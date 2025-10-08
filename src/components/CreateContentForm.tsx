@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Video, FileText, Loader2 } from "lucide-react";
+import { Upload, Video, FileText, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useCreateContent } from "@/hooks/useCreateContent";
 import { Database } from "@/integrations/supabase/types";
@@ -14,10 +15,30 @@ type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
 type GradeLevel = Database["public"]["Enums"]["grade_level"];
 
-export const CreateContentForm = () => {
+interface ContentData {
+  id?: string;
+  title: string;
+  description?: string;
+  category: CategoryType;
+  grade_level: GradeLevel;
+  content_type: ContentType;
+  tags?: string[];
+  video_url?: string;
+  document_url?: string;
+  thumbnail_url?: string;
+}
+
+interface CreateContentFormProps {
+  editMode?: boolean;
+  contentData?: ContentData;
+  onUpdate?: (id: string, updates: any) => Promise<void>;
+}
+
+export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: CreateContentFormProps) => {
   const navigate = useNavigate();
   const { uploadFile, uploading } = useCloudinary();
   const { createMutation } = useCreateContent();
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -25,13 +46,30 @@ export const CreateContentForm = () => {
     category: "" as CategoryType,
     grade_level: "" as GradeLevel,
     content_type: "" as ContentType,
-    tags: "",
   });
+  
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [documentPreview, setDocumentPreview] = useState<string>("");
+
+  useEffect(() => {
+    if (editMode && contentData) {
+      setFormData({
+        title: contentData.title,
+        description: contentData.description || "",
+        category: contentData.category,
+        grade_level: contentData.grade_level,
+        content_type: contentData.content_type,
+      });
+      setTags(contentData.tags || []);
+      if (contentData.video_url) setVideoPreview(contentData.video_url);
+      if (contentData.document_url) setDocumentPreview(contentData.document_url.split('/').pop() || "");
+    }
+  }, [editMode, contentData]);
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -47,6 +85,20 @@ export const CreateContentForm = () => {
       setDocumentFile(file);
       setDocumentPreview(file.name);
     }
+  };
+
+  const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && tagInput.trim()) {
+      e.preventDefault();
+      if (!tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()]);
+      }
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,25 +118,36 @@ export const CreateContentForm = () => {
         documentUrl = await uploadFile(documentFile, "raw");
       }
 
-      await createMutation.mutateAsync({
+      const contentPayload = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
         grade_level: formData.grade_level,
         content_type: formData.content_type,
-        tags: formData.tags.split(",").map(tag => tag.trim()).filter(Boolean),
-        video_url: videoUrl,
-        document_url: documentUrl,
-        thumbnail_url: thumbnailUrl,
-      });
+        tags: tags,
+        video_url: videoUrl || (editMode ? contentData?.video_url : undefined),
+        document_url: documentUrl || (editMode ? contentData?.document_url : undefined),
+        thumbnail_url: thumbnailUrl || (editMode ? contentData?.thumbnail_url : undefined),
+      };
 
-      navigate("/");
+      if (editMode && contentData?.id && onUpdate) {
+        setIsUpdating(true);
+        await onUpdate(contentData.id, contentPayload);
+        setIsUpdating(false);
+        navigate("/profile");
+      } else {
+        await createMutation.mutateAsync(contentPayload);
+        navigate("/");
+      }
     } catch (error) {
       console.error("Error creating content:", error);
     }
   };
 
-  const isLoading = uploading || createMutation.isPending;
+  const isLoading = uploading || createMutation.isPending || isUpdating;
+
+  const shouldShowVideo = !formData.content_type || formData.content_type === "video";
+  const shouldShowDocument = !formData.content_type || formData.content_type === "document";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -159,6 +222,7 @@ export const CreateContentForm = () => {
           value={formData.content_type}
           onValueChange={(value) => setFormData({ ...formData, content_type: value as ContentType })}
           required
+          disabled={editMode}
         >
           <SelectTrigger>
             <SelectValue placeholder="Selecciona tipo" />
@@ -172,80 +236,98 @@ export const CreateContentForm = () => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="tags">Etiquetas (separadas por coma)</Label>
+        <Label htmlFor="tags">Etiquetas (presiona Enter para agregar)</Label>
         <Input
           id="tags"
-          placeholder="Ej: biología, plantas, fotosíntesis"
-          value={formData.tags}
-          onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+          placeholder="Escribe una etiqueta y presiona Enter"
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={handleTagInput}
         />
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="gap-1">
+                {tag}
+                <X 
+                  className="w-3 h-3 cursor-pointer hover:text-destructive" 
+                  onClick={() => removeTag(tag)}
+                />
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="video">Video (opcional)</Label>
-          <div className="flex items-center gap-4">
-            <Input
-              id="video"
-              type="file"
-              accept="video/*"
-              onChange={handleVideoChange}
-              className="hidden"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById("video")?.click()}
-              className="w-full"
-            >
-              <Video className="w-4 h-4 mr-2" />
-              {videoFile ? "Cambiar video" : "Subir video"}
-            </Button>
-          </div>
-          {videoPreview && (
-            <video src={videoPreview} controls className="w-full rounded-lg mt-2" />
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="document">Documento (opcional)</Label>
-          <div className="flex items-center gap-4">
-            <Input
-              id="document"
-              type="file"
-              accept=".pdf,.doc,.docx,.ppt,.pptx"
-              onChange={handleDocumentChange}
-              className="hidden"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById("document")?.click()}
-              className="w-full"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {documentFile ? "Cambiar documento" : "Subir documento"}
-            </Button>
-          </div>
-          {documentPreview && (
-            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg mt-2">
-              <FileText className="w-5 h-5 text-primary" />
-              <span className="text-sm">{documentPreview}</span>
+        {shouldShowVideo && (
+          <div className="space-y-2">
+            <Label htmlFor="video">Video {!formData.content_type && "(opcional)"}</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="video"
+                type="file"
+                accept="video/*"
+                onChange={handleVideoChange}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById("video")?.click()}
+                className="w-full"
+              >
+                <Video className="w-4 h-4 mr-2" />
+                {videoFile || videoPreview ? "Cambiar video" : "Subir video"}
+              </Button>
             </div>
-          )}
-        </div>
+            {videoPreview && (
+              <video src={videoPreview} controls className="w-full rounded-lg mt-2" />
+            )}
+          </div>
+        )}
+
+        {shouldShowDocument && (
+          <div className="space-y-2">
+            <Label htmlFor="document">Documento {!formData.content_type && "(opcional)"}</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="document"
+                type="file"
+                accept=".pdf,.doc,.docx,.ppt,.pptx"
+                onChange={handleDocumentChange}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById("document")?.click()}
+                className="w-full"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                {documentFile || documentPreview ? "Cambiar documento" : "Subir documento"}
+              </Button>
+            </div>
+            {documentPreview && (
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg mt-2">
+                <FileText className="w-5 h-5 text-primary" />
+                <span className="text-sm">{documentPreview}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Publicando...
+            {editMode ? "Guardando..." : "Publicando..."}
           </>
         ) : (
           <>
             <Upload className="w-4 h-4 mr-2" />
-            Publicar Cápsula
+            {editMode ? "Guardar Cambios" : "Publicar Cápsula"}
           </>
         )}
       </Button>

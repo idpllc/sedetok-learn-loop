@@ -58,6 +58,10 @@ export const useUserContent = () => {
         title?: string; 
         description?: string; 
         is_public?: boolean;
+        tags?: string[];
+        video_url?: string;
+        document_url?: string;
+        thumbnail_url?: string;
       } 
     }) => {
       const { error } = await supabase
