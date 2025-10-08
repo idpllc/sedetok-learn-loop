@@ -171,32 +171,32 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Action buttons - floating on the right */}
-        <div className="absolute right-4 bottom-44 flex flex-col gap-4 z-30">
+        <div className="fixed right-4 md:right-8 lg:right-12 bottom-32 md:bottom-1/2 md:translate-y-1/2 flex flex-col gap-6 md:gap-8 z-30">
           <button
             onClick={handleLike}
-            className="flex flex-col items-center gap-1 transition-all hover:scale-110"
+            className="flex flex-col items-center gap-2 transition-all hover:scale-110"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg ${
+            <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg ${
               isLiked ? 'bg-red-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Heart 
-                className={`w-6 h-6 ${isLiked ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-6 h-6 md:w-7 md:h-7 ${isLiked ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
-            <span className="text-xs font-semibold text-white">{initialLikes}</span>
+            <span className="text-xs md:text-sm font-semibold text-white drop-shadow-lg">{initialLikes}</span>
           </button>
 
           <CommentsSheet contentId={id} commentsCount={initialComments} />
 
           <button 
             onClick={handleSave}
-            className="flex flex-col items-center gap-1 transition-all hover:scale-110"
+            className="flex flex-col items-center gap-2 transition-all hover:scale-110"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg ${
+            <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg ${
               isSaved ? 'bg-yellow-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Bookmark 
-                className={`w-6 h-6 ${isSaved ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-6 h-6 md:w-7 md:h-7 ${isSaved ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
           </button>
