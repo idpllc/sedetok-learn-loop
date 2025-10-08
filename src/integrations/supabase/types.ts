@@ -557,11 +557,50 @@ export type Database = {
           },
         ]
       }
+      user_xp_log: {
+        Row: {
+          action_type: string
+          content_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+          xp_amount: number
+        }
+        Insert: {
+          action_type: string
+          content_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+          xp_amount: number
+        }
+        Update: {
+          action_type?: string
+          content_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+          xp_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_xp_log_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      award_xp_for_action: {
+        Args: { p_action_type: string; p_content_id: string; p_user_id: string }
+        Returns: undefined
+      }
       decrement_comments_count: {
         Args: { content_id: string }
         Returns: undefined

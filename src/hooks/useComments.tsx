@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useComments = (contentId: string) => {
+export const useComments = (contentId: string, onCommentAdded?: () => void) => {
   const queryClient = useQueryClient();
 
   const { data: comments = [], isLoading } = useQuery({
@@ -48,6 +48,10 @@ export const useComments = (contentId: string) => {
       queryClient.invalidateQueries({ queryKey: ["comments", contentId] });
       queryClient.invalidateQueries({ queryKey: ["content"] });
       toast.success("Comentario agregado");
+      // Call the callback to award XP
+      if (onCommentAdded) {
+        onCommentAdded();
+      }
     },
     onError: () => {
       toast.error("Error al agregar comentario");

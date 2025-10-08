@@ -8,6 +8,8 @@ interface VideoPlayerProps {
   onNext?: () => void;
   hasPrevious?: boolean;
   hasNext?: boolean;
+  contentId?: string;
+  onVideoComplete?: () => void;
 }
 
 export interface VideoPlayerRef {
@@ -22,7 +24,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   onPrevious,
   onNext,
   hasPrevious = true,
-  hasNext = true
+  hasNext = true,
+  contentId,
+  onVideoComplete
 }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -59,9 +63,20 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       setIsVertical(aspectRatio < 1);
     };
 
+    const handleVideoEnded = () => {
+      if (onVideoComplete) {
+        onVideoComplete();
+      }
+    };
+
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    return () => video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-  }, [videoUrl]);
+    video.addEventListener('ended', handleVideoEnded);
+    
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('ended', handleVideoEnded);
+    };
+  }, [videoUrl, onVideoComplete]);
 
   const togglePlay = () => {
     const video = videoRef.current;

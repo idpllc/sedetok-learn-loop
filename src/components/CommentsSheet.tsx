@@ -6,6 +6,7 @@ import { Textarea } from "./ui/textarea";
 import { ScrollArea } from "./ui/scroll-area";
 import { useComments } from "@/hooks/useComments";
 import { useAuth } from "@/hooks/useAuth";
+import { useXP } from "@/hooks/useXP";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -17,8 +18,14 @@ interface CommentsSheetProps {
 export const CommentsSheet = ({ contentId, commentsCount }: CommentsSheetProps) => {
   const [open, setOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const { comments, isLoading, addComment, deleteComment } = useComments(contentId);
   const { user } = useAuth();
+  const { awardXP } = useXP();
+  
+  const handleCommentAdded = () => {
+    awardXP(contentId, 'comment');
+  };
+  
+  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, handleCommentAdded);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;

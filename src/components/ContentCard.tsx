@@ -3,6 +3,7 @@ import { Badge } from "./ui/badge";
 import { useContent } from "@/hooks/useContent";
 import { VideoPlayer, VideoPlayerRef } from "./VideoPlayer";
 import { useViews } from "@/hooks/useViews";
+import { useXP } from "@/hooks/useXP";
 import { CommentsSheet } from "./CommentsSheet";
 import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
@@ -52,6 +53,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 }, ref) => {
   const { user } = useAuth();
   const { likeMutation, saveMutation } = useContent();
+  const { awardXP } = useXP();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   useViews(id);
@@ -63,6 +65,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       return;
     }
     likeMutation.mutate({ contentId: id, isLiked });
+    // Award XP only when liking (not unliking)
+    if (!isLiked) {
+      awardXP(id, 'like');
+    }
   };
 
   const handleSave = () => {
@@ -72,15 +78,27 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       return;
     }
     saveMutation.mutate({ contentId: id, isSaved });
+    // Award XP only when saving (not unsaving)
+    if (!isSaved) {
+      awardXP(id, 'save');
+    }
   };
 
   const handleAuthSuccess = () => {
     if (pendingAction === 'like') {
       likeMutation.mutate({ contentId: id, isLiked: false });
+      awardXP(id, 'like');
     } else if (pendingAction === 'save') {
       saveMutation.mutate({ contentId: id, isSaved: false });
+      awardXP(id, 'save');
     }
     setPendingAction(null);
+  };
+
+  const handleVideoComplete = () => {
+    if (user) {
+      awardXP(id, 'view_complete');
+    }
   };
 
   return (
@@ -96,6 +114,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             onNext={onNext}
             hasPrevious={hasPrevious}
             hasNext={hasNext}
+            contentId={id}
+            onVideoComplete={handleVideoComplete}
           />
         ) : thumbnail ? (
           <img 
