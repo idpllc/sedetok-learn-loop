@@ -1,7 +1,6 @@
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
-import { useState } from "react";
-import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { useContent } from "@/hooks/useContent";
 
 interface ContentCardProps {
   id: string;
@@ -15,9 +14,12 @@ interface ContentCardProps {
   likes: number;
   comments: number;
   grade: string;
+  isLiked: boolean;
+  isSaved: boolean;
 }
 
 export const ContentCard = ({
+  id,
   title,
   creator,
   institution,
@@ -27,14 +29,17 @@ export const ContentCard = ({
   likes: initialLikes,
   comments: initialComments,
   grade,
+  isLiked,
+  isSaved,
 }: ContentCardProps) => {
-  const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [likes, setLikes] = useState(initialLikes);
+  const { likeMutation, saveMutation } = useContent();
 
   const handleLike = () => {
-    setLiked(!liked);
-    setLikes(liked ? likes - 1 : likes + 1);
+    likeMutation.mutate({ contentId: id, isLiked });
+  };
+
+  const handleSave = () => {
+    saveMutation.mutate({ contentId: id, isSaved });
   };
 
   return (
@@ -99,13 +104,13 @@ export const ContentCard = ({
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              liked ? 'bg-destructive' : 'bg-background/90'
+              isLiked ? 'bg-destructive' : 'bg-background/90'
             } backdrop-blur-sm`}>
               <Heart 
-                className={`w-6 h-6 ${liked ? 'fill-primary-foreground text-primary-foreground' : 'text-foreground'}`}
+                className={`w-6 h-6 ${isLiked ? 'fill-primary-foreground text-primary-foreground' : 'text-foreground'}`}
               />
             </div>
-            <span className="text-xs font-semibold text-foreground">{likes}</span>
+            <span className="text-xs font-semibold text-foreground">{initialLikes}</span>
           </button>
 
           <button className="flex flex-col items-center gap-1 transition-all hover:scale-110">
@@ -116,14 +121,14 @@ export const ContentCard = ({
           </button>
 
           <button 
-            onClick={() => setSaved(!saved)}
+            onClick={handleSave}
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
             <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              saved ? 'bg-accent' : 'bg-background/90'
+              isSaved ? 'bg-accent' : 'bg-background/90'
             } backdrop-blur-sm`}>
               <Bookmark 
-                className={`w-6 h-6 ${saved ? 'fill-accent-foreground text-accent-foreground' : 'text-foreground'}`}
+                className={`w-6 h-6 ${isSaved ? 'fill-accent-foreground text-accent-foreground' : 'text-foreground'}`}
               />
             </div>
           </button>

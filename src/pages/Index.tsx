@@ -1,6 +1,11 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
+import { useAuth } from "@/hooks/useAuth";
+import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const mockContent = [
   {
@@ -66,12 +71,75 @@ const mockContent = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { content, isLoading } = useContent();
+  const { likes } = useUserLikes();
+  const { saves } = useUserSaves();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading || !user) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="text-6xl mb-4 animate-pulse">📚</div>
+          <p className="text-muted-foreground">Cargando SEDETOK...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="relative h-screen">
+        <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-screen w-full snap-start snap-always flex items-center justify-center bg-muted/50">
+              <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const contentData = content || mockContent.map(item => ({
+    ...item,
+    profiles: {
+      username: item.creator,
+      full_name: item.creator,
+      avatar_url: null,
+      institution: item.institution,
+      is_verified: false
+    }
+  }));
+
   return (
     <div className="relative">
       {/* Feed container with snap scroll */}
       <div className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
-        {mockContent.map((content) => (
-          <ContentCard key={content.id} {...content} />
+        {contentData.map((item: any) => (
+          <ContentCard
+            key={item.id}
+            id={item.id}
+            title={item.title}
+            creator={item.profiles?.username || item.creator}
+            institution={item.profiles?.institution || item.institution}
+            tags={item.tags || []}
+            category={item.category}
+            thumbnail={item.thumbnail_url || item.thumbnail}
+            videoUrl={item.video_url}
+            likes={item.likes_count || item.likes}
+            comments={item.comments_count || item.comments}
+            grade={item.grade_level || item.grade}
+            isLiked={likes.has(item.id)}
+            isSaved={saves.has(item.id)}
+          />
         ))}
       </div>
 
