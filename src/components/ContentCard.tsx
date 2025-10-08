@@ -113,13 +113,15 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
 
             {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs border-white/30 text-white/90">
-                  #{tag}
-                </Badge>
-              ))}
-            </div>
+            {tags && tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-xs border-white/30 text-white/90">
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

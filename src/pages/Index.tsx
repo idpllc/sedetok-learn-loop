@@ -185,7 +185,7 @@ const Index = () => {
             title={item.title}
             creator={item.profiles?.username || item.creator}
             institution={item.profiles?.institution || item.institution}
-            tags={item.tags || []}
+            tags={Array.isArray(item.tags) ? item.tags : []}
             category={item.category}
             thumbnail={item.thumbnail_url || item.thumbnail}
             videoUrl={item.video_url}
