@@ -144,7 +144,7 @@ const Index = () => {
     }
   }, [contentIdFromUrl, content]);
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">

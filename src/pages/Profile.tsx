@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
   const handleDelete = (contentId: string) => {
     setContentToDelete(contentId);
@@ -116,6 +122,17 @@ const Profile = () => {
       </CardContent>
     </Card>
   );
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-6xl mb-4 animate-pulse">📚</div>
+          <p className="text-muted-foreground">Verificando acceso...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

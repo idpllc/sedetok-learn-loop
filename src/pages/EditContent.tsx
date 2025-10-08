@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button";
 import { CreateContentForm } from "@/components/CreateContentForm";
 import { useUserContent } from "@/hooks/useUserContent";
 import { useCloudinary } from "@/hooks/useCloudinary";
+import { useAuth } from "@/hooks/useAuth";
 
 const EditContent = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { user, loading: authLoading } = useAuth();
   const { userContent, isLoading, updateMutation } = useUserContent();
   const { uploadFile } = useCloudinary();
   const [content, setContent] = useState<any>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (userContent && id) {
@@ -24,7 +32,7 @@ const EditContent = () => {
     }
   }, [userContent, id, navigate]);
 
-  if (isLoading || !content) {
+  if (authLoading || !user || isLoading || !content) {
     return (
       <div className="min-h-screen bg-background pb-20 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
