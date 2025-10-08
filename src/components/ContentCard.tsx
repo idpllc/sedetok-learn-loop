@@ -4,7 +4,10 @@ import { useContent } from "@/hooks/useContent";
 import { VideoPlayer, VideoPlayerRef } from "./VideoPlayer";
 import { useViews } from "@/hooks/useViews";
 import { CommentsSheet } from "./CommentsSheet";
-import { forwardRef } from "react";
+import { ShareSheet } from "./ShareSheet";
+import { AuthModal } from "./AuthModal";
+import { forwardRef, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ContentCardProps {
   id: string;
@@ -47,15 +50,37 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   hasNext,
   videoRef,
 }, ref) => {
+  const { user } = useAuth();
   const { likeMutation, saveMutation } = useContent();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   useViews(id);
 
   const handleLike = () => {
+    if (!user) {
+      setPendingAction('like');
+      setAuthModalOpen(true);
+      return;
+    }
     likeMutation.mutate({ contentId: id, isLiked });
   };
 
   const handleSave = () => {
+    if (!user) {
+      setPendingAction('save');
+      setAuthModalOpen(true);
+      return;
+    }
     saveMutation.mutate({ contentId: id, isSaved });
+  };
+
+  const handleAuthSuccess = () => {
+    if (pendingAction === 'like') {
+      likeMutation.mutate({ contentId: id, isLiked: false });
+    } else if (pendingAction === 'save') {
+      saveMutation.mutate({ contentId: id, isSaved: false });
+    }
+    setPendingAction(null);
   };
 
   return (
@@ -156,13 +181,15 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
           </button>
 
-          <button className="flex flex-col items-center gap-1 transition-all hover:scale-110">
-            <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
-              <Share2 className="w-6 h-6 text-black" />
-            </div>
-          </button>
+          <ShareSheet contentId={id} contentTitle={title} />
         </div>
       </div>
+
+      <AuthModal 
+        open={authModalOpen} 
+        onOpenChange={setAuthModalOpen}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 });

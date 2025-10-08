@@ -8,7 +8,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Database } from "@/integrations/supabase/types";
-import { Heart, MessageCircle, Bookmark, Eye, Play, FileText, ClipboardCheck } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Eye, Play, FileText, ClipboardCheck, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -209,6 +209,10 @@ const Search = () => {
                           <div className="flex items-center gap-1">
                             <Eye className="w-4 h-4" />
                             <span>{item.views_count}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Share2 className="w-4 h-4" />
+                            <span>{item.shares_count || 0}</span>
                           </div>
                         </div>
 

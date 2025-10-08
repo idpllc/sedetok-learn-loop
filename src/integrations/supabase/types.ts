@@ -593,6 +593,10 @@ export type Database = {
         Args: { content_id: string }
         Returns: undefined
       }
+      increment_shares_count: {
+        Args: { content_id: string }
+        Returns: undefined
+      }
       increment_views_count: {
         Args: { content_id: string }
         Returns: undefined
