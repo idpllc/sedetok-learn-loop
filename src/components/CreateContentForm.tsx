@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useCreateContent } from "@/hooks/useCreateContent";
 import { Database } from "@/integrations/supabase/types";
@@ -50,6 +51,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
   
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
@@ -66,6 +68,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         content_type: contentData.content_type,
       });
       setTags(contentData.tags || []);
+      setIsPublic((contentData as any).is_public ?? true);
       if (contentData.video_url) setVideoPreview(contentData.video_url);
       if (contentData.document_url) setDocumentPreview(contentData.document_url.split('/').pop() || "");
     }
@@ -125,6 +128,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         grade_level: formData.grade_level,
         content_type: formData.content_type,
         tags: tags,
+        is_public: isPublic,
         video_url: videoUrl || (editMode ? contentData?.video_url : undefined),
         document_url: documentUrl || (editMode ? contentData?.document_url : undefined),
         thumbnail_url: thumbnailUrl || (editMode ? contentData?.thumbnail_url : undefined),
@@ -257,6 +261,20 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
             ))}
           </div>
         )}
+      </div>
+
+      <div className="flex items-center justify-between p-4 border rounded-lg">
+        <div className="space-y-0.5">
+          <Label htmlFor="visibility">Visibilidad</Label>
+          <p className="text-sm text-muted-foreground">
+            {isPublic ? "Cápsula pública - visible para todos" : "Cápsula privada - solo tú puedes verla"}
+          </p>
+        </div>
+        <Switch
+          id="visibility"
+          checked={isPublic}
+          onCheckedChange={setIsPublic}
+        />
       </div>
 
       <div className="space-y-4">
