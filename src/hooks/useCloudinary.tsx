@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useCloudinary = () => {
   const [uploading, setUploading] = useState(false);
@@ -10,24 +11,21 @@ export const useCloudinary = () => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", "ml_default");
+      formData.append("resourceType", resourceType);
 
-      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-      
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('upload-to-cloudinary', {
+        body: formData,
+      });
 
-      if (!response.ok) {
-        throw new Error("Error al subir el archivo");
+      if (error) {
+        throw new Error(error.message || "Error al subir el archivo");
       }
 
-      const data = await response.json();
-      return data.secure_url;
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      return data.url;
     } catch (error) {
       toast({
         title: "Error",
