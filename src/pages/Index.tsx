@@ -77,12 +77,12 @@ const Index = () => {
   const { content, isLoading } = useContent();
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
-  const videoRefs = useRef<Map<string, VideoPlayerRef>>(new Map());
+  const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
-    videoRefs.current.forEach((ref, id) => {
-      if (id !== exceptId) {
+    Object.entries(videoRefs.current).forEach(([id, ref]) => {
+      if (id !== exceptId && ref) {
         ref.pause();
       }
     });
@@ -101,7 +101,8 @@ const Index = () => {
           if (entry.isIntersecting && cardId) {
             pauseAllVideos(cardId);
           } else if (!entry.isIntersecting && cardId) {
-            videoRefs.current.get(cardId)?.pause();
+            const ref = videoRefs.current[cardId];
+            if (ref) ref.pause();
           }
         });
       },
@@ -160,20 +161,22 @@ const Index = () => {
     <div className="relative">
       {/* Feed container with snap scroll */}
       <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
-        {contentData.map((item: any, index: number) => (
-          <ContentCard
-            key={item.id}
-            data-content-id={item.id}
-            ref={(el) => {
-              if (el) el.dataset.contentId = item.id;
-            }}
-            id={item.id}
-            videoRef={{
-              current: {
-                pause: () => videoRefs.current.get(item.id)?.pause(),
-                play: () => videoRefs.current.get(item.id)?.play(),
-              }
-            } as React.RefObject<VideoPlayerRef>}
+        {contentData.map((item: any, index: number) => {
+          const videoRef = (ref: VideoPlayerRef | null) => {
+            if (ref) {
+              videoRefs.current[item.id] = ref;
+            }
+          };
+          
+          return (
+            <ContentCard
+              key={item.id}
+              data-content-id={item.id}
+              ref={(el) => {
+                if (el) el.dataset.contentId = item.id;
+              }}
+              id={item.id}
+              videoRef={videoRef}
             title={item.title}
             creator={item.profiles?.username || item.creator}
             institution={item.profiles?.institution || item.institution}
@@ -186,24 +189,25 @@ const Index = () => {
             grade={item.grade_level || item.grade}
             isLiked={likes.has(item.id)}
             isSaved={saves.has(item.id)}
-            onPrevious={() => {
-              pauseAllVideos();
-              const container = document.querySelector('.snap-y');
-              if (container && index > 0) {
-                container.children[index - 1]?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            onNext={() => {
-              pauseAllVideos();
-              const container = document.querySelector('.snap-y');
-              if (container && index < contentData.length - 1) {
-                container.children[index + 1]?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            hasPrevious={index > 0}
-            hasNext={index < contentData.length - 1}
-          />
-        ))}
+              onPrevious={() => {
+                pauseAllVideos();
+                const container = document.querySelector('.snap-y');
+                if (container && index > 0) {
+                  container.children[index - 1]?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              onNext={() => {
+                pauseAllVideos();
+                const container = document.querySelector('.snap-y');
+                if (container && index < contentData.length - 1) {
+                  container.children[index + 1]?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              hasPrevious={index > 0}
+              hasNext={index < contentData.length - 1}
+            />
+          );
+        })}
       </div>
 
       {/* Floating action button */}

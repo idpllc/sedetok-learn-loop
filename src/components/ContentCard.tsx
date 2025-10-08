@@ -22,7 +22,7 @@ interface ContentCardProps {
   onNext?: () => void;
   hasPrevious?: boolean;
   hasNext?: boolean;
-  videoRef?: React.RefObject<VideoPlayerRef>;
+  videoRef?: (ref: VideoPlayerRef | null) => void;
 }
 
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
@@ -99,7 +99,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Content info */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
+        <div className="absolute bottom-20 left-0 right-0 p-6 z-10">
           <div className="space-y-3">
             <div>
               <h2 className="text-xl font-bold text-foreground mb-1">{title}</h2>
@@ -121,7 +121,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Action buttons - floating on the right */}
-        <div className="absolute right-4 bottom-40 flex flex-col gap-4 z-30">
+        <div className="absolute right-4 bottom-44 flex flex-col gap-4 z-30">
           <button
             onClick={handleLike}
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
