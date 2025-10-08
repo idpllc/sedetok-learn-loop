@@ -42,15 +42,11 @@ export const useContent = () => {
           .eq("content_id", contentId)
           .eq("user_id", user.id);
         if (error) throw error;
-        
-        await supabase.rpc("decrement_likes_count", { content_id: contentId });
       } else {
         const { error } = await supabase
           .from("likes")
           .insert([{ content_id: contentId, user_id: user.id }]);
         if (error) throw error;
-        
-        await supabase.rpc("increment_likes_count", { content_id: contentId });
       }
     },
     onSuccess: () => {
@@ -78,15 +74,11 @@ export const useContent = () => {
           .eq("content_id", contentId)
           .eq("user_id", user.id);
         if (error) throw error;
-        
-        await supabase.rpc("decrement_saves_count", { content_id: contentId });
       } else {
         const { error } = await supabase
           .from("saves")
           .insert([{ content_id: contentId, user_id: user.id }]);
         if (error) throw error;
-        
-        await supabase.rpc("increment_saves_count", { content_id: contentId });
       }
     },
     onSuccess: () => {
