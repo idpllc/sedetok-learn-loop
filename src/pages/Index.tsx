@@ -122,12 +122,6 @@ const Index = () => {
     return () => observer.disconnect();
   }, [pauseAllVideos, content]);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
-
   // Scroll to specific content when contentId is in URL
   useEffect(() => {
     if (contentIdFromUrl && content && containerRef.current) {
@@ -143,17 +137,6 @@ const Index = () => {
       }
     }
   }, [contentIdFromUrl, content]);
-
-  if (authLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="text-6xl mb-4 animate-pulse">📚</div>
-          <p className="text-muted-foreground">Cargando SEDETOK...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
