@@ -12,13 +12,17 @@ serve(async (req) => {
 
   try {
     const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
-    const uploadPreset = Deno.env.get('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET') || 'sede_uploads';
+    const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET');
     
     console.log('Cloud Name:', cloudName);
     console.log('Upload Preset:', uploadPreset);
     
     if (!cloudName) {
       throw new Error('CLOUDINARY_CLOUD_NAME no está configurado');
+    }
+
+    if (!uploadPreset) {
+      throw new Error('CLOUDINARY_UPLOAD_PRESET no está configurado');
     }
 
     const formData = await req.formData();
