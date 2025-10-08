@@ -13,6 +13,7 @@ interface VideoPlayerProps {
 export interface VideoPlayerRef {
   pause: () => void;
   play: () => void;
+  isPlaying: boolean;
 }
 
 export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
@@ -40,10 +41,13 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     play: () => {
       const video = videoRef.current;
       if (video) {
-        video.play();
+        video.play().catch(() => {
+          // Ignore autoplay errors
+        });
         setIsPlaying(true);
       }
-    }
+    },
+    isPlaying
   }));
 
   useEffect(() => {
@@ -94,7 +98,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-background">
+    <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black">
       <video
         ref={videoRef}
         src={videoUrl}
@@ -114,33 +118,33 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
         style={{ opacity: isPlaying ? 0 : 1, transition: 'opacity 0.3s' }}
       >
-        <div className="w-20 h-20 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <Play className="w-10 h-10 text-foreground ml-1" />
+        <div className="w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
+          <Play className="w-10 h-10 text-black ml-1" />
         </div>
       </div>
 
       {/* Play/Pause button */}
       <button
         onClick={togglePlay}
-        className="absolute bottom-24 left-4 z-20 w-12 h-12 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform"
+        className="absolute bottom-24 left-4 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
       >
         {isPlaying ? (
-          <Pause className="w-6 h-6 text-foreground" />
+          <Pause className="w-6 h-6 text-black" />
         ) : (
-          <Play className="w-6 h-6 text-foreground ml-0.5" />
+          <Play className="w-6 h-6 text-black ml-0.5" />
         )}
       </button>
 
       {/* Volume controls */}
-      <div className="absolute bottom-24 left-20 z-20 flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-full px-3 py-2">
+      <div className="absolute bottom-24 left-20 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg">
         <button
           onClick={toggleMute}
           className="hover:scale-110 transition-transform"
         >
           {isMuted || volume === 0 ? (
-            <VolumeX className="w-5 h-5 text-foreground" />
+            <VolumeX className="w-5 h-5 text-black" />
           ) : (
-            <Volume2 className="w-5 h-5 text-foreground" />
+            <Volume2 className="w-5 h-5 text-black" />
           )}
         </button>
         <input
@@ -150,7 +154,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           step="0.1"
           value={isMuted ? 0 : volume}
           onChange={handleVolumeChange}
-          className="w-20 h-1 bg-muted rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+          className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black"
         />
       </div>
 
@@ -159,17 +163,17 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         {hasPrevious && onPrevious && (
           <button
             onClick={onPrevious}
-            className="w-12 h-12 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform hover:bg-primary/20"
+            className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform hover:bg-white shadow-lg"
           >
-            <ChevronUp className="w-6 h-6 text-foreground" />
+            <ChevronUp className="w-6 h-6 text-black" />
           </button>
         )}
         {hasNext && onNext && (
           <button
             onClick={onNext}
-            className="w-12 h-12 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform hover:bg-primary/20"
+            className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform hover:bg-white shadow-lg"
           >
-            <ChevronDown className="w-6 h-6 text-foreground" />
+            <ChevronDown className="w-6 h-6 text-black" />
           </button>
         )}
       </div>

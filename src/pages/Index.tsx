@@ -100,6 +100,11 @@ const Index = () => {
           
           if (entry.isIntersecting && cardId) {
             pauseAllVideos(cardId);
+            // Auto-play the video after a short delay
+            setTimeout(() => {
+              const ref = videoRefs.current[cardId];
+              if (ref) ref.play();
+            }, 100);
           } else if (!entry.isIntersecting && cardId) {
             const ref = videoRefs.current[cardId];
             if (ref) ref.pause();
