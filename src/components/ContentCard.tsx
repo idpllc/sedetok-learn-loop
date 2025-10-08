@@ -7,7 +7,7 @@ import { useXP } from "@/hooks/useXP";
 import { CommentsSheet } from "./CommentsSheet";
 import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
-import { forwardRef, useState } from "react";
+import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ContentCardProps {
@@ -57,6 +57,30 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   useViews(id);
+  
+  // Visibility detection to show action buttons only for the in-view card (desktop)
+  const [isInView, setIsInView] = useState(false);
+  const localRef = useRef<HTMLDivElement | null>(null);
+  const setRefs = (node: HTMLDivElement | null) => {
+    localRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref && (ref as any).current !== undefined) {
+      (ref as any).current = node;
+    }
+  };
+  useEffect(() => {
+    const el = localRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.6);
+      },
+      { threshold: [0.5, 0.6, 0.75, 1] }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleLike = () => {
     if (!user) {
@@ -102,7 +126,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   };
 
   return (
-    <div ref={ref} className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-black">
+    <div ref={setRefs} className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-black">
       {/* Video/Content container */}
       <div className="relative w-full h-full max-w-4xl overflow-hidden flex items-center justify-center">
         {videoUrl ? (
@@ -171,7 +195,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Action buttons - floating on the right */}
-        <div className="absolute md:fixed right-4 md:right-8 lg:right-12 bottom-32 md:bottom-40 md:top-auto md:translate-y-0 flex flex-col gap-6 md:gap-8 z-30">
+        <div className={`absolute right-4 md:right-8 lg:right-12 bottom-32 md:bottom-40 md:top-auto md:translate-y-0 flex flex-col gap-6 md:gap-8 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
           <button
             onClick={handleLike}
             className="flex flex-col items-center gap-2 transition-all hover:scale-110"
