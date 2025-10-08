@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -6,6 +6,7 @@ import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VideoPlayerRef } from "@/components/VideoPlayer";
 
 const mockContent = [
   {
@@ -76,6 +77,42 @@ const Index = () => {
   const { content, isLoading } = useContent();
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
+  const videoRefs = useRef<Map<string, VideoPlayerRef>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const pauseAllVideos = useCallback((exceptId?: string) => {
+    videoRefs.current.forEach((ref, id) => {
+      if (id !== exceptId) {
+        ref.pause();
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const cardElement = entry.target as HTMLElement;
+          const cardId = cardElement.dataset.contentId;
+          
+          if (entry.isIntersecting && cardId) {
+            pauseAllVideos(cardId);
+          } else if (!entry.isIntersecting && cardId) {
+            videoRefs.current.get(cardId)?.pause();
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    const cards = container.querySelectorAll('[data-content-id]');
+    cards.forEach((card) => observer.observe(card));
+
+    return () => observer.disconnect();
+  }, [pauseAllVideos, content]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -122,11 +159,21 @@ const Index = () => {
   return (
     <div className="relative">
       {/* Feed container with snap scroll */}
-      <div className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
+      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
         {contentData.map((item: any, index: number) => (
           <ContentCard
             key={item.id}
+            data-content-id={item.id}
+            ref={(el) => {
+              if (el) el.dataset.contentId = item.id;
+            }}
             id={item.id}
+            videoRef={{
+              current: {
+                pause: () => videoRefs.current.get(item.id)?.pause(),
+                play: () => videoRefs.current.get(item.id)?.play(),
+              }
+            } as React.RefObject<VideoPlayerRef>}
             title={item.title}
             creator={item.profiles?.username || item.creator}
             institution={item.profiles?.institution || item.institution}
@@ -140,12 +187,14 @@ const Index = () => {
             isLiked={likes.has(item.id)}
             isSaved={saves.has(item.id)}
             onPrevious={() => {
+              pauseAllVideos();
               const container = document.querySelector('.snap-y');
               if (container && index > 0) {
                 container.children[index - 1]?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
             onNext={() => {
+              pauseAllVideos();
               const container = document.querySelector('.snap-y');
               if (container && index < contentData.length - 1) {
                 container.children[index + 1]?.scrollIntoView({ behavior: 'smooth' });

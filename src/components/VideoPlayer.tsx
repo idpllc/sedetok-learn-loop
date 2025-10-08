@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -10,19 +10,41 @@ interface VideoPlayerProps {
   hasNext?: boolean;
 }
 
-export const VideoPlayer = ({ 
+export interface VideoPlayerRef {
+  pause: () => void;
+  play: () => void;
+}
+
+export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   videoUrl, 
   thumbnail,
   onPrevious,
   onNext,
   hasPrevious = true,
   hasNext = true
-}: VideoPlayerProps) => {
+}, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [isVertical, setIsVertical] = useState(true);
+
+  useImperativeHandle(ref, () => ({
+    pause: () => {
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        setIsPlaying(false);
+      }
+    },
+    play: () => {
+      const video = videoRef.current;
+      if (video) {
+        video.play();
+        setIsPlaying(true);
+      }
+    }
+  }));
 
   useEffect(() => {
     const video = videoRef.current;
@@ -72,14 +94,14 @@ export const VideoPlayer = ({
   };
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-background">
+    <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-background">
       <video
         ref={videoRef}
         src={videoUrl}
         poster={thumbnail}
         className={`${
           isVertical 
-            ? 'w-full h-full object-cover' 
+            ? 'w-auto h-full max-w-full object-contain' 
             : 'w-full h-auto max-h-full object-contain'
         } transition-all`}
         loop
@@ -153,4 +175,4 @@ export const VideoPlayer = ({
       </div>
     </div>
   );
-};
+});

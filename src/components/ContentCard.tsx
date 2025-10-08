@@ -1,7 +1,8 @@
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useContent } from "@/hooks/useContent";
-import { VideoPlayer } from "./VideoPlayer";
+import { VideoPlayer, VideoPlayerRef } from "./VideoPlayer";
+import { forwardRef } from "react";
 
 interface ContentCardProps {
   id: string;
@@ -21,9 +22,10 @@ interface ContentCardProps {
   onNext?: () => void;
   hasPrevious?: boolean;
   hasNext?: boolean;
+  videoRef?: React.RefObject<VideoPlayerRef>;
 }
 
-export const ContentCard = ({
+export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   id,
   title,
   creator,
@@ -41,7 +43,8 @@ export const ContentCard = ({
   onNext,
   hasPrevious,
   hasNext,
-}: ContentCardProps) => {
+  videoRef,
+}, ref) => {
   const { likeMutation, saveMutation } = useContent();
 
   const handleLike = () => {
@@ -53,11 +56,12 @@ export const ContentCard = ({
   };
 
   return (
-    <div className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-background">
+    <div ref={ref} className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-background">
       {/* Video/Content container */}
-      <div className="relative w-full h-full max-w-4xl overflow-hidden">
+      <div className="relative w-full h-full max-w-4xl overflow-hidden flex items-center justify-center">
         {videoUrl ? (
           <VideoPlayer 
+            ref={videoRef}
             videoUrl={videoUrl}
             thumbnail={thumbnail}
             onPrevious={onPrevious}
@@ -161,4 +165,4 @@ export const ContentCard = ({
       </div>
     </div>
   );
-};
+});
