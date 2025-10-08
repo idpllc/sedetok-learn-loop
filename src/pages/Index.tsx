@@ -123,7 +123,7 @@ const Index = () => {
     <div className="relative">
       {/* Feed container with snap scroll */}
       <div className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
-        {contentData.map((item: any) => (
+        {contentData.map((item: any, index: number) => (
           <ContentCard
             key={item.id}
             id={item.id}
@@ -139,6 +139,20 @@ const Index = () => {
             grade={item.grade_level || item.grade}
             isLiked={likes.has(item.id)}
             isSaved={saves.has(item.id)}
+            onPrevious={() => {
+              const container = document.querySelector('.snap-y');
+              if (container && index > 0) {
+                container.children[index - 1]?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            onNext={() => {
+              const container = document.querySelector('.snap-y');
+              if (container && index < contentData.length - 1) {
+                container.children[index + 1]?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            hasPrevious={index > 0}
+            hasNext={index < contentData.length - 1}
           />
         ))}
       </div>

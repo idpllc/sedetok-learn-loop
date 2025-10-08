@@ -1,6 +1,7 @@
 import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useContent } from "@/hooks/useContent";
+import { VideoPlayer } from "./VideoPlayer";
 
 interface ContentCardProps {
   id: string;
@@ -16,6 +17,10 @@ interface ContentCardProps {
   grade: string;
   isLiked: boolean;
   isSaved: boolean;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
 }
 
 export const ContentCard = ({
@@ -26,11 +31,16 @@ export const ContentCard = ({
   tags,
   category,
   thumbnail,
+  videoUrl,
   likes: initialLikes,
   comments: initialComments,
   grade,
   isLiked,
   isSaved,
+  onPrevious,
+  onNext,
+  hasPrevious,
+  hasNext,
 }: ContentCardProps) => {
   const { likeMutation, saveMutation } = useContent();
 
@@ -43,10 +53,19 @@ export const ContentCard = ({
   };
 
   return (
-    <div className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-muted/50">
-      {/* Thumbnail/Video container */}
-      <div className="relative w-full max-w-md h-[85vh] bg-card rounded-3xl overflow-hidden shadow-[var(--shadow-card)]">
-        {thumbnail ? (
+    <div className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-background">
+      {/* Video/Content container */}
+      <div className="relative w-full h-full max-w-4xl overflow-hidden">
+        {videoUrl ? (
+          <VideoPlayer 
+            videoUrl={videoUrl}
+            thumbnail={thumbnail}
+            onPrevious={onPrevious}
+            onNext={onNext}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
+          />
+        ) : thumbnail ? (
           <img 
             src={thumbnail} 
             alt={title}
@@ -98,7 +117,7 @@ export const ContentCard = ({
         </div>
 
         {/* Action buttons - floating on the right */}
-        <div className="absolute right-4 bottom-32 flex flex-col gap-4 z-20">
+        <div className="absolute right-4 bottom-40 flex flex-col gap-4 z-30">
           <button
             onClick={handleLike}
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
