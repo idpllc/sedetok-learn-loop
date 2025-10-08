@@ -1,7 +1,9 @@
-import { Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
+import { Heart, Share2, Bookmark } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useContent } from "@/hooks/useContent";
 import { VideoPlayer, VideoPlayerRef } from "./VideoPlayer";
+import { useViews } from "@/hooks/useViews";
+import { CommentsSheet } from "./CommentsSheet";
 import { forwardRef } from "react";
 
 interface ContentCardProps {
@@ -46,6 +48,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   videoRef,
 }, ref) => {
   const { likeMutation, saveMutation } = useContent();
+  useViews(id);
 
   const handleLike = () => {
     likeMutation.mutate({ contentId: id, isLiked });
@@ -136,12 +139,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             <span className="text-xs font-semibold text-white">{initialLikes}</span>
           </button>
 
-          <button className="flex flex-col items-center gap-1 transition-all hover:scale-110">
-            <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
-              <MessageCircle className="w-6 h-6 text-black" />
-            </div>
-            <span className="text-xs font-semibold text-white">{initialComments}</span>
-          </button>
+          <CommentsSheet contentId={id} commentsCount={initialComments} />
 
           <button 
             onClick={handleSave}

@@ -111,6 +111,7 @@ const Profile = () => {
           <span>❤️ {item.likes_count || 0}</span>
           <span>💬 {item.comments_count || 0}</span>
           <span>👁️ {item.views_count || 0}</span>
+          <span>🔖 {item.saves_count || 0}</span>
         </div>
       </CardContent>
     </Card>
@@ -154,7 +155,7 @@ const Profile = () => {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-2xl font-bold text-center">
@@ -177,6 +178,14 @@ const Profile = () => {
                 {userContent?.reduce((sum, c) => sum + (c.views_count || 0), 0) || 0}
               </CardTitle>
               <CardDescription className="text-center">Total vistas</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-2xl font-bold text-center">
+                {userContent?.reduce((sum, c) => sum + (c.saves_count || 0), 0) || 0}
+              </CardTitle>
+              <CardDescription className="text-center">Total guardados</CardDescription>
             </CardHeader>
           </Card>
         </div>

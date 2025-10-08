@@ -562,12 +562,40 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrement_comments_count: {
+        Args: { content_id: string }
+        Returns: undefined
+      }
+      decrement_likes_count: {
+        Args: { content_id: string }
+        Returns: undefined
+      }
+      decrement_saves_count: {
+        Args: { content_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_comments_count: {
+        Args: { content_id: string }
+        Returns: undefined
+      }
+      increment_likes_count: {
+        Args: { content_id: string }
+        Returns: undefined
+      }
+      increment_saves_count: {
+        Args: { content_id: string }
+        Returns: undefined
+      }
+      increment_views_count: {
+        Args: { content_id: string }
+        Returns: undefined
       }
     }
     Enums: {
