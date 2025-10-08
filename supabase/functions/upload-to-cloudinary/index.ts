@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
-    const uploadPreset = Deno.env.get('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET') || Deno.env.get('CLOUDINARY_UPLOAD_PRESET') || 'ml_default';
+    const uploadPreset = Deno.env.get('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET') || 'sede_uploads';
     
     console.log('Cloud Name:', cloudName);
     console.log('Upload Preset:', uploadPreset);
