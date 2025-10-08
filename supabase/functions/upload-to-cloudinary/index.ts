@@ -14,6 +14,9 @@ serve(async (req) => {
     const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
     const uploadPreset = Deno.env.get('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET') || Deno.env.get('CLOUDINARY_UPLOAD_PRESET') || 'ml_default';
     
+    console.log('Cloud Name:', cloudName);
+    console.log('Upload Preset:', uploadPreset);
+    
     if (!cloudName) {
       throw new Error('CLOUDINARY_CLOUD_NAME no está configurado');
     }
@@ -21,6 +24,9 @@ serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get('file');
     const resourceType = formData.get('resourceType') || 'raw';
+
+    console.log('Resource Type:', resourceType);
+    console.log('File received:', !!file);
 
     if (!file) {
       throw new Error('No se proporcionó ningún archivo');
