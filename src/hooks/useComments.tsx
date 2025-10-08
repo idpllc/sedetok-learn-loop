@@ -42,10 +42,6 @@ export const useComments = (contentId: string) => {
         .single();
 
       if (error) throw error;
-
-      // Increment comment count
-      await supabase.rpc("increment_comments_count", { content_id: contentId });
-
       return data;
     },
     onSuccess: () => {
@@ -66,9 +62,6 @@ export const useComments = (contentId: string) => {
         .eq("id", commentId);
 
       if (error) throw error;
-
-      // Decrement comment count
-      await supabase.rpc("decrement_comments_count", { content_id: contentId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", contentId] });
