@@ -12,6 +12,7 @@ serve(async (req) => {
 
   try {
     const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
+    const uploadPreset = Deno.env.get('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET') || Deno.env.get('CLOUDINARY_UPLOAD_PRESET') || 'ml_default';
     
     if (!cloudName) {
       throw new Error('CLOUDINARY_CLOUD_NAME no está configurado');
@@ -28,7 +29,7 @@ serve(async (req) => {
     // Crear FormData para Cloudinary
     const cloudinaryFormData = new FormData();
     cloudinaryFormData.append('file', file);
-    cloudinaryFormData.append('upload_preset', 'ml_default');
+    cloudinaryFormData.append('upload_preset', uploadPreset);
 
     const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
     
