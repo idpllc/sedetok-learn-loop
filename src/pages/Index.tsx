@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
@@ -73,6 +73,8 @@ const mockContent = [
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const contentIdFromUrl = searchParams.get("content");
   const { user, loading: authLoading } = useAuth();
   const { content, isLoading } = useContent();
   const { likes } = useUserLikes();
@@ -125,6 +127,22 @@ const Index = () => {
       navigate("/auth");
     }
   }, [user, authLoading, navigate]);
+
+  // Scroll to specific content when contentId is in URL
+  useEffect(() => {
+    if (contentIdFromUrl && content && containerRef.current) {
+      const contentIndex = content.findIndex((item) => item.id === contentIdFromUrl);
+      if (contentIndex !== -1) {
+        setTimeout(() => {
+          const container = containerRef.current;
+          const targetCard = container?.children[contentIndex];
+          if (targetCard) {
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 300);
+      }
+    }
+  }, [contentIdFromUrl, content]);
 
   if (authLoading || !user) {
     return (
