@@ -1,14 +1,54 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn } from "lucide-react";
+import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Achievements = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [myXP, setMyXP] = useState<number | null>(null);
+  const [myRank, setMyRank] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      // Fetch top leaderboard
+      const { data: top, error: lbError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, institution, experience_points')
+        .order('experience_points', { ascending: false })
+        .limit(10);
+      if (!lbError && top) setLeaderboard(top);
+
+      // Fetch my XP and rank if logged in
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const { data: me } = await supabase
+          .from('profiles')
+          .select('experience_points, username')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        if (me) {
+          const xp = me.experience_points || 0;
+          setMyXP(xp);
+          const { count } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .gt('experience_points', xp);
+          setMyRank((count || 0) + 1);
+        }
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
 
   const xpActivities = [
     {
@@ -99,6 +139,60 @@ const Achievements = () => {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-8">
+        {/* Podio de Logros */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Crown className="w-6 h-6 text-primary" />
+              <CardTitle>Podio de Logros</CardTitle>
+            </div>
+            <CardDescription>Top 3 usuarios por XP</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {leaderboard.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aún no hay datos del podio.</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-4 items-end">
+                {leaderboard.slice(0,3).map((u, idx) => (
+                  <div key={u.id} className={`text-center p-3 rounded-lg border ${idx === 1 ? 'translate-y-2' : ''}`}>
+                    <div className={`text-3xl mb-2 ${idx === 0 ? 'order-2' : ''}`}>
+                      {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
+                    </div>
+                    <div className="text-sm font-semibold truncate">{u.username || 'Usuario'}</div>
+                    <div className="text-xs text-muted-foreground">{u.experience_points || 0} XP</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Mi posición */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Mi Posición</CardTitle>
+            <CardDescription>Tu lugar en la clasificación general</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Cargando...</p>
+            ) : user ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Posición actual</p>
+                  <p className="text-2xl font-bold">#{myRank ?? '—'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Tus puntos</p>
+                  <p className="text-2xl font-bold">{(myXP ?? 0).toLocaleString()} XP</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Inicia sesión para ver tu posición y puntos.</p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* XP Info Card */}
         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
           <CardHeader>
