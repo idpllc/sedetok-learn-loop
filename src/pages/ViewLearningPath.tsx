@@ -24,7 +24,7 @@ const ViewLearningPath = () => {
   const { markComplete, getCompletedIds, isCompleted } = usePathProgress(id);
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
-  const [viewMode, setViewMode] = useState<"map" | "cards">("map");
+  const [viewMode, setViewMode] = useState<"map" | "cards">("cards");
   const completedIds = getCompletedIds();
 
   // Fetch learning path info
@@ -42,6 +42,24 @@ const ViewLearningPath = () => {
     },
     enabled: !!id,
   });
+  
+  const { data: creators } = useQuery({
+    queryKey: ['path-creators', id, (pathContent || []).map((i: any) => i.quiz?.creator_id || i.content?.creator_id).join(',')],
+    queryFn: async () => {
+      const ids = Array.from(new Set((pathContent || []).map((i: any) => i.quiz?.creator_id || i.content?.creator_id).filter(Boolean)));
+      if (ids.length === 0) return [] as any[];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, institution, is_verified')
+        .in('id', ids);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!pathContent && pathContent.length > 0,
+  });
+  
+  const profileMap: Record<string, any> = Object.fromEntries((creators || []).map((p: any) => [p.id, p]));
+
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
     Object.entries(videoRefs.current).forEach(([id, ref]) => {
@@ -127,18 +145,19 @@ const ViewLearningPath = () => {
       
       if (isQuiz && item.quiz) {
         const quiz = item.quiz;
+        const profile = profileMap[quiz.creator_id];
         
         return {
           id: item.quiz_id!,
           title: quiz.title || "",
           description: quiz.description || "",
           creator_id: quiz.creator_id,
-          creator: "",
-          institution: "",
-          creatorAvatar: undefined,
+          creator: profile?.username || "",
+          institution: profile?.institution || "",
+          creatorAvatar: profile?.avatar_url,
           tags: [],
           category: quiz.category,
-          thumbnail_url: quiz.thumbnail_url,
+          thumbnail_url: undefined, // force special quiz block with CTA and icon
           video_url: undefined,
           documento_url: undefined,
           rich_text: undefined,
@@ -147,20 +166,21 @@ const ViewLearningPath = () => {
           comments_count: 0,
           shares_count: 0,
           grade_level: quiz.grade_level,
-          profiles: undefined,
-          questions_count: 10, // Default placeholder, will show in UI
+          profiles: profile,
+          questions_count: undefined,
           difficulty: quiz.difficulty,
         };
       } else if (item.content) {
         const content = item.content;
+        const profile = profileMap[content.creator_id];
         return {
           id: item.content_id!,
           title: content.title || "",
           description: content.description || "",
           creator_id: content.creator_id,
-          creator: "",
-          institution: "",
-          creatorAvatar: undefined,
+          creator: profile?.username || "",
+          institution: profile?.institution || "",
+          creatorAvatar: profile?.avatar_url,
           tags: content.tags || [],
           category: content.category,
           thumbnail_url: content.thumbnail_url,
@@ -172,7 +192,7 @@ const ViewLearningPath = () => {
           comments_count: content.comments_count || 0,
           shares_count: content.shares_count || 0,
           grade_level: content.grade_level,
-          profiles: undefined,
+          profiles: profile,
           questions_count: undefined,
           difficulty: undefined,
         };
