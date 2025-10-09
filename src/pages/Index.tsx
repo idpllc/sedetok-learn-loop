@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -85,6 +85,7 @@ const Index = () => {
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
+  const [isAnyVideoPlaying, setIsAnyVideoPlaying] = useState(false);
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
     Object.entries(videoRefs.current).forEach(([id, ref]) => {
@@ -187,19 +188,19 @@ const Index = () => {
               }}
               id={item.id}
               videoRef={videoRef}
-            title={item.title}
-            creator={item.profiles?.username || item.creator}
-            institution={item.profiles?.institution || item.institution}
-            tags={Array.isArray(item.tags) ? item.tags : []}
-            category={item.category}
-            thumbnail={item.thumbnail_url || item.thumbnail}
-            videoUrl={item.video_url}
-            documentUrl={item.documento_url}
-            likes={item.likes_count || item.likes}
-            comments={item.comments_count || item.comments}
-            grade={item.grade_level || item.grade}
-            isLiked={likes.has(item.id)}
-            isSaved={saves.has(item.id)}
+              title={item.title}
+              creator={item.profiles?.username || item.creator}
+              institution={item.profiles?.institution || item.institution}
+              tags={Array.isArray(item.tags) ? item.tags : []}
+              category={item.category}
+              thumbnail={item.thumbnail_url || item.thumbnail}
+              videoUrl={item.video_url}
+              documentUrl={item.documento_url}
+              likes={item.likes_count || item.likes}
+              comments={item.comments_count || item.comments}
+              grade={item.grade_level || item.grade}
+              isLiked={likes.has(item.id)}
+              isSaved={saves.has(item.id)}
               onPrevious={() => {
                 pauseAllVideos();
                 const container = document.querySelector('.snap-y');
@@ -216,6 +217,7 @@ const Index = () => {
               }}
               hasPrevious={index > 0}
               hasNext={index < contentData.length - 1}
+              onPlayStateChange={setIsAnyVideoPlaying}
             />
           );
         })}
@@ -224,8 +226,10 @@ const Index = () => {
       {/* Floating action button */}
       <FloatingActionButton />
 
-      {/* Bottom navigation */}
-      <BottomNav />
+      {/* Bottom navigation - hidden when video is playing on mobile */}
+      <div className={`transition-transform duration-300 ${isAnyVideoPlaying ? 'md:translate-y-0 translate-y-full' : 'translate-y-0'}`}>
+        <BottomNav />
+      </div>
 
       {/* Onboarding modal */}
       {user && (

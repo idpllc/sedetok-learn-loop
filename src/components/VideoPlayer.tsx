@@ -10,6 +10,7 @@ interface VideoPlayerProps {
   hasNext?: boolean;
   contentId?: string;
   onVideoComplete?: () => void;
+  onPlayStateChange?: (isPlaying: boolean) => void;
 }
 
 export interface VideoPlayerRef {
@@ -26,7 +27,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   hasPrevious = true,
   hasNext = true,
   contentId,
-  onVideoComplete
+  onVideoComplete,
+  onPlayStateChange
 }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -82,12 +84,14 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     const video = videoRef.current;
     if (!video) return;
 
-    if (isPlaying) {
-      video.pause();
-    } else {
+    const newPlayingState = !isPlaying;
+    if (newPlayingState) {
       video.play();
+    } else {
+      video.pause();
     }
-    setIsPlaying(!isPlaying);
+    setIsPlaying(newPlayingState);
+    onPlayStateChange?.(newPlayingState);
   };
 
   const toggleMute = () => {
@@ -136,41 +140,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         <div className="w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
           <Play className="w-10 h-10 text-black ml-1" />
         </div>
-      </div>
-
-      {/* Play/Pause button */}
-      <button
-        onClick={togglePlay}
-        className="absolute bottom-4 left-4 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
-      >
-        {isPlaying ? (
-          <Pause className="w-6 h-6 text-black" />
-        ) : (
-          <Play className="w-6 h-6 text-black ml-0.5" />
-        )}
-      </button>
-
-      {/* Volume controls */}
-      <div className="absolute bottom-20 left-4 z-20 flex flex-col-reverse items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-3 shadow-lg">
-        <button
-          onClick={toggleMute}
-          className="hover:scale-110 transition-transform"
-        >
-          {isMuted || volume === 0 ? (
-            <VolumeX className="w-5 h-5 text-black" />
-          ) : (
-            <Volume2 className="w-5 h-5 text-black" />
-          )}
-        </button>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={isMuted ? 0 : volume}
-          onChange={handleVolumeChange}
-          className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black -rotate-90 origin-center"
-        />
       </div>
 
       {/* Vertical navigation buttons */}

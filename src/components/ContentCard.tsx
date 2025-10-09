@@ -1,4 +1,4 @@
-import { Heart, Share2, Bookmark } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { useContent } from "@/hooks/useContent";
 import { VideoPlayer, VideoPlayerRef } from "./VideoPlayer";
@@ -32,6 +32,7 @@ interface ContentCardProps {
   hasPrevious?: boolean;
   hasNext?: boolean;
   videoRef?: (ref: VideoPlayerRef | null) => void;
+  onPlayStateChange?: (isPlaying: boolean) => void;
 }
 
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
@@ -54,6 +55,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   hasPrevious,
   hasNext,
   videoRef,
+  onPlayStateChange,
 }, ref) => {
   const { user } = useAuth();
   const { likeMutation, saveMutation } = useContent();
@@ -61,6 +63,12 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showPdfContent, setShowPdfContent] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const videoPlayerRef = useRef<VideoPlayerRef>(null);
   useViews(id);
   
   // Visibility detection to show action buttons only for the in-view card (desktop)
@@ -134,13 +142,57 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     setPdfModalOpen(true);
   };
 
+  const handlePlayStateChange = (playing: boolean) => {
+    setIsPlaying(playing);
+    onPlayStateChange?.(playing);
+  };
+
+  const togglePlayPause = () => {
+    if (videoPlayerRef.current) {
+      if (videoPlayerRef.current.isPlaying) {
+        videoPlayerRef.current.pause();
+      } else {
+        videoPlayerRef.current.play();
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    const video = document.querySelector(`[data-content-id="${id}"] video`) as HTMLVideoElement;
+    if (video) {
+      const newMutedState = !video.muted;
+      video.muted = newMutedState;
+      setIsMuted(newMutedState);
+      setShowVolumeSlider(!newMutedState);
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = document.querySelector(`[data-content-id="${id}"] video`) as HTMLVideoElement;
+    if (video) {
+      const newVolume = parseFloat(e.target.value);
+      video.volume = newVolume;
+      setVolume(newVolume);
+      if (newVolume === 0) {
+        setIsMuted(true);
+        video.muted = true;
+      } else if (isMuted) {
+        setIsMuted(false);
+        video.muted = false;
+      }
+    }
+  };
+
   return (
     <div ref={setRefs} className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-black">
       {/* Video/Content container */}
       <div className="relative w-full h-full max-w-4xl overflow-hidden flex items-center justify-center">
         {videoUrl ? (
           <VideoPlayer 
-            ref={videoRef}
+            ref={(ref) => {
+              videoPlayerRef.current = ref;
+              if (videoRef) videoRef(ref);
+            }}
             videoUrl={videoUrl}
             thumbnail={thumbnail}
             onPrevious={onPrevious}
@@ -149,10 +201,17 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             hasNext={hasNext}
             contentId={id}
             onVideoComplete={handleVideoComplete}
+            onPlayStateChange={handlePlayStateChange}
           />
         ) : documentUrl ? (
-          <div className="w-full h-full flex items-center justify-center p-4 cursor-pointer" onClick={handleExpandPdf}>
-            <div className="w-full max-w-2xl">
+          <div className="w-full h-full flex items-center justify-center p-4">
+            <div 
+              className={`w-full max-w-2xl transition-opacity duration-300 ${showPdfContent ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPdfContent(!showPdfContent);
+              }}
+            >
               <PDFViewer 
                 fileUrl={documentUrl}
                 onExpandClick={handleExpandPdf}
@@ -213,7 +272,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Action buttons - floating on the right */}
-        <div className={`absolute right-4 md:right-8 lg:right-12 bottom-32 md:bottom-40 md:top-auto md:translate-y-0 flex flex-col gap-6 md:gap-8 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
+        <div className={`absolute right-4 md:right-8 lg:right-12 bottom-32 md:bottom-40 md:top-auto md:translate-y-1/2 flex flex-col gap-4 md:gap-6 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
           <button
             onClick={handleLike}
             className="flex flex-col items-center gap-2 transition-all hover:scale-110"
@@ -244,6 +303,49 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           </button>
 
           <ShareSheet contentId={id} contentTitle={title} />
+
+          {/* Video controls - below share button */}
+          {videoUrl && (
+            <>
+              <button
+                onClick={togglePlayPause}
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
+              >
+                {isPlaying ? (
+                  <Pause className="w-6 h-6 md:w-7 md:h-7 text-black" />
+                ) : (
+                  <Play className="w-6 h-6 md:w-7 md:h-7 text-black ml-0.5" />
+                )}
+              </button>
+
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={toggleMute}
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="w-6 h-6 md:w-7 md:h-7 text-black" />
+                  ) : (
+                    <Volume2 className="w-6 h-6 md:w-7 md:h-7 text-black" />
+                  )}
+                </button>
+
+                {showVolumeSlider && (
+                  <div className="flex flex-col items-center bg-white/90 backdrop-blur-sm rounded-full px-2 py-3 shadow-lg">
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
+                      className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black -rotate-90 origin-center"
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
