@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
@@ -89,7 +89,6 @@ const Index = () => {
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
-  const [isAnyVideoPlaying, setIsAnyVideoPlaying] = useState(false);
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
     Object.entries(videoRefs.current).forEach(([id, ref]) => {
@@ -97,9 +96,6 @@ const Index = () => {
         ref.pause();
       }
     });
-    if (!exceptId) {
-      setIsAnyVideoPlaying(false);
-    }
   }, []);
 
   useEffect(() => {
@@ -231,16 +227,13 @@ const Index = () => {
               }}
               hasPrevious={index > 0}
               hasNext={index < contentData.length - 1}
-              onPlayStateChange={setIsAnyVideoPlaying}
             />
           );
         })}
       </div>
 
-      {/* Bottom navigation - hidden when playing on mobile */}
-      <div className={`md:block ${isAnyVideoPlaying ? 'hidden' : 'block'}`}>
-        <BottomNav />
-      </div>
+      {/* Bottom navigation - now as floating button */}
+      <BottomNav />
 
       {/* Onboarding modal */}
       {user && (

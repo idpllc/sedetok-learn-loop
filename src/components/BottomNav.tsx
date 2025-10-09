@@ -1,14 +1,16 @@
-import { Home, Search, Award, User, Plus } from "lucide-react";
+import { Home, Search, Award, User, Plus, Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "./ui/button";
 
 export const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleCreateClick = () => {
     if (!user) {
@@ -27,8 +29,22 @@ export const BottomNav = () => {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
-        <div className="flex items-center justify-around h-16 max-w-2xl mx-auto px-4">
+      {/* Floating Menu Button - Bottom Left */}
+      <Button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="fixed bottom-6 left-6 z-50 h-14 w-14 rounded-full shadow-xl bg-card border-2 border-border hover:bg-accent transition-all hover:scale-110"
+        size="icon"
+      >
+        <Menu className="w-6 h-6" />
+      </Button>
+
+      {/* Full Menu - Slides up from bottom */}
+      <nav 
+        className={`fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border transition-transform duration-300 ${
+          menuOpen ? 'translate-y-0' : 'translate-y-full'
+        }`}
+      >
+        <div className="flex items-center justify-around h-20 max-w-2xl mx-auto px-4">
           {tabs.slice(0, 2).map((tab) => {
             const Icon = tab.icon;
             const isActive = location.pathname === tab.path;
@@ -36,7 +52,10 @@ export const BottomNav = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => navigate(tab.path)}
+                onClick={() => {
+                  navigate(tab.path);
+                  setMenuOpen(false);
+                }}
                 className={`flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all ${
                   isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -49,7 +68,10 @@ export const BottomNav = () => {
 
           {/* Create button */}
           <button
-            onClick={handleCreateClick}
+            onClick={() => {
+              handleCreateClick();
+              setMenuOpen(false);
+            }}
             className="flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all text-primary hover:text-primary/80"
           >
             <Plus className="w-6 h-6" />
@@ -63,7 +85,10 @@ export const BottomNav = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => navigate(tab.path)}
+                onClick={() => {
+                  navigate(tab.path);
+                  setMenuOpen(false);
+                }}
                 className={`flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all ${
                   isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -75,6 +100,14 @@ export const BottomNav = () => {
           })}
         </div>
       </nav>
+
+      {/* Backdrop */}
+      {menuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 transition-opacity"
+          onClick={() => setMenuOpen(false)}
+        />
+      )}
 
       <AuthModal 
         open={authModalOpen} 
