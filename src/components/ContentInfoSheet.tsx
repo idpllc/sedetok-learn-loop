@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
-import { Send, Trash2, X } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useComments } from "@/hooks/useComments";
 import { useAuth } from "@/hooks/useAuth";
 import { useXP } from "@/hooks/useXP";
@@ -56,61 +55,49 @@ export function ContentInfoSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0">
-        <div className="flex items-center justify-between border-b px-4 py-3">
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0 flex flex-col">
+        <SheetHeader className="border-b px-4 py-3">
           <SheetTitle className="text-base">Información</SheetTitle>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        </SheetHeader>
 
-        <Tabs defaultValue="info" className="h-[calc(100%-60px)]">
-          <TabsList className="grid w-full grid-cols-2 sticky top-0 z-10">
-            <TabsTrigger value="info">Descripción</TabsTrigger>
-            <TabsTrigger value="comments">Comentarios ({commentsCount})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="info" className="h-[calc(100%-40px)] m-0">
-            <ScrollArea className="h-full px-4 py-4">
-              <div className="space-y-4">
-                {/* Creator info */}
-                <div className="flex items-center gap-3 pb-4 border-b">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={creatorAvatar} />
-                    <AvatarFallback>{creator.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="font-semibold">{creator}</div>
-                    {institution && (
-                      <div className="text-sm text-muted-foreground">{institution}</div>
-                    )}
-                  </div>
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Scrollable content area */}
+          <ScrollArea className="flex-1 px-4">
+            <div className="space-y-6 py-4">
+              {/* Creator info */}
+              <div className="flex items-center gap-3 pb-4 border-b">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={creatorAvatar} />
+                  <AvatarFallback>{creator.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="font-semibold">{creator}</div>
+                  {institution && (
+                    <div className="text-sm text-muted-foreground">{institution}</div>
+                  )}
                 </div>
-                
-                {/* Title and description */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">{title}</h3>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{description}</p>
-                </div>
-                
-                {/* Tags */}
-                {tags && tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
               </div>
-            </ScrollArea>
-          </TabsContent>
+              
+              {/* Title and description */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">{title}</h3>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{description}</p>
+              </div>
+              
+              {/* Tags */}
+              {tags && tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
 
-          <TabsContent value="comments" className="h-[calc(100%-40px)] m-0">
-            <div className="flex flex-col h-full">
-              {/* Comments list */}
-              <ScrollArea className="flex-1 px-4">
+              {/* Comments section */}
+              <div className="pt-4 border-t">
+                <h4 className="text-base font-semibold mb-4">Comentarios ({commentsCount})</h4>
                 {isLoading ? (
                   <div className="text-center py-8 text-muted-foreground">Cargando comentarios...</div>
                 ) : comments.length === 0 ? (
@@ -118,7 +105,7 @@ export function ContentInfoSheet({
                     No hay comentarios aún. ¡Sé el primero en comentar!
                   </div>
                 ) : (
-                  <div className="space-y-4 py-4">
+                  <div className="space-y-4">
                     {comments.map((comment: any) => (
                       <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-muted/50">
                         <div className="flex-shrink-0">
@@ -166,37 +153,37 @@ export function ContentInfoSheet({
                     ))}
                   </div>
                 )}
-              </ScrollArea>
-
-              {/* Add comment */}
-              <div className="p-4 border-t">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Escribe un comentario..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="resize-none"
-                    rows={2}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAddComment();
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleAddComment}
-                    disabled={!newComment.trim()}
-                    size="icon"
-                    className="flex-shrink-0"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
+          </ScrollArea>
+
+          {/* Add comment - fixed at bottom */}
+          <div className="p-4 border-t bg-background">
+            <div className="flex gap-2">
+              <Textarea
+                placeholder="Escribe un comentario..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="resize-none"
+                rows={2}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+              />
+              <Button
+                onClick={handleAddComment}
+                disabled={!newComment.trim()}
+                size="icon"
+                className="flex-shrink-0"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );
