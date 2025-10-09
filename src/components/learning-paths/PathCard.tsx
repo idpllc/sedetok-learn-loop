@@ -62,7 +62,7 @@ export const PathCard = ({ path }: PathCardProps) => {
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
         <div
           className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative"
-          onClick={() => navigate(`/learning-paths/${path.id}`)}
+          onClick={() => navigate(`/learning-paths/view/${path.id}`)}
         >
           {path.cover_url || path.thumbnail_url ? (
             <img
@@ -85,7 +85,7 @@ export const PathCard = ({ path }: PathCardProps) => {
           </div>
         </div>
 
-        <CardContent className="p-4" onClick={() => navigate(`/learning-paths/${path.id}`)}>
+        <CardContent className="p-4" onClick={() => navigate(`/learning-paths/view/${path.id}`)}>
           <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {path.title}
           </h3>
