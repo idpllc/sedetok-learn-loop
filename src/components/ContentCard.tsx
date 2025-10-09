@@ -1,6 +1,7 @@
 import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { useContent } from "@/hooks/useContent";
 import { VideoPlayer, VideoPlayerRef } from "./VideoPlayer";
 import { useViews } from "@/hooks/useViews";
@@ -10,6 +11,7 @@ import { AuthModal } from "./AuthModal";
 import { PDFViewer } from "./PDFViewer";
 import { PDFModal } from "./PDFModal";
 import { ReadingModal } from "./ReadingModal";
+import { QuizViewer } from "./QuizViewer";
 import { BookOpen } from "lucide-react";
 import { ContentInfoSheet } from "./ContentInfoSheet";
 import { forwardRef, useState, useEffect, useRef } from "react";
@@ -82,6 +84,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
+  const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPdfContent, setShowPdfContent] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -278,6 +281,18 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
                   ⚡ Desafío
                 </Badge>
+              </div>
+              <div className="mt-8">
+                <Button
+                  size="lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQuizModalOpen(true);
+                  }}
+                  className="bg-white hover:bg-white/90 text-purple-600 font-bold text-lg px-8 py-6 shadow-2xl hover:scale-105 transition-transform pointer-events-auto"
+                >
+                  🎯 Responder Quiz
+                </Button>
               </div>
             </div>
           </div>
@@ -495,6 +510,21 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         creatorAvatar={creatorAvatar}
         commentsCount={initialComments}
       />
+
+      {/* Quiz Viewer Dialog */}
+      {contentType === 'quiz' && (
+        <Dialog open={quizModalOpen} onOpenChange={setQuizModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+            </DialogHeader>
+            <QuizViewer 
+              quizId={id} 
+              onComplete={() => setQuizModalOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 });

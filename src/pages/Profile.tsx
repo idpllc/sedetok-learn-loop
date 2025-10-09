@@ -113,18 +113,6 @@ const Profile = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => toggleVisibility(item.id, item.is_public)}
-                title={item.is_public ? "Ocultar" : "Publicar"}
-              >
-                {item.is_public ? (
-                  <Eye className="h-4 w-4" />
-                ) : (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
                 onClick={() => navigate(`/edit/${item.id}`)}
                 title="Editar"
               >

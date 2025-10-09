@@ -71,12 +71,21 @@ export const useUserContent = (userId?: string) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (contentId: string) => {
-      const { error } = await supabase
+      // Try to delete from content table first
+      const { error: contentError } = await supabase
         .from("content")
         .delete()
         .eq("id", contentId);
 
-      if (error) throw error;
+      // If not found in content, try quizzes table
+      if (contentError) {
+        const { error: quizError } = await supabase
+          .from("quizzes")
+          .delete()
+          .eq("id", contentId);
+        
+        if (quizError) throw quizError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userContent"] });
