@@ -105,6 +105,27 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
       });
       return;
     }
+
+    // Verificar si el item es un quiz o content regular
+    const item = [...(myContent || []), ...(publicContent || [])].find(i => i.id === contentId);
+    if (!item) {
+      toast({
+        title: "Error",
+        description: "No se encontró la cápsula",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Solo permitir agregar contenido regular (no quizzes) por ahora
+    if (item.content_type === 'quiz') {
+      toast({
+        title: "No disponible",
+        description: "Los quizzes no pueden agregarse a rutas de aprendizaje por el momento",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       const maxOrder = contents?.reduce((max, item) => 
@@ -199,17 +220,23 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
             null;
 
           const isAdded = contents?.some((c: any) => c.content_id === item.id);
+          const isQuiz = item.content_type === 'quiz';
+          const canAdd = !isQuiz && !isAdded;
 
           return (
             <Card
               key={item.id}
-              className="p-3 hover:shadow-md transition-shadow"
-              draggable
+              className={`p-3 hover:shadow-md transition-shadow ${isQuiz ? 'opacity-60' : ''}`}
+              draggable={!isQuiz}
               onDragStart={(e) => {
+                if (isQuiz) {
+                  e.preventDefault();
+                  return;
+                }
                 e.dataTransfer.setData('text/path-content-id', item.id);
                 e.dataTransfer.effectAllowed = 'copy';
               }}
-              title="Arrastra para agregar al constructor"
+              title={isQuiz ? "Los quizzes no pueden agregarse a rutas" : "Arrastra para agregar al constructor"}
             >
               <div className="flex items-start gap-3">
                 {thumbnail && (
@@ -242,12 +269,13 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                 </div>
                 <Button
                   size="sm"
-                  variant={isAdded ? "secondary" : "default"}
+                  variant={isAdded ? "secondary" : isQuiz ? "outline" : "default"}
                   onClick={() => handleAddContent(item.id)}
-                  disabled={addContent.isPending || isAdded}
+                  disabled={addContent.isPending || isAdded || isQuiz}
                   className="flex-shrink-0"
+                  title={isQuiz ? "Los quizzes no están disponibles para rutas" : ""}
                 >
-                  {isAdded ? "Agregado" : "Agregar"}
+                  {isAdded ? "Agregado" : isQuiz ? "No disponible" : "Agregar"}
                 </Button>
               </div>
             </Card>
