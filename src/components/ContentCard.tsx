@@ -206,27 +206,32 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   };
 
   const toggleMute = () => {
-    const video = document.querySelector(`[data-content-id="${id}"] video`) as HTMLVideoElement;
+    const video = document.querySelector(`video[data-content-id="${id}"]`) as HTMLVideoElement;
     if (video) {
       const newMutedState = !video.muted;
       video.muted = newMutedState;
       setIsMuted(newMutedState);
       setShowVolumeSlider(!newMutedState);
+      localStorage.setItem('videoMuted', JSON.stringify(newMutedState));
     }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = document.querySelector(`[data-content-id="${id}"] video`) as HTMLVideoElement;
+    const video = document.querySelector(`video[data-content-id="${id}"]`) as HTMLVideoElement;
     if (video) {
       const newVolume = parseFloat(e.target.value);
       video.volume = newVolume;
       setVolume(newVolume);
+      localStorage.setItem('videoVolume', newVolume.toString());
+      
       if (newVolume === 0) {
         setIsMuted(true);
         video.muted = true;
+        localStorage.setItem('videoMuted', JSON.stringify(true));
       } else if (isMuted) {
         setIsMuted(false);
         video.muted = false;
+        localStorage.setItem('videoMuted', JSON.stringify(false));
       }
     }
   };

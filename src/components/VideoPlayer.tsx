@@ -168,11 +168,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black">
+    <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
       <video
         ref={videoRef}
         src={videoUrl}
         poster={thumbnail}
+        data-content-id={contentId}
         className={`${
           isVertical 
             ? 'w-auto h-full max-w-full object-contain' 
