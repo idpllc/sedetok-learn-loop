@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface QuizViewerProps {
@@ -30,6 +31,7 @@ interface Question {
 
 export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -98,8 +100,9 @@ export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
 
     if (user) {
       try {
+        // Calculate max score
         const maxScore = questions.reduce((sum, q) => sum + q.points, 0);
-        const passed = (score / maxScore) * 100 >= 60; // 60% to pass
+        const passed = score >= maxScore * 0.6; // 60% to pass
 
         await supabase.from("user_quiz_results").insert({
           user_id: user.id,
@@ -112,6 +115,9 @@ export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
         if (passed) {
           toast.success("¡Felicitaciones! Has aprobado el quiz");
         }
+
+        // Invalidar la query para actualizar el último intento
+        queryClient.invalidateQueries({ queryKey: ["quiz-attempts", quizId, user.id] });
       } catch (error) {
         console.error("Error saving quiz result:", error);
       }

@@ -12,6 +12,7 @@ import { PDFViewer } from "./PDFViewer";
 import { PDFModal } from "./PDFModal";
 import { ReadingModal } from "./ReadingModal";
 import { QuizViewer } from "./QuizViewer";
+import { useQuizAttempts } from "@/hooks/useQuizAttempts";
 import { BookOpen } from "lucide-react";
 import { ContentInfoSheet } from "./ContentInfoSheet";
 import { forwardRef, useState, useEffect, useRef } from "react";
@@ -79,6 +80,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const { likeMutation, saveMutation } = useContent();
   const { awardXP } = useXP();
   const { isFollowing, toggleFollow, isProcessing } = useFollow(creatorId);
+  const { lastAttempt, hasAttempted } = useQuizAttempts(contentType === 'quiz' ? id : undefined);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
@@ -274,6 +276,19 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               <div className="text-8xl mb-6 animate-bounce">🧠</div>
               <h3 className="text-3xl font-bold text-white mb-3">{title}</h3>
               <p className="text-white/90 text-lg">Quiz Interactivo</p>
+              
+              {hasAttempted && lastAttempt && (
+                <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
+                  <p className="text-white/90 text-sm font-semibold mb-2">Tu último resultado:</p>
+                  <div className="flex items-center justify-center gap-4 text-white">
+                    <span className="text-2xl font-bold">{lastAttempt.score} / {lastAttempt.max_score}</span>
+                    <span className="text-lg">
+                      {lastAttempt.passed ? '✅ Aprobado' : '❌ No aprobado'}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
               <div className="mt-6 flex items-center justify-center gap-4">
                 <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
                   📝 Preguntas
@@ -291,7 +306,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   }}
                   className="bg-white hover:bg-white/90 text-purple-600 font-bold text-lg px-8 py-6 shadow-2xl hover:scale-105 transition-transform pointer-events-auto"
                 >
-                  🎯 Responder Quiz
+                  {hasAttempted ? '🔄 Volver a responder' : '🎯 Responder Quiz'}
                 </Button>
               </div>
             </div>
