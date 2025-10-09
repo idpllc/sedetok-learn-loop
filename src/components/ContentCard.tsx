@@ -243,20 +243,18 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             onPlayStateChange={handlePlayStateChange}
           />
         ) : documentUrl ? (
-          <div className="w-full h-full flex items-center justify-center p-4 relative">
-            <div 
-              className={`relative z-10 w-full max-w-2xl transition-opacity duration-300 ${showPdfContent ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowPdfContent(!showPdfContent);
-              }}
-            >
-              <PDFViewer 
-                fileUrl={documentUrl}
-                onExpandClick={handleExpandPdf}
-                showDownloadButton={false}
+          <div className="w-full h-full flex items-center justify-center relative">
+            {/* Thumbnail background */}
+            {thumbnail && (
+              <img 
+                src={thumbnail} 
+                alt={title}
+                className="absolute inset-0 w-full h-full object-cover"
               />
-            </div>
+            )}
+            
+            {/* Dark overlay */}
+            <div className="absolute inset-0 bg-black/40 z-0" />
             
             {/* Central download button */}
             <div className="absolute inset-0 flex items-center justify-center z-[999]">
