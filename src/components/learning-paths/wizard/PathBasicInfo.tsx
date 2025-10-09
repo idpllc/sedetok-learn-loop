@@ -25,8 +25,10 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   ];
 
   const grades = [
-    "Preescolar", "Primero", "Segundo", "Tercero", "Cuarto", "Quinto",
-    "Sexto", "Séptimo", "Octavo", "Noveno", "Décimo", "Once"
+    { value: "primaria", label: "Primaria" },
+    { value: "secundaria", label: "Secundaria" },
+    { value: "preparatoria", label: "Preparatoria" },
+    { value: "universidad", label: "Universidad" },
   ];
 
   const handleTogglePrerequisites = (checked: boolean) => {
@@ -122,9 +124,10 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
                 <SelectValue placeholder="Seleccionar" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
                 {grades.map((grade) => (
-                  <SelectItem key={grade} value={grade}>
-                    {grade}
+                  <SelectItem key={grade.value} value={grade.value}>
+                    {grade.label}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -121,16 +121,10 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
               : "border-muted-foreground/25 hover:border-muted-foreground/50"
           }`}
         >
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileInput}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            disabled={isUploading}
-          />
-          
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-4">
-            {isUploading ? (
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-4 pointer-events-none"
+          >
+            {isUploading || uploading ? (
               <>
                 <Loader2 className="w-10 h-10 text-primary animate-spin" />
                 <p className="text-sm text-muted-foreground">
@@ -153,6 +147,19 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
               </>
             )}
           </div>
+          
+          <label 
+            htmlFor="image-upload" 
+            className="absolute inset-0 cursor-pointer"
+          />
+          <input
+            id="image-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleFileInput}
+            className="hidden"
+            disabled={isUploading || uploading}
+          />
         </div>
       )}
     </div>

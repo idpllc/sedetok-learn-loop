@@ -24,18 +24,10 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
   ];
 
   const grades = [
-    "Preescolar",
-    "Primero",
-    "Segundo",
-    "Tercero",
-    "Cuarto",
-    "Quinto",
-    "Sexto",
-    "Séptimo",
-    "Octavo",
-    "Noveno",
-    "Décimo",
-    "Once",
+    { value: "primaria", label: "Primaria" },
+    { value: "secundaria", label: "Secundaria" },
+    { value: "preparatoria", label: "Preparatoria" },
+    { value: "universidad", label: "Universidad" },
   ];
 
   return (
@@ -74,8 +66,8 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
               <SelectContent>
                 <SelectItem value="">Todos</SelectItem>
                 {grades.map((grade) => (
-                  <SelectItem key={grade} value={grade}>
-                    {grade}
+                  <SelectItem key={grade.value} value={grade.value}>
+                    {grade.label}
                   </SelectItem>
                 ))}
               </SelectContent>
