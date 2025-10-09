@@ -243,7 +243,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
     return (
       <div className="h-full flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center space-y-6">
+          <CardContent className="p-6 md:p-8 text-center space-y-6">
             <div className="text-6xl">{score >= maxScore * 0.6 ? "🎉" : "📚"}</div>
             <div>
               <h3 className="text-2xl font-bold mb-2">Quiz Completado</h3>
@@ -292,7 +292,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
 
               {/* Question */}
               <Card>
-                <CardContent className="p-6 space-y-6">
+                <CardContent className="p-3 md:p-6 space-y-6">
                   <h3 className="text-xl font-bold">{currentQ.question_text}</h3>
 
                   {currentQ.image_url && (
