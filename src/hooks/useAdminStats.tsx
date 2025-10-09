@@ -25,6 +25,17 @@ export const useAdminStats = () => {
         .from("learning_paths")
         .select("*", { count: "exact", head: true });
 
+      // Get completed paths count
+      const { count: completedPathsCount } = await supabase
+        .from("user_path_progress")
+        .select("*", { count: "exact", head: true })
+        .eq("completed", true);
+
+      // Get completed quizzes count
+      const { count: completedQuizzesCount } = await supabase
+        .from("user_quiz_results")
+        .select("*", { count: "exact", head: true });
+
       // Calculate stats from content
       let videosCount = 0;
       let documentsCount = 0;
@@ -50,6 +61,8 @@ export const useAdminStats = () => {
         pathsCount: pathsCount || 0,
         totalViews,
         estimatedViewingHours,
+        completedPathsCount: completedPathsCount || 0,
+        completedQuizzesCount: completedQuizzesCount || 0,
       };
     },
   });

@@ -200,6 +200,34 @@ export default function AdminDashboard() {
               </Card>
             </div>
 
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Rutas Completadas</CardTitle>
+                  <Route className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.completedPathsCount}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Rutas terminadas por usuarios</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Quizzes Completados</CardTitle>
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.completedQuizzesCount}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Intentos de quizzes realizados</p>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle>Actividad Reciente</CardTitle>
