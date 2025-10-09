@@ -220,23 +220,38 @@ export type Database = {
         Row: {
           content_id: string
           created_at: string | null
+          estimated_time_minutes: number | null
           id: string
+          is_required: boolean | null
           order_index: number
           path_id: string
+          prerequisites: Json | null
+          section_name: string | null
+          xp_reward: number | null
         }
         Insert: {
           content_id: string
           created_at?: string | null
+          estimated_time_minutes?: number | null
           id?: string
+          is_required?: boolean | null
           order_index: number
           path_id: string
+          prerequisites?: Json | null
+          section_name?: string | null
+          xp_reward?: number | null
         }
         Update: {
           content_id?: string
           created_at?: string | null
+          estimated_time_minutes?: number | null
           id?: string
+          is_required?: boolean | null
           order_index?: number
           path_id?: string
+          prerequisites?: Json | null
+          section_name?: string | null
+          xp_reward?: number | null
         }
         Relationships: [
           {
@@ -257,39 +272,78 @@ export type Database = {
       }
       learning_paths: {
         Row: {
+          allow_collaboration: boolean | null
           category: Database["public"]["Enums"]["category_type"]
+          cover_url: string | null
           created_at: string | null
           creator_id: string
           description: string | null
+          enforce_order: boolean | null
+          estimated_duration: number | null
           grade_level: Database["public"]["Enums"]["grade_level"]
           id: string
           is_public: boolean | null
+          language: string | null
+          level: string | null
+          objectives: string | null
+          require_quiz_pass: boolean | null
+          required_routes: string[] | null
+          status: string | null
+          subject: string | null
           thumbnail_url: string | null
           title: string
+          topic: string | null
+          total_xp: number | null
           updated_at: string | null
         }
         Insert: {
+          allow_collaboration?: boolean | null
           category: Database["public"]["Enums"]["category_type"]
+          cover_url?: string | null
           created_at?: string | null
           creator_id: string
           description?: string | null
+          enforce_order?: boolean | null
+          estimated_duration?: number | null
           grade_level: Database["public"]["Enums"]["grade_level"]
           id?: string
           is_public?: boolean | null
+          language?: string | null
+          level?: string | null
+          objectives?: string | null
+          require_quiz_pass?: boolean | null
+          required_routes?: string[] | null
+          status?: string | null
+          subject?: string | null
           thumbnail_url?: string | null
           title: string
+          topic?: string | null
+          total_xp?: number | null
           updated_at?: string | null
         }
         Update: {
+          allow_collaboration?: boolean | null
           category?: Database["public"]["Enums"]["category_type"]
+          cover_url?: string | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
+          enforce_order?: boolean | null
+          estimated_duration?: number | null
           grade_level?: Database["public"]["Enums"]["grade_level"]
           id?: string
           is_public?: boolean | null
+          language?: string | null
+          level?: string | null
+          objectives?: string | null
+          require_quiz_pass?: boolean | null
+          required_routes?: string[] | null
+          status?: string | null
+          subject?: string | null
           thumbnail_url?: string | null
           title?: string
+          topic?: string | null
+          total_xp?: number | null
           updated_at?: string | null
         }
         Relationships: [

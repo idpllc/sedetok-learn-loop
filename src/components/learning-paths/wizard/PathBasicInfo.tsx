@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { RouteSearchModal } from "@/components/learning-paths/RouteSearchModal";
+import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 
 interface PathBasicInfoProps {
   data: any;
@@ -149,14 +150,10 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
         </div>
 
         <div>
-          <Label htmlFor="cover">Imagen de portada</Label>
-          <Input
-            id="cover"
-            type="url"
-            placeholder="URL de la imagen"
+          <ImageUpload
             value={data.cover_url}
-            onChange={(e) => onChange({ ...data, cover_url: e.target.value })}
-            className="mt-1.5"
+            onChange={(url) => onChange({ ...data, cover_url: url })}
+            label="Imagen de portada"
           />
         </div>
       </div>
