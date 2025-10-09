@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
+import { useAdminStats } from "@/hooks/useAdminStats";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +15,9 @@ import {
   BarChart3,
   Settings,
   Home,
-  Shield
+  Shield,
+  Eye,
+  Clock
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
@@ -22,6 +25,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { isSuperAdmin, loading } = useSuperAdmin();
+  const { data: stats, isLoading: statsLoading } = useAdminStats();
   const [activeTab, setActiveTab] = useState("overview");
 
   if (loading) {
@@ -91,11 +95,67 @@ export default function AdminDashboard() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Usuarios</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.usersCount}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total de usuarios registrados</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total de Visitas</CardTitle>
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.totalViews.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Visualizaciones totales</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Horas de Visualización</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : `${stats?.estimatedViewingHours}h`}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Tiempo estimado de visualización</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Contenido Total</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : (stats?.videosCount || 0) + (stats?.documentsCount || 0) + (stats?.readingsCount || 0) + (stats?.quizzesCount || 0)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Videos, docs, lecturas y quizzes</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Videos</CardTitle>
                   <Video className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">--</div>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.videosCount}
+                  </div>
                   <p className="text-xs text-muted-foreground">Total de videos publicados</p>
                 </CardContent>
               </Card>
@@ -106,7 +166,9 @@ export default function AdminDashboard() {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">--</div>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.documentsCount}
+                  </div>
                   <p className="text-xs text-muted-foreground">PDFs y documentos</p>
                 </CardContent>
               </Card>
@@ -117,7 +179,9 @@ export default function AdminDashboard() {
                   <HelpCircle className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">--</div>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.quizzesCount}
+                  </div>
                   <p className="text-xs text-muted-foreground">Evaluaciones disponibles</p>
                 </CardContent>
               </Card>
@@ -128,7 +192,9 @@ export default function AdminDashboard() {
                   <Route className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">--</div>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : stats?.pathsCount}
+                  </div>
                   <p className="text-xs text-muted-foreground">Rutas de aprendizaje</p>
                 </CardContent>
               </Card>
