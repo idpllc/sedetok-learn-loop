@@ -13,6 +13,7 @@ import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { ArrowLeft, Map, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PathMapView } from "@/components/learning-paths/PathMapView";
+import { PathInfoCard } from "@/components/PathInfoCard";
 
 const ViewLearningPath = () => {
   const { id } = useParams<{ id: string }>();
@@ -132,7 +133,8 @@ const ViewLearningPath = () => {
     setTimeout(() => {
       const container = document.querySelector('.snap-y');
       if (container) {
-        container.children[index]?.scrollIntoView({ behavior: 'smooth' });
+        // index + 1 because PathInfoCard is at index 0
+        container.children[index + 1]?.scrollIntoView({ behavior: 'smooth' });
       }
     }, 100);
   };
@@ -276,6 +278,37 @@ const ViewLearningPath = () => {
 
       {/* Feed container with snap scroll */}
       <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
+        {/* Path Info Card - First slide */}
+        <PathInfoCard
+          pathId={id!}
+          title={pathTitle}
+          description={pathDescription}
+          subject={pathInfo?.subject}
+          level={pathInfo?.level}
+          category={pathInfo?.category || ""}
+          gradeLevel={pathInfo?.grade_level || ""}
+          estimatedDuration={pathInfo?.estimated_duration}
+          totalXp={pathInfo?.total_xp}
+          objectives={pathInfo?.objectives}
+          coverUrl={pathInfo?.cover_url}
+          contentCount={contentData.length}
+          onStart={() => {
+            // Scroll to first content capsule
+            const container = document.querySelector('.snap-y');
+            if (container && container.children.length > 1) {
+              container.children[1]?.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          onNext={() => {
+            const container = document.querySelector('.snap-y');
+            if (container && container.children.length > 1) {
+              container.children[1]?.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          hasNext={contentData.length > 0}
+        />
+        
+        {/* Content cards */}
         {contentData.map((item: any, index: number) => {
           const videoRef = (ref: VideoPlayerRef | null) => {
             if (ref) {
@@ -334,18 +367,20 @@ const ViewLearningPath = () => {
               onPrevious={() => {
                 pauseAllVideos();
                 const container = document.querySelector('.snap-y');
-                if (container && index > 0) {
-                  container.children[index - 1]?.scrollIntoView({ behavior: 'smooth' });
+                // Go back to info card (index 0) or previous content
+                if (container) {
+                  container.children[index]?.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
               onNext={() => {
                 pauseAllVideos();
                 const container = document.querySelector('.snap-y');
                 if (container && index < contentData.length - 1) {
-                  container.children[index + 1]?.scrollIntoView({ behavior: 'smooth' });
+                  // index + 2 because PathInfoCard is at 0, so content starts at 1
+                  container.children[index + 2]?.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-              hasPrevious={index > 0}
+              hasPrevious={true}
               hasNext={index < contentData.length - 1}
             />
           );
