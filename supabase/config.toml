@@ -1,1 +1,7 @@
 project_id = "mdvlhfxcllpfnatvltde"
+
+[functions.generate-quiz-questions]
+verify_jwt = true
+
+[functions.upload-to-cloudinary]
+verify_jwt = true

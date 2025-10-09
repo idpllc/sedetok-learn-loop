@@ -460,7 +460,17 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
         <div className="space-y-4">
           {quizStep === 1 && (
-            <QuizStep2 questions={quizQuestions} onChange={setQuizQuestions} />
+            <QuizStep2 
+              questions={quizQuestions} 
+              onChange={setQuizQuestions}
+              quizContext={{
+                title: formData.title,
+                description: formData.description,
+                category: formData.category,
+                grade_level: formData.grade_level,
+                difficulty: formData.difficulty,
+              }}
+            />
           )}
           {quizStep === 2 && (
             <div className="border rounded-lg p-6 bg-card">

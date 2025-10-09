@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Copy } from "lucide-react";
+import { Plus, Trash2, Copy, Sparkles } from "lucide-react";
 import { QuestionEditor } from "./QuestionEditor";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface QuizQuestion {
   id: string;
@@ -26,10 +28,18 @@ export interface QuizQuestion {
 interface QuizStep2Props {
   questions: QuizQuestion[];
   onChange: (questions: QuizQuestion[]) => void;
+  quizContext?: {
+    title: string;
+    description?: string;
+    category: string;
+    grade_level: string;
+    difficulty: string;
+  };
 }
 
-export const QuizStep2 = ({ questions, onChange }: QuizStep2Props) => {
+export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) => {
   const [selectedQuestion, setSelectedQuestion] = useState<number>(0);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -72,15 +82,70 @@ export const QuizStep2 = ({ questions, onChange }: QuizStep2Props) => {
     onChange(newQuestions);
   };
 
+  const generateWithAI = async () => {
+    if (!quizContext) {
+      toast.error("Falta el contexto del quiz para generar preguntas");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-quiz-questions', {
+        body: {
+          title: quizContext.title,
+          description: quizContext.description,
+          category: quizContext.category,
+          grade_level: quizContext.grade_level,
+          difficulty: quizContext.difficulty,
+          numQuestions: 5,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      if (data.questions && data.questions.length > 0) {
+        onChange([...questions, ...data.questions]);
+        toast.success(`${data.questions.length} preguntas generadas con IA`);
+        setSelectedQuestion(questions.length);
+      } else {
+        toast.error("No se generaron preguntas");
+      }
+    } catch (error) {
+      console.error('Error al generar preguntas:', error);
+      toast.error("Error al generar preguntas con IA");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh-300px)]">
       {/* Lista de preguntas */}
       <div className="lg:col-span-1 border rounded-lg p-4 bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Preguntas ({questions.length})</h3>
-          <Button size="sm" onClick={addQuestion}>
-            <Plus className="h-4 w-4" />
-          </Button>
+        <div className="flex flex-col gap-2 mb-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Preguntas ({questions.length})</h3>
+            <Button size="sm" onClick={addQuestion}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          {quizContext && (
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              onClick={generateWithAI}
+              disabled={isGenerating}
+              className="w-full"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {isGenerating ? "Generando..." : "Generar con IA"}
+            </Button>
+          )}
         </div>
         <ScrollArea className="h-[calc(100vh-400px)]">
           <div className="space-y-2">
