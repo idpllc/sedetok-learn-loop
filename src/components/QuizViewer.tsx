@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,6 +22,9 @@ interface Question {
   image_url?: string;
   video_url?: string;
   feedback?: string;
+  feedback_correct?: string;
+  feedback_incorrect?: string;
+  comparison_mode?: string;
   points: number;
   quiz_options: Array<{
     id: string;
@@ -36,12 +40,13 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [shortAnswerText, setShortAnswerText] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
-
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
   useEffect(() => {
     fetchQuestions();
   }, [quizId]);
@@ -65,6 +70,62 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
     }
   };
 
+  const validateShortAnswer = (userAnswer: string, correctAnswers: string[], comparisonMode: string = 'exact'): boolean => {
+    const normalizedUserAnswer = userAnswer.trim().toLowerCase();
+    
+    if (comparisonMode === 'exact') {
+      // Comparación exacta sin mayúsculas/minúsculas
+      return correctAnswers.some(answer => 
+        answer.trim().toLowerCase() === normalizedUserAnswer
+      );
+    } else {
+      // Comparación flexible (80% de coincidencia)
+      return correctAnswers.some(answer => {
+        const normalizedCorrect = answer.trim().toLowerCase();
+        const similarity = calculateSimilarity(normalizedUserAnswer, normalizedCorrect);
+        return similarity >= 0.8;
+      });
+    }
+  };
+
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = getEditDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+  };
+
+  const getEditDistance = (str1: string, str2: string): number => {
+    const matrix: number[][] = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    
+    return matrix[str2.length][str1.length];
+  };
+
   const handleAnswer = (optionId: string) => {
     if (showFeedback) return;
 
@@ -77,6 +138,29 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
 
     if (selectedOption?.is_correct) {
       setScore(score + currentQ.points);
+      setIsAnswerCorrect(true);
+    } else {
+      setIsAnswerCorrect(false);
+    }
+  };
+
+  const handleShortAnswer = () => {
+    if (showFeedback || !shortAnswerText.trim()) return;
+
+    const currentQ = questions[currentQuestion];
+    const correctAnswers = currentQ.quiz_options.map(opt => opt.option_text);
+    const isCorrect = validateShortAnswer(
+      shortAnswerText, 
+      correctAnswers, 
+      currentQ.comparison_mode || 'exact'
+    );
+
+    setShowFeedback(true);
+    setIsAnswerCorrect(isCorrect);
+    setUserAnswers({ ...userAnswers, [currentQuestion]: shortAnswerText });
+
+    if (isCorrect) {
+      setScore(score + currentQ.points);
     }
   };
 
@@ -84,7 +168,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
+      setShortAnswerText("");
       setShowFeedback(false);
+      setIsAnswerCorrect(false);
     } else {
       completeQuiz();
     }
@@ -94,7 +180,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
       setSelectedAnswer(null);
+      setShortAnswerText("");
       setShowFeedback(false);
+      setIsAnswerCorrect(false);
     }
   };
 
@@ -215,7 +303,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
                     />
                   )}
 
-                  {currentQ.video_url && (
+                   {currentQ.video_url && (
                     <div className="aspect-video">
                       <iframe
                         src={currentQ.video_url.replace("watch?v=", "embed/")}
@@ -225,62 +313,128 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
                     </div>
                   )}
 
-                   {/* Options */}
-                   <div className="space-y-3">
-                     {currentQ.quiz_options
-                       .sort((a, b) => a.order_index - b.order_index)
-                       .map((option) => {
-                         const isSelected = selectedAnswer === option.id;
-                         const isCorrect = option.is_correct;
-                         const showResult = showFeedback && isSelected;
-                         const showCorrectFromPrevious = showPreviousResults && !showFeedback && isCorrect;
+                   {/* Options for multiple choice and true/false */}
+                   {(currentQ.question_type === "multiple_choice" || currentQ.question_type === "true_false") && (
+                    <div className="space-y-3">
+                      {currentQ.quiz_options
+                        .sort((a, b) => a.order_index - b.order_index)
+                        .map((option) => {
+                          const isSelected = selectedAnswer === option.id;
+                          const isCorrect = option.is_correct;
+                          const showResult = showFeedback && isSelected;
+                          const showCorrectFromPrevious = showPreviousResults && !showFeedback && isCorrect;
 
-                         return (
-                           <Button
-                             key={option.id}
-                             variant="outline"
-                             className={`w-full justify-start text-left h-auto p-4 ${
-                               showResult
-                                 ? isCorrect
-                                   ? "bg-green-100 border-green-500 dark:bg-green-900/20"
-                                   : "bg-red-100 border-red-500 dark:bg-red-900/20"
-                                 : showCorrectFromPrevious
-                                 ? "bg-green-50 border-green-300 dark:bg-green-900/10"
-                                 : isSelected
-                                 ? "bg-primary/10 border-primary"
-                                 : ""
-                             }`}
-                             onClick={() => handleAnswer(option.id)}
-                             disabled={showFeedback}
-                           >
-                             <span className="flex-1">{option.option_text}</span>
-                             {showResult && (
-                               <span className="ml-2">
-                                 {isCorrect ? (
-                                   <Check className="h-5 w-5 text-green-600" />
-                                 ) : (
-                                   <X className="h-5 w-5 text-red-600" />
-                                 )}
-                               </span>
-                             )}
-                             {showCorrectFromPrevious && !showFeedback && (
-                               <span className="ml-2 text-xs text-green-600">
-                                 ✓ Correcta
-                               </span>
-                             )}
-                           </Button>
-                         );
-                       })}
-                   </div>
+                          return (
+                            <Button
+                              key={option.id}
+                              variant="outline"
+                              className={`w-full justify-start text-left h-auto p-4 ${
+                                showResult
+                                  ? isCorrect
+                                    ? "bg-green-100 border-green-500 dark:bg-green-900/20"
+                                    : "bg-red-100 border-red-500 dark:bg-red-900/20"
+                                  : showCorrectFromPrevious
+                                  ? "bg-green-50 border-green-300 dark:bg-green-900/10"
+                                  : isSelected
+                                  ? "bg-primary/10 border-primary"
+                                  : ""
+                              }`}
+                              onClick={() => handleAnswer(option.id)}
+                              disabled={showFeedback}
+                            >
+                              <span className="flex-1">{option.option_text}</span>
+                              {showResult && (
+                                <span className="ml-2">
+                                  {isCorrect ? (
+                                    <Check className="h-5 w-5 text-green-600" />
+                                  ) : (
+                                    <X className="h-5 w-5 text-red-600" />
+                                  )}
+                                </span>
+                              )}
+                              {showCorrectFromPrevious && !showFeedback && (
+                                <span className="ml-2 text-xs text-green-600">
+                                  ✓ Correcta
+                                </span>
+                              )}
+                            </Button>
+                          );
+                        })}
+                    </div>
+                   )}
+
+                   {/* Input for short answer */}
+                   {currentQ.question_type === "short_answer" && (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <Input
+                          value={shortAnswerText}
+                          onChange={(e) => setShortAnswerText(e.target.value)}
+                          placeholder="Escribe tu respuesta aquí..."
+                          className={`text-base ${
+                            showFeedback
+                              ? isAnswerCorrect
+                                ? "bg-green-100 border-green-500 dark:bg-green-900/20"
+                                : "bg-red-100 border-red-500 dark:bg-red-900/20"
+                              : ""
+                          }`}
+                          disabled={showFeedback}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !showFeedback) {
+                              handleShortAnswer();
+                            }
+                          }}
+                        />
+                        {showFeedback && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {isAnswerCorrect ? (
+                              <Check className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <X className="h-5 w-5 text-red-600" />
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {!showFeedback && (
+                        <Button 
+                          onClick={handleShortAnswer}
+                          disabled={!shortAnswerText.trim()}
+                          className="w-full"
+                        >
+                          Enviar respuesta
+                        </Button>
+                      )}
+
+                      {showFeedback && !isAnswerCorrect && (
+                        <div className="p-3 bg-muted rounded-lg">
+                          <p className="text-sm font-semibold mb-1">Respuesta correcta:</p>
+                          <p className="text-sm">{currentQ.quiz_options[0]?.option_text}</p>
+                        </div>
+                      )}
+                    </div>
+                   )}
 
                   {/* Feedback */}
-                  {showFeedback && currentQ.feedback && (
+                  {showFeedback && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-4 bg-muted rounded-lg"
+                      className={`p-4 rounded-lg ${
+                        isAnswerCorrect 
+                          ? "bg-green-100 dark:bg-green-900/20" 
+                          : "bg-red-100 dark:bg-red-900/20"
+                      }`}
                     >
-                      <p className="text-sm">{currentQ.feedback}</p>
+                      {isAnswerCorrect && currentQ.feedback_correct && (
+                        <p className="text-sm">{currentQ.feedback_correct}</p>
+                      )}
+                      {!isAnswerCorrect && currentQ.feedback_incorrect && (
+                        <p className="text-sm">{currentQ.feedback_incorrect}</p>
+                      )}
+                      {!currentQ.feedback_correct && !currentQ.feedback_incorrect && currentQ.feedback && (
+                        <p className="text-sm">{currentQ.feedback}</p>
+                      )}
                     </motion.div>
                   )}
                 </CardContent>

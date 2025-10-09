@@ -4,8 +4,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Info } from "lucide-react";
 import { QuizQuestion } from "./QuizStep2";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 interface QuestionEditorProps {
   question: QuizQuestion;
@@ -28,13 +30,14 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
       return;
     }
     
-    // When changing to short answer, ensure we have exactly 1 option
+    // When changing to short answer, ensure we have at least 1 option
     if (field === "question_type" && value === "short_answer") {
       const updatedQuestion = {
         ...question,
         question_type: value,
-        options: [
-          { id: "answer", option_text: "", is_correct: true, order_index: 0 },
+        comparison_mode: question.comparison_mode || 'exact',
+        options: question.options.length > 0 ? question.options : [
+          { id: "answer-1", option_text: "", is_correct: true, order_index: 0 },
         ],
       };
       onChange(updatedQuestion);
@@ -48,10 +51,20 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
     const newOption = {
       id: `opt-${Date.now()}`,
       option_text: "",
-      is_correct: false,
+      is_correct: question.question_type === "short_answer",
       order_index: question.options.length,
     };
     updateField("options", [...question.options, newOption]);
+  };
+
+  const addShortAnswerOption = () => {
+    const newAnswer = {
+      id: `answer-${Date.now()}`,
+      option_text: "",
+      is_correct: true,
+      order_index: question.options.length,
+    };
+    updateField("options", [...question.options, newAnswer]);
   };
 
   const updateOption = (index: number, field: string, value: any) => {
@@ -162,24 +175,100 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
       )}
 
       {question.question_type === "short_answer" && (
-        <div>
-          <Label>Respuesta correcta</Label>
-          <Input
-            value={question.options[0]?.option_text || ""}
-            onChange={(e) => updateOption(0, "option_text", e.target.value)}
-            placeholder="Escribe la respuesta correcta"
-          />
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <Label>Respuestas correctas *</Label>
+              <Button size="sm" variant="outline" onClick={addShortAnswerOption}>
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar respuesta válida
+              </Button>
+            </div>
+            
+            <div className="space-y-2 mb-4">
+              {question.options.map((option, index) => (
+                <div key={option.id} className="flex items-center gap-2">
+                  <Input
+                    value={option.option_text}
+                    onChange={(e) => updateOption(index, "option_text", e.target.value)}
+                    placeholder={`Respuesta válida ${index + 1}`}
+                    className="flex-1"
+                  />
+                  {question.options.length > 1 && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeOption(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex items-start gap-2 p-3 bg-muted rounded-lg text-sm">
+              <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+              <p className="text-muted-foreground">
+                Puedes agregar múltiples respuestas válidas. Ejemplo: "asociación", "asociación libre"
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Label>Modo de comparación</Label>
+            <Select
+              value={question.comparison_mode || 'exact'}
+              onValueChange={(value) => updateField("comparison_mode", value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="exact">Exacta (sin mayúsculas/minúsculas)</SelectItem>
+                <SelectItem value="flexible">Flexible (tolerancia al 80%)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              {question.comparison_mode === 'flexible' 
+                ? 'Acepta respuestas con hasta 20% de diferencia'
+                : 'Solo acepta respuestas exactas (sin distinguir mayúsculas)'}
+            </p>
+          </div>
+
+          {/* Vista previa */}
+          <Card className="p-4 border-dashed">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Vista previa:</p>
+            <p className="text-sm mb-3">{question.question_text || "Texto de la pregunta..."}</p>
+            <Input 
+              placeholder="Escribe tu respuesta aquí..." 
+              disabled 
+              className="bg-background"
+            />
+          </Card>
         </div>
       )}
 
-      <div>
-        <Label>Retroalimentación (opcional)</Label>
-        <Textarea
-          value={question.feedback || ""}
-          onChange={(e) => updateField("feedback", e.target.value)}
-          placeholder="Mensaje que se mostrará después de responder"
-          rows={2}
-        />
+      <div className="space-y-4">
+        <div>
+          <Label>Retroalimentación correcta (opcional)</Label>
+          <Textarea
+            value={question.feedback_correct || ""}
+            onChange={(e) => updateField("feedback_correct", e.target.value)}
+            placeholder="Mensaje que se mostrará al responder correctamente"
+            rows={2}
+          />
+        </div>
+        
+        <div>
+          <Label>Retroalimentación incorrecta (opcional)</Label>
+          <Textarea
+            value={question.feedback_incorrect || ""}
+            onChange={(e) => updateField("feedback_incorrect", e.target.value)}
+            placeholder="Mensaje que se mostrará al responder incorrectamente"
+            rows={2}
+          />
+        </div>
       </div>
 
       <div>

@@ -651,10 +651,13 @@ export type Database = {
       }
       quiz_questions: {
         Row: {
+          comparison_mode: string | null
           content_id: string
           correct_answer: number
           created_at: string | null
           feedback: string | null
+          feedback_correct: string | null
+          feedback_incorrect: string | null
           id: string
           image_url: string | null
           options: Json
@@ -665,10 +668,13 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          comparison_mode?: string | null
           content_id: string
           correct_answer: number
           created_at?: string | null
           feedback?: string | null
+          feedback_correct?: string | null
+          feedback_incorrect?: string | null
           id?: string
           image_url?: string | null
           options: Json
@@ -679,10 +685,13 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          comparison_mode?: string | null
           content_id?: string
           correct_answer?: number
           created_at?: string | null
           feedback?: string | null
+          feedback_correct?: string | null
+          feedback_incorrect?: string | null
           id?: string
           image_url?: string | null
           options?: Json

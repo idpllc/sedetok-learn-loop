@@ -11,6 +11,9 @@ export interface QuizQuestion {
   image_url?: string;
   video_url?: string;
   feedback?: string;
+  feedback_correct?: string;
+  feedback_incorrect?: string;
+  comparison_mode?: "exact" | "flexible";
   points: number;
   options: Array<{
     id: string;

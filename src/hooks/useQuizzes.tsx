@@ -142,6 +142,9 @@ export const useQuizQuestions = (quizId?: string) => {
         image_url: question.image_url,
         video_url: question.video_url,
         feedback: question.feedback,
+        feedback_correct: question.feedback_correct,
+        feedback_incorrect: question.feedback_incorrect,
+        comparison_mode: question.comparison_mode,
         points: question.points,
         options: question.quiz_options 
           ? question.quiz_options
@@ -167,6 +170,9 @@ export const useQuizQuestions = (quizId?: string) => {
         .insert({
           ...questionData,
           options: {} as any, // Required field but will use quiz_options table
+          feedback_correct: questionData.feedback_correct,
+          feedback_incorrect: questionData.feedback_incorrect,
+          comparison_mode: questionData.comparison_mode,
         })
         .select()
         .single();
