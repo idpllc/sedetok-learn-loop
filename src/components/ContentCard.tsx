@@ -264,6 +264,23 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               </div>
             </div>
           </div>
+        ) : contentType === 'quiz' ? (
+          <div className="w-full h-full bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-blue-500/30 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30" />
+            <div className="text-center p-8 relative z-10">
+              <div className="text-8xl mb-6 animate-bounce">🧠</div>
+              <h3 className="text-3xl font-bold text-white mb-3">{title}</h3>
+              <p className="text-white/90 text-lg">Quiz Interactivo</p>
+              <div className="mt-6 flex items-center justify-center gap-4">
+                <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
+                  📝 Preguntas
+                </Badge>
+                <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
+                  ⚡ Desafío
+                </Badge>
+              </div>
+            </div>
+          </div>
         ) : thumbnail ? (
           <img 
             src={thumbnail} 

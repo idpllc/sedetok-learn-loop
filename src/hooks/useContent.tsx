@@ -9,7 +9,8 @@ export const useContent = () => {
   const { data: content, isLoading } = useQuery({
     queryKey: ["content"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch regular content
+      const { data: contentData, error: contentError } = await supabase
         .from("content")
         .select(`
           *,
@@ -25,8 +26,49 @@ export const useContent = () => {
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) throw error;
-      return data;
+      if (contentError) throw contentError;
+
+      // Fetch quizzes
+      const { data: quizData, error: quizError } = await supabase
+        .from("quizzes")
+        .select(`
+          *,
+          profiles:creator_id (
+            username,
+            full_name,
+            avatar_url,
+            institution,
+            is_verified
+          )
+        `)
+        .eq("is_public", true)
+        .eq("status", "publicado")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (quizError) throw quizError;
+
+      // Combine and mark quizzes with content_type
+      const quizzes = (quizData || []).map(quiz => ({
+        ...quiz,
+        content_type: 'quiz' as const,
+        likes_count: 0,
+        views_count: 0,
+        saves_count: 0,
+        shares_count: 0,
+        comments_count: 0,
+        video_url: null,
+        document_url: null,
+        rich_text: null,
+        tags: [],
+      }));
+
+      // Combine both arrays and sort by created_at
+      const allContent = [...(contentData || []), ...quizzes].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ).slice(0, 50);
+
+      return allContent;
     },
   });
 

@@ -22,20 +22,50 @@ export const useUserContent = (userId?: string) => {
         isOwnContent = user?.id === targetUserId;
       }
 
-      let query = supabase
+      // Fetch regular content
+      let contentQuery = supabase
         .from("content")
         .select("*")
         .eq("creator_id", targetUserId);
 
-      // Only filter by is_public if viewing someone else's profile
       if (!isOwnContent) {
-        query = query.eq("is_public", true);
+        contentQuery = contentQuery.eq("is_public", true);
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false });
+      const { data: contentData, error: contentError } = await contentQuery.order("created_at", { ascending: false });
+      if (contentError) throw contentError;
 
-      if (error) throw error;
-      return data;
+      // Fetch quizzes
+      let quizQuery = supabase
+        .from("quizzes")
+        .select("*")
+        .eq("creator_id", targetUserId);
+
+      if (!isOwnContent) {
+        quizQuery = quizQuery.eq("is_public", true);
+      }
+
+      const { data: quizData, error: quizError } = await quizQuery.order("created_at", { ascending: false });
+      if (quizError) throw quizError;
+
+      // Combine and mark quizzes with content_type
+      const quizzes = (quizData || []).map(quiz => ({
+        ...quiz,
+        content_type: 'quiz' as const,
+        likes_count: 0,
+        views_count: 0,
+        saves_count: 0,
+        shares_count: 0,
+        comments_count: 0,
+        tags: [],
+      }));
+
+      // Combine both arrays and sort by created_at
+      const allContent = [...(contentData || []), ...quizzes].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      return allContent;
     },
   });
 
