@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useXP } from "@/hooks/useXP";
 
 export const usePathProgress = (pathId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { awardPathCompletionXP } = useXP();
 
   const { data: progress, isLoading } = useQuery({
     queryKey: ["path-progress", pathId, user?.id],
@@ -52,8 +54,13 @@ export const usePathProgress = (pathId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["path-progress", pathId, user?.id] });
+      
+      // Check if path is complete and award XP
+      if (pathId) {
+        await awardPathCompletionXP(pathId);
+      }
     },
   });
 
@@ -88,8 +95,13 @@ export const usePathProgress = (pathId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["path-progress", pathId, user?.id] });
+      
+      // Check if path is complete and award XP
+      if (pathId) {
+        await awardPathCompletionXP(pathId);
+      }
     },
   });
 
