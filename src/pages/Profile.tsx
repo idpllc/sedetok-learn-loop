@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -168,6 +168,10 @@ const Profile = () => {
               {user?.user_metadata?.username || user?.email}
             </p>
           </div>
+          <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
+            <UserCog className="w-4 h-4" />
+            <span className="hidden md:inline">Editar Perfil</span>
+          </Button>
         </div>
       </header>
 

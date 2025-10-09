@@ -327,48 +327,188 @@ export type Database = {
       }
       profiles: {
         Row: {
+          areas_interes: string[] | null
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          departamento: string | null
+          desempenos_academicos: Json | null
+          dificultades_aprendizaje: string | null
           experience_points: number | null
+          fecha_nacimiento: string | null
           followers_count: number | null
           following_count: number | null
+          frecuencia_estudio:
+            | Database["public"]["Enums"]["frecuencia_estudio"]
+            | null
           full_name: string | null
+          genero: Database["public"]["Enums"]["genero"] | null
+          grado_actual: string | null
+          habilidades_a_desarrollar: string[] | null
+          horario_preferido_estudio:
+            | Database["public"]["Enums"]["horario_estudio"]
+            | null
           id: string
+          id_grupo: string | null
+          id_sede: string | null
+          idioma_contenido_preferido: string | null
+          idioma_preferido: string | null
           institution: string | null
           is_verified: boolean | null
+          modo_consumo_preferido:
+            | Database["public"]["Enums"]["modo_consumo"]
+            | null
+          motivaciones_principales:
+            | Database["public"]["Enums"]["motivacion_principal"]
+            | null
+          municipio: string | null
+          nivel_autonomia: Database["public"]["Enums"]["nivel_autonomia"] | null
+          nivel_educativo: Database["public"]["Enums"]["nivel_educativo"] | null
+          nivel_meta_aprendizaje:
+            | Database["public"]["Enums"]["nivel_meta"]
+            | null
+          nivel_motivacion: number | null
+          pais: string | null
+          preferencia_duracion_contenido:
+            | Database["public"]["Enums"]["preferencia_duracion"]
+            | null
+          profesiones_de_interes: string[] | null
+          recomendaciones_activas: Json | null
+          rutas_aprobadas_por_docente: Json | null
+          temas_favoritos: string[] | null
+          tipo_aprendizaje:
+            | Database["public"]["Enums"]["tipo_aprendizaje"]
+            | null
+          tipo_documento: Database["public"]["Enums"]["tipo_documento"] | null
+          tipo_usuario: Database["public"]["Enums"]["tipo_usuario"] | null
           total_likes: number | null
           total_views: number | null
           updated_at: string | null
           username: string
         }
         Insert: {
+          areas_interes?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          departamento?: string | null
+          desempenos_academicos?: Json | null
+          dificultades_aprendizaje?: string | null
           experience_points?: number | null
+          fecha_nacimiento?: string | null
           followers_count?: number | null
           following_count?: number | null
+          frecuencia_estudio?:
+            | Database["public"]["Enums"]["frecuencia_estudio"]
+            | null
           full_name?: string | null
+          genero?: Database["public"]["Enums"]["genero"] | null
+          grado_actual?: string | null
+          habilidades_a_desarrollar?: string[] | null
+          horario_preferido_estudio?:
+            | Database["public"]["Enums"]["horario_estudio"]
+            | null
           id: string
+          id_grupo?: string | null
+          id_sede?: string | null
+          idioma_contenido_preferido?: string | null
+          idioma_preferido?: string | null
           institution?: string | null
           is_verified?: boolean | null
+          modo_consumo_preferido?:
+            | Database["public"]["Enums"]["modo_consumo"]
+            | null
+          motivaciones_principales?:
+            | Database["public"]["Enums"]["motivacion_principal"]
+            | null
+          municipio?: string | null
+          nivel_autonomia?:
+            | Database["public"]["Enums"]["nivel_autonomia"]
+            | null
+          nivel_educativo?:
+            | Database["public"]["Enums"]["nivel_educativo"]
+            | null
+          nivel_meta_aprendizaje?:
+            | Database["public"]["Enums"]["nivel_meta"]
+            | null
+          nivel_motivacion?: number | null
+          pais?: string | null
+          preferencia_duracion_contenido?:
+            | Database["public"]["Enums"]["preferencia_duracion"]
+            | null
+          profesiones_de_interes?: string[] | null
+          recomendaciones_activas?: Json | null
+          rutas_aprobadas_por_docente?: Json | null
+          temas_favoritos?: string[] | null
+          tipo_aprendizaje?:
+            | Database["public"]["Enums"]["tipo_aprendizaje"]
+            | null
+          tipo_documento?: Database["public"]["Enums"]["tipo_documento"] | null
+          tipo_usuario?: Database["public"]["Enums"]["tipo_usuario"] | null
           total_likes?: number | null
           total_views?: number | null
           updated_at?: string | null
           username: string
         }
         Update: {
+          areas_interes?: string[] | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          departamento?: string | null
+          desempenos_academicos?: Json | null
+          dificultades_aprendizaje?: string | null
           experience_points?: number | null
+          fecha_nacimiento?: string | null
           followers_count?: number | null
           following_count?: number | null
+          frecuencia_estudio?:
+            | Database["public"]["Enums"]["frecuencia_estudio"]
+            | null
           full_name?: string | null
+          genero?: Database["public"]["Enums"]["genero"] | null
+          grado_actual?: string | null
+          habilidades_a_desarrollar?: string[] | null
+          horario_preferido_estudio?:
+            | Database["public"]["Enums"]["horario_estudio"]
+            | null
           id?: string
+          id_grupo?: string | null
+          id_sede?: string | null
+          idioma_contenido_preferido?: string | null
+          idioma_preferido?: string | null
           institution?: string | null
           is_verified?: boolean | null
+          modo_consumo_preferido?:
+            | Database["public"]["Enums"]["modo_consumo"]
+            | null
+          motivaciones_principales?:
+            | Database["public"]["Enums"]["motivacion_principal"]
+            | null
+          municipio?: string | null
+          nivel_autonomia?:
+            | Database["public"]["Enums"]["nivel_autonomia"]
+            | null
+          nivel_educativo?:
+            | Database["public"]["Enums"]["nivel_educativo"]
+            | null
+          nivel_meta_aprendizaje?:
+            | Database["public"]["Enums"]["nivel_meta"]
+            | null
+          nivel_motivacion?: number | null
+          pais?: string | null
+          preferencia_duracion_contenido?:
+            | Database["public"]["Enums"]["preferencia_duracion"]
+            | null
+          profesiones_de_interes?: string[] | null
+          recomendaciones_activas?: Json | null
+          rutas_aprobadas_por_docente?: Json | null
+          temas_favoritos?: string[] | null
+          tipo_aprendizaje?:
+            | Database["public"]["Enums"]["tipo_aprendizaje"]
+            | null
+          tipo_documento?: Database["public"]["Enums"]["tipo_documento"] | null
+          tipo_usuario?: Database["public"]["Enums"]["tipo_usuario"] | null
           total_likes?: number | null
           total_views?: number | null
           updated_at?: string | null
@@ -652,7 +792,38 @@ export type Database = {
         | "tecnologia"
         | "otros"
       content_type: "video" | "document" | "quiz"
+      frecuencia_estudio: "Diaria" | "Semanal" | "Esporádica"
+      genero: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir"
       grade_level: "primaria" | "secundaria" | "preparatoria" | "universidad"
+      horario_estudio: "Mañana" | "Tarde" | "Noche"
+      modo_consumo: "Videos" | "PDF" | "Quizzes" | "Textos" | "Mixto"
+      motivacion_principal:
+        | "Aprender"
+        | "Certificarme"
+        | "Superarme"
+        | "Jugar"
+        | "Competir"
+      nivel_autonomia: "Alta" | "Media" | "Baja"
+      nivel_educativo:
+        | "Preescolar"
+        | "Primaria"
+        | "Secundaria"
+        | "Media"
+        | "Universitario"
+      nivel_meta: "Inicial" | "Intermedio" | "Avanzado"
+      preferencia_duracion: "Corto" | "Medio" | "Largo"
+      tipo_aprendizaje: "Visual" | "Auditivo" | "Kinestésico" | "Lógico"
+      tipo_documento:
+        | "RC"
+        | "NES"
+        | "PPT"
+        | "TI"
+        | "CC"
+        | "CE"
+        | "TE"
+        | "DIE"
+        | "DESC"
+      tipo_usuario: "Estudiante" | "Docente" | "Padre" | "Institución"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -791,7 +962,41 @@ export const Constants = {
         "otros",
       ],
       content_type: ["video", "document", "quiz"],
+      frecuencia_estudio: ["Diaria", "Semanal", "Esporádica"],
+      genero: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
       grade_level: ["primaria", "secundaria", "preparatoria", "universidad"],
+      horario_estudio: ["Mañana", "Tarde", "Noche"],
+      modo_consumo: ["Videos", "PDF", "Quizzes", "Textos", "Mixto"],
+      motivacion_principal: [
+        "Aprender",
+        "Certificarme",
+        "Superarme",
+        "Jugar",
+        "Competir",
+      ],
+      nivel_autonomia: ["Alta", "Media", "Baja"],
+      nivel_educativo: [
+        "Preescolar",
+        "Primaria",
+        "Secundaria",
+        "Media",
+        "Universitario",
+      ],
+      nivel_meta: ["Inicial", "Intermedio", "Avanzado"],
+      preferencia_duracion: ["Corto", "Medio", "Largo"],
+      tipo_aprendizaje: ["Visual", "Auditivo", "Kinestésico", "Lógico"],
+      tipo_documento: [
+        "RC",
+        "NES",
+        "PPT",
+        "TI",
+        "CC",
+        "CE",
+        "TE",
+        "DIE",
+        "DESC",
+      ],
+      tipo_usuario: ["Estudiante", "Docente", "Padre", "Institución"],
     },
   },
 } as const

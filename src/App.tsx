@@ -10,6 +10,7 @@ import Achievements from "./pages/Achievements";
 import CreateContent from "./pages/CreateContent";
 import EditContent from "./pages/EditContent";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/create" element={<CreateContent />} />
           <Route path="/edit/:id" element={<EditContent />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
