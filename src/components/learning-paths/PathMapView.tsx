@@ -43,26 +43,16 @@ export const PathMapView = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-24">
-      {/* Header */}
-      <Card className="mx-4 mt-4 mb-8 bg-primary text-primary-foreground">
-        <div className="p-6 flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium opacity-90 mb-1">RUTA</p>
-            <h1 className="text-2xl font-bold">{pathTitle}</h1>
-            {pathDescription && (
-              <p className="text-sm opacity-90 mt-2">{pathDescription}</p>
-            )}
-          </div>
-          <Button 
-            variant="secondary" 
-            size="icon"
-            onClick={() => navigate("/learning-paths")}
-            className="shrink-0"
-          >
-            <Star className="w-5 h-5" />
-          </Button>
+      {/* Header with path title */}
+      <div className="sticky top-0 z-20 bg-gradient-to-b from-primary to-primary/95 text-primary-foreground shadow-lg">
+        <div className="max-w-md mx-auto px-4 py-6 text-center">
+          <p className="text-xs font-semibold uppercase tracking-wider opacity-90 mb-1">RUTA DE APRENDIZAJE</p>
+          <h1 className="text-2xl font-bold">{pathTitle}</h1>
+          {pathDescription && (
+            <p className="text-sm opacity-90 mt-2 line-clamp-2">{pathDescription}</p>
+          )}
         </div>
-      </Card>
+      </div>
 
       {/* Path Map */}
       <div className="relative max-w-md mx-auto px-4">
@@ -146,6 +136,22 @@ export const PathMapView = ({
                       {content.description}
                     </p>
                   )}
+                  {/* Category and Grade Level */}
+                  <div className={cn(
+                    "flex gap-2 mt-2 flex-wrap",
+                    index % 2 === 0 ? "justify-start" : "justify-end"
+                  )}>
+                    {content.category && (
+                      <span className="bg-secondary text-secondary-foreground text-xs px-2 py-0.5 rounded-full font-medium">
+                        {content.category}
+                      </span>
+                    )}
+                    {content.grade_level && (
+                      <span className="bg-accent text-accent-foreground text-xs px-2 py-0.5 rounded-full font-medium">
+                        {content.grade_level}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );
