@@ -674,10 +674,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "quiz_questions_content_id_fkey"
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
-            referencedRelation: "content"
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
         ]

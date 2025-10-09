@@ -30,7 +30,7 @@ const CreateContent = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
-        <div className="flex items-center gap-3 max-w-2xl mx-auto">
+        <div className={`flex items-center gap-3 mx-auto ${pageTitle.includes("Quiz") ? "container" : "max-w-2xl"}`}>
           <Button
             variant="ghost"
             size="icon"
@@ -42,7 +42,7 @@ const CreateContent = () => {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className={`mx-auto px-4 py-6 ${pageTitle.includes("Quiz") ? "container" : "max-w-2xl"}`}>
         <CreateContentForm onTitleChange={setPageTitle} />
       </main>
     </div>

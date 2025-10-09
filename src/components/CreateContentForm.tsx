@@ -230,6 +230,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       toast.error("Por favor completa todos los campos requeridos");
       return;
     }
+    onTitleChange?.("Crear Quiz - Preguntas");
     setQuizStep(1);
   };
 
@@ -409,7 +410,15 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         <div className="flex justify-between pt-4">
           <Button
             variant="outline"
-            onClick={() => setQuizStep(Math.max(0, quizStep - 1))}
+            onClick={() => {
+              const newStep = Math.max(0, quizStep - 1);
+              setQuizStep(newStep);
+              if (newStep === 0) {
+                onTitleChange?.("Crear Quiz");
+              } else if (newStep === 1) {
+                onTitleChange?.("Crear Quiz - Preguntas");
+              }
+            }}
           >
             Anterior
           </Button>
@@ -435,7 +444,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
             {quizStep < 2 && (
               <Button
-                onClick={() => setQuizStep(quizStep + 1)}
+                onClick={() => {
+                  const newStep = quizStep + 1;
+                  setQuizStep(newStep);
+                  if (newStep === 2) {
+                    onTitleChange?.("Crear Quiz - Configuración");
+                  }
+                }}
                 disabled={quizStep === 1 && quizQuestions.length === 0}
               >
                 Siguiente
