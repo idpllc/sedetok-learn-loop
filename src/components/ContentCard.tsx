@@ -1,4 +1,4 @@
-import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -243,7 +243,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             onPlayStateChange={handlePlayStateChange}
           />
         ) : documentUrl ? (
-          <div className="w-full h-full flex items-center justify-center p-4">
+          <div className="w-full h-full flex items-center justify-center p-4 relative">
             <div 
               className={`w-full max-w-2xl transition-opacity duration-300 ${showPdfContent ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
               onClick={(e) => {
@@ -256,6 +256,27 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 onExpandClick={handleExpandPdf}
                 showDownloadButton={true}
               />
+            </div>
+            
+            {/* Central download button */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+              <Button
+                size="lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const link = document.createElement('a');
+                  link.href = documentUrl;
+                  link.download = documentUrl.split('/').pop() || 'documento.pdf';
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="pointer-events-auto flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform"
+              >
+                <Download className="w-6 h-6" />
+                Descargar Documento
+              </Button>
             </div>
           </div>
         ) : contentType === 'lectura' && richText ? (
