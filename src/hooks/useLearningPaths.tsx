@@ -2,9 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export type LearningPath = any;
-export type LearningPathContent = any;
-
 export const useLearningPaths = (userId?: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -20,14 +17,14 @@ export const useLearningPaths = (userId?: string) => {
       if (userId) {
         query = query.eq("creator_id", userId);
       } else {
-        query = query.eq("is_public", true).eq("status", "published");
+        query = query.eq("is_public", true);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as LearningPath[];
+      return (data || []) as any[];
     },
-  });
+  }) as { data: any[] | undefined; isLoading: boolean };
 
   const createPath = useMutation({
     mutationFn: async (path: any) => {
@@ -36,12 +33,12 @@ export const useLearningPaths = (userId?: string) => {
 
       const { data, error } = await supabase
         .from("learning_paths")
-        .insert([{ ...path as any, creator_id: user.id }])
+        .insert([{ ...path, creator_id: user.id }])
         .select()
         .single();
 
       if (error) throw error;
-      return data as LearningPath;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["learning-paths"] });
@@ -63,13 +60,13 @@ export const useLearningPaths = (userId?: string) => {
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
       const { data, error } = await supabase
         .from("learning_paths")
-        .update(updates as any)
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as LearningPath;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["learning-paths"] });
@@ -133,7 +130,7 @@ export const usePathContent = (pathId?: string) => {
         .order("order_index", { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!pathId,
   });
@@ -142,12 +139,12 @@ export const usePathContent = (pathId?: string) => {
     mutationFn: async (content: any) => {
       const { data, error } = await supabase
         .from("learning_path_content")
-        .insert([content as any])
+        .insert([content])
         .select()
         .single();
 
       if (error) throw error;
-      return data as LearningPathContent;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["path-content"] });
@@ -165,13 +162,13 @@ export const usePathContent = (pathId?: string) => {
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
       const { data, error } = await supabase
         .from("learning_path_content")
-        .update(updates as any)
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
 
       if (error) throw error;
-      return data as LearningPathContent;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["path-content"] });

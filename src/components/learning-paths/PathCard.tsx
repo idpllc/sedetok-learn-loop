@@ -11,11 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { useLearningPaths, LearningPath } from "@/hooks/useLearningPaths";
+import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface PathCardProps {
-  path: LearningPath;
+  path: any;
 }
 
 export const PathCard = ({ path }: PathCardProps) => {

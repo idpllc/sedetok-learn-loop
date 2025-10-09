@@ -170,15 +170,15 @@ export const PathReview = ({ data, pathId }: PathReviewProps) => {
                 {requiredRoutesData.map((route) => (
                   <Card key={route.id} className="p-3">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h5 className="font-medium">{route.title}</h5>
-                        <p className="text-sm text-muted-foreground">
-                          {route.subject} • {route.grade_level}
-                        </p>
-                      </div>
-                      <Badge variant="outline">
-                        {route.total_xp} XP
-                      </Badge>
+                  <div>
+                    <h5 className="font-medium">{route.title}</h5>
+                    <p className="text-sm text-muted-foreground">
+                      {route.subject || route.category} • {route.grade_level}
+                    </p>
+                  </div>
+                  <Badge variant="outline">
+                    {route.total_xp || 0} XP
+                  </Badge>
                     </div>
                   </Card>
                 ))}

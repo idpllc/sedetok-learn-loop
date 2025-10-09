@@ -11,6 +11,8 @@ import CreateContent from "./pages/CreateContent";
 import EditContent from "./pages/EditContent";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
+import LearningPaths from "./pages/LearningPaths";
+import CreateLearningPath from "./pages/CreateLearningPath";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,9 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/learning-paths" element={<LearningPaths />} />
+          <Route path="/learning-paths/create" element={<CreateLearningPath />} />
+          <Route path="/learning-paths/edit/:id" element={<CreateLearningPath />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

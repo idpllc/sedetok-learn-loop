@@ -26,9 +26,9 @@ const LearningPaths = () => {
     const matchesSearch = path.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       path.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesSubject = !filters.subject || path.subject === filters.subject;
+    const matchesSubject = !filters.subject || (path.subject || path.category) === filters.subject;
     const matchesGrade = !filters.grade || path.grade_level === filters.grade;
-    const matchesStatus = !filters.status || path.status === filters.status;
+    const matchesStatus = !filters.status || (path.status || 'draft') === filters.status;
     const matchesVisibility = !filters.visibility || 
       (filters.visibility === "public" ? path.is_public : !path.is_public);
     

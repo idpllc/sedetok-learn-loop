@@ -1,4 +1,4 @@
-import { Home, Search, Award, User, Plus, Menu } from "lucide-react";
+import { Home, Search, Award, User, Plus, Menu, Map } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { AuthModal } from "./AuthModal";
@@ -23,6 +23,7 @@ export const BottomNav = () => {
   const tabs = [
     { id: "home", icon: Home, label: "Inicio", path: "/" },
     { id: "search", icon: Search, label: "Explorar", path: "/search" },
+    { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ];
@@ -44,7 +45,7 @@ export const BottomNav = () => {
           menuOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        <div className="flex items-center justify-around h-20 max-w-2xl mx-auto px-4">
+        <div className="flex items-center justify-around h-20 max-w-3xl mx-auto px-4">
           {tabs.slice(0, 2).map((tab) => {
             const Icon = tab.icon;
             const isActive = location.pathname === tab.path;
@@ -56,11 +57,11 @@ export const BottomNav = () => {
                   navigate(tab.path);
                   setMenuOpen(false);
                 }}
-                className={`flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all ${
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all ${
                   isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Icon className={`w-6 h-6 transition-all ${isActive ? 'scale-110' : ''}`} />
+                <Icon className={`w-5 h-5 transition-all ${isActive ? 'scale-110' : ''}`} />
                 <span className="text-xs font-medium">{tab.label}</span>
               </button>
             );
@@ -72,9 +73,9 @@ export const BottomNav = () => {
               handleCreateClick();
               setMenuOpen(false);
             }}
-            className="flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all text-primary hover:text-primary/80"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all text-primary hover:text-primary/80"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
             <span className="text-xs font-medium">Crear</span>
           </button>
 
@@ -89,11 +90,11 @@ export const BottomNav = () => {
                   navigate(tab.path);
                   setMenuOpen(false);
                 }}
-                className={`flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all ${
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all ${
                   isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Icon className={`w-6 h-6 transition-all ${isActive ? 'scale-110' : ''}`} />
+                <Icon className={`w-5 h-5 transition-all ${isActive ? 'scale-110' : ''}`} />
                 <span className="text-xs font-medium">{tab.label}</span>
               </button>
             );
