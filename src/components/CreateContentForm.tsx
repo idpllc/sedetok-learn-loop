@@ -121,10 +121,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   
   // Load quiz questions when available
   useEffect(() => {
-    if (loadedQuestions && loadedQuestions.length > 0) {
+    if (loadedQuestions && loadedQuestions.length > 0 && editMode) {
+      console.log("Loading questions:", loadedQuestions);
       setQuizQuestions(loadedQuestions as any);
     }
-  }, [loadedQuestions]);
+  }, [loadedQuestions, editMode]);
 
   // Update page title based on content type
   useEffect(() => {

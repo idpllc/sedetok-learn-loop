@@ -55,7 +55,7 @@ const EditContent = () => {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="w-full px-4 py-6">
         <CreateContentForm 
           editMode={true} 
           contentData={content}

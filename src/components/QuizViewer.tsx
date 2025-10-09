@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 interface QuizViewerProps {
   quizId: string;
+  lastAttempt?: any;
   onComplete?: () => void;
 }
 
@@ -29,7 +30,7 @@ interface Question {
   }>;
 }
 
-export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
+export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -39,6 +40,7 @@ export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
   const [score, setScore] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetchQuestions();
@@ -68,6 +70,7 @@ export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
 
     setSelectedAnswer(optionId);
     setShowFeedback(true);
+    setUserAnswers({ ...userAnswers, [currentQuestion]: optionId });
 
     const currentQ = questions[currentQuestion];
     const selectedOption = currentQ.quiz_options.find((opt) => opt.id === optionId);
@@ -144,6 +147,9 @@ export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
 
   const currentQ = questions[currentQuestion];
   const maxScore = questions.reduce((sum, q) => sum + q.points, 0);
+  
+  // Show previous attempt results if available
+  const showPreviousResults = lastAttempt && !isCompleted;
 
   if (isCompleted) {
     return (
@@ -219,45 +225,53 @@ export const QuizViewer = ({ quizId, onComplete }: QuizViewerProps) => {
                     </div>
                   )}
 
-                  {/* Options */}
-                  <div className="space-y-3">
-                    {currentQ.quiz_options
-                      .sort((a, b) => a.order_index - b.order_index)
-                      .map((option) => {
-                        const isSelected = selectedAnswer === option.id;
-                        const isCorrect = option.is_correct;
-                        const showResult = showFeedback && isSelected;
+                   {/* Options */}
+                   <div className="space-y-3">
+                     {currentQ.quiz_options
+                       .sort((a, b) => a.order_index - b.order_index)
+                       .map((option) => {
+                         const isSelected = selectedAnswer === option.id;
+                         const isCorrect = option.is_correct;
+                         const showResult = showFeedback && isSelected;
+                         const showCorrectFromPrevious = showPreviousResults && !showFeedback && isCorrect;
 
-                        return (
-                          <Button
-                            key={option.id}
-                            variant="outline"
-                            className={`w-full justify-start text-left h-auto p-4 ${
-                              showResult
-                                ? isCorrect
-                                  ? "bg-green-100 border-green-500 dark:bg-green-900/20"
-                                  : "bg-red-100 border-red-500 dark:bg-red-900/20"
-                                : isSelected
-                                ? "bg-primary/10 border-primary"
-                                : ""
-                            }`}
-                            onClick={() => handleAnswer(option.id)}
-                            disabled={showFeedback}
-                          >
-                            <span className="flex-1">{option.option_text}</span>
-                            {showResult && (
-                              <span className="ml-2">
-                                {isCorrect ? (
-                                  <Check className="h-5 w-5 text-green-600" />
-                                ) : (
-                                  <X className="h-5 w-5 text-red-600" />
-                                )}
-                              </span>
-                            )}
-                          </Button>
-                        );
-                      })}
-                  </div>
+                         return (
+                           <Button
+                             key={option.id}
+                             variant="outline"
+                             className={`w-full justify-start text-left h-auto p-4 ${
+                               showResult
+                                 ? isCorrect
+                                   ? "bg-green-100 border-green-500 dark:bg-green-900/20"
+                                   : "bg-red-100 border-red-500 dark:bg-red-900/20"
+                                 : showCorrectFromPrevious
+                                 ? "bg-green-50 border-green-300 dark:bg-green-900/10"
+                                 : isSelected
+                                 ? "bg-primary/10 border-primary"
+                                 : ""
+                             }`}
+                             onClick={() => handleAnswer(option.id)}
+                             disabled={showFeedback}
+                           >
+                             <span className="flex-1">{option.option_text}</span>
+                             {showResult && (
+                               <span className="ml-2">
+                                 {isCorrect ? (
+                                   <Check className="h-5 w-5 text-green-600" />
+                                 ) : (
+                                   <X className="h-5 w-5 text-red-600" />
+                                 )}
+                               </span>
+                             )}
+                             {showCorrectFromPrevious && !showFeedback && (
+                               <span className="ml-2 text-xs text-green-600">
+                                 ✓ Correcta
+                               </span>
+                             )}
+                           </Button>
+                         );
+                       })}
+                   </div>
 
                   {/* Feedback */}
                   {showFeedback && currentQ.feedback && (

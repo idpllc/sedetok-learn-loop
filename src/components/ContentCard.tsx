@@ -550,6 +550,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </DialogHeader>
             <QuizViewer 
               quizId={id} 
+              lastAttempt={lastAttempt}
               onComplete={() => setQuizModalOpen(false)}
             />
           </DialogContent>
