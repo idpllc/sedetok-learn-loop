@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, GripVertical, X, Edit } from "lucide-react";
+import { Plus, Search, GripVertical, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,8 +23,10 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
-  const { contents, addContent, removeContent } = usePathContent(pathId || undefined);
+  const { contents, addContent, removeContent, reorderContents } = usePathContent(pathId || undefined);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Fetch user's own content
   const { data: myContent, isLoading: loadingMyContent } = useQuery({
@@ -154,6 +156,66 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
 
   const handleRemoveContent = async (id: string) => {
     await removeContent.mutateAsync(id);
+  };
+
+  const handleReorder = async (fromIndex: number, toIndex: number) => {
+    if (!contents || fromIndex === toIndex) return;
+
+    const reordered = [...contents];
+    const [movedItem] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, movedItem);
+
+    const updates = reordered.map((item, index) => ({
+      id: item.id,
+      order_index: index,
+    }));
+
+    try {
+      await reorderContents.mutateAsync(updates);
+      toast({
+        title: "Orden actualizado",
+        description: "El orden de las cápsulas se ha actualizado",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el orden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number, isFromLibrary: boolean) => {
+    if (isFromLibrary) {
+      const item = [...(myContent || []), ...(publicContent || [])][index];
+      e.dataTransfer.setData('text/path-content-id', item?.id || '');
+      e.dataTransfer.effectAllowed = 'copy';
+    } else {
+      setDraggedIndex(index);
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/reorder', 'true');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    const isReorder = e.dataTransfer.types.includes('text/reorder');
+    if (isReorder && draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDropOnCard = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const isReorder = e.dataTransfer.types.includes('text/reorder');
+    
+    if (isReorder && draggedIndex !== null) {
+      await handleReorder(draggedIndex, dropIndex);
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+    }
   };
 
   const handleDrop = async (e: any) => {
@@ -361,7 +423,23 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                   null;
 
                 return (
-                  <Card key={item.id} className="p-4">
+                  <Card
+                    key={item.id}
+                    className={`p-4 transition-all ${
+                      draggedIndex === index ? 'opacity-50' : ''
+                    } ${
+                      dragOverIndex === index ? 'border-2 border-primary' : ''
+                    }`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index, false)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragLeave={() => setDragOverIndex(null)}
+                    onDrop={(e) => handleDropOnCard(e, index)}
+                    onDragEnd={() => {
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                  >
                     <div className="flex items-start gap-3">
                       <div className="cursor-move mt-1">
                         <GripVertical className="w-5 h-5 text-muted-foreground" />
@@ -402,9 +480,6 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="ghost">
-                          <Edit className="w-4 h-4" />
-                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
