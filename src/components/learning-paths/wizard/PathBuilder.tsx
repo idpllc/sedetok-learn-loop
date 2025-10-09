@@ -174,6 +174,8 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
             (item.content_type === 'documento' && item.cover_image) ||
             null;
 
+          const isAdded = contents?.some((c: any) => c.content_id === item.id);
+
           return (
             <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
               <div className="flex items-start gap-3">
@@ -207,12 +209,12 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                 </div>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant={isAdded ? "secondary" : "outline"}
                   onClick={() => handleAddContent(item.id)}
-                  disabled={!pathId || addContent.isPending}
+                  disabled={!pathId || addContent.isPending || isAdded}
                   className="flex-shrink-0"
                 >
-                  <Plus className="w-3 h-3" />
+                  {isAdded ? "Agregado" : "Agregar"}
                 </Button>
               </div>
             </Card>
