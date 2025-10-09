@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Book, Video, FileText, Brain, Star, Lock, CheckCircle2, Play } from "lucide-react";
+import { Book, Video, FileText, Brain, Star, Lock, CheckCircle2, Play, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,17 @@ export const PathMapView = ({
   completedIds = new Set(),
   onContentClick 
 }: PathMapViewProps) => {
-  const navigate = useNavigate();
+  const handleContentClick = (contentId: string, index: number) => {
+    if (contentId === 'start') {
+      // Scroll to the PathInfoCard (first slide)
+      const container = document.querySelector('.snap-y');
+      if (container) {
+        container.children[0]?.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      onContentClick(contentId, index);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-24">
@@ -61,6 +71,26 @@ export const PathMapView = ({
 
         {/* Content nodes */}
         <div className="relative z-10 space-y-8">
+          {/* START NODE - Always first */}
+          <div className="flex items-center justify-center pt-8">
+            <button
+              onClick={() => handleContentClick('start', -1)}
+              className="relative group transition-all duration-300 hover:scale-105"
+            >
+              {/* Start node circle */}
+              <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-2xl bg-gradient-to-br from-primary to-primary/80 border-4 border-primary-foreground/20 animate-pulse">
+                <Flag className="w-10 h-10 text-primary-foreground" />
+              </div>
+
+              {/* Start label */}
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground border-2 border-primary-foreground/20 rounded-full px-4 py-1.5 text-sm font-bold whitespace-nowrap flex items-center gap-2 shadow-lg">
+                <Play className="w-4 h-4" />
+                INICIO
+              </div>
+            </button>
+          </div>
+
+          {/* Regular content nodes */}
           {contents.map((content, index) => {
             const isCompleted = completedIds.has(content.id);
             const isFirst = index === 0;
@@ -80,7 +110,7 @@ export const PathMapView = ({
 
                 {/* Content node */}
                 <button
-                  onClick={() => !isLocked && onContentClick(content.id, index)}
+                  onClick={() => !isLocked && handleContentClick(content.id, index)}
                   disabled={isLocked}
                   className={cn(
                     "relative group transition-all duration-300",
