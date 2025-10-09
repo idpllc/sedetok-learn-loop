@@ -38,6 +38,7 @@ const App = () => (
           <Route path="/learning-paths/create" element={<CreateLearningPath />} />
           <Route path="/learning-paths/edit/:id" element={<CreateLearningPath />} />
           <Route path="/learning-paths/view/:id" element={<ViewLearningPath />} />
+          <Route path="/learning-paths/:id" element={<ViewLearningPath />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
