@@ -225,7 +225,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   return (
     <div ref={setRefs} className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-black">
       {/* Video/Content container */}
-      <div className="relative w-full h-full max-w-4xl overflow-hidden flex items-center justify-center">
+      <div className="relative isolate w-full h-full max-w-4xl overflow-hidden flex items-center justify-center">
         {videoUrl ? (
           <VideoPlayer 
             ref={(ref) => {
@@ -259,7 +259,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
             
             {/* Central download button */}
-            <div className="absolute inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 flex items-center justify-center z-[200] pointer-events-none">
               <Button
                 size="lg"
                 onClick={(e) => {
@@ -272,7 +272,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   link.click();
                   document.body.removeChild(link);
                 }}
-                className="flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform"
+                className="flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform pointer-events-auto"
               >
                 <Download className="w-6 h-6" />
                 Descargar Recurso
@@ -367,7 +367,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         )}
 
         {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0" />
 
         {/* Category badge */}
         <div className="absolute top-4 left-4 z-10">
