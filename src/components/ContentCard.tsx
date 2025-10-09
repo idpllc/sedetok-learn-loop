@@ -254,28 +254,28 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               <PDFViewer 
                 fileUrl={documentUrl}
                 onExpandClick={handleExpandPdf}
-                showDownloadButton={true}
+                showDownloadButton={false}
               />
             </div>
             
             {/* Central download button */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+            <div className="absolute inset-0 flex items-center justify-center z-50">
               <Button
                 size="lg"
                 onClick={(e) => {
                   e.stopPropagation();
                   const link = document.createElement('a');
                   link.href = documentUrl;
-                  link.download = documentUrl.split('/').pop() || 'documento.pdf';
+                  link.download = documentUrl.split('/').pop() || 'documento';
                   link.target = '_blank';
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
                 }}
-                className="pointer-events-auto flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform"
+                className="flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform"
               >
                 <Download className="w-6 h-6" />
-                Descargar Documento
+                Descargar Recurso
               </Button>
             </div>
           </div>
