@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen } from "lucide-react";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { PDFViewer } from "@/components/PDFViewer";
@@ -95,6 +95,7 @@ const Profile = () => {
 
   const videoContent = userContent?.filter(c => c.content_type === "video") || [];
   const documentContent = userContent?.filter(c => c.content_type === "document") || [];
+  const readingContent = userContent?.filter(c => c.content_type === "lectura") || [];
   const quizContent = userContent?.filter(c => c.content_type === "quiz") || [];
 
   const ContentItem = ({ item }: { item: any }) => (
@@ -307,18 +308,22 @@ const Profile = () => {
 
         {/* Content tabs */}
         <Tabs defaultValue="videos" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="videos" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
-              Videos ({videoContent.length})
+              <span className="hidden sm:inline">Videos</span> ({videoContent.length})
             </TabsTrigger>
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              Documentos ({documentContent.length})
+              <span className="hidden sm:inline">Docs</span> ({documentContent.length})
+            </TabsTrigger>
+            <TabsTrigger value="readings" className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">Lecturas</span> ({readingContent.length})
             </TabsTrigger>
             <TabsTrigger value="quizzes" className="flex items-center gap-2">
               <HelpCircle className="w-4 h-4" />
-              Quizzes ({quizContent.length})
+              <span className="hidden sm:inline">Quizzes</span> ({quizContent.length})
             </TabsTrigger>
           </TabsList>
 
@@ -343,6 +348,19 @@ const Profile = () => {
                 <div className="col-span-full text-center py-12 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p>No tienes documentos aún</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="readings" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {readingContent.length > 0 ? (
+                readingContent.map((item) => <ContentItem key={item.id} item={item} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No tienes lecturas aún</p>
                 </div>
               )}
             </div>

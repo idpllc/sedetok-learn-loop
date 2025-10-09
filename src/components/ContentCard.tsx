@@ -242,18 +242,21 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
           </div>
         ) : contentType === 'lectura' && richText ? (
-          <div className="w-full h-full flex items-center justify-center p-4">
-            <div className="w-full max-w-2xl bg-background/95 backdrop-blur-sm rounded-lg p-6 shadow-xl overflow-hidden relative z-10">
+          <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
+            <div className="w-full max-w-2xl bg-background/95 backdrop-blur-sm rounded-lg p-6 shadow-xl overflow-hidden">
               <div className="prose prose-sm max-w-none line-clamp-[20] text-foreground">
                 <div className="whitespace-pre-wrap leading-relaxed">
                   {richText}
                 </div>
               </div>
-              <div className="mt-6 flex justify-center relative z-20">
+              <div className="mt-6 flex justify-center">
                 <Button
                   size="lg"
-                  onClick={handleExpandReading}
-                  className="flex items-center gap-2 shadow-lg relative z-20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleExpandReading();
+                  }}
+                  className="flex items-center gap-2 shadow-lg pointer-events-auto"
                 >
                   <BookOpen className="w-5 h-5" />
                   Leer más
