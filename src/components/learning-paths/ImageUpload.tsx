@@ -37,9 +37,9 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
 
     setIsUploading(true);
     try {
-      const result = await uploadFile(file);
-      if (result?.secure_url) {
-        onChange(result.secure_url);
+      const url = await uploadFile(file);
+      if (url) {
+        onChange(url);
         toast({
           title: "Imagen cargada",
           description: "La imagen ha sido cargada exitosamente",

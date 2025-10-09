@@ -25,14 +25,19 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
   const handleAddContent = async (contentId: string) => {
     if (!pathId) return;
     
-    const maxOrder = contents?.reduce((max, item) => 
-      Math.max(max, item.order_index), -1) ?? -1;
+    try {
+      const maxOrder = contents?.reduce((max, item) => 
+        Math.max(max, item.order_index), -1) ?? -1;
 
-    await addContent.mutateAsync({
-      path_id: pathId,
-      content_id: contentId,
-      order_index: maxOrder + 1,
-    } as any);
+      await addContent.mutateAsync({
+        path_id: pathId,
+        content_id: contentId,
+        order_index: maxOrder + 1,
+        is_required: false,
+      });
+    } catch (error) {
+      console.error("Error adding content:", error);
+    }
   };
 
   const handleRemoveContent = async (id: string) => {
