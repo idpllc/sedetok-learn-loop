@@ -14,6 +14,7 @@ import EditProfile from "./pages/EditProfile";
 import LearningPaths from "./pages/LearningPaths";
 import CreateLearningPath from "./pages/CreateLearningPath";
 import ViewLearningPath from "./pages/ViewLearningPath";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/learning-paths/edit/:id" element={<CreateLearningPath />} />
           <Route path="/learning-paths/view/:id" element={<ViewLearningPath />} />
           <Route path="/learning-paths/:id" element={<ViewLearningPath />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
