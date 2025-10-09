@@ -55,15 +55,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
   const [tagInput, setTagInput] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
-  const [videoPreview, setVideoPreview] = useState<string>("");
-  const [documentPreview, setDocumentPreview] = useState<string>("");
-  const [thumbnailDragActive, setThumbnailDragActive] = useState(false);
-  const [videoDragActive, setVideoDragActive] = useState(false);
-  const [documentDragActive, setDocumentDragActive] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string>("");
+  const [fileType, setFileType] = useState<'video' | 'document' | 'image' | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     if (editMode && contentData) {
@@ -76,166 +71,113 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
       });
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
-      if (contentData.thumbnail_url) setThumbnailPreview(contentData.thumbnail_url);
-      if (contentData.video_url) setVideoPreview(contentData.video_url);
-      if (contentData.document_url) setDocumentPreview(contentData.document_url.split('/').pop() || "");
+      if (contentData.video_url) {
+        setFilePreview(contentData.video_url);
+        setFileType('video');
+      } else if (contentData.document_url) {
+        setFilePreview(contentData.document_url.split('/').pop() || "");
+        setFileType('document');
+      } else if (contentData.thumbnail_url) {
+        setFilePreview(contentData.thumbnail_url);
+        setFileType('image');
+      }
     }
   }, [editMode, contentData]);
 
-  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && validateImageFile(file)) {
-      setThumbnailFile(file);
-      setThumbnailPreview(URL.createObjectURL(file));
-      
-      // Auto-detect content type based on file
-      if (!formData.content_type && !videoFile && !documentFile) {
-        // If only thumbnail is uploaded, don't auto-select type
-      }
-    }
-  };
-
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && validateVideoFile(file)) {
-      setVideoFile(file);
-      setVideoPreview(URL.createObjectURL(file));
-      
-      // Auto-detect content type as video
-      if (!formData.content_type) {
-        setFormData({ ...formData, content_type: "video" as ContentType });
-      }
-    }
-  };
-
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && validateDocumentFile(file)) {
-      setDocumentFile(file);
-      setDocumentPreview(file.name);
-      
-      // Auto-detect content type as document
-      if (!formData.content_type) {
-        setFormData({ ...formData, content_type: "document" as ContentType });
-      }
-    }
-  };
-
-  const validateImageFile = (file: File): boolean => {
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
+  const detectFileType = (file: File): 'video' | 'document' | 'image' | null => {
+    const videoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
+    const documentTypes = ['application/pdf'];
+    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     
-    if (!validTypes.includes(file.type)) {
+    if (videoTypes.includes(file.type)) return 'video';
+    if (documentTypes.includes(file.type)) return 'document';
+    if (imageTypes.includes(file.type)) return 'image';
+    return null;
+  };
+
+  const validateFile = (file: File): boolean => {
+    const type = detectFileType(file);
+    
+    if (!type) {
       toast({
         title: "Tipo de archivo no válido",
-        description: "Por favor sube una imagen válida (JPG, PNG, WEBP)",
+        description: "Por favor sube un video (MP4, MOV, AVI, MKV), documento PDF o imagen (JPG, PNG, WEBP)",
         variant: "destructive",
       });
       return false;
     }
-    
-    if (file.size > maxSize) {
+
+    const maxSizes = {
+      video: 500 * 1024 * 1024, // 500MB
+      document: 50 * 1024 * 1024, // 50MB
+      image: 10 * 1024 * 1024, // 10MB
+    };
+
+    if (file.size > maxSizes[type]) {
+      const maxSizeText = type === 'video' ? '500MB' : type === 'document' ? '50MB' : '10MB';
       toast({
         title: "Archivo muy grande",
-        description: "La imagen no debe superar los 10MB",
+        description: `El archivo no debe superar los ${maxSizeText}`,
         variant: "destructive",
       });
       return false;
     }
-    
+
     return true;
   };
 
-  const validateVideoFile = (file: File): boolean => {
-    const validTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
-    const maxSize = 500 * 1024 * 1024; // 500MB
-    
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: "Tipo de archivo no válido",
-        description: "Por favor sube un archivo de video válido (MP4, MOV, AVI, MKV)",
-        variant: "destructive",
-      });
-      return false;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!validateFile(file)) return;
+
+    const type = detectFileType(file);
+    if (!type) return;
+
+    setUploadedFile(file);
+    setFileType(type);
+
+    if (type === 'video' || type === 'image') {
+      setFilePreview(URL.createObjectURL(file));
+    } else {
+      setFilePreview(file.name);
     }
-    
-    if (file.size > maxSize) {
-      toast({
-        title: "Archivo muy grande",
-        description: "El video no debe superar los 500MB",
-        variant: "destructive",
-      });
-      return false;
+
+    // Auto-detect content type
+    if (type === 'video') {
+      setFormData({ ...formData, content_type: "video" as ContentType });
+    } else if (type === 'document') {
+      setFormData({ ...formData, content_type: "document" as ContentType });
     }
-    
-    return true;
   };
 
-  const validateDocumentFile = (file: File): boolean => {
-    const validTypes = ['application/pdf'];
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    
-    if (!validTypes.includes(file.type)) {
-      toast({
-        title: "Tipo de archivo no válido",
-        description: "Por favor sube un archivo PDF",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    if (file.size > maxSize) {
-      toast({
-        title: "Archivo muy grande",
-        description: "El PDF no debe superar los 50MB",
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    return true;
-  };
-
-  const handleThumbnailDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setThumbnailDragActive(false);
+    setDragActive(false);
     
     const file = e.dataTransfer.files?.[0];
-    if (file && validateImageFile(file)) {
-      setThumbnailFile(file);
-      setThumbnailPreview(URL.createObjectURL(file));
-    }
-  };
+    if (!file) return;
 
-  const handleVideoDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setVideoDragActive(false);
-    
-    const file = e.dataTransfer.files?.[0];
-    if (file && validateVideoFile(file)) {
-      setVideoFile(file);
-      setVideoPreview(URL.createObjectURL(file));
-      
-      // Auto-detect content type as video
-      if (!formData.content_type) {
-        setFormData({ ...formData, content_type: "video" as ContentType });
-      }
-    }
-  };
+    if (!validateFile(file)) return;
 
-  const handleDocumentDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDocumentDragActive(false);
-    
-    const file = e.dataTransfer.files?.[0];
-    if (file && validateDocumentFile(file)) {
-      setDocumentFile(file);
-      setDocumentPreview(file.name);
-      
-      // Auto-detect content type as document
-      if (!formData.content_type) {
-        setFormData({ ...formData, content_type: "document" as ContentType });
-      }
+    const type = detectFileType(file);
+    if (!type) return;
+
+    setUploadedFile(file);
+    setFileType(type);
+
+    if (type === 'video' || type === 'image') {
+      setFilePreview(URL.createObjectURL(file));
+    } else {
+      setFilePreview(file.name);
+    }
+
+    // Auto-detect content type
+    if (type === 'video') {
+      setFormData({ ...formData, content_type: "video" as ContentType });
+    } else if (type === 'document') {
+      setFormData({ ...formData, content_type: "document" as ContentType });
     }
   };
 
@@ -243,34 +185,14 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     e.preventDefault();
   };
 
-  const handleThumbnailDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setThumbnailDragActive(true);
+    setDragActive(true);
   };
 
-  const handleThumbnailDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setThumbnailDragActive(false);
-  };
-
-  const handleVideoDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setVideoDragActive(true);
-  };
-
-  const handleVideoDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setVideoDragActive(false);
-  };
-
-  const handleDocumentDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDocumentDragActive(true);
-  };
-
-  const handleDocumentDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDocumentDragActive(false);
+    setDragActive(false);
   };
 
   const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -295,20 +217,15 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
       let documentUrl: string | undefined;
       let thumbnailUrl: string | undefined;
 
-      if (thumbnailFile) {
-        thumbnailUrl = await uploadFile(thumbnailFile, "raw");
-      }
-
-      if (videoFile) {
-        videoUrl = await uploadFile(videoFile, "video");
-        // Only auto-generate thumbnail if user didn't provide one
-        if (!thumbnailUrl) {
+      if (uploadedFile) {
+        if (fileType === 'video') {
+          videoUrl = await uploadFile(uploadedFile, "video");
           thumbnailUrl = videoUrl.replace(/\.[^/.]+$/, ".jpg");
+        } else if (fileType === 'document') {
+          documentUrl = await uploadFile(uploadedFile, "raw");
+        } else if (fileType === 'image') {
+          thumbnailUrl = await uploadFile(uploadedFile, "raw");
         }
-      }
-
-      if (documentFile) {
-        documentUrl = await uploadFile(documentFile, "raw");
       }
 
       const contentPayload = {
@@ -340,73 +257,134 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
 
   const isLoading = uploading || createMutation.isPending || isUpdating;
 
-  const shouldShowVideo = !formData.content_type || formData.content_type === "video";
-  const shouldShowDocument = !formData.content_type || formData.content_type === "document";
+  const getFileTypeIcon = () => {
+    if (!fileType) return <Upload className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
+    if (fileType === 'video') return <Video className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
+    if (fileType === 'document') return <FileText className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
+    return <Upload className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
+  };
+
+  const getFileTypeText = () => {
+    if (fileType === 'video') return 'Video';
+    if (fileType === 'document') return 'Documento PDF';
+    if (fileType === 'image') return 'Imagen';
+    return 'contenido';
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="thumbnail">Imagen de Portada</Label>
+        <Label htmlFor="file">Contenido de la Cápsula</Label>
         <div
-          onDrop={handleThumbnailDrop}
+          onDrop={handleFileDrop}
           onDragOver={handleDragOver}
-          onDragEnter={handleThumbnailDragEnter}
-          onDragLeave={handleThumbnailDragLeave}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
           className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
-            thumbnailDragActive
+            dragActive
               ? "border-primary bg-primary/5"
               : "border-border hover:border-primary/50"
           }`}
         >
           <Input
-            id="thumbnail"
+            id="file"
             type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            onChange={handleThumbnailChange}
+            accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,application/pdf,image/jpeg,image/jpg,image/png,image/webp"
+            onChange={handleFileChange}
             className="hidden"
+            disabled={editMode}
           />
           <div className="flex flex-col items-center justify-center gap-4">
             <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-              thumbnailDragActive ? "bg-primary/20" : "bg-muted"
+              dragActive ? "bg-primary/20" : "bg-muted"
             }`}>
-              <Upload className={`w-8 h-8 ${thumbnailDragActive ? "text-primary" : "text-muted-foreground"}`} />
+              {getFileTypeIcon()}
             </div>
             <div className="text-center">
               <p className="text-sm font-medium mb-1">
-                {thumbnailDragActive ? "Suelta la imagen aquí" : "Arrastra tu imagen aquí"}
+                {dragActive ? `Suelta tu ${getFileTypeText()} aquí` : "Arrastra tu archivo aquí"}
               </p>
               <p className="text-xs text-muted-foreground mb-3">
                 o haz click para seleccionar
               </p>
               <p className="text-xs text-muted-foreground">
-                Formatos: JPG, PNG, WEBP (máx. 10MB)
+                Videos (MP4, MOV, AVI, MKV), PDFs o Imágenes (JPG, PNG, WEBP)
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Máx: Videos 500MB | PDFs 50MB | Imágenes 10MB
               </p>
             </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => document.getElementById("thumbnail")?.click()}
+              onClick={() => document.getElementById("file")?.click()}
+              disabled={editMode}
             >
               Seleccionar archivo
             </Button>
           </div>
         </div>
-        {thumbnailPreview && (
+        {filePreview && (
           <div className="relative">
-            <img src={thumbnailPreview} alt="Preview" className="w-full rounded-lg mt-2 max-h-[300px] object-cover" />
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              className="absolute top-4 right-4"
-              onClick={() => {
-                setThumbnailFile(null);
-                setThumbnailPreview("");
-              }}
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            {fileType === 'video' && (
+              <>
+                <video src={filePreview} controls className="w-full rounded-lg mt-2" />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-4 right-4"
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setFilePreview("");
+                    setFileType(null);
+                    setFormData({ ...formData, content_type: "" as ContentType });
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+            {fileType === 'image' && (
+              <>
+                <img src={filePreview} alt="Preview" className="w-full rounded-lg mt-2 max-h-[300px] object-cover" />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="absolute top-4 right-4"
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setFilePreview("");
+                    setFileType(null);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+            {fileType === 'document' && (
+              <div className="flex items-center justify-between gap-2 p-4 bg-muted rounded-lg mt-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-medium">{filePreview}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setUploadedFile(null);
+                    setFilePreview("");
+                    setFileType(null);
+                    setFormData({ ...formData, content_type: "" as ContentType });
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -531,146 +509,6 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
           checked={isPublic}
           onCheckedChange={setIsPublic}
         />
-      </div>
-
-      <div className="space-y-4">
-        {shouldShowVideo && (
-          <div className="space-y-2">
-            <Label htmlFor="video">Video {!formData.content_type && "(opcional)"}</Label>
-            <div
-              onDrop={handleVideoDrop}
-              onDragOver={handleDragOver}
-              onDragEnter={handleVideoDragEnter}
-              onDragLeave={handleVideoDragLeave}
-              className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
-                videoDragActive
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              }`}
-            >
-              <Input
-                id="video"
-                type="file"
-                accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
-                onChange={handleVideoChange}
-                className="hidden"
-              />
-              <div className="flex flex-col items-center justify-center gap-4">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                  videoDragActive ? "bg-primary/20" : "bg-muted"
-                }`}>
-                  <Video className={`w-8 h-8 ${videoDragActive ? "text-primary" : "text-muted-foreground"}`} />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium mb-1">
-                    {videoDragActive ? "Suelta el video aquí" : "Arrastra tu video aquí"}
-                  </p>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    o haz click para seleccionar
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Formatos: MP4, MOV, AVI, MKV (máx. 500MB)
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById("video")?.click()}
-                >
-                  Seleccionar archivo
-                </Button>
-              </div>
-            </div>
-            {videoPreview && (
-              <div className="relative">
-                <video src={videoPreview} controls className="w-full rounded-lg mt-2" />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-4 right-4"
-                  onClick={() => {
-                    setVideoFile(null);
-                    setVideoPreview("");
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {shouldShowDocument && (
-          <div className="space-y-2">
-            <Label htmlFor="document">Documento PDF {!formData.content_type && "(opcional)"}</Label>
-            <div
-              onDrop={handleDocumentDrop}
-              onDragOver={handleDragOver}
-              onDragEnter={handleDocumentDragEnter}
-              onDragLeave={handleDocumentDragLeave}
-              className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
-                documentDragActive
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-              }`}
-            >
-              <Input
-                id="document"
-                type="file"
-                accept="application/pdf"
-                onChange={handleDocumentChange}
-                className="hidden"
-              />
-              <div className="flex flex-col items-center justify-center gap-4">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                  documentDragActive ? "bg-primary/20" : "bg-muted"
-                }`}>
-                  <FileText className={`w-8 h-8 ${documentDragActive ? "text-primary" : "text-muted-foreground"}`} />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium mb-1">
-                    {documentDragActive ? "Suelta el PDF aquí" : "Arrastra tu PDF aquí"}
-                  </p>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    o haz click para seleccionar
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Formato: PDF (máx. 50MB)
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById("document")?.click()}
-                >
-                  Seleccionar archivo
-                </Button>
-              </div>
-            </div>
-            {documentPreview && (
-              <div className="flex items-center justify-between gap-2 p-4 bg-muted rounded-lg mt-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-medium">{documentPreview}</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDocumentFile(null);
-                    setDocumentPreview("");
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
