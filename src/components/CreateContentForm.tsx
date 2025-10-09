@@ -276,6 +276,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+
       {formData.content_type === 'lectura' ? (
         <div className="space-y-2">
           <Label htmlFor="richText">Contenido de la Lectura</Label>
