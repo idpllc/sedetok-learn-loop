@@ -534,7 +534,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 </button>
 
                 {showVolumeSlider && (
-                  <div className="flex flex-col items-center bg-white/90 backdrop-blur-sm rounded-full px-2 py-3 shadow-lg">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
                     <input
                       type="range"
                       min="0"
@@ -542,7 +542,21 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       step="0.1"
                       value={isMuted ? 0 : volume}
                       onChange={handleVolumeChange}
-                      className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black -rotate-90 origin-center"
+                      className="w-24 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-4
+                        [&::-webkit-slider-thumb]:h-4
+                        [&::-webkit-slider-thumb]:rounded-full
+                        [&::-webkit-slider-thumb]:bg-black
+                        [&::-webkit-slider-thumb]:cursor-pointer
+                        [&::-webkit-slider-thumb]:shadow-md
+                        [&::-moz-range-thumb]:w-4
+                        [&::-moz-range-thumb]:h-4
+                        [&::-moz-range-thumb]:rounded-full
+                        [&::-moz-range-thumb]:bg-black
+                        [&::-moz-range-thumb]:border-0
+                        [&::-moz-range-thumb]:cursor-pointer
+                        [&::-moz-range-thumb]:shadow-md"
                     />
                   </div>
                 )}
