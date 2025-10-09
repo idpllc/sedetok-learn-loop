@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Search from "./pages/Search";
 import Achievements from "./pages/Achievements";
 import CreateContent from "./pages/CreateContent";
+import CreateQuiz from "./pages/CreateQuiz";
 import EditContent from "./pages/EditContent";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/create" element={<CreateContent />} />
+          <Route path="/create-quiz" element={<CreateQuiz />} />
           <Route path="/edit/:id" element={<EditContent />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />

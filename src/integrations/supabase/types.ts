@@ -594,36 +594,83 @@ export type Database = {
           },
         ]
       }
+      quiz_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_correct: boolean | null
+          option_text: string
+          order_index: number
+          question_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          option_text: string
+          order_index: number
+          question_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean | null
+          option_text?: string
+          order_index?: number
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_questions: {
         Row: {
           content_id: string
           correct_answer: number
           created_at: string | null
+          feedback: string | null
           id: string
+          image_url: string | null
           options: Json
           order_index: number
           points: number | null
           question_text: string
+          question_type: Database["public"]["Enums"]["question_type"] | null
+          video_url: string | null
         }
         Insert: {
           content_id: string
           correct_answer: number
           created_at?: string | null
+          feedback?: string | null
           id?: string
+          image_url?: string | null
           options: Json
           order_index: number
           points?: number | null
           question_text: string
+          question_type?: Database["public"]["Enums"]["question_type"] | null
+          video_url?: string | null
         }
         Update: {
           content_id?: string
           correct_answer?: number
           created_at?: string | null
+          feedback?: string | null
           id?: string
+          image_url?: string | null
           options?: Json
           order_index?: number
           points?: number | null
           question_text?: string
+          question_type?: Database["public"]["Enums"]["question_type"] | null
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -631,6 +678,68 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          category: Database["public"]["Enums"]["category_type"]
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          difficulty: Database["public"]["Enums"]["quiz_difficulty"]
+          final_message: string | null
+          grade_level: Database["public"]["Enums"]["grade_level"]
+          id: string
+          is_public: boolean | null
+          random_order: boolean | null
+          status: Database["public"]["Enums"]["quiz_status"] | null
+          thumbnail_url: string | null
+          time_limit: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["category_type"]
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          difficulty?: Database["public"]["Enums"]["quiz_difficulty"]
+          final_message?: string | null
+          grade_level: Database["public"]["Enums"]["grade_level"]
+          id?: string
+          is_public?: boolean | null
+          random_order?: boolean | null
+          status?: Database["public"]["Enums"]["quiz_status"] | null
+          thumbnail_url?: string | null
+          time_limit?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["category_type"]
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          difficulty?: Database["public"]["Enums"]["quiz_difficulty"]
+          final_message?: string | null
+          grade_level?: Database["public"]["Enums"]["grade_level"]
+          id?: string
+          is_public?: boolean | null
+          random_order?: boolean | null
+          status?: Database["public"]["Enums"]["quiz_status"] | null
+          thumbnail_url?: string | null
+          time_limit?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -700,6 +809,54 @@ export type Database = {
           },
           {
             foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quiz_results: {
+        Row: {
+          completed_at: string | null
+          id: string
+          max_score: number
+          passed: boolean | null
+          quiz_id: string
+          score: number
+          time_taken: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          max_score: number
+          passed?: boolean | null
+          quiz_id: string
+          score: number
+          time_taken?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          max_score?: number
+          passed?: boolean | null
+          quiz_id?: string
+          score?: number
+          time_taken?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quiz_results_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quiz_results_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -848,6 +1005,14 @@ export type Database = {
         | "Universitario"
       nivel_meta: "Inicial" | "Intermedio" | "Avanzado"
       preferencia_duracion: "Corto" | "Medio" | "Largo"
+      question_type:
+        | "multiple_choice"
+        | "true_false"
+        | "short_answer"
+        | "matching"
+        | "ordering"
+      quiz_difficulty: "basico" | "intermedio" | "avanzado"
+      quiz_status: "borrador" | "publicado"
       tipo_aprendizaje: "Visual" | "Auditivo" | "Kinestésico" | "Lógico"
       tipo_documento:
         | "RC"
@@ -1020,6 +1185,15 @@ export const Constants = {
       ],
       nivel_meta: ["Inicial", "Intermedio", "Avanzado"],
       preferencia_duracion: ["Corto", "Medio", "Largo"],
+      question_type: [
+        "multiple_choice",
+        "true_false",
+        "short_answer",
+        "matching",
+        "ordering",
+      ],
+      quiz_difficulty: ["basico", "intermedio", "avanzado"],
+      quiz_status: ["borrador", "publicado"],
       tipo_aprendizaje: ["Visual", "Auditivo", "Kinestésico", "Lógico"],
       tipo_documento: [
         "RC",
