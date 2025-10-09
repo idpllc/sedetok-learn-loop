@@ -369,7 +369,10 @@ export type Database = {
             | null
           nivel_motivacion: number | null
           numero_documento: string | null
+          onboarding_paso_actual: number | null
+          onboarding_pospuesto_hasta: string | null
           pais: string | null
+          perfil_completo_360: boolean | null
           preferencia_duracion_contenido:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
@@ -434,7 +437,10 @@ export type Database = {
             | null
           nivel_motivacion?: number | null
           numero_documento?: string | null
+          onboarding_paso_actual?: number | null
+          onboarding_pospuesto_hasta?: string | null
           pais?: string | null
+          perfil_completo_360?: boolean | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
@@ -499,7 +505,10 @@ export type Database = {
             | null
           nivel_motivacion?: number | null
           numero_documento?: string | null
+          onboarding_paso_actual?: number | null
+          onboarding_pospuesto_hasta?: string | null
           pais?: string | null
+          perfil_completo_360?: boolean | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null

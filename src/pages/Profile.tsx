@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles } from "lucide-react";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +27,7 @@ const Profile = () => {
   const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
+  const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -168,10 +171,16 @@ const Profile = () => {
               {user?.user_metadata?.username || user?.email}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
-            <UserCog className="w-4 h-4" />
-            <span className="hidden md:inline">Editar Perfil</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={openOnboarding} className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden md:inline">Completar Perfil 360°</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
+              <UserCog className="w-4 h-4" />
+              <span className="hidden md:inline">Editar Perfil</span>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -295,6 +304,13 @@ const Profile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Onboarding modal */}
+      <OnboardingModal
+        open={shouldShowOnboarding}
+        onOpenChange={closeOnboarding}
+        initialStep={initialStep}
+      />
     </div>
   );
 };

@@ -4,6 +4,9 @@ import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { useAuth } from "@/hooks/useAuth";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import { OnboardingTeaser } from "@/components/OnboardingTeaser";
+import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
@@ -81,6 +84,7 @@ const Index = () => {
   const { saves } = useUserSaves();
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
     Object.entries(videoRefs.current).forEach(([id, ref]) => {
@@ -221,6 +225,18 @@ const Index = () => {
 
       {/* Bottom navigation */}
       <BottomNav />
+
+      {/* Onboarding modal */}
+      {user && (
+        <>
+          <OnboardingModal
+            open={shouldShowOnboarding}
+            onOpenChange={closeOnboarding}
+            initialStep={initialStep}
+          />
+          <OnboardingTeaser onOpenOnboarding={openOnboarding} />
+        </>
+      )}
     </div>
   );
 };
