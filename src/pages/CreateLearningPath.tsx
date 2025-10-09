@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -7,30 +7,89 @@ import { PathBasicInfo } from "@/components/learning-paths/wizard/PathBasicInfo"
 import { PathBuilder } from "@/components/learning-paths/wizard/PathBuilder";
 import { PathReview } from "@/components/learning-paths/wizard/PathReview";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CreateLearningPath = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const { toast } = useToast();
   const { createPath, updatePath } = useLearningPaths();
   const [currentStep, setCurrentStep] = useState(1);
-  const [pathId, setPathId] = useState<string | null>(null);
-  const [pathData, setPathData] = useState({
+  const [pathId, setPathId] = useState<string | null>(id || null);
+  const [isLoading, setIsLoading] = useState(!!id);
+  const [pathData, setPathData] = useState<any>({
     title: "",
     description: "",
     objectives: "",
     subject: "",
     topic: "",
-    grade_level: "primaria" as const,
+    grade_level: "primaria",
     level: "",
     language: "Español",
-    category: "matematicas" as const,
+    category: "matematicas",
     is_public: false,
     cover_url: "",
     enforce_order: false,
     require_quiz_pass: false,
     allow_collaboration: false,
-    required_routes: [] as string[],
-    tipo_aprendizaje: "" as any,
+    required_routes: [],
+    tipo_aprendizaje: "",
   });
+
+  // Cargar datos existentes si estamos en modo edición
+  useEffect(() => {
+    const loadPathData = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("learning_paths")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setPathData({
+            title: data.title || "",
+            description: data.description || "",
+            objectives: data.objectives || "",
+            subject: data.subject || "",
+            topic: data.topic || "",
+            grade_level: data.grade_level || "primaria",
+            level: data.level || "",
+            language: data.language || "Español",
+            category: data.category || "matematicas",
+            is_public: data.is_public || false,
+            cover_url: data.cover_url || "",
+            enforce_order: data.enforce_order || false,
+            require_quiz_pass: data.require_quiz_pass || false,
+            allow_collaboration: data.allow_collaboration || false,
+            required_routes: data.required_routes || [],
+            tipo_aprendizaje: data.tipo_aprendizaje || "",
+          });
+        }
+      } catch (error: any) {
+        console.error("Error loading path:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo cargar la ruta",
+          variant: "destructive",
+        });
+        navigate("/learning-paths");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPathData();
+  }, [id, navigate, toast]);
 
   const steps = [
     { number: 1, title: "Información Básica", component: PathBasicInfo },
@@ -39,6 +98,26 @@ const CreateLearningPath = () => {
   ];
 
   const progress = (currentStep / steps.length) * 100;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <header className="sticky top-0 z-10 bg-card border-b border-border">
+          <div className="container mx-auto px-4 py-4">
+            <Skeleton className="h-8 w-64 mb-4" />
+            <Skeleton className="h-2 w-full" />
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-6">
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const handleNext = async () => {
     // Si es el primer paso, crear la ruta
@@ -90,7 +169,9 @@ const CreateLearningPath = () => {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-xl font-bold">Crear Ruta de Aprendizaje</h1>
+                <h1 className="text-xl font-bold">
+                  {id ? "Editar" : "Crear"} Ruta de Aprendizaje
+                </h1>
                 <p className="text-sm text-muted-foreground">
                   Paso {currentStep} de {steps.length}: {steps[currentStep - 1].title}
                 </p>
