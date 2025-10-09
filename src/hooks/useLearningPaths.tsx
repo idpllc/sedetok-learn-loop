@@ -2,27 +2,95 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const useLearningPaths = (userId?: string) => {
+export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' | 'all') => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: paths, isLoading } = useQuery({
-    queryKey: ["learning-paths", userId],
+    queryKey: ["learning-paths", userId, filter],
     queryFn: async () => {
-      let query = supabase
-        .from("learning_paths")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (userId) {
-        query = query.eq("creator_id", userId);
-      } else {
-        query = query.eq("is_public", true);
+      if (!userId) {
+        // Public paths for non-authenticated users
+        const { data, error } = await supabase
+          .from("learning_paths")
+          .select("*")
+          .eq("is_public", true)
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        return (data || []) as any[];
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []) as any[];
+      if (filter === 'created') {
+        // Only paths created by the user
+        const { data, error } = await supabase
+          .from("learning_paths")
+          .select("*")
+          .eq("creator_id", userId)
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        return (data || []) as any[];
+      } else if (filter === 'taken') {
+        // Only paths where user has progress (taken by the user)
+        const { data: progressData, error: progressError } = await supabase
+          .from("user_path_progress")
+          .select("path_id")
+          .eq("user_id", userId);
+        
+        if (progressError) throw progressError;
+        
+        const pathIds = [...new Set(progressData?.map(p => p.path_id) || [])];
+        
+        if (pathIds.length === 0) return [];
+        
+        const { data, error } = await supabase
+          .from("learning_paths")
+          .select("*")
+          .in("id", pathIds)
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        return (data || []) as any[];
+      } else {
+        // All paths: created by user OR where user has progress
+        const [createdPaths, progressData] = await Promise.all([
+          supabase
+            .from("learning_paths")
+            .select("*")
+            .eq("creator_id", userId),
+          supabase
+            .from("user_path_progress")
+            .select("path_id")
+            .eq("user_id", userId)
+        ]);
+
+        if (createdPaths.error) throw createdPaths.error;
+        if (progressData.error) throw progressData.error;
+
+        const progressPathIds = [...new Set(progressData.data?.map(p => p.path_id) || [])];
+        const createdPathIds = new Set(createdPaths.data?.map(p => p.id) || []);
+        
+        // Get paths where user has progress but didn't create
+        const takenPathIds = progressPathIds.filter(id => !createdPathIds.has(id));
+        
+        if (takenPathIds.length === 0) {
+          return createdPaths.data || [];
+        }
+        
+        const { data: takenPaths, error: takenError } = await supabase
+          .from("learning_paths")
+          .select("*")
+          .in("id", takenPathIds);
+        
+        if (takenError) throw takenError;
+        
+        // Combine and sort by created_at
+        const allPaths = [...(createdPaths.data || []), ...(takenPaths || [])];
+        return allPaths.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
     },
   }) as { data: any[] | undefined; isLoading: boolean };
 

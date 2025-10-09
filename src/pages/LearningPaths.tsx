@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Search, Filter, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { PathCard } from "@/components/learning-paths/PathCard";
@@ -12,7 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 const LearningPaths = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { paths, isLoading } = useLearningPaths(user?.id);
+  const [pathFilter, setPathFilter] = useState<'all' | 'created' | 'taken'>('all');
+  const { paths, isLoading } = useLearningPaths(user?.id, pathFilter);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -56,6 +58,30 @@ const LearningPaths = () => {
             </Button>
           </div>
           
+          <div className="flex gap-2 mb-3">
+            <Badge
+              variant={pathFilter === 'all' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setPathFilter('all')}
+            >
+              Todas
+            </Badge>
+            <Badge
+              variant={pathFilter === 'created' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setPathFilter('created')}
+            >
+              Mis Rutas
+            </Badge>
+            <Badge
+              variant={pathFilter === 'taken' ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() => setPathFilter('taken')}
+            >
+              En Progreso
+            </Badge>
+          </div>
+
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
