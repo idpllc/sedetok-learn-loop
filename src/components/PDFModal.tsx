@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 
 // Configure PDF.js worker
@@ -47,6 +47,16 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title }: PDFModalProps) 
     setScale((prev) => Math.max(prev - 0.2, 0.6));
   };
 
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileUrl.split('/').pop() || 'documento.pdf';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       // Reset state when closing
@@ -61,7 +71,18 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title }: PDFModalProps) 
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle>{title}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>{title}</DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Descargar
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="flex items-center justify-between px-6 py-3 border-b bg-muted/50">

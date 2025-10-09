@@ -254,6 +254,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               <PDFViewer 
                 fileUrl={documentUrl}
                 onExpandClick={handleExpandPdf}
+                showDownloadButton={true}
               />
             </div>
           </div>

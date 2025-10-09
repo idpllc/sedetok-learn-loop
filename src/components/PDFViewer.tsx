@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
-import { Maximize2, Loader2 } from "lucide-react";
+import { Maximize2, Loader2, Download } from "lucide-react";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -9,9 +9,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 interface PDFViewerProps {
   fileUrl: string;
   onExpandClick: () => void;
+  showDownloadButton?: boolean;
 }
 
-export const PDFViewer = ({ fileUrl, onExpandClick }: PDFViewerProps) => {
+export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }: PDFViewerProps) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +24,16 @@ export const PDFViewer = ({ fileUrl, onExpandClick }: PDFViewerProps) => {
   const onDocumentLoadError = (error: Error) => {
     console.error("Error loading PDF:", error);
     setLoading(false);
+  };
+
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileUrl.split('/').pop() || 'documento.pdf';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -53,7 +64,17 @@ export const PDFViewer = ({ fileUrl, onExpandClick }: PDFViewerProps) => {
         </Document>
       </div>
 
-      <div className="absolute bottom-4 right-4 z-20">
+      <div className="absolute bottom-4 right-4 z-20 flex gap-2">
+        {showDownloadButton && (
+          <Button
+            size="sm"
+            onClick={handleDownload}
+            className="flex items-center gap-2 shadow-lg bg-secondary hover:bg-secondary/80"
+          >
+            <Download className="w-4 h-4" />
+            Descargar
+          </Button>
+        )}
         <Button
           size="sm"
           onClick={onExpandClick}

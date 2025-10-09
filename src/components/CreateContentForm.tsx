@@ -78,7 +78,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [isPublic, setIsPublic] = useState(true);
   
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedThumbnail, setUploadedThumbnail] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>("");
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   const [fileType, setFileType] = useState<'video' | 'document' | 'image' | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [richText, setRichText] = useState("");
@@ -112,6 +114,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       } else if (contentData.document_url) {
         setFilePreview(contentData.document_url.split('/').pop() || "");
         setFileType('document');
+        // Load existing thumbnail for documents
+        if (contentData.thumbnail_url) {
+          setThumbnailPreview(contentData.thumbnail_url);
+        }
       } else if (contentData.thumbnail_url) {
         setFilePreview(contentData.thumbnail_url);
         setFileType('image');
@@ -142,7 +148,15 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
   const detectFileType = (file: File): 'video' | 'document' | 'image' | null => {
     const videoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
-    const documentTypes = ['application/pdf'];
+    const documentTypes = [
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/vnd.ms-excel', // .xls
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-powerpoint', // .ppt
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+    ];
     const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     
     if (videoTypes.includes(file.type)) return 'video';
@@ -157,7 +171,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     if (!type) {
       toastHook({
         title: "Tipo de archivo no válido",
-        description: "Por favor sube un video (MP4, MOV, AVI, MKV), documento PDF o imagen (JPG, PNG, WEBP)",
+        description: "Por favor sube un video (MP4, MOV, AVI, MKV), documento (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) o imagen (JPG, PNG, WEBP)",
         variant: "destructive",
       });
       return false;
@@ -170,7 +184,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     };
 
     if (file.size > maxSizes[type]) {
-      const maxSizeText = type === 'video' ? '500MB' : type === 'document' ? '50MB' : '10MB';
+      const maxSizeText = type === 'video' ? '500MB' : '50MB';
       toastHook({
         title: "Archivo muy grande",
         description: `El archivo no debe superar los ${maxSizeText}`,
@@ -359,6 +373,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         } else if (fileType === 'image') {
           thumbnailUrl = await uploadFile(uploadedFile, "raw");
         }
+      }
+
+      // Upload thumbnail if provided (for documents)
+      if (uploadedThumbnail && fileType === 'document') {
+        thumbnailUrl = await uploadFile(uploadedThumbnail, "raw");
       }
 
       const contentPayload = {
@@ -590,7 +609,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <Input
                   id="file"
                   type="file"
-                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,application/pdf,image/jpeg,image/jpg,image/png,image/webp"
+                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/jpeg,image/jpg,image/png,image/webp"
                   onChange={handleFileChange}
                   className="hidden"
                   disabled={editMode}
@@ -609,10 +628,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                       o haz click para seleccionar
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Videos (MP4, MOV, AVI, MKV), PDFs o Imágenes (JPG, PNG, WEBP)
+                      Videos (MP4, MOV, AVI, MKV), Documentos (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) o Imágenes (JPG, PNG, WEBP)
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Máx: Videos 500MB | PDFs 50MB | Imágenes 10MB
+                      Máx: Videos 500MB | Documentos 50MB | Imágenes 10MB
                     </p>
                   </div>
                   <Button
@@ -680,6 +699,67 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                           setFilePreview("");
                           setFileType(null);
                           setFormData({ ...formData, content_type: "" as ContentType });
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Portada opcional para documentos */}
+              {fileType === 'document' && (
+                <div className="space-y-2 mt-4 p-4 border rounded-lg bg-muted/50">
+                  <Label htmlFor="thumbnail">Portada del Documento (Opcional)</Label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Sube una imagen para previsualizar el documento
+                  </p>
+                  <Input
+                    id="thumbnail"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                        if (!imageTypes.includes(file.type)) {
+                          toastHook({
+                            title: "Tipo de archivo no válido",
+                            description: "Solo se permiten imágenes (JPG, PNG, WEBP)",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        if (file.size > 10 * 1024 * 1024) {
+                          toastHook({
+                            title: "Archivo muy grande",
+                            description: "La portada no debe superar los 10MB",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        setUploadedThumbnail(file);
+                        setThumbnailPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+                  {thumbnailPreview && (
+                    <div className="relative mt-2">
+                      <img 
+                        src={thumbnailPreview} 
+                        alt="Portada del documento" 
+                        className="w-full rounded-lg max-h-[200px] object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={() => {
+                          setUploadedThumbnail(null);
+                          setThumbnailPreview("");
                         }}
                       >
                         <X className="w-4 h-4" />
