@@ -245,7 +245,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         ) : documentUrl ? (
           <div className="w-full h-full flex items-center justify-center p-4 relative">
             <div 
-              className={`w-full max-w-2xl transition-opacity duration-300 ${showPdfContent ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              className={`relative z-10 w-full max-w-2xl transition-opacity duration-300 ${showPdfContent ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
               onClick={(e) => {
                 e.stopPropagation();
                 setShowPdfContent(!showPdfContent);
@@ -259,7 +259,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
             
             {/* Central download button */}
-            <div className="absolute inset-0 flex items-center justify-center z-[200] pointer-events-none">
+            <div className="absolute inset-0 flex items-center justify-center z-[999]">
               <Button
                 size="lg"
                 onClick={(e) => {
