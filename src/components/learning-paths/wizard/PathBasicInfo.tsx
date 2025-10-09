@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { RouteSearchModal } from "@/components/learning-paths/RouteSearchModal";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 
+const learningTypes = [
+  { value: "Visual", label: "Visual" },
+  { value: "Auditivo", label: "Auditivo" },
+  { value: "Kinestésico", label: "Kinestésico" },
+  { value: "Lógico", label: "Lógico" },
+];
+
 interface PathBasicInfoProps {
   data: any;
   onChange: (data: any) => void;
@@ -149,6 +156,28 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div>
+          <Label htmlFor="learning_type">Tipo de Aprendizaje Principal</Label>
+          <Select
+            value={data.tipo_aprendizaje}
+            onValueChange={(value) => onChange({ ...data, tipo_aprendizaje: value })}
+          >
+            <SelectTrigger id="learning_type" className="mt-1.5">
+              <SelectValue placeholder="Seleccionar tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              {learningTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground mt-1">
+            Indica el estilo de aprendizaje predominante de esta ruta
+          </p>
         </div>
 
         <div>

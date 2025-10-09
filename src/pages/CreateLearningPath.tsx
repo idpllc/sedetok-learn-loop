@@ -29,6 +29,7 @@ const CreateLearningPath = () => {
     require_quiz_pass: false,
     allow_collaboration: false,
     required_routes: [] as string[],
+    tipo_aprendizaje: "" as any,
   });
 
   const steps = [

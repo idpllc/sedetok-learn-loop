@@ -291,6 +291,9 @@ export type Database = {
           status: string | null
           subject: string | null
           thumbnail_url: string | null
+          tipo_aprendizaje:
+            | Database["public"]["Enums"]["tipo_aprendizaje"]
+            | null
           title: string
           topic: string | null
           total_xp: number | null
@@ -316,6 +319,9 @@ export type Database = {
           status?: string | null
           subject?: string | null
           thumbnail_url?: string | null
+          tipo_aprendizaje?:
+            | Database["public"]["Enums"]["tipo_aprendizaje"]
+            | null
           title: string
           topic?: string | null
           total_xp?: number | null
@@ -341,6 +347,9 @@ export type Database = {
           status?: string | null
           subject?: string | null
           thumbnail_url?: string | null
+          tipo_aprendizaje?:
+            | Database["public"]["Enums"]["tipo_aprendizaje"]
+            | null
           title?: string
           topic?: string | null
           total_xp?: number | null
