@@ -34,8 +34,14 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
 }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(() => {
+    const saved = localStorage.getItem('videoMuted');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('videoVolume');
+    return saved ? parseFloat(saved) : 1;
+  });
   const [isVertical, setIsVertical] = useState(true);
   const hasWatchedRef = useRef(false);
 
@@ -62,6 +68,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Apply saved volume and mute settings
+    video.volume = volume;
+    video.muted = isMuted;
 
     const handleLoadedMetadata = () => {
       const aspectRatio = video.videoWidth / video.videoHeight;
@@ -118,8 +128,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     const video = videoRef.current;
     if (!video) return;
 
-    video.muted = !isMuted;
-    setIsMuted(!isMuted);
+    const newMutedState = !isMuted;
+    video.muted = newMutedState;
+    setIsMuted(newMutedState);
+    localStorage.setItem('videoMuted', JSON.stringify(newMutedState));
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,10 +141,16 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     const newVolume = parseFloat(e.target.value);
     video.volume = newVolume;
     setVolume(newVolume);
+    localStorage.setItem('videoVolume', newVolume.toString());
+    
     if (newVolume === 0) {
-      setIsMuted(true);
+      const newMutedState = true;
+      setIsMuted(newMutedState);
+      localStorage.setItem('videoMuted', JSON.stringify(newMutedState));
     } else if (isMuted) {
-      setIsMuted(false);
+      const newMutedState = false;
+      setIsMuted(newMutedState);
+      localStorage.setItem('videoMuted', JSON.stringify(newMutedState));
     }
   };
 
