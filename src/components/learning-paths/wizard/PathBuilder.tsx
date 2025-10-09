@@ -24,6 +24,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { contents, addContent, removeContent } = usePathContent(pathId || undefined);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   // Fetch user's own content
   const { data: myContent, isLoading: loadingMyContent } = useQuery({
@@ -134,6 +135,29 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
     await removeContent.mutateAsync(id);
   };
 
+  const handleDrop = async (e: any) => {
+    e.preventDefault();
+    setIsDraggingOver(false);
+    const droppedId = e.dataTransfer.getData('text/path-content-id') || e.dataTransfer.getData('text/plain');
+    if (!droppedId) return;
+    if (!pathId) {
+      toast({
+        title: "Error",
+        description: "Debes completar el paso 1 primero",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (contents?.some((c: any) => c.content_id === droppedId)) {
+      toast({
+        title: "Ya agregado",
+        description: "Esta cápsula ya está en la ruta",
+      });
+      return;
+    }
+    await handleAddContent(droppedId);
+  };
+
   const filterContent = (items: any[] | undefined) => {
     if (!items) return [];
     return items.filter(
@@ -177,7 +201,16 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
           const isAdded = contents?.some((c: any) => c.content_id === item.id);
 
           return (
-            <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
+            <Card
+              key={item.id}
+              className="p-3 hover:shadow-md transition-shadow"
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('text/path-content-id', item.id);
+                e.dataTransfer.effectAllowed = 'copy';
+              }}
+              title="Arrastra para agregar al constructor"
+            >
               <div className="flex items-start gap-3">
                 {thumbnail && (
                   <div className="w-20 h-14 rounded overflow-hidden flex-shrink-0 bg-muted">
@@ -286,7 +319,12 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
           </Card>
         ) : contents && contents.length > 0 ? (
           <ScrollArea className="h-[600px]">
-            <div className="space-y-3">
+            <div
+              className={`space-y-3 rounded-lg ${isDraggingOver ? "border-2 border-dashed border-primary/50 bg-primary/5" : ""}`}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
+              onDragLeave={() => setIsDraggingOver(false)}
+              onDrop={handleDrop}
+            >
               {contents.map((item: any, index) => {
                 const thumbnail = item.content?.thumbnail_url || 
                   (item.content?.content_type === 'video' && item.content?.video_url ? 
@@ -355,10 +393,15 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
             </div>
           </ScrollArea>
         ) : (
-          <Card className="p-12 text-center">
+          <Card
+            className={`p-12 text-center rounded-lg ${isDraggingOver ? "border-2 border-dashed border-primary/50 bg-primary/5" : ""}`}
+            onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
+            onDragLeave={() => setIsDraggingOver(false)}
+            onDrop={handleDrop}
+          >
             <div className="text-4xl mb-4">👈</div>
             <p className="text-muted-foreground">
-              Agrega cápsulas desde la biblioteca para comenzar
+              Agrega cápsulas desde la biblioteca o arrastra y suelta aquí
             </p>
           </Card>
         )}
