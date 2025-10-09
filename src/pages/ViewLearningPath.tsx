@@ -1,5 +1,7 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,8 +9,9 @@ import { usePathContent } from "@/hooks/useLearningPaths";
 import { useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Map, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PathMapView } from "@/components/learning-paths/PathMapView";
 
 const ViewLearningPath = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +22,24 @@ const ViewLearningPath = () => {
   const { saves } = useUserSaves();
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<"map" | "cards">("map");
+  const [completedIds] = useState<Set<string>>(new Set()); // TODO: Track completed content
+
+  // Fetch learning path info
+  const { data: pathInfo } = useQuery({
+    queryKey: ["learning-path", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("learning_paths")
+        .select("*")
+        .eq("id", id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
     Object.entries(videoRefs.current).forEach(([id, ref]) => {
@@ -85,6 +106,17 @@ const ViewLearningPath = () => {
     );
   }
 
+  const handleContentClick = (contentId: string, index: number) => {
+    setViewMode("cards");
+    pauseAllVideos();
+    setTimeout(() => {
+      const container = document.querySelector('.snap-y');
+      if (container) {
+        container.children[index]?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   // Transform pathContent to match ContentCard expected format
   const contentData = pathContent
     .sort((a, b) => a.order_index - b.order_index)
@@ -147,6 +179,52 @@ const ViewLearningPath = () => {
     })
     .filter(Boolean) as any[];
 
+  // Get path info
+  const pathTitle = pathInfo?.title || "Ruta de Aprendizaje";
+  const pathDescription = pathInfo?.description;
+
+  // Map view
+  if (viewMode === "map") {
+    return (
+      <div className="relative">
+        {/* Back button */}
+        <div className="absolute top-4 left-4 z-50">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => navigate("/learning-paths")}
+            className="rounded-full bg-background/80 backdrop-blur-sm"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {/* View toggle button */}
+        <div className="absolute top-4 right-4 z-50">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => setViewMode("cards")}
+            className="rounded-full bg-background/80 backdrop-blur-sm"
+          >
+            <List className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <PathMapView
+          pathTitle={pathTitle}
+          pathDescription={pathDescription}
+          contents={contentData}
+          completedIds={completedIds}
+          onContentClick={handleContentClick}
+        />
+        
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Cards view
   return (
     <div className="relative">
       {/* Back button */}
@@ -158,6 +236,18 @@ const ViewLearningPath = () => {
           className="rounded-full bg-background/80 backdrop-blur-sm"
         >
           <ArrowLeft className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* View toggle button */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={() => setViewMode("map")}
+          className="rounded-full bg-background/80 backdrop-blur-sm"
+        >
+          <Map className="w-5 h-5" />
         </Button>
       </div>
 
