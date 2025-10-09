@@ -60,8 +60,8 @@ export const ShareSheet = ({ contentId, contentTitle }: ShareSheetProps) => {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button className="flex flex-col items-center gap-1 transition-all hover:scale-110">
-          <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
-            <Share2 className="w-6 h-6 text-black" />
+          <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-white">
+            <Share2 className="w-5 h-5 text-black" />
           </div>
         </button>
       </SheetTrigger>

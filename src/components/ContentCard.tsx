@@ -9,12 +9,14 @@ import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
 import { PDFViewer } from "./PDFViewer";
 import { PDFModal } from "./PDFModal";
+import { DescriptionSheet } from "./DescriptionSheet";
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ContentCardProps {
   id: string;
   title: string;
+  description?: string;
   creator: string;
   institution?: string;
   tags: string[];
@@ -27,6 +29,7 @@ interface ContentCardProps {
   grade: string;
   isLiked: boolean;
   isSaved: boolean;
+  creatorAvatar?: string;
   onPrevious?: () => void;
   onNext?: () => void;
   hasPrevious?: boolean;
@@ -38,6 +41,7 @@ interface ContentCardProps {
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   id,
   title,
+  description,
   creator,
   institution,
   tags,
@@ -50,6 +54,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   grade,
   isLiked,
   isSaved,
+  creatorAvatar,
   onPrevious,
   onNext,
   hasPrevious,
@@ -249,84 +254,85 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 
         {/* Content info */}
         <div className="absolute bottom-20 left-0 right-0 p-6 z-10">
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div>
-              <h2 className="text-xl font-bold text-white mb-1">{title}</h2>
-              <p className="text-sm text-white/80">
+              <h2 className="text-base font-bold text-white mb-1">{title}</h2>
+              <p className="text-xs text-white/80 mb-2">
                 {creator}
                 {institution && <span className="text-white/60"> · {institution}</span>}
               </p>
+              
+              {/* Description excerpt with "más" link */}
+              {description && (
+                <DescriptionSheet
+                  title={title}
+                  description={description}
+                  creator={creator}
+                  institution={institution}
+                  tags={tags}
+                  creatorAvatar={creatorAvatar}
+                />
+              )}
             </div>
-
-            {/* Tags */}
-            {tags && tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs border-white/30 text-white/90">
-                    #{tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
         {/* Action buttons - floating on the right, centered vertically */}
-        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-4 md:gap-6 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
+        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
           <button
             onClick={handleLike}
-            className="flex flex-col items-center gap-2 transition-all hover:scale-110"
+            className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
-            <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg ${
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
               isLiked ? 'bg-red-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Heart 
-                className={`w-6 h-6 md:w-7 md:h-7 ${isLiked ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-5 h-5 ${isLiked ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
-            <span className="text-xs md:text-sm font-semibold text-white drop-shadow-lg">{initialLikes}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-lg">{initialLikes}</span>
           </button>
 
           <CommentsSheet contentId={id} commentsCount={initialComments} />
 
           <button 
             onClick={handleSave}
-            className="flex flex-col items-center gap-2 transition-all hover:scale-110"
+            className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
-            <div className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-lg ${
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
               isSaved ? 'bg-yellow-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Bookmark 
-                className={`w-6 h-6 md:w-7 md:h-7 ${isSaved ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-5 h-5 ${isSaved ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
           </button>
 
           <ShareSheet contentId={id} contentTitle={title} />
 
-          {/* Video controls - below share button */}
+          {/* Video controls - hidden on mobile */}
           {videoUrl && (
             <>
               <button
                 onClick={togglePlayPause}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
+                className="hidden md:flex w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
               >
                 {isPlaying ? (
-                  <Pause className="w-6 h-6 md:w-7 md:h-7 text-black" />
+                  <Pause className="w-5 h-5 text-black" />
                 ) : (
-                  <Play className="w-6 h-6 md:w-7 md:h-7 text-black ml-0.5" />
+                  <Play className="w-5 h-5 text-black ml-0.5" />
                 )}
               </button>
 
-              <div className="flex flex-col items-center gap-2">
+              <div className="hidden md:flex flex-col items-center gap-2">
                 <button
                   onClick={toggleMute}
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
+                  className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
                 >
                   {isMuted || volume === 0 ? (
-                    <VolumeX className="w-6 h-6 md:w-7 md:h-7 text-black" />
+                    <VolumeX className="w-5 h-5 text-black" />
                   ) : (
-                    <Volume2 className="w-6 h-6 md:w-7 md:h-7 text-black" />
+                    <Volume2 className="w-5 h-5 text-black" />
                   )}
                 </button>
 

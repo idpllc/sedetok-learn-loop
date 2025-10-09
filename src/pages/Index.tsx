@@ -14,6 +14,7 @@ const mockContent = [
   {
     id: "1",
     title: "Ecuaciones Cuadráticas: Método de Factorización",
+    description: "Aprende a resolver ecuaciones cuadráticas usando el método de factorización paso a paso. En esta lección veremos ejemplos prácticos y ejercicios resueltos para dominar esta técnica fundamental del álgebra.",
     creator: "Prof. María González",
     institution: "Instituto San Martín",
     tags: ["matemáticas", "álgebra", "ecuaciones"],
@@ -26,6 +27,7 @@ const mockContent = [
   {
     id: "2",
     title: "Fotosíntesis: El proceso que da vida al planeta",
+    description: "Descubre cómo las plantas convierten la luz solar en energía mediante la fotosíntesis. Exploraremos las fases luminosa y oscura, los cloroplastos y la importancia de este proceso para la vida en la Tierra.",
     creator: "Dr. Carlos Méndez",
     institution: "Colegio Nacional",
     tags: ["biología", "plantas", "ciencia"],
@@ -38,6 +40,7 @@ const mockContent = [
   {
     id: "3",
     title: "Verbos Irregulares en Inglés: Tips para Memorizar",
+    description: "Aprende los verbos irregulares más comunes en inglés con técnicas efectivas de memorización. Incluye ejemplos prácticos, frases útiles y trucos para recordar las formas en pasado y participio.",
     creator: "Teacher Ana Smith",
     institution: "English Academy",
     tags: ["inglés", "gramática", "verbos"],
@@ -50,6 +53,7 @@ const mockContent = [
   {
     id: "4",
     title: "La Revolución Francesa: Causas y Consecuencias",
+    description: "Un análisis completo de la Revolución Francesa de 1789, sus causas sociales y económicas, los principales eventos y personajes, y su impacto en la historia moderna de Europa y el mundo.",
     creator: "Prof. Roberto Díaz",
     institution: "Liceo Histórico",
     tags: ["historia", "francia", "revolución"],
@@ -62,6 +66,7 @@ const mockContent = [
   {
     id: "5",
     title: "Introducción a la Programación con Python",
+    description: "Da tus primeros pasos en el mundo de la programación con Python. Aprenderás los conceptos básicos: variables, tipos de datos, estructuras de control, funciones y mucho más con ejemplos prácticos.",
     creator: "Dev. Laura Rodríguez",
     institution: "TechEdu",
     tags: ["programación", "python", "código"],
@@ -188,8 +193,10 @@ const Index = () => {
               id={item.id}
               videoRef={videoRef}
               title={item.title}
+              description={item.description}
               creator={item.profiles?.username || item.creator}
               institution={item.profiles?.institution || item.institution}
+              creatorAvatar={item.profiles?.avatar_url}
               tags={Array.isArray(item.tags) ? item.tags : []}
               category={item.category}
               thumbnail={item.thumbnail_url || item.thumbnail}

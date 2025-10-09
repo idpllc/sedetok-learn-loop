@@ -36,11 +36,11 @@ export const CommentsSheet = ({ contentId, commentsCount }: CommentsSheetProps) 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button className="flex flex-col items-center gap-2 transition-all hover:scale-110">
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
-            <MessageCircle className="w-6 h-6 md:w-7 md:h-7 text-black" />
+        <button className="flex flex-col items-center gap-1 transition-all hover:scale-110">
+          <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-white">
+            <MessageCircle className="w-5 h-5 text-black" />
           </div>
-          <span className="text-xs md:text-sm font-semibold text-white drop-shadow-lg">{commentsCount}</span>
+          <span className="text-xs font-semibold text-white drop-shadow-lg">{commentsCount}</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[80vh] bg-background">
