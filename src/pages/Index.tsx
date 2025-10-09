@@ -206,6 +206,7 @@ const Index = () => {
               contentType={item.content_type}
               likes={item.likes_count || item.likes}
               comments={item.comments_count || item.comments}
+              shares={item.shares_count || 0}
               grade={item.grade_level || item.grade}
               isLiked={likes.has(item.id)}
               isSaved={saves.has(item.id)}

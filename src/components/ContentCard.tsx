@@ -37,6 +37,7 @@ interface ContentCardProps {
   contentType?: string;
   likes: number;
   comments: number;
+  shares: number;
   grade: string;
   isLiked: boolean;
   isSaved: boolean;
@@ -67,6 +68,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   contentType,
   likes: initialLikes,
   comments: initialComments,
+  shares: initialShares,
   grade,
   isLiked,
   isSaved,
@@ -454,7 +456,12 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
           </button>
 
-          <ShareSheet contentId={id} contentTitle={title} />
+          <ShareSheet 
+            contentId={id} 
+            contentTitle={title} 
+            isQuiz={contentType === 'quiz'}
+            sharesCount={initialShares}
+          />
 
           {/* Video controls - hidden on mobile */}
           {videoUrl && (

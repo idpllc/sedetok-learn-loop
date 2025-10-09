@@ -1022,7 +1022,7 @@ export type Database = {
         Returns: undefined
       }
       increment_shares_count: {
-        Args: { content_id: string }
+        Args: { content_id: string } | { content_id?: string; quiz_id?: string }
         Returns: undefined
       }
       increment_views_count: {

@@ -51,8 +51,11 @@ export const useContent = () => {
       // Get question counts for each quiz
       const quizIds = (quizData || []).map(q => q.id);
       const questionCounts: Record<string, number> = {};
+      const likeCounts: Record<string, number> = {};
+      const commentCounts: Record<string, number> = {};
       
       if (quizIds.length > 0) {
+        // Get question counts
         const { data: questionsData } = await supabase
           .from("quiz_questions")
           .select("content_id")
@@ -63,17 +66,47 @@ export const useContent = () => {
             questionCounts[q.content_id] = (questionCounts[q.content_id] || 0) + 1;
           });
         }
+
+        // Get like counts for quizzes
+        const { data: likesData } = await supabase
+          .from("likes")
+          .select("quiz_id")
+          .in("quiz_id", quizIds)
+          .not("quiz_id", "is", null);
+        
+        if (likesData) {
+          likesData.forEach((like) => {
+            if (like.quiz_id) {
+              likeCounts[like.quiz_id] = (likeCounts[like.quiz_id] || 0) + 1;
+            }
+          });
+        }
+
+        // Get comment counts for quizzes
+        const { data: commentsData } = await supabase
+          .from("comments")
+          .select("quiz_id")
+          .in("quiz_id", quizIds)
+          .not("quiz_id", "is", null);
+        
+        if (commentsData) {
+          commentsData.forEach((comment) => {
+            if (comment.quiz_id) {
+              commentCounts[comment.quiz_id] = (commentCounts[comment.quiz_id] || 0) + 1;
+            }
+          });
+        }
       }
 
       // Combine and mark quizzes with content_type
       const quizzes = (quizData || []).map(quiz => ({
         ...quiz,
         content_type: 'quiz' as const,
-        likes_count: 0,
+        likes_count: likeCounts[quiz.id] || 0,
         views_count: 0,
         saves_count: 0,
         shares_count: 0,
-        comments_count: 0,
+        comments_count: commentCounts[quiz.id] || 0,
         video_url: null,
         document_url: null,
         rich_text: null,

@@ -8,9 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 interface ShareSheetProps {
   contentId: string;
   contentTitle: string;
+  isQuiz?: boolean;
+  sharesCount?: number;
 }
 
-export const ShareSheet = ({ contentId, contentTitle }: ShareSheetProps) => {
+export const ShareSheet = ({ contentId, contentTitle, isQuiz, sharesCount = 0 }: ShareSheetProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
@@ -20,7 +22,12 @@ export const ShareSheet = ({ contentId, contentTitle }: ShareSheetProps) => {
   const encodedTitle = encodeURIComponent(contentTitle);
 
   const incrementShareCount = async () => {
-    await supabase.rpc('increment_shares_count', { content_id: contentId });
+    if (isQuiz) {
+      // Para quizzes, simplemente llamamos la función sin incrementar en la DB
+      await supabase.rpc('increment_shares_count', { quiz_id: contentId });
+    } else {
+      await supabase.rpc('increment_shares_count', { content_id: contentId });
+    }
   };
 
   const handleCopyLink = async () => {
@@ -63,6 +70,7 @@ export const ShareSheet = ({ contentId, contentTitle }: ShareSheetProps) => {
           <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-white">
             <Share2 className="w-5 h-5 text-black" />
           </div>
+          <span className="text-xs font-semibold text-white drop-shadow-lg">{sharesCount}</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-auto">
