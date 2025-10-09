@@ -49,8 +49,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const { user } = useAuth();
   const { uploadFile, uploading } = useCloudinary();
   const { createMutation } = useCreateContent();
-  const { createQuiz } = useQuizzes();
-  const { createQuestion } = useQuizQuestions();
+  const { createQuiz, updateQuiz } = useQuizzes();
+  const { createQuestion, deleteQuestion } = useQuizQuestions();
   const [isUpdating, setIsUpdating] = useState(false);
   const [quizStep, setQuizStep] = useState(0); // 0 = basic form, 1 = questions, 2 = config
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -282,12 +282,33 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         creator_id: user.id,
       };
 
-      const createdQuiz = await createQuiz.mutateAsync(quizData as any);
+      let targetQuizId: string;
 
+      // If editing, update existing quiz
+      if (editMode && contentData?.id) {
+        await updateQuiz.mutateAsync({ 
+          id: contentData.id, 
+          updates: quizData 
+        } as any);
+        targetQuizId = contentData.id;
+
+        // Delete all existing questions before creating new ones
+        if (loadedQuestions && loadedQuestions.length > 0) {
+          for (const question of loadedQuestions) {
+            await deleteQuestion.mutateAsync(question.id);
+          }
+        }
+      } else {
+        // Creating new quiz
+        const createdQuiz = await createQuiz.mutateAsync(quizData as any);
+        targetQuizId = createdQuiz.id;
+      }
+
+      // Create all questions
       for (let i = 0; i < quizQuestions.length; i++) {
         const question = quizQuestions[i];
         await createQuestion.mutateAsync({
-          content_id: createdQuiz.id,
+          content_id: targetQuizId,
           question_text: question.question_text,
           question_type: question.question_type,
           image_url: question.image_url,
@@ -304,11 +325,17 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         } as any);
       }
 
-      toast.success(status === "publicado" ? "¡Quiz publicado!" : "Quiz guardado como borrador");
+      toast.success(
+        editMode 
+          ? "¡Quiz actualizado exitosamente!" 
+          : status === "publicado" 
+            ? "¡Quiz publicado!" 
+            : "Quiz guardado como borrador"
+      );
       navigate("/profile");
     } catch (error) {
       console.error("Error saving quiz:", error);
-      toast.error("Error al guardar el quiz");
+      toast.error(editMode ? "Error al actualizar el quiz" : "Error al guardar el quiz");
     }
   };
 
