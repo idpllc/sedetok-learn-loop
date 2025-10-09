@@ -159,7 +159,7 @@ export const PathMapView = ({
         </div>
 
         {/* Progress indicator at bottom */}
-        <div className="mt-12 text-center">
+        <div className="mt-12 text-center relative z-30">
           <div className="inline-flex items-center gap-2 bg-card border rounded-full px-6 py-3 shadow-sm">
             <Star className="w-5 h-5 text-primary fill-primary" />
             <span className="font-bold text-lg">

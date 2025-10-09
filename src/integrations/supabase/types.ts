@@ -1124,6 +1124,10 @@ export type Database = {
           | { p_action_type: string; p_content_id: string; p_user_id: string }
         Returns: undefined
       }
+      award_xp_for_upload: {
+        Args: { p_content_id: string; p_user_id: string }
+        Returns: boolean
+      }
       check_and_award_path_completion_xp: {
         Args: { p_path_id: string; p_user_id: string }
         Returns: boolean
