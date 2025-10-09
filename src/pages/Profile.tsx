@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut } from "lucide-react";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
+import { PDFViewer } from "@/components/PDFViewer";
+import { PDFModal } from "@/components/PDFModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,11 +25,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<{ url: string; title: string } | null>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  const handleExpandPdf = (url: string, title: string) => {
+    setSelectedPdf({ url, title });
+    setPdfModalOpen(true);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -102,13 +116,18 @@ const Profile = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {item.thumbnail_url && (
+        {item.content_type === "document" && item.documento_url ? (
+          <PDFViewer 
+            fileUrl={item.documento_url} 
+            onExpandClick={() => handleExpandPdf(item.documento_url, item.title)}
+          />
+        ) : item.thumbnail_url ? (
           <img 
             src={item.thumbnail_url} 
             alt={item.title}
             className="w-full h-48 object-cover rounded-md"
           />
-        )}
+        ) : null}
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="secondary">{item.category}</Badge>
           <Badge variant="outline">{item.grade_level}</Badge>
@@ -179,6 +198,10 @@ const Profile = () => {
             <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
               <UserCog className="w-4 h-4" />
               <span className="hidden md:inline">Editar Perfil</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-2">
+              <LogOut className="w-4 h-4" />
+              <span className="hidden md:inline">Cerrar Sesión</span>
             </Button>
           </div>
         </div>
@@ -311,6 +334,16 @@ const Profile = () => {
         onOpenChange={closeOnboarding}
         initialStep={initialStep}
       />
+
+      {/* PDF Modal */}
+      {selectedPdf && (
+        <PDFModal
+          open={pdfModalOpen}
+          onOpenChange={setPdfModalOpen}
+          fileUrl={selectedPdf.url}
+          title={selectedPdf.title}
+        />
+      )}
     </div>
   );
 };
