@@ -273,7 +273,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 pb-4">
         {filtered.map((item) => {
           const thumbnail = item.thumbnail_url || 
             (item.content_type === 'video' && item.video_url ? 
@@ -288,7 +288,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
           return (
             <Card
               key={item.id}
-              className="p-3 hover:shadow-md transition-shadow"
+              className="p-3 hover:shadow-md transition-shadow overflow-visible"
               draggable
               onDragStart={(e) => {
                 e.dataTransfer.setData('text/path-content-id', item.id);
