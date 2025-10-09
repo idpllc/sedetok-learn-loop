@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search as SearchIcon, Filter, BookOpen, Map } from "lucide-react";
+import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,9 +142,11 @@ const Search = () => {
             </div>
             {filteredContent.map((item) => {
               const isLearningPath = item.itemType === "learning_path";
+              const isQuiz = !isLearningPath && item.content_type === 'quiz';
               const isLiked = !isLearningPath && likes.has(item.id);
               const isSaved = !isLearningPath && saves.has(item.id);
               const profile = item.profiles as any;
+              const scientist = isQuiz ? getQuizScientistIcon(item.category) : null;
               
               return (
                 <Card 
@@ -166,6 +169,17 @@ const Search = () => {
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
+                      ) : isQuiz && scientist ? (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-blue-500/30 flex items-center justify-center">
+                          <div className="text-center">
+                            <img 
+                              src={scientist.icon} 
+                              alt={scientist.name}
+                              className="w-24 h-24 mx-auto rounded-full shadow-xl border-4 border-white/30 object-cover mb-3"
+                            />
+                            <p className="text-sm text-white/80">{scientist.name}</p>
+                          </div>
+                        </div>
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <div className="text-center">

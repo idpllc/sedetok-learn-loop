@@ -1,4 +1,5 @@
 import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download } from "lucide-react";
+import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -313,53 +314,64 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
           </div>
         ) : contentType === 'quiz' ? (
-          <div className="w-full h-full bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-blue-500/30 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30" />
-            <div className="text-center p-8 relative z-10">
-              <div className="text-8xl mb-6 animate-bounce">🧠</div>
-              <h3 className="text-3xl font-bold text-white mb-3">{title}</h3>
-              <p className="text-white/90 text-lg">Quiz Interactivo</p>
-              
-              {hasAttempted && lastAttempt && (
-                <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
-                  <p className="text-white/90 text-sm font-semibold mb-2">Tu último resultado:</p>
-                  <div className="flex items-center justify-center gap-4 text-white">
-                    <span className="text-2xl font-bold">{lastAttempt.score} / {lastAttempt.max_score}</span>
-                    <span className="text-lg">
-                      {lastAttempt.passed ? '✅ Aprobado' : '❌ No aprobado'}
-                    </span>
+          (() => {
+            const scientist = getQuizScientistIcon(category);
+            return (
+              <div className="w-full h-full bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-blue-500/30 flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30" />
+                <div className="text-center p-8 relative z-10">
+                  <div className="mb-6">
+                    <img 
+                      src={scientist.icon} 
+                      alt={scientist.name}
+                      className="w-32 h-32 mx-auto rounded-full shadow-2xl border-4 border-white/30 object-cover animate-bounce"
+                    />
+                  </div>
+                  <h3 className="text-3xl font-bold text-white mb-3">{title}</h3>
+                  <p className="text-white/90 text-lg">Quiz con {scientist.name}</p>
+                  
+                  {hasAttempted && lastAttempt && (
+                    <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
+                      <p className="text-white/90 text-sm font-semibold mb-2">Tu último resultado:</p>
+                      <div className="flex items-center justify-center gap-4 text-white">
+                        <span className="text-2xl font-bold">{lastAttempt.score} / {lastAttempt.max_score}</span>
+                        <span className="text-lg">
+                          {lastAttempt.passed ? '✅ Aprobado' : '❌ No aprobado'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 flex items-center justify-center gap-4">
+                    {questionsCount && (
+                      <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
+                        📝 {questionsCount} {questionsCount === 1 ? 'Pregunta' : 'Preguntas'}
+                      </Badge>
+                    )}
+                    {difficulty && (
+                      <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
+                        {difficulty === 'basico' ? '⭐ Básico' : 
+                         difficulty === 'intermedio' ? '⭐⭐ Intermedio' : 
+                         '⭐⭐⭐ Avanzado'}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-8">
+                    <Button
+                      size="lg"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuizModalOpen(true);
+                      }}
+                      className="bg-white hover:bg-white/90 text-purple-600 font-bold text-lg px-8 py-6 shadow-2xl hover:scale-105 transition-transform pointer-events-auto"
+                    >
+                      {hasAttempted ? '🔄 Responder nuevamente' : '🎯 Responder Quiz'}
+                    </Button>
                   </div>
                 </div>
-              )}
-              
-              <div className="mt-6 flex items-center justify-center gap-4">
-                {questionsCount && (
-                  <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
-                    📝 {questionsCount} {questionsCount === 1 ? 'Pregunta' : 'Preguntas'}
-                  </Badge>
-                )}
-                {difficulty && (
-                  <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
-                    {difficulty === 'basico' ? '⭐ Básico' : 
-                     difficulty === 'intermedio' ? '⭐⭐ Intermedio' : 
-                     '⭐⭐⭐ Avanzado'}
-                  </Badge>
-                )}
               </div>
-              <div className="mt-8">
-                <Button
-                  size="lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setQuizModalOpen(true);
-                  }}
-                  className="bg-white hover:bg-white/90 text-purple-600 font-bold text-lg px-8 py-6 shadow-2xl hover:scale-105 transition-transform pointer-events-auto"
-                >
-                  {hasAttempted ? '🔄 Responder nuevamente' : '🎯 Responder Quiz'}
-                </Button>
-              </div>
-            </div>
-          </div>
+            );
+          })()
         ) : thumbnail ? (
           <img 
             src={thumbnail} 
