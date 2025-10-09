@@ -51,7 +51,7 @@ const CreateLearningPath = () => {
           .from("learning_paths")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
