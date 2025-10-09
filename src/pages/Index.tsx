@@ -222,7 +222,7 @@ const Index = () => {
         })}
       </div>
 
-      {/* Bottom navigation - hidden when video is playing on mobile */}
+      {/* Bottom navigation - shown when video is paused, hidden when playing on mobile */}
       <div className={`transition-transform duration-300 ${isAnyVideoPlaying ? 'md:translate-y-0 translate-y-full' : 'translate-y-0'}`}>
         <BottomNav />
       </div>

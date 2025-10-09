@@ -142,8 +142,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         </div>
       </div>
 
-      {/* Vertical navigation buttons */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-3">
+      {/* Vertical navigation buttons - hidden on mobile */}
+      <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 flex-col gap-3">
         {hasPrevious && onPrevious && (
           <button
             onClick={onPrevious}
