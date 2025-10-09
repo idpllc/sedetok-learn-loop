@@ -100,62 +100,94 @@ const Profile = () => {
 
   const ContentItem = ({ item }: { item: any }) => (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <CardHeader className="space-y-2 p-3 md:p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-sm md:text-lg line-clamp-2">{item.title}</CardTitle>
-            <CardDescription className="text-xs md:text-sm line-clamp-2 mt-1">
-              {item.description || "Sin descripción"}
-            </CardDescription>
-          </div>
-          {isOwnProfile && (
-            <div className="flex gap-1 ml-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(`/edit/${item.id}`)}
-                title="Editar"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleDelete(item.id)}
-                title="Eliminar"
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+      <div className="relative">
+        {/* Thumbnail/Preview */}
+        <div className="relative aspect-video w-full overflow-hidden bg-muted">
+          {item.content_type === "document" && item.document_url ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <PDFViewer 
+                fileUrl={item.document_url} 
+                onExpandClick={() => handleExpandPdf(item.document_url, item.title)}
+              />
+            </div>
+          ) : item.thumbnail_url ? (
+            <img 
+              src={item.thumbnail_url} 
+              alt={item.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              {item.content_type === "video" && <Video className="w-12 h-12" />}
+              {item.content_type === "lectura" && <BookOpen className="w-12 h-12" />}
+              {item.content_type === "quiz" && <HelpCircle className="w-12 h-12" />}
             </div>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3 p-3 md:p-6 pt-0">
-        {item.content_type === "document" && item.document_url ? (
-          <PDFViewer 
-            fileUrl={item.document_url} 
-            onExpandClick={() => handleExpandPdf(item.document_url, item.title)}
-          />
-        ) : item.thumbnail_url ? (
-          <img 
-            src={item.thumbnail_url} 
-            alt={item.title}
-            className="w-full h-32 md:h-48 object-cover rounded-md"
-          />
-        ) : null}
-        <div className="flex items-center gap-1 md:gap-2 flex-wrap">
+        
+        {/* Action buttons overlay */}
+        {isOwnProfile && (
+          <div className="absolute top-2 right-2 flex gap-1">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-background"
+              onClick={() => navigate(`/edit/${item.id}`)}
+              title="Editar"
+            >
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => handleDelete(item.id)}
+              title="Eliminar"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <CardHeader className="space-y-2 p-4">
+        <CardTitle className="text-base line-clamp-2">{item.title}</CardTitle>
+        <CardDescription className="text-sm line-clamp-2">
+          {item.description || "Sin descripción"}
+        </CardDescription>
+        
+        {/* Tags */}
+        <div className="flex items-center gap-2 flex-wrap pt-2">
           <Badge variant="secondary" className="text-xs">{item.category}</Badge>
           <Badge variant="outline" className="text-xs">{item.grade_level}</Badge>
           {!item.is_public && (
-            <Badge variant="destructive" className="text-xs">No publicado</Badge>
+            <Badge variant="destructive" className="text-xs">Privado</Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
-          <span>❤️ {item.likes_count || 0}</span>
-          <span>💬 {item.comments_count || 0}</span>
-          <span>👁️ {item.views_count || 0}</span>
-          <span>🔖 {item.saves_count || 0}</span>
-          <span>🔗 {item.shares_count || 0}</span>
+      </CardHeader>
+
+      <CardContent className="p-4 pt-0">
+        {/* Stats */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              ❤️ <span className="text-foreground font-medium">{item.likes_count || 0}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              💬 <span className="text-foreground font-medium">{item.comments_count || 0}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              👁️ <span className="text-foreground font-medium">{item.views_count || 0}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              🔖 <span className="text-foreground font-medium">{item.saves_count || 0}</span>
+            </span>
+            <span className="flex items-center gap-1">
+              🔗 <span className="text-foreground font-medium">{item.shares_count || 0}</span>
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>

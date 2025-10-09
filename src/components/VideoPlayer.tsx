@@ -69,13 +69,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     const video = videoRef.current;
     if (!video) return;
 
-    // Apply saved volume and mute settings
-    video.volume = volume;
-    video.muted = isMuted;
-
     const handleLoadedMetadata = () => {
       const aspectRatio = video.videoWidth / video.videoHeight;
       setIsVertical(aspectRatio < 1);
+      // Apply saved volume and mute settings after metadata loads
+      video.volume = volume;
+      video.muted = isMuted;
     };
 
     const handleVideoEnded = () => {
@@ -99,16 +98,30 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       }
     };
 
+    const handleLoadedData = () => {
+      // Ensure volume settings persist after data loads
+      video.volume = volume;
+      video.muted = isMuted;
+    };
+
+    // Apply settings immediately if video is already loaded
+    if (video.readyState >= 2) {
+      video.volume = volume;
+      video.muted = isMuted;
+    }
+
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('ended', handleVideoEnded);
     video.addEventListener('timeupdate', handleTimeUpdate);
     
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('ended', handleVideoEnded);
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [videoUrl, onVideoComplete, onVideoWatched]);
+  }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
 
   const togglePlay = () => {
     const video = videoRef.current;
