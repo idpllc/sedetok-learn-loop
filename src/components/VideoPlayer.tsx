@@ -141,7 +141,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       {/* Play/Pause button */}
       <button
         onClick={togglePlay}
-        className="absolute bottom-24 left-4 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
+        className="absolute bottom-4 left-4 z-20 w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
       >
         {isPlaying ? (
           <Pause className="w-6 h-6 text-black" />
@@ -151,7 +151,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       </button>
 
       {/* Volume controls */}
-      <div className="absolute bottom-24 left-20 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg">
+      <div className="absolute bottom-20 left-4 z-20 flex flex-col-reverse items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-3 shadow-lg">
         <button
           onClick={toggleMute}
           className="hover:scale-110 transition-transform"
@@ -169,7 +169,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           step="0.1"
           value={isMuted ? 0 : volume}
           onChange={handleVolumeChange}
-          className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black"
+          className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black -rotate-90 origin-center"
         />
       </div>
 
