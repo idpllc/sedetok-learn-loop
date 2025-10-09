@@ -50,12 +50,10 @@ export const BottomNav = () => {
           {/* Create button */}
           <button
             onClick={handleCreateClick}
-            className="flex flex-col items-center justify-center -mt-8 transition-all hover:scale-110"
+            className="flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all text-primary hover:text-primary/80"
           >
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary-glow shadow-[var(--shadow-float)] flex items-center justify-center animate-pulse-glow">
-              <Plus className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-xs font-medium text-primary mt-1">Crear</span>
+            <Plus className="w-6 h-6" />
+            <span className="text-xs font-medium">Crear</span>
           </button>
 
           {tabs.slice(2).map((tab) => {

@@ -271,8 +271,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           </div>
         </div>
 
-        {/* Action buttons - floating on the right */}
-        <div className={`absolute right-4 md:right-8 lg:right-12 bottom-32 md:bottom-40 md:top-auto md:translate-y-1/2 flex flex-col gap-4 md:gap-6 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
+        {/* Action buttons - floating on the right, centered vertically */}
+        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-4 md:gap-6 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
           <button
             onClick={handleLike}
             className="flex flex-col items-center gap-2 transition-all hover:scale-110"
