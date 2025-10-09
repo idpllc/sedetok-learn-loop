@@ -128,13 +128,13 @@ export const useQuizQuestions = (quizId?: string) => {
 
       const { data, error } = await supabase
         .from("quiz_questions")
-        .select("*")
+        .select("*, quiz_options(*)")
         .eq("content_id", quizId)
         .order("order_index", { ascending: true });
 
       if (error) throw error;
       
-      // Parse options from jsonb to array format expected by the UI
+      // Parse options from quiz_options table to array format expected by the UI
       return data.map((question: any) => ({
         id: question.id,
         question_type: question.question_type,
@@ -143,12 +143,16 @@ export const useQuizQuestions = (quizId?: string) => {
         video_url: question.video_url,
         feedback: question.feedback,
         points: question.points,
-        options: Array.isArray(question.options) ? question.options.map((opt: any, idx: number) => ({
-          id: `opt-${idx}`,
-          option_text: opt.option_text,
-          is_correct: opt.is_correct,
-          order_index: opt.order_index || idx
-        })) : []
+        options: question.quiz_options 
+          ? question.quiz_options
+              .sort((a: any, b: any) => a.order_index - b.order_index)
+              .map((opt: any) => ({
+                id: opt.id,
+                option_text: opt.option_text,
+                is_correct: opt.is_correct,
+                order_index: opt.order_index
+              }))
+          : []
       }));
     },
     enabled: !!quizId,
