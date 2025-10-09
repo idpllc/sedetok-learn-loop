@@ -125,7 +125,11 @@ export const usePathContent = (pathId?: string) => {
 
       const { data, error } = await supabase
         .from("learning_path_content")
-        .select("*, content(*)")
+        .select(`
+          *,
+          content(*),
+          quiz:quizzes(*)
+        `)
         .eq("path_id", pathId)
         .order("order_index", { ascending: true });
 

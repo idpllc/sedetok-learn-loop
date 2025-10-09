@@ -119,26 +119,26 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
       return;
     }
 
-    // Solo permitir agregar contenido regular (no quizzes) por ahora
-    if (item.content_type === 'quiz') {
-      toast({
-        title: "No disponible",
-        description: "Los quizzes no pueden agregarse a rutas de aprendizaje por el momento",
-        variant: "destructive",
-      });
-      return;
-    }
+    const isQuiz = item.content_type === 'quiz';
     
     try {
       const maxOrder = contents?.reduce((max, item) => 
         Math.max(max, item.order_index), -1) ?? -1;
 
-      await addContent.mutateAsync({
+      const insertData: any = {
         path_id: pathId,
-        content_id: contentId,
         order_index: maxOrder + 1,
         is_required: false,
-      });
+      };
+
+      // Usar content_id o quiz_id según el tipo
+      if (isQuiz) {
+        insertData.quiz_id = contentId;
+      } else {
+        insertData.content_id = contentId;
+      }
+
+      await addContent.mutateAsync(insertData);
 
       toast({
         title: "Cápsula agregada",
@@ -231,7 +231,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
       });
       return;
     }
-    if (contents?.some((c: any) => c.content_id === droppedId)) {
+    if (contents?.some((c: any) => c.content_id === droppedId || c.quiz_id === droppedId)) {
       toast({
         title: "Ya agregado",
         description: "Esta cápsula ya está en la ruta",
@@ -281,24 +281,20 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
             (item.content_type === 'documento' && item.cover_image) ||
             null;
 
-          const isAdded = contents?.some((c: any) => c.content_id === item.id);
-          const isQuiz = item.content_type === 'quiz';
-          const canAdd = !isQuiz && !isAdded;
+          const isAdded = contents?.some((c: any) => 
+            c.content_id === item.id || c.quiz_id === item.id
+          );
 
           return (
             <Card
               key={item.id}
-              className={`p-3 hover:shadow-md transition-shadow ${isQuiz ? 'opacity-60' : ''}`}
-              draggable={!isQuiz}
+              className="p-3 hover:shadow-md transition-shadow"
+              draggable
               onDragStart={(e) => {
-                if (isQuiz) {
-                  e.preventDefault();
-                  return;
-                }
                 e.dataTransfer.setData('text/path-content-id', item.id);
                 e.dataTransfer.effectAllowed = 'copy';
               }}
-              title={isQuiz ? "Los quizzes no pueden agregarse a rutas" : "Arrastra para agregar al constructor"}
+              title="Arrastra para agregar al constructor"
             >
               <div className="flex items-start gap-3">
                 {thumbnail && (
@@ -331,13 +327,12 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                 </div>
                 <Button
                   size="sm"
-                  variant={isAdded ? "secondary" : isQuiz ? "outline" : "default"}
+                  variant={isAdded ? "secondary" : "default"}
                   onClick={() => handleAddContent(item.id)}
-                  disabled={addContent.isPending || isAdded || isQuiz}
+                  disabled={addContent.isPending || isAdded}
                   className="flex-shrink-0"
-                  title={isQuiz ? "Los quizzes no están disponibles para rutas" : ""}
                 >
-                  {isAdded ? "Agregado" : isQuiz ? "No disponible" : "Agregar"}
+                  {isAdded ? "Agregado" : "Agregar"}
                 </Button>
               </div>
             </Card>
@@ -416,10 +411,14 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
               onDrop={handleDrop}
             >
               {contents.map((item: any, index) => {
-                const thumbnail = item.content?.thumbnail_url || 
-                  (item.content?.content_type === 'video' && item.content?.video_url ? 
-                    item.content.video_url.replace('upload/', 'upload/c_thumb,w_300/') : null) ||
-                  (item.content?.content_type === 'documento' && item.content?.cover_image) ||
+                // Determinar si es contenido regular o quiz
+                const itemData = item.content || item.quiz;
+                const isQuiz = !!item.quiz;
+                
+                const thumbnail = itemData?.thumbnail_url || 
+                  (itemData?.content_type === 'video' && itemData?.video_url ? 
+                    itemData.video_url.replace('upload/', 'upload/c_thumb,w_300/') : null) ||
+                  (itemData?.content_type === 'documento' && itemData?.cover_image) ||
                   null;
 
                 return (
@@ -448,7 +447,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                         <div className="w-24 h-16 rounded overflow-hidden flex-shrink-0 bg-muted">
                           <img
                             src={thumbnail}
-                            alt={item.content?.title}
+                            alt={itemData?.title}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -456,13 +455,13 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-2xl">
-                            {item.content?.content_type === 'video' ? '🎥' : 
-                             item.content?.content_type === 'lectura' ? '📖' :
-                             item.content?.content_type === 'documento' ? '📄' :
-                             item.content?.content_type === 'quiz' ? '📝' : '❓'}
+                            {isQuiz ? '📝' :
+                             itemData?.content_type === 'video' ? '🎥' : 
+                             itemData?.content_type === 'lectura' ? '📖' :
+                             itemData?.content_type === 'documento' ? '📄' : '❓'}
                           </span>
                           <div className="flex-1">
-                            <h4 className="font-medium">{item.content?.title || 'Cápsula'}</h4>
+                            <h4 className="font-medium">{itemData?.title || 'Cápsula'}</h4>
                             <p className="text-sm text-muted-foreground">
                               Posición {index + 1}
                             </p>
@@ -475,7 +474,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                             </Badge>
                           )}
                           <Badge variant="outline" className="text-xs">
-                            {item.content?.category}
+                            {itemData?.category}
                           </Badge>
                         </div>
                       </div>

@@ -218,7 +218,7 @@ export type Database = {
       }
       learning_path_content: {
         Row: {
-          content_id: string
+          content_id: string | null
           created_at: string | null
           estimated_time_minutes: number | null
           id: string
@@ -226,11 +226,12 @@ export type Database = {
           order_index: number
           path_id: string
           prerequisites: Json | null
+          quiz_id: string | null
           section_name: string | null
           xp_reward: number | null
         }
         Insert: {
-          content_id: string
+          content_id?: string | null
           created_at?: string | null
           estimated_time_minutes?: number | null
           id?: string
@@ -238,11 +239,12 @@ export type Database = {
           order_index: number
           path_id: string
           prerequisites?: Json | null
+          quiz_id?: string | null
           section_name?: string | null
           xp_reward?: number | null
         }
         Update: {
-          content_id?: string
+          content_id?: string | null
           created_at?: string | null
           estimated_time_minutes?: number | null
           id?: string
@@ -250,6 +252,7 @@ export type Database = {
           order_index?: number
           path_id?: string
           prerequisites?: Json | null
+          quiz_id?: string | null
           section_name?: string | null
           xp_reward?: number | null
         }
@@ -266,6 +269,13 @@ export type Database = {
             columns: ["path_id"]
             isOneToOne: false
             referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_path_content_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
         ]
