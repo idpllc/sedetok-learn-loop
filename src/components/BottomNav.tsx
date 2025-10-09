@@ -30,10 +30,12 @@ export const BottomNav = () => {
 
   return (
     <>
-      {/* Floating Menu Button - Bottom Right */}
+      {/* Floating Menu Button - Bottom Right - Animates up when menu opens */}
       <Button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all hover:scale-110"
+        className={`fixed right-6 z-50 h-14 w-14 rounded-full shadow-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all hover:scale-110 duration-300 ${
+          menuOpen ? 'bottom-24' : 'bottom-6'
+        }`}
         size="icon"
       >
         <Menu className="w-6 h-6" />

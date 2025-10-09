@@ -124,7 +124,6 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
                 <SelectValue placeholder="Seleccionar" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
                 {grades.map((grade) => (
                   <SelectItem key={grade.value} value={grade.value}>
                     {grade.label}

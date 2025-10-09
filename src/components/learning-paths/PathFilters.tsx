@@ -44,7 +44,6 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
                 {subjects.map((subject) => (
                   <SelectItem key={subject} value={subject}>
                     {subject}
@@ -64,7 +63,6 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
                 {grades.map((grade) => (
                   <SelectItem key={grade.value} value={grade.value}>
                     {grade.label}
@@ -84,7 +82,6 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
                 <SelectValue placeholder="Todos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
                 <SelectItem value="draft">Borrador</SelectItem>
                 <SelectItem value="published">Publicada</SelectItem>
                 <SelectItem value="archived">Archivada</SelectItem>
@@ -102,7 +99,6 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
                 <SelectItem value="public">Públicas</SelectItem>
                 <SelectItem value="private">Privadas</SelectItem>
               </SelectContent>
