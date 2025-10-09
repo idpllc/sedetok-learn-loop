@@ -243,7 +243,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             onPlayStateChange={handlePlayStateChange}
           />
         ) : documentUrl ? (
-          <div className="w-full h-full flex items-center justify-center relative">
+          <div className="w-full h-full flex items-center justify-center relative pointer-events-none">
             {/* Thumbnail background */}
             {thumbnail && (
               <img 
