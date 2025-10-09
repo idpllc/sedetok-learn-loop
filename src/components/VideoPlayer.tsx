@@ -162,6 +162,47 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         </div>
       </div>
 
+      {/* Volume control - positioned at bottom left */}
+      <div className="absolute bottom-8 left-8 z-20 flex items-center gap-3">
+        <button
+          onClick={toggleMute}
+          className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform hover:bg-white shadow-lg"
+        >
+          {isMuted || volume === 0 ? (
+            <VolumeX className="w-6 h-6 text-black" />
+          ) : (
+            <Volume2 className="w-6 h-6 text-black" />
+          )}
+        </button>
+        
+        {/* Volume slider */}
+        <div className="relative w-24 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center px-4">
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={volume}
+            onChange={handleVolumeChange}
+            className="w-full h-1 appearance-none bg-gray-300 rounded-full cursor-pointer
+              [&::-webkit-slider-thumb]:appearance-none
+              [&::-webkit-slider-thumb]:w-4
+              [&::-webkit-slider-thumb]:h-4
+              [&::-webkit-slider-thumb]:rounded-full
+              [&::-webkit-slider-thumb]:bg-black
+              [&::-webkit-slider-thumb]:cursor-pointer
+              [&::-webkit-slider-thumb]:shadow-md
+              [&::-moz-range-thumb]:w-4
+              [&::-moz-range-thumb]:h-4
+              [&::-moz-range-thumb]:rounded-full
+              [&::-moz-range-thumb]:bg-black
+              [&::-moz-range-thumb]:border-0
+              [&::-moz-range-thumb]:cursor-pointer
+              [&::-moz-range-thumb]:shadow-md"
+          />
+        </div>
+      </div>
+
       {/* Vertical navigation buttons - hidden on mobile */}
       <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 flex-col gap-3">
         {hasPrevious && onPrevious && (
