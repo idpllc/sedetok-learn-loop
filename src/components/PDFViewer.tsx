@@ -47,17 +47,17 @@ export const PDFViewer = ({ fileUrl, onExpandClick }: PDFViewerProps) => {
           <Page
             pageNumber={1}
             width={Math.min(window.innerWidth * 0.8, 800)}
-            renderTextLayer={false}
+            renderTextLayer={true}
             renderAnnotationLayer={false}
           />
         </Document>
       </div>
 
-      <div className="absolute bottom-2 right-2 z-20">
+      <div className="absolute bottom-4 right-4 z-20">
         <Button
           size="sm"
           onClick={onExpandClick}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 shadow-lg bg-primary hover:bg-primary/90"
         >
           <Maximize2 className="w-4 h-4" />
           Ampliar lectura
@@ -65,8 +65,8 @@ export const PDFViewer = ({ fileUrl, onExpandClick }: PDFViewerProps) => {
       </div>
 
       {numPages && (
-        <div className="absolute bottom-2 left-2 z-20">
-          <div className="bg-background/90 backdrop-blur-sm px-3 py-1 rounded-md text-sm font-medium">
+        <div className="absolute bottom-4 left-4 z-20">
+          <div className="bg-background/90 backdrop-blur-sm px-3 py-1 rounded-md text-sm font-medium shadow-md">
             {numPages} {numPages === 1 ? "página" : "páginas"}
           </div>
         </div>

@@ -109,14 +109,14 @@ export const CommentsSheet = ({ contentId, commentsCount }: CommentsSheetProps) 
           </ScrollArea>
 
           {/* Add comment */}
-          <div className="pt-4 border-t">
-            <div className="flex gap-2">
+          <div className="pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t">
+            <div className="flex gap-2 items-end">
               <Textarea
                 placeholder="Escribe un comentario..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                className="resize-none"
-                rows={2}
+                className="resize-none flex-1 min-h-[60px] max-h-[100px]"
+                rows={1}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -128,7 +128,7 @@ export const CommentsSheet = ({ contentId, commentsCount }: CommentsSheetProps) 
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
                 size="icon"
-                className="flex-shrink-0"
+                className="flex-shrink-0 h-10 w-10"
               >
                 <Send className="h-4 w-4" />
               </Button>
