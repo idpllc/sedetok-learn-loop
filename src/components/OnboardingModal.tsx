@@ -63,15 +63,33 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
     if (!user) return;
 
     try {
-      await supabase
+      console.log("Saving progress:", { currentStep, formData });
+      
+      const { error } = await supabase
         .from("profiles")
         .update({
           onboarding_paso_actual: currentStep,
           ...formData,
         })
         .eq("id", user.id);
+
+      if (error) {
+        console.error("Error saving progress:", error);
+        toast({
+          title: "Error al guardar",
+          description: "No se pudo guardar tu progreso. Intenta de nuevo.",
+          variant: "destructive",
+        });
+      } else {
+        console.log("Progress saved successfully");
+      }
     } catch (error) {
       console.error("Error saving progress:", error);
+      toast({
+        title: "Error al guardar",
+        description: "No se pudo guardar tu progreso. Intenta de nuevo.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -132,7 +150,9 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
     if (!user) return;
 
     try {
-      await supabase
+      console.log("Completing onboarding with data:", formData);
+      
+      const { error } = await supabase
         .from("profiles")
         .update({
           perfil_completo_360: true,
@@ -140,6 +160,16 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
           ...formData,
         })
         .eq("id", user.id);
+
+      if (error) {
+        console.error("Error completing onboarding:", error);
+        toast({
+          title: "Error",
+          description: "No se pudo completar el perfil",
+          variant: "destructive",
+        });
+        return;
+      }
 
       localStorage.removeItem("onboarding_step");
       localStorage.removeItem("onboarding_postponed_until");
@@ -151,6 +181,7 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
 
       onOpenChange(false);
     } catch (error) {
+      console.error("Error completing onboarding:", error);
       toast({
         title: "Error",
         description: "No se pudo completar el perfil",

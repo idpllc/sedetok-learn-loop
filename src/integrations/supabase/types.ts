@@ -355,6 +355,7 @@ export type Database = {
           idioma_preferido: string | null
           institution: string | null
           is_verified: boolean | null
+          modo_competitivo: boolean | null
           modo_consumo_preferido:
             | Database["public"]["Enums"]["modo_consumo"]
             | null
@@ -368,14 +369,20 @@ export type Database = {
             | Database["public"]["Enums"]["nivel_meta"]
             | null
           nivel_motivacion: number | null
+          notificaciones_correo: boolean | null
+          notificaciones_push: boolean | null
           numero_documento: string | null
           onboarding_paso_actual: number | null
           onboarding_pospuesto_hasta: string | null
           pais: string | null
           perfil_completo_360: boolean | null
+          perfil_publico: boolean | null
+          permitir_comentarios: boolean | null
+          permitir_rankings: boolean | null
           preferencia_duracion_contenido:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
+          preferencia_recompensas: string | null
           profesiones_de_interes: string[] | null
           recomendaciones_activas: Json | null
           rutas_aprobadas_por_docente: Json | null
@@ -419,6 +426,7 @@ export type Database = {
           idioma_preferido?: string | null
           institution?: string | null
           is_verified?: boolean | null
+          modo_competitivo?: boolean | null
           modo_consumo_preferido?:
             | Database["public"]["Enums"]["modo_consumo"]
             | null
@@ -436,14 +444,20 @@ export type Database = {
             | Database["public"]["Enums"]["nivel_meta"]
             | null
           nivel_motivacion?: number | null
+          notificaciones_correo?: boolean | null
+          notificaciones_push?: boolean | null
           numero_documento?: string | null
           onboarding_paso_actual?: number | null
           onboarding_pospuesto_hasta?: string | null
           pais?: string | null
           perfil_completo_360?: boolean | null
+          perfil_publico?: boolean | null
+          permitir_comentarios?: boolean | null
+          permitir_rankings?: boolean | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
+          preferencia_recompensas?: string | null
           profesiones_de_interes?: string[] | null
           recomendaciones_activas?: Json | null
           rutas_aprobadas_por_docente?: Json | null
@@ -487,6 +501,7 @@ export type Database = {
           idioma_preferido?: string | null
           institution?: string | null
           is_verified?: boolean | null
+          modo_competitivo?: boolean | null
           modo_consumo_preferido?:
             | Database["public"]["Enums"]["modo_consumo"]
             | null
@@ -504,14 +519,20 @@ export type Database = {
             | Database["public"]["Enums"]["nivel_meta"]
             | null
           nivel_motivacion?: number | null
+          notificaciones_correo?: boolean | null
+          notificaciones_push?: boolean | null
           numero_documento?: string | null
           onboarding_paso_actual?: number | null
           onboarding_pospuesto_hasta?: string | null
           pais?: string | null
           perfil_completo_360?: boolean | null
+          perfil_publico?: boolean | null
+          permitir_comentarios?: boolean | null
+          permitir_rankings?: boolean | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
+          preferencia_recompensas?: string | null
           profesiones_de_interes?: string[] | null
           recomendaciones_activas?: Json | null
           rutas_aprobadas_por_docente?: Json | null

@@ -16,7 +16,7 @@ export const useOnboardingTrigger = () => {
           .from("profiles")
           .select("perfil_completo_360, onboarding_paso_actual, onboarding_pospuesto_hasta")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (!profile) return;
 
