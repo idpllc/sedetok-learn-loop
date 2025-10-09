@@ -71,20 +71,25 @@ export const useUserContent = (userId?: string) => {
 
   const deleteMutation = useMutation({
     mutationFn: async (contentId: string) => {
-      // Try to delete from content table first
-      const { error: contentError } = await supabase
-        .from("content")
-        .delete()
-        .eq("id", contentId);
-
-      // If not found in content, try quizzes table
-      if (contentError) {
-        const { error: quizError } = await supabase
+      // First, check which table this content belongs to
+      const content = userContent?.find(c => c.id === contentId);
+      
+      if (content?.content_type === 'quiz') {
+        // Delete from quizzes table
+        const { error } = await supabase
           .from("quizzes")
           .delete()
           .eq("id", contentId);
         
-        if (quizError) throw quizError;
+        if (error) throw error;
+      } else {
+        // Delete from content table
+        const { error } = await supabase
+          .from("content")
+          .delete()
+          .eq("id", contentId);
+        
+        if (error) throw error;
       }
     },
     onSuccess: () => {
