@@ -50,6 +50,10 @@ interface ContentCardProps {
   onPlayStateChange?: (isPlaying: boolean) => void;
   questionsCount?: number;
   difficulty?: string;
+  onVideoWatched?: () => void;
+  onReadComplete?: () => void;
+  onDocumentDownload?: () => void;
+  onQuizComplete?: (passed: boolean) => void;
 }
 
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
@@ -81,6 +85,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   onPlayStateChange,
   questionsCount,
   difficulty,
+  onVideoWatched,
+  onReadComplete,
+  onDocumentDownload,
+  onQuizComplete,
 }, ref) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -241,6 +249,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             contentId={id}
             onVideoComplete={handleVideoComplete}
             onPlayStateChange={handlePlayStateChange}
+            onVideoWatched={onVideoWatched}
           />
         ) : documentUrl ? (
           <div className="w-full h-full flex items-center justify-center relative pointer-events-none">
@@ -269,6 +278,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
+                  if (onDocumentDownload) {
+                    onDocumentDownload();
+                  }
                 }}
                 className="flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform pointer-events-auto"
               >
@@ -541,6 +553,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           onOpenChange={setPdfModalOpen}
           fileUrl={documentUrl}
           title={title}
+          onDownload={onDocumentDownload}
         />
       )}
 
@@ -551,6 +564,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           onClose={() => setIsReadingModalOpen(false)}
           title={title}
           content={richText}
+          onReadComplete={onReadComplete}
         />
       )}
 
@@ -585,6 +599,11 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 // Refrescar los intentos del quiz después de completarlo
                 if (user) {
                   queryClient.invalidateQueries({ queryKey: ["quiz-attempts", id, user.id] });
+                }
+              }}
+              onQuizComplete={(passed) => {
+                if (passed && onQuizComplete) {
+                  onQuizComplete(passed);
                 }
               }}
             />

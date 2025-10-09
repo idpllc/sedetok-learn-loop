@@ -928,6 +928,67 @@ export type Database = {
           },
         ]
       }
+      user_path_progress: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          content_id: string | null
+          created_at: string | null
+          id: string
+          path_id: string
+          progress_data: Json | null
+          quiz_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          content_id?: string | null
+          created_at?: string | null
+          id?: string
+          path_id: string
+          progress_data?: Json | null
+          quiz_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          content_id?: string | null
+          created_at?: string | null
+          id?: string
+          path_id?: string
+          progress_data?: Json | null
+          quiz_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_path_progress_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_path_progress_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_path_progress_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_quiz_results: {
         Row: {
           completed_at: string | null

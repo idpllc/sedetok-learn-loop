@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { usePathContent } from "@/hooks/useLearningPaths";
 import { useUserLikes, useUserSaves } from "@/hooks/useContent";
+import { usePathProgress } from "@/hooks/usePathProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { ArrowLeft, Map, List } from "lucide-react";
@@ -20,10 +21,11 @@ const ViewLearningPath = () => {
   const { contents: pathContent, isLoading } = usePathContent(id);
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
+  const { markComplete, getCompletedIds, isCompleted } = usePathProgress(id);
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<"map" | "cards">("map");
-  const [completedIds] = useState<Set<string>>(new Set()); // TODO: Track completed content
+  const completedIds = getCompletedIds();
 
   // Fetch learning path info
   const { data: pathInfo } = useQuery({
@@ -259,6 +261,10 @@ const ViewLearningPath = () => {
               videoRefs.current[item.id] = ref;
             }
           };
+
+          const isQuiz = item.content_type === 'Quiz';
+          const itemContentId = isQuiz ? undefined : item.id;
+          const itemQuizId = isQuiz ? item.id : undefined;
           
           return (
             <ContentCard
@@ -290,6 +296,20 @@ const ViewLearningPath = () => {
               isSaved={saves.has(item.id)}
               questionsCount={item.questions_count}
               difficulty={item.difficulty}
+              onVideoWatched={() => {
+                markComplete.mutate({ contentId: itemContentId });
+              }}
+              onReadComplete={() => {
+                markComplete.mutate({ contentId: itemContentId });
+              }}
+              onDocumentDownload={() => {
+                markComplete.mutate({ contentId: itemContentId });
+              }}
+              onQuizComplete={(passed) => {
+                if (passed) {
+                  markComplete.mutate({ quizId: itemQuizId });
+                }
+              }}
               onPrevious={() => {
                 pauseAllVideos();
                 const container = document.querySelector('.snap-y');

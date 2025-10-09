@@ -11,6 +11,7 @@ interface VideoPlayerProps {
   contentId?: string;
   onVideoComplete?: () => void;
   onPlayStateChange?: (isPlaying: boolean) => void;
+  onVideoWatched?: () => void; // Called when video is fully watched
 }
 
 export interface VideoPlayerRef {
@@ -28,13 +29,15 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   hasNext = true,
   contentId,
   onVideoComplete,
-  onPlayStateChange
+  onPlayStateChange,
+  onVideoWatched
 }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [isVertical, setIsVertical] = useState(true);
+  const hasWatchedRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     pause: () => {
@@ -69,16 +72,33 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       if (onVideoComplete) {
         onVideoComplete();
       }
+      // Mark as watched when video ends
+      if (!hasWatchedRef.current && onVideoWatched) {
+        hasWatchedRef.current = true;
+        onVideoWatched();
+      }
+    };
+
+    const handleTimeUpdate = () => {
+      // Mark as watched when 95% of video is played
+      if (video.duration && video.currentTime / video.duration >= 0.95) {
+        if (!hasWatchedRef.current && onVideoWatched) {
+          hasWatchedRef.current = true;
+          onVideoWatched();
+        }
+      }
     };
 
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('ended', handleVideoEnded);
+    video.addEventListener('timeupdate', handleTimeUpdate);
     
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('ended', handleVideoEnded);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [videoUrl, onVideoComplete]);
+  }, [videoUrl, onVideoComplete, onVideoWatched]);
 
   const togglePlay = () => {
     const video = videoRef.current;

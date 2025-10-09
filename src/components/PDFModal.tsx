@@ -13,9 +13,10 @@ interface PDFModalProps {
   onOpenChange: (open: boolean) => void;
   fileUrl: string;
   title: string;
+  onDownload?: () => void;
 }
 
-export const PDFModal = ({ open, onOpenChange, fileUrl, title }: PDFModalProps) => {
+export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDFModalProps) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -55,6 +56,11 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title }: PDFModalProps) 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    // Notify that document was downloaded
+    if (onDownload) {
+      onDownload();
+    }
   };
 
   const handleOpenChange = (newOpen: boolean) => {

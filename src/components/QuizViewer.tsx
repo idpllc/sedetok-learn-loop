@@ -13,6 +13,7 @@ interface QuizViewerProps {
   quizId: string;
   lastAttempt?: any;
   onComplete?: () => void;
+  onQuizComplete?: (passed: boolean) => void;
 }
 
 interface Question {
@@ -34,7 +35,7 @@ interface Question {
   }>;
 }
 
-export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps) => {
+export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: QuizViewerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -205,6 +206,14 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
 
         if (passed) {
           toast.success("¡Felicitaciones! Has aprobado el quiz");
+          // Notify quiz completion
+          if (onQuizComplete) {
+            onQuizComplete(true);
+          }
+        } else {
+          if (onQuizComplete) {
+            onQuizComplete(false);
+          }
         }
 
         // Invalidar la query para actualizar el último intento
