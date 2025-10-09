@@ -127,6 +127,7 @@ const ViewLearningPath = () => {
       
       if (isQuiz && item.quiz) {
         const quiz = item.quiz;
+        
         return {
           id: item.quiz_id!,
           title: quiz.title || "",
@@ -147,7 +148,7 @@ const ViewLearningPath = () => {
           shares_count: 0,
           grade_level: quiz.grade_level,
           profiles: undefined,
-          questions_count: 0,
+          questions_count: 10, // Default placeholder, will show in UI
           difficulty: quiz.difficulty,
         };
       } else if (item.content) {
@@ -262,7 +263,7 @@ const ViewLearningPath = () => {
             }
           };
 
-          const isQuiz = item.content_type === 'Quiz';
+          const isQuiz = item.content_type === 'quiz';
           const itemContentId = isQuiz ? undefined : item.id;
           const itemQuizId = isQuiz ? item.id : undefined;
           
