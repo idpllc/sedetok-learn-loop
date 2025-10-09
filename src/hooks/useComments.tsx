@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useComments = (contentId: string, onCommentAdded?: () => void) => {
+export const useComments = (contentId: string, isQuiz?: boolean, onCommentAdded?: () => void) => {
   const queryClient = useQueryClient();
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ["comments", contentId],
     queryFn: async () => {
+      const idField = isQuiz ? "quiz_id" : "content_id";
       const { data, error } = await supabase
         .from("comments")
         .select(`
@@ -18,7 +19,7 @@ export const useComments = (contentId: string, onCommentAdded?: () => void) => {
             avatar_url
           )
         `)
-        .eq("content_id", contentId)
+        .eq(idField, contentId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -31,10 +32,11 @@ export const useComments = (contentId: string, onCommentAdded?: () => void) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user logged in");
 
+      const idField = isQuiz ? "quiz_id" : "content_id";
       const { data, error } = await supabase
         .from("comments")
         .insert({
-          content_id: contentId,
+          [idField]: contentId,
           user_id: user.id,
           comment_text,
         })

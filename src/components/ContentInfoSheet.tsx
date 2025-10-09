@@ -45,7 +45,7 @@ export function ContentInfoSheet({
     awardXP(contentId, 'comment');
   };
   
-  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, handleCommentAdded);
+  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, false, handleCommentAdded);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;

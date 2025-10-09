@@ -213,6 +213,8 @@ const Index = () => {
               grade={item.grade_level || item.grade}
               isLiked={likes.has(item.id)}
               isSaved={saves.has(item.id)}
+              questionsCount={item.questions_count}
+              difficulty={item.difficulty}
               onPrevious={() => {
                 pauseAllVideos();
                 const container = document.querySelector('.snap-y');

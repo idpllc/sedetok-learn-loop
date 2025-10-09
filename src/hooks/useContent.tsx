@@ -48,6 +48,23 @@ export const useContent = () => {
 
       if (quizError) throw quizError;
 
+      // Get question counts for each quiz
+      const quizIds = (quizData || []).map(q => q.id);
+      const questionCounts: Record<string, number> = {};
+      
+      if (quizIds.length > 0) {
+        const { data: questionsData } = await supabase
+          .from("quiz_questions")
+          .select("content_id")
+          .in("content_id", quizIds);
+        
+        if (questionsData) {
+          questionsData.forEach((q) => {
+            questionCounts[q.content_id] = (questionCounts[q.content_id] || 0) + 1;
+          });
+        }
+      }
+
       // Combine and mark quizzes with content_type
       const quizzes = (quizData || []).map(quiz => ({
         ...quiz,
@@ -61,6 +78,7 @@ export const useContent = () => {
         document_url: null,
         rich_text: null,
         tags: [],
+        questions_count: questionCounts[quiz.id] || 0,
       }));
 
       // Combine both arrays and sort by created_at
@@ -73,21 +91,23 @@ export const useContent = () => {
   });
 
   const likeMutation = useMutation({
-    mutationFn: async ({ contentId, isLiked }: { contentId: string; isLiked: boolean }) => {
+    mutationFn: async ({ contentId, isLiked, isQuiz }: { contentId: string; isLiked: boolean; isQuiz?: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
+      const idField = isQuiz ? "quiz_id" : "content_id";
+      
       if (isLiked) {
         const { error } = await supabase
           .from("likes")
           .delete()
-          .eq("content_id", contentId)
+          .eq(idField, contentId)
           .eq("user_id", user.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("likes")
-          .insert([{ content_id: contentId, user_id: user.id }]);
+          .insert([{ [idField]: contentId, user_id: user.id }]);
         if (error) throw error;
       }
     },
@@ -105,21 +125,23 @@ export const useContent = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ contentId, isSaved }: { contentId: string; isSaved: boolean }) => {
+    mutationFn: async ({ contentId, isSaved, isQuiz }: { contentId: string; isSaved: boolean; isQuiz?: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
+      const idField = isQuiz ? "quiz_id" : "content_id";
+      
       if (isSaved) {
         const { error } = await supabase
           .from("saves")
           .delete()
-          .eq("content_id", contentId)
+          .eq(idField, contentId)
           .eq("user_id", user.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("saves")
-          .insert([{ content_id: contentId, user_id: user.id }]);
+          .insert([{ [idField]: contentId, user_id: user.id }]);
         if (error) throw error;
       }
     },
@@ -150,10 +172,10 @@ export const useUserLikes = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("likes")
-        .select("content_id");
+        .select("content_id, quiz_id");
 
       if (error) throw error;
-      return new Set(data.map(like => like.content_id));
+      return new Set(data.map(like => like.content_id || like.quiz_id));
     },
   });
 
@@ -166,10 +188,10 @@ export const useUserSaves = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("saves")
-        .select("content_id");
+        .select("content_id, quiz_id");
 
       if (error) throw error;
-      return new Set(data.map(save => save.content_id));
+      return new Set(data.map(save => save.content_id || save.quiz_id));
     },
   });
 

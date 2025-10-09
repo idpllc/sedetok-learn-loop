@@ -46,6 +46,8 @@ interface ContentCardProps {
   hasNext?: boolean;
   videoRef?: (ref: VideoPlayerRef | null) => void;
   onPlayStateChange?: (isPlaying: boolean) => void;
+  questionsCount?: number;
+  difficulty?: string;
 }
 
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
@@ -74,6 +76,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   hasNext,
   videoRef,
   onPlayStateChange,
+  questionsCount,
+  difficulty,
 }, ref) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -125,7 +129,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       setAuthModalOpen(true);
       return;
     }
-    likeMutation.mutate({ contentId: id, isLiked });
+    const isQuiz = contentType === 'quiz';
+    likeMutation.mutate({ contentId: id, isLiked, isQuiz });
     // Award XP only when liking (not unliking)
     if (!isLiked) {
       awardXP(id, 'like');
@@ -138,7 +143,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       setAuthModalOpen(true);
       return;
     }
-    saveMutation.mutate({ contentId: id, isSaved });
+    const isQuiz = contentType === 'quiz';
+    saveMutation.mutate({ contentId: id, isSaved, isQuiz });
     // Award XP only when saving (not unsaving)
     if (!isSaved) {
       awardXP(id, 'save');
@@ -146,11 +152,12 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   };
 
   const handleAuthSuccess = () => {
+    const isQuiz = contentType === 'quiz';
     if (pendingAction === 'like') {
-      likeMutation.mutate({ contentId: id, isLiked: false });
+      likeMutation.mutate({ contentId: id, isLiked: false, isQuiz });
       awardXP(id, 'like');
     } else if (pendingAction === 'save') {
-      saveMutation.mutate({ contentId: id, isSaved: false });
+      saveMutation.mutate({ contentId: id, isSaved: false, isQuiz });
       awardXP(id, 'save');
     }
     setPendingAction(null);
@@ -290,12 +297,18 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               )}
               
               <div className="mt-6 flex items-center justify-center gap-4">
-                <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
-                  📝 Preguntas
-                </Badge>
-                <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
-                  ⚡ Desafío
-                </Badge>
+                {questionsCount && (
+                  <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
+                    📝 {questionsCount} {questionsCount === 1 ? 'Pregunta' : 'Preguntas'}
+                  </Badge>
+                )}
+                {difficulty && (
+                  <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
+                    {difficulty === 'basico' ? '⭐ Básico' : 
+                     difficulty === 'intermedio' ? '⭐⭐ Intermedio' : 
+                     '⭐⭐⭐ Avanzado'}
+                  </Badge>
+                )}
               </div>
               <div className="mt-8">
                 <Button

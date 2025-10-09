@@ -44,28 +44,31 @@ export type Database = {
       comments: {
         Row: {
           comment_text: string
-          content_id: string
+          content_id: string | null
           created_at: string | null
           id: string
           parent_id: string | null
+          quiz_id: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           comment_text: string
-          content_id: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
           parent_id?: string | null
+          quiz_id?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           comment_text?: string
-          content_id?: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
           parent_id?: string | null
+          quiz_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -82,6 +85,13 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
           {
@@ -294,21 +304,24 @@ export type Database = {
       }
       likes: {
         Row: {
-          content_id: string
+          content_id: string | null
           created_at: string | null
           id: string
+          quiz_id: string | null
           user_id: string
         }
         Insert: {
-          content_id: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
+          quiz_id?: string | null
           user_id: string
         }
         Update: {
-          content_id?: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
+          quiz_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -317,6 +330,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
           {
@@ -746,21 +766,24 @@ export type Database = {
       }
       saves: {
         Row: {
-          content_id: string
+          content_id: string | null
           created_at: string | null
           id: string
+          quiz_id: string | null
           user_id: string
         }
         Insert: {
-          content_id: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
+          quiz_id?: string | null
           user_id: string
         }
         Update: {
-          content_id?: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
+          quiz_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -769,6 +792,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saves_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
           {
