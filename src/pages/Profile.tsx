@@ -131,10 +131,10 @@ const Profile = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-3 p-3 md:p-6 pt-0">
-        {item.content_type === "document" && item.documento_url ? (
+        {item.content_type === "document" && item.document_url ? (
           <PDFViewer 
-            fileUrl={item.documento_url} 
-            onExpandClick={() => handleExpandPdf(item.documento_url, item.title)}
+            fileUrl={item.document_url} 
+            onExpandClick={() => handleExpandPdf(item.document_url, item.title)}
           />
         ) : item.thumbnail_url ? (
           <img 
