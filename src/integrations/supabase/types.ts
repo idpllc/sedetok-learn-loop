@@ -368,6 +368,7 @@ export type Database = {
             | Database["public"]["Enums"]["nivel_meta"]
             | null
           nivel_motivacion: number | null
+          numero_documento: string | null
           pais: string | null
           preferencia_duracion_contenido:
             | Database["public"]["Enums"]["preferencia_duracion"]
@@ -432,6 +433,7 @@ export type Database = {
             | Database["public"]["Enums"]["nivel_meta"]
             | null
           nivel_motivacion?: number | null
+          numero_documento?: string | null
           pais?: string | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]
@@ -496,6 +498,7 @@ export type Database = {
             | Database["public"]["Enums"]["nivel_meta"]
             | null
           nivel_motivacion?: number | null
+          numero_documento?: string | null
           pais?: string | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]

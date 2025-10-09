@@ -22,6 +22,7 @@ const EditProfile = () => {
     // Datos generales
     full_name: "",
     tipo_documento: "",
+    numero_documento: "",
     fecha_nacimiento: "",
     genero: "",
     pais: "",
@@ -65,6 +66,7 @@ const EditProfile = () => {
       setFormData({
         full_name: profile.full_name || "",
         tipo_documento: profile.tipo_documento || "",
+        numero_documento: profile.numero_documento || "",
         fecha_nacimiento: profile.fecha_nacimiento || "",
         genero: profile.genero || "",
         pais: profile.pais || "",
@@ -101,6 +103,7 @@ const EditProfile = () => {
     const updates: any = {
       full_name: formData.full_name || null,
       tipo_documento: formData.tipo_documento || null,
+      numero_documento: formData.numero_documento || null,
       fecha_nacimiento: formData.fecha_nacimiento || null,
       genero: formData.genero || null,
       pais: formData.pais || null,
@@ -220,6 +223,15 @@ const EditProfile = () => {
                       <SelectItem value="PPT">PPT - Pasaporte</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numero_documento">Número de Documento</Label>
+                  <Input
+                    id="numero_documento"
+                    value={formData.numero_documento}
+                    onChange={(e) => setFormData({ ...formData, numero_documento: e.target.value })}
+                    placeholder="Ingresa tu número de documento"
+                  />
                 </div>
               </div>
 
