@@ -46,7 +46,6 @@ export const useComments = (contentId: string, onCommentAdded?: () => void) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", contentId] });
-      queryClient.invalidateQueries({ queryKey: ["content"] });
       toast.success("Comentario agregado");
       // Call the callback to award XP
       if (onCommentAdded) {
@@ -69,7 +68,6 @@ export const useComments = (contentId: string, onCommentAdded?: () => void) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", contentId] });
-      queryClient.invalidateQueries({ queryKey: ["content"] });
       toast.success("Comentario eliminado");
     },
     onError: () => {

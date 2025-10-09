@@ -75,11 +75,11 @@ const Profile = () => {
 
   const ContentItem = ({ item }: { item: any }) => (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <CardHeader className="space-y-2">
+      <CardHeader className="space-y-2 p-3 md:p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg line-clamp-2">{item.title}</CardTitle>
-            <CardDescription className="line-clamp-2 mt-1">
+            <CardTitle className="text-sm md:text-lg line-clamp-2">{item.title}</CardTitle>
+            <CardDescription className="text-xs md:text-sm line-clamp-2 mt-1">
               {item.description || "Sin descripción"}
             </CardDescription>
           </div>
@@ -115,7 +115,7 @@ const Profile = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 p-3 md:p-6 pt-0">
         {item.content_type === "document" && item.documento_url ? (
           <PDFViewer 
             fileUrl={item.documento_url} 
@@ -125,17 +125,17 @@ const Profile = () => {
           <img 
             src={item.thumbnail_url} 
             alt={item.title}
-            className="w-full h-48 object-cover rounded-md"
+            className="w-full h-32 md:h-48 object-cover rounded-md"
           />
         ) : null}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="secondary">{item.category}</Badge>
-          <Badge variant="outline">{item.grade_level}</Badge>
+        <div className="flex items-center gap-1 md:gap-2 flex-wrap">
+          <Badge variant="secondary" className="text-xs">{item.category}</Badge>
+          <Badge variant="outline" className="text-xs">{item.grade_level}</Badge>
           {!item.is_public && (
-            <Badge variant="destructive">No publicado</Badge>
+            <Badge variant="destructive" className="text-xs">No publicado</Badge>
           )}
         </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
           <span>❤️ {item.likes_count || 0}</span>
           <span>💬 {item.comments_count || 0}</span>
           <span>👁️ {item.views_count || 0}</span>
@@ -209,45 +209,45 @@ const Profile = () => {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* Stats */}
-        <div className="grid grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-4 mb-6">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-2xl font-bold text-center">
+            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
+              <CardTitle className="text-lg md:text-2xl font-bold text-center">
                 {userContent?.length || 0}
               </CardTitle>
-              <CardDescription className="text-center">Total cápsulas</CardDescription>
+              <CardDescription className="text-xs md:text-sm text-center">Cápsulas</CardDescription>
             </CardHeader>
           </Card>
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-2xl font-bold text-center">
+            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
+              <CardTitle className="text-lg md:text-2xl font-bold text-center">
                 {userContent?.reduce((sum, c) => sum + (c.likes_count || 0), 0) || 0}
               </CardTitle>
-              <CardDescription className="text-center">Total likes</CardDescription>
+              <CardDescription className="text-xs md:text-sm text-center">Likes</CardDescription>
             </CardHeader>
           </Card>
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-2xl font-bold text-center">
+            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
+              <CardTitle className="text-lg md:text-2xl font-bold text-center">
                 {userContent?.reduce((sum, c) => sum + (c.views_count || 0), 0) || 0}
               </CardTitle>
-              <CardDescription className="text-center">Total vistas</CardDescription>
+              <CardDescription className="text-xs md:text-sm text-center">Vistas</CardDescription>
             </CardHeader>
           </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-2xl font-bold text-center">
+          <Card className="hidden md:block">
+            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
+              <CardTitle className="text-lg md:text-2xl font-bold text-center">
                 {userContent?.reduce((sum, c) => sum + (c.saves_count || 0), 0) || 0}
               </CardTitle>
-              <CardDescription className="text-center">Total guardados</CardDescription>
+              <CardDescription className="text-xs md:text-sm text-center">Guardados</CardDescription>
             </CardHeader>
           </Card>
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-2xl font-bold text-center">
+          <Card className="hidden md:block">
+            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
+              <CardTitle className="text-lg md:text-2xl font-bold text-center">
                 {userContent?.reduce((sum, c) => sum + (c.shares_count || 0), 0) || 0}
               </CardTitle>
-              <CardDescription className="text-center">Total compartidos</CardDescription>
+              <CardDescription className="text-xs md:text-sm text-center">Compartidos</CardDescription>
             </CardHeader>
           </Card>
         </div>

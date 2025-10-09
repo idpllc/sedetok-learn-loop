@@ -97,6 +97,9 @@ const Index = () => {
         ref.pause();
       }
     });
+    if (!exceptId) {
+      setIsAnyVideoPlaying(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -230,8 +233,8 @@ const Index = () => {
         })}
       </div>
 
-      {/* Bottom navigation - shown when video is paused, hidden when playing on mobile */}
-      <div className={`transition-transform duration-300 ${isAnyVideoPlaying ? 'md:translate-y-0 translate-y-full' : 'translate-y-0'}`}>
+      {/* Bottom navigation - hidden when playing on mobile */}
+      <div className={`md:block ${isAnyVideoPlaying ? 'hidden' : 'block'}`}>
         <BottomNav />
       </div>
 

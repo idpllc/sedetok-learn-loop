@@ -260,7 +260,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Content info */}
-        <div className="absolute bottom-20 left-0 right-0 p-6 z-10">
+        <div className="absolute bottom-24 md:bottom-20 left-0 right-0 px-4 md:px-6 pb-4 z-10">
           <div className="space-y-2">
             <div>
               <button 
