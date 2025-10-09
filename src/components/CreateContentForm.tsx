@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Video, FileText, Loader2, X } from "lucide-react";
+import { Upload, Video, FileText, Loader2, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,13 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useCreateContent } from "@/hooks/useCreateContent";
+import { useQuizzes, useQuizQuestions } from "@/hooks/useQuizzes";
+import { useAuth } from "@/hooks/useAuth";
 import { Database } from "@/integrations/supabase/types";
+import { QuizStep2, QuizQuestion } from "./quiz/QuizStep2";
+import { QuizStep3 } from "./quiz/QuizStep3";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -34,14 +40,25 @@ interface CreateContentFormProps {
   editMode?: boolean;
   contentData?: ContentData;
   onUpdate?: (id: string, updates: any) => Promise<void>;
+  onTitleChange?: (title: string) => void;
 }
 
-export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: CreateContentFormProps) => {
+export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onTitleChange }: CreateContentFormProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: toastHook } = useToast();
+  const { user } = useAuth();
   const { uploadFile, uploading } = useCloudinary();
   const { createMutation } = useCreateContent();
+  const { createQuiz } = useQuizzes();
+  const { createQuestion } = useQuizQuestions();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [quizStep, setQuizStep] = useState(0); // 0 = basic form, 1 = questions, 2 = config
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [quizConfig, setQuizConfig] = useState({
+    time_limit: undefined as number | undefined,
+    random_order: false,
+    final_message: "¡Excelente trabajo! Has completado el quiz.",
+  });
   
   const [formData, setFormData] = useState({
     title: "",
@@ -49,6 +66,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     category: "" as CategoryType,
     grade_level: "" as GradeLevel,
     content_type: "" as ContentType,
+    difficulty: "basico" as "basico" | "intermedio" | "avanzado",
   });
   
   const [tags, setTags] = useState<string[]>([]);
@@ -69,6 +87,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         category: contentData.category,
         grade_level: contentData.grade_level,
         content_type: contentData.content_type,
+        difficulty: "basico",
       });
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
@@ -86,6 +105,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     }
   }, [editMode, contentData]);
 
+  // Update page title based on content type
+  useEffect(() => {
+    if (onTitleChange) {
+      const titles: Record<ContentType, string> = {
+        video: "Crear Video",
+        document: "Crear Documento",
+        lectura: "Crear Lectura",
+        quiz: "Crear Quiz",
+      };
+      onTitleChange(formData.content_type ? titles[formData.content_type] : "Crear Contenido");
+    }
+  }, [formData.content_type, onTitleChange]);
+
   const detectFileType = (file: File): 'video' | 'document' | 'image' | null => {
     const videoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
     const documentTypes = ['application/pdf'];
@@ -101,7 +133,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     const type = detectFileType(file);
     
     if (!type) {
-      toast({
+      toastHook({
         title: "Tipo de archivo no válido",
         description: "Por favor sube un video (MP4, MOV, AVI, MKV), documento PDF o imagen (JPG, PNG, WEBP)",
         variant: "destructive",
@@ -110,14 +142,14 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     }
 
     const maxSizes = {
-      video: 500 * 1024 * 1024, // 500MB
-      document: 50 * 1024 * 1024, // 50MB
-      image: 10 * 1024 * 1024, // 10MB
+      video: 500 * 1024 * 1024,
+      document: 50 * 1024 * 1024,
+      image: 10 * 1024 * 1024,
     };
 
     if (file.size > maxSizes[type]) {
       const maxSizeText = type === 'video' ? '500MB' : type === 'document' ? '50MB' : '10MB';
-      toast({
+      toastHook({
         title: "Archivo muy grande",
         description: `El archivo no debe superar los ${maxSizeText}`,
         variant: "destructive",
@@ -131,9 +163,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!validateFile(file)) return;
-
     const type = detectFileType(file);
     if (!type) return;
 
@@ -146,7 +176,6 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
       setFilePreview(file.name);
     }
 
-    // Auto-detect content type
     if (type === 'video') {
       setFormData({ ...formData, content_type: "video" as ContentType });
     } else if (type === 'document') {
@@ -157,12 +186,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
-    
     const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-
-    if (!validateFile(file)) return;
-
+    if (!file || !validateFile(file)) return;
     const type = detectFileType(file);
     if (!type) return;
 
@@ -175,7 +200,6 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
       setFilePreview(file.name);
     }
 
-    // Auto-detect content type
     if (type === 'video') {
       setFormData({ ...formData, content_type: "video" as ContentType });
     } else if (type === 'document') {
@@ -183,19 +207,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragActive(false);
-  };
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setDragActive(true); };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setDragActive(false); };
 
   const handleTagInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && tagInput.trim()) {
@@ -209,6 +223,70 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
 
   const removeTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleProceedToQuestions = () => {
+    if (!formData.title || !formData.category || !formData.grade_level) {
+      toast.error("Por favor completa todos los campos requeridos");
+      return;
+    }
+    setQuizStep(1);
+  };
+
+  const handleQuizSubmit = async (status: "borrador" | "publicado") => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para crear un quiz");
+      return;
+    }
+
+    if (quizQuestions.length === 0) {
+      toast.error("Debes agregar al menos una pregunta");
+      return;
+    }
+
+    try {
+      const quizData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        grade_level: formData.grade_level,
+        difficulty: formData.difficulty,
+        is_public: isPublic,
+        status,
+        time_limit: quizConfig.time_limit,
+        random_order: quizConfig.random_order,
+        final_message: quizConfig.final_message,
+        creator_id: user.id,
+      };
+
+      const createdQuiz = await createQuiz.mutateAsync(quizData as any);
+
+      for (let i = 0; i < quizQuestions.length; i++) {
+        const question = quizQuestions[i];
+        await createQuestion.mutateAsync({
+          content_id: createdQuiz.id,
+          question_text: question.question_text,
+          question_type: question.question_type,
+          image_url: question.image_url,
+          video_url: question.video_url,
+          feedback: question.feedback,
+          points: question.points,
+          order_index: i,
+          correct_answer: 0,
+          options: question.options.map((opt, idx) => ({
+            option_text: opt.option_text,
+            is_correct: opt.is_correct,
+            order_index: idx,
+          })),
+        } as any);
+      }
+
+      toast.success(status === "publicado" ? "¡Quiz publicado!" : "Quiz guardado como borrador");
+      navigate("/profile");
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+      toast.error("Error al guardar el quiz");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,6 +337,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
   };
 
   const isLoading = uploading || createMutation.isPending || isUpdating;
+  const isQuizMode = formData.content_type === 'quiz';
 
   const getFileTypeIcon = () => {
     if (!fileType) return <Upload className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
@@ -274,145 +353,290 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     return 'contenido';
   };
 
+  // Quiz wizard rendering
+  if (isQuizMode && quizStep > 0) {
+    return (
+      <div className="space-y-6">
+        {/* Steps indicator */}
+        <div className="flex items-center justify-between">
+          {[1, 2, 3].map((step, index) => (
+            <div key={step} className="flex items-center flex-1">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                    quizStep >= step
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {step}
+                </div>
+                <p className="text-xs mt-2 text-center hidden md:block">
+                  {step === 1 ? "Datos" : step === 2 ? "Preguntas" : "Configuración"}
+                </p>
+              </div>
+              {index < 2 && (
+                <div
+                  className={`flex-1 h-1 mx-2 ${
+                    quizStep > step ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {quizStep === 1 ? "Preguntas del Quiz" : "Configuración Final"}
+            </CardTitle>
+            <CardDescription>
+              {quizStep === 1
+                ? "Agrega las preguntas que conformarán tu quiz"
+                : "Ajusta la configuración antes de publicar"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {quizStep === 1 && (
+              <QuizStep2 questions={quizQuestions} onChange={setQuizQuestions} />
+            )}
+            {quizStep === 2 && (
+              <QuizStep3
+                formData={quizConfig}
+                questions={quizQuestions}
+                onChange={(field, value) => setQuizConfig({ ...quizConfig, [field]: value })}
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Navigation buttons */}
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={() => setQuizStep(Math.max(0, quizStep - 1))}
+          >
+            Anterior
+          </Button>
+
+          <div className="flex gap-2">
+            {quizStep === 2 && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => handleQuizSubmit("borrador")}
+                  disabled={quizQuestions.length === 0}
+                >
+                  Guardar borrador
+                </Button>
+                <Button
+                  onClick={() => handleQuizSubmit("publicado")}
+                  disabled={quizQuestions.length === 0}
+                >
+                  Publicar
+                </Button>
+              </>
+            )}
+
+            {quizStep < 2 && (
+              <Button
+                onClick={() => setQuizStep(quizStep + 1)}
+                disabled={quizStep === 1 && quizQuestions.length === 0}
+              >
+                Siguiente
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Normal form or quiz step 1 (basic data)
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Tipo de contenido primero */}
+      <div className="space-y-2">
+        <Label htmlFor="content_type">Tipo de Contenido *</Label>
+        <Select
+          value={formData.content_type}
+          onValueChange={(value) => setFormData({ ...formData, content_type: value as ContentType })}
+          required
+          disabled={editMode}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecciona tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="video">Video</SelectItem>
+            <SelectItem value="document">Documento</SelectItem>
+            <SelectItem value="lectura">Lectura</SelectItem>
+            <SelectItem value="quiz">Quiz</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      {formData.content_type === 'lectura' ? (
+      {isQuizMode && (
         <div className="space-y-2">
-          <Label htmlFor="richText">Contenido de la Lectura</Label>
-          <Textarea
-            id="richText"
-            value={richText}
-            onChange={(e) => setRichText(e.target.value)}
-            placeholder="Escribe aquí el contenido completo de la lectura..."
-            className="min-h-[300px] resize-y"
-            required
-          />
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <Label htmlFor="file">Contenido de la Cápsula</Label>
-          <div
-            onDrop={handleFileDrop}
-            onDragOver={handleDragOver}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
-              dragActive
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/50"
-            }`}
+          <Label htmlFor="difficulty">Nivel de dificultad *</Label>
+          <Select
+            value={formData.difficulty}
+            onValueChange={(value) => setFormData({ ...formData, difficulty: value as any })}
           >
-            <Input
-              id="file"
-              type="file"
-              accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,application/pdf,image/jpeg,image/jpg,image/png,image/webp"
-              onChange={handleFileChange}
-              className="hidden"
-              disabled={editMode}
-            />
-            <div className="flex flex-col items-center justify-center gap-4">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                dragActive ? "bg-primary/20" : "bg-muted"
-              }`}>
-                {getFileTypeIcon()}
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium mb-1">
-                  {dragActive ? `Suelta tu ${getFileTypeText()} aquí` : "Arrastra tu archivo aquí"}
-                </p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  o haz click para seleccionar
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Videos (MP4, MOV, AVI, MKV), PDFs o Imágenes (JPG, PNG, WEBP)
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Máx: Videos 500MB | PDFs 50MB | Imágenes 10MB
-                </p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => document.getElementById("file")?.click()}
-                disabled={editMode}
-              >
-                Seleccionar archivo
-              </Button>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona el nivel" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="basico">Básico</SelectItem>
+              <SelectItem value="intermedio">Intermedio</SelectItem>
+              <SelectItem value="avanzado">Avanzado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Contenido según tipo */}
+      {!isQuizMode && (
+        <>
+          {formData.content_type === 'lectura' ? (
+            <div className="space-y-2">
+              <Label htmlFor="richText">Contenido de la Lectura</Label>
+              <Textarea
+                id="richText"
+                value={richText}
+                onChange={(e) => setRichText(e.target.value)}
+                placeholder="Escribe aquí el contenido completo de la lectura..."
+                className="min-h-[300px] resize-y"
+                required
+              />
             </div>
-          </div>
-          {filePreview && (
-            <div className="relative">
-              {fileType === 'video' && (
-                <>
-                  <video src={filePreview} controls className="w-full rounded-lg mt-2" />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-4 right-4"
-                    onClick={() => {
-                      setUploadedFile(null);
-                      setFilePreview("");
-                      setFileType(null);
-                      setFormData({ ...formData, content_type: "" as ContentType });
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-              {fileType === 'image' && (
-                <>
-                  <img src={filePreview} alt="Preview" className="w-full rounded-lg mt-2 max-h-[300px] object-cover" />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-4 right-4"
-                    onClick={() => {
-                      setUploadedFile(null);
-                      setFilePreview("");
-                      setFileType(null);
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-              {fileType === 'document' && (
-                <div className="flex items-center justify-between gap-2 p-4 bg-muted rounded-lg mt-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-primary" />
-                    <span className="text-sm font-medium">{filePreview}</span>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="file">Contenido de la Cápsula</Label>
+              <div
+                onDrop={handleFileDrop}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
+                  dragActive
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <Input
+                  id="file"
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,application/pdf,image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  disabled={editMode}
+                />
+                <div className="flex flex-col items-center justify-center gap-4">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                    dragActive ? "bg-primary/20" : "bg-muted"
+                  }`}>
+                    {getFileTypeIcon()}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium mb-1">
+                      {dragActive ? `Suelta tu ${getFileTypeText()} aquí` : "Arrastra tu archivo aquí"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      o haz click para seleccionar
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Videos (MP4, MOV, AVI, MKV), PDFs o Imágenes (JPG, PNG, WEBP)
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Máx: Videos 500MB | PDFs 50MB | Imágenes 10MB
+                    </p>
                   </div>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => {
-                      setUploadedFile(null);
-                      setFilePreview("");
-                      setFileType(null);
-                      setFormData({ ...formData, content_type: "" as ContentType });
-                    }}
+                    onClick={() => document.getElementById("file")?.click()}
+                    disabled={editMode}
                   >
-                    <X className="w-4 h-4" />
+                    Seleccionar archivo
                   </Button>
+                </div>
+              </div>
+              {filePreview && (
+                <div className="relative">
+                  {fileType === 'video' && (
+                    <>
+                      <video src={filePreview} controls className="w-full rounded-lg mt-2" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-4 right-4"
+                        onClick={() => {
+                          setUploadedFile(null);
+                          setFilePreview("");
+                          setFileType(null);
+                          setFormData({ ...formData, content_type: "" as ContentType });
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                  {fileType === 'image' && (
+                    <>
+                      <img src={filePreview} alt="Preview" className="w-full rounded-lg mt-2 max-h-[300px] object-cover" />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-4 right-4"
+                        onClick={() => {
+                          setUploadedFile(null);
+                          setFilePreview("");
+                          setFileType(null);
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                  {fileType === 'document' && (
+                    <div className="flex items-center justify-between gap-2 p-4 bg-muted rounded-lg mt-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-primary" />
+                        <span className="text-sm font-medium">{filePreview}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setUploadedFile(null);
+                          setFilePreview("");
+                          setFileType(null);
+                          setFormData({ ...formData, content_type: "" as ContentType });
+                        }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
-        </div>
+        </>
       )}
 
-
       <div className="space-y-2">
-        <Label htmlFor="title">Título de la Cápsula</Label>
+        <Label htmlFor="title">{isQuizMode ? "Título del Quiz" : "Título de la Cápsula"} *</Label>
         <Input
           id="title"
-          placeholder="Ej: Introducción a la Fotosíntesis"
+          placeholder={isQuizMode ? "Ej: Quiz de Matemáticas - Fracciones" : "Ej: Introducción a la Fotosíntesis"}
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           required
@@ -423,7 +647,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         <Label htmlFor="description">Descripción</Label>
         <Textarea
           id="description"
-          placeholder="Describe el contenido de tu cápsula..."
+          placeholder={isQuizMode ? "Describe brevemente el contenido del quiz" : "Describe el contenido de tu cápsula..."}
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           className="min-h-[100px]"
@@ -432,7 +656,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="category">Categoría</Label>
+          <Label htmlFor="category">Categoría *</Label>
           <Select
             value={formData.category}
             onValueChange={(value) => setFormData({ ...formData, category: value as CategoryType })}
@@ -454,7 +678,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="grade">Nivel</Label>
+          <Label htmlFor="grade">Nivel *</Label>
           <Select
             value={formData.grade_level}
             onValueChange={(value) => setFormData({ ...formData, grade_level: value as GradeLevel })}
@@ -471,26 +695,6 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
             </SelectContent>
           </Select>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="content_type">Tipo de Contenido</Label>
-        <Select
-          value={formData.content_type}
-          onValueChange={(value) => setFormData({ ...formData, content_type: value as ContentType })}
-          required
-          disabled={editMode}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecciona tipo" />
-          </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="video">Video</SelectItem>
-              <SelectItem value="document">Documento</SelectItem>
-              <SelectItem value="lectura">Lectura</SelectItem>
-              <SelectItem value="quiz">Quiz</SelectItem>
-            </SelectContent>
-        </Select>
       </div>
 
       <div className="space-y-2">
@@ -521,7 +725,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         <div className="space-y-0.5">
           <Label htmlFor="visibility">Visibilidad</Label>
           <p className="text-sm text-muted-foreground">
-            {isPublic ? "Cápsula pública - visible para todos" : "Cápsula privada - solo tú puedes verla"}
+            {isPublic ? `${isQuizMode ? 'Quiz' : 'Cápsula'} pública - visible para todos` : `${isQuizMode ? 'Quiz' : 'Cápsula'} privada - solo tú puedes verla`}
           </p>
         </div>
         <Switch
@@ -531,19 +735,31 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            {editMode ? "Guardando..." : "Publicando..."}
-          </>
-        ) : (
-          <>
-            <Upload className="w-4 h-4 mr-2" />
-            {editMode ? "Guardar Cambios" : "Publicar Cápsula"}
-          </>
-        )}
-      </Button>
+      {isQuizMode ? (
+        <Button 
+          type="button" 
+          className="w-full"
+          onClick={handleProceedToQuestions}
+          disabled={!formData.title || !formData.category || !formData.grade_level}
+        >
+          <ArrowRight className="w-4 h-4 mr-2" />
+          Crear Preguntas y Respuestas
+        </Button>
+      ) : (
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              {editMode ? "Guardando..." : "Publicando..."}
+            </>
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-2" />
+              {editMode ? "Guardar Cambios" : "Publicar Cápsula"}
+            </>
+          )}
+        </Button>
+      )}
     </form>
   );
 };

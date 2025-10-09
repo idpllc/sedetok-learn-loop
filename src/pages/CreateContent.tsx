@@ -3,11 +3,12 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateContentForm } from "@/components/CreateContentForm";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const CreateContent = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [pageTitle, setPageTitle] = useState("Crear Contenido");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -37,12 +38,12 @@ const CreateContent = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold">Crear Cápsula</h1>
+          <h1 className="text-xl font-bold">{pageTitle}</h1>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6">
-        <CreateContentForm />
+        <CreateContentForm onTitleChange={setPageTitle} />
       </main>
     </div>
   );
