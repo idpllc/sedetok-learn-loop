@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
-import { FloatingActionButton } from "@/components/FloatingActionButton";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
@@ -222,9 +221,6 @@ const Index = () => {
           );
         })}
       </div>
-
-      {/* Floating action button */}
-      <FloatingActionButton />
 
       {/* Bottom navigation - hidden when video is playing on mobile */}
       <div className={`transition-transform duration-300 ${isAnyVideoPlaying ? 'md:translate-y-0 translate-y-full' : 'translate-y-0'}`}>
