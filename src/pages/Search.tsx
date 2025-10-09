@@ -149,14 +149,20 @@ const Search = () => {
                 <Card 
                   key={item.id} 
                   className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(isLearningPath ? `/learning-paths/${item.id}` : `/?content=${item.id}`)}
+                  onClick={() => {
+                    if (isLearningPath) {
+                      navigate(`/learning-paths/${item.id}`);
+                    } else {
+                      navigate(`/?content=${item.id}`);
+                    }
+                  }}
                 >
                   <CardContent className="p-0">
                     {/* Thumbnail/Preview */}
                     <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-secondary/20">
-                      {item.thumbnail_url ? (
+                      {(item.cover_url || item.thumbnail_url) ? (
                         <img 
-                          src={item.thumbnail_url} 
+                          src={item.cover_url || item.thumbnail_url} 
                           alt={item.title}
                           className="w-full h-full object-cover"
                         />
@@ -164,7 +170,10 @@ const Search = () => {
                         <div className="w-full h-full flex items-center justify-center">
                           <div className="text-center">
                             <div className="text-5xl mb-2">
-                              {item.content_type === 'video' ? '🎥' : item.content_type === 'document' ? '📄' : '📝'}
+                              {isLearningPath ? '🗺️' : 
+                               item.content_type === 'video' ? '🎥' : 
+                               item.content_type === 'document' ? '📄' : 
+                               item.content_type === 'lectura' ? '📖' : '📝'}
                             </div>
                           </div>
                         </div>
