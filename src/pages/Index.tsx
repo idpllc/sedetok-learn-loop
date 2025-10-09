@@ -195,6 +195,7 @@ const Index = () => {
               title={item.title}
               description={item.description}
               creator={item.profiles?.username || item.creator}
+              creatorId={item.creator_id || item.id}
               institution={item.profiles?.institution || item.institution}
               creatorAvatar={item.profiles?.avatar_url}
               tags={Array.isArray(item.tags) ? item.tags : []}

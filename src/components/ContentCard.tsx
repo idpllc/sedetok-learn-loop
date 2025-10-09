@@ -1,23 +1,26 @@
-import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { useContent } from "@/hooks/useContent";
 import { VideoPlayer, VideoPlayerRef } from "./VideoPlayer";
 import { useViews } from "@/hooks/useViews";
 import { useXP } from "@/hooks/useXP";
-import { CommentsSheet } from "./CommentsSheet";
 import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
 import { PDFViewer } from "./PDFViewer";
 import { PDFModal } from "./PDFModal";
-import { DescriptionSheet } from "./DescriptionSheet";
+import { ContentInfoSheet } from "./ContentInfoSheet";
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useFollow } from "@/hooks/useFollow";
+import { useNavigate } from "react-router-dom";
 
 interface ContentCardProps {
   id: string;
   title: string;
   description?: string;
   creator: string;
+  creatorId: string;
   institution?: string;
   tags: string[];
   category: string;
@@ -43,6 +46,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   title,
   description,
   creator,
+  creatorId,
   institution,
   tags,
   category,
@@ -62,12 +66,15 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   videoRef,
   onPlayStateChange,
 }, ref) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { likeMutation, saveMutation } = useContent();
   const { awardXP } = useXP();
+  const { isFollowing, toggleFollow, isProcessing } = useFollow(creatorId);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPdfContent, setShowPdfContent] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -256,22 +263,27 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         <div className="absolute bottom-20 left-0 right-0 p-6 z-10">
           <div className="space-y-2">
             <div>
-              <h2 className="text-base font-bold text-white mb-1">{title}</h2>
-              <p className="text-xs text-white/80 mb-2">
+              <button 
+                onClick={() => navigate(`/profile`)}
+                className="text-xl font-bold text-white mb-1 text-left hover:underline"
+              >
                 {creator}
-                {institution && <span className="text-white/60"> · {institution}</span>}
-              </p>
+              </button>
+              {institution && (
+                <p className="text-sm text-white/80 mb-2">{institution}</p>
+              )}
               
               {/* Description excerpt with "más" link */}
               {description && (
-                <DescriptionSheet
-                  title={title}
-                  description={description}
-                  creator={creator}
-                  institution={institution}
-                  tags={tags}
-                  creatorAvatar={creatorAvatar}
-                />
+                <button 
+                  className="text-sm text-white/90 text-left block"
+                  onClick={() => setInfoSheetOpen(true)}
+                >
+                  {description.length > 80 ? `${description.slice(0, 80)}...` : description}
+                  {description.length > 80 && (
+                    <span className="ml-1 font-semibold">más</span>
+                  )}
+                </button>
               )}
             </div>
           </div>
@@ -279,6 +291,36 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 
         {/* Action buttons - floating on the right, centered vertically */}
         <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
+          {/* Creator avatar with follow button */}
+          <div className="relative flex flex-col items-center">
+            <button
+              onClick={() => navigate(`/profile`)}
+              className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg"
+            >
+              {creatorAvatar ? (
+                <img src={creatorAvatar} alt={creator} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-primary/80 flex items-center justify-center">
+                  <span className="text-white font-semibold text-lg">{creator.charAt(0)}</span>
+                </div>
+              )}
+            </button>
+            {user && user.id !== creatorId && (
+              <Button
+                size="icon"
+                onClick={() => toggleFollow(creatorId)}
+                disabled={isProcessing}
+                className="absolute -bottom-2 w-6 h-6 rounded-full bg-primary hover:bg-primary/90 shadow-lg p-0"
+              >
+                {isFollowing ? (
+                  <UserCheck className="w-3 h-3" />
+                ) : (
+                  <UserPlus className="w-3 h-3" />
+                )}
+              </Button>
+            )}
+          </div>
+
           <button
             onClick={handleLike}
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
@@ -293,7 +335,15 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             <span className="text-xs font-semibold text-white drop-shadow-lg">{initialLikes}</span>
           </button>
 
-          <CommentsSheet contentId={id} commentsCount={initialComments} />
+          <button
+            onClick={() => setInfoSheetOpen(true)}
+            className="flex flex-col items-center gap-1 transition-all hover:scale-110"
+          >
+            <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-white">
+              <MessageCircle className="w-5 h-5 text-black" />
+            </div>
+            <span className="text-xs font-semibold text-white drop-shadow-lg">{initialComments}</span>
+          </button>
 
           <button 
             onClick={handleSave}
@@ -370,6 +420,20 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           title={title}
         />
       )}
+
+      {/* Content Info Sheet with Comments */}
+      <ContentInfoSheet
+        open={infoSheetOpen}
+        onOpenChange={setInfoSheetOpen}
+        contentId={id}
+        title={title}
+        description={description || ""}
+        creator={creator}
+        institution={institution}
+        tags={tags}
+        creatorAvatar={creatorAvatar}
+        commentsCount={initialComments}
+      />
     </div>
   );
 });
