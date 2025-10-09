@@ -141,7 +141,7 @@ const ViewLearningPath = () => {
           video_url: undefined,
           documento_url: undefined,
           rich_text: undefined,
-          content_type: "Quiz" as const,
+          content_type: 'quiz' as const,
           likes_count: 0,
           comments_count: 0,
           shares_count: 0,
