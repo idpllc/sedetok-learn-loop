@@ -6,9 +6,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useContent } from "@/hooks/useContent";
 import { usePathContent } from "@/hooks/useLearningPaths";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface PathBuilderProps {
   data: any;
@@ -18,12 +21,89 @@ interface PathBuilderProps {
 
 export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { content: myContent, isLoading: loadingMyContent } = useContent();
-  const { content: publicContent, isLoading: loadingPublicContent } = useContent();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { contents, addContent, removeContent } = usePathContent(pathId || undefined);
 
+  // Fetch user's own content
+  const { data: myContent, isLoading: loadingMyContent } = useQuery({
+    queryKey: ["my-content", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data: contentData, error: contentError } = await supabase
+        .from("content")
+        .select("*")
+        .eq("creator_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (contentError) throw contentError;
+
+      const { data: quizData, error: quizError } = await supabase
+        .from("quizzes")
+        .select("*")
+        .eq("creator_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (quizError) throw quizError;
+
+      const quizzes = (quizData || []).map(quiz => ({
+        ...quiz,
+        content_type: 'quiz' as const,
+      }));
+
+      return [...(contentData || []), ...quizzes].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch public content (excluding user's own)
+  const { data: publicContent, isLoading: loadingPublicContent } = useQuery({
+    queryKey: ["public-content", user?.id],
+    queryFn: async () => {
+      const { data: contentData, error: contentError } = await supabase
+        .from("content")
+        .select("*")
+        .eq("is_public", true)
+        .neq("creator_id", user?.id || "")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (contentError) throw contentError;
+
+      const { data: quizData, error: quizError } = await supabase
+        .from("quizzes")
+        .select("*")
+        .eq("is_public", true)
+        .eq("status", "publicado")
+        .neq("creator_id", user?.id || "")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (quizError) throw quizError;
+
+      const quizzes = (quizData || []).map(quiz => ({
+        ...quiz,
+        content_type: 'quiz' as const,
+      }));
+
+      return [...(contentData || []), ...quizzes]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 50);
+    },
+  });
+
   const handleAddContent = async (contentId: string) => {
-    if (!pathId) return;
+    if (!pathId) {
+      toast({
+        title: "Error",
+        description: "Debes completar el paso 1 primero",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       const maxOrder = contents?.reduce((max, item) => 
@@ -35,8 +115,18 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
         order_index: maxOrder + 1,
         is_required: false,
       });
-    } catch (error) {
+
+      toast({
+        title: "Cápsula agregada",
+        description: "La cápsula se agregó exitosamente a la ruta",
+      });
+    } catch (error: any) {
       console.error("Error adding content:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo agregar la cápsula",
+        variant: "destructive",
+      });
     }
   };
 
@@ -77,38 +167,57 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
 
     return (
       <div className="space-y-2">
-        {filtered.map((item) => (
-          <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">
-                    {item.content_type === 'video' ? '🎥' : 
-                     item.content_type === 'lectura' ? '📖' :
-                     item.content_type === 'documento' ? '📄' : '❓'}
-                  </span>
-                  <h4 className="font-medium text-sm truncate">{item.title}</h4>
+        {filtered.map((item) => {
+          const thumbnail = item.thumbnail_url || 
+            (item.content_type === 'video' && item.video_url ? 
+              item.video_url.replace('upload/', 'upload/c_thumb,w_300/') : null) ||
+            (item.content_type === 'documento' && item.cover_image) ||
+            null;
+
+          return (
+            <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
+              <div className="flex items-start gap-3">
+                {thumbnail && (
+                  <div className="w-20 h-14 rounded overflow-hidden flex-shrink-0 bg-muted">
+                    <img
+                      src={thumbnail}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">
+                      {item.content_type === 'video' ? '🎥' : 
+                       item.content_type === 'lectura' ? '📖' :
+                       item.content_type === 'documento' ? '📄' :
+                       item.content_type === 'quiz' ? '📝' : '❓'}
+                    </span>
+                    <h4 className="font-medium text-sm truncate">{item.title}</h4>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary" className="text-xs">
+                      {item.category}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {item.grade_level}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="secondary" className="text-xs">
-                    {item.category}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {item.grade_level}
-                  </Badge>
-                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleAddContent(item.id)}
+                  disabled={!pathId || addContent.isPending}
+                  className="flex-shrink-0"
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddContent(item.id)}
-                disabled={!pathId}
-              >
-                <Plus className="w-3 h-3" />
-              </Button>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
     );
   };
@@ -176,52 +285,71 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
         ) : contents && contents.length > 0 ? (
           <ScrollArea className="h-[600px]">
             <div className="space-y-3">
-              {contents.map((item: any, index) => (
-                <Card key={item.id} className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="cursor-move mt-1">
-                      <GripVertical className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">
-                          {item.content?.content_type === 'video' ? '🎥' : 
-                           item.content?.content_type === 'lectura' ? '📖' :
-                           item.content?.content_type === 'documento' ? '📄' : '❓'}
-                        </span>
-                        <div className="flex-1">
-                          <h4 className="font-medium">{item.content?.title || 'Cápsula'}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Posición {index + 1}
-                          </p>
+              {contents.map((item: any, index) => {
+                const thumbnail = item.content?.thumbnail_url || 
+                  (item.content?.content_type === 'video' && item.content?.video_url ? 
+                    item.content.video_url.replace('upload/', 'upload/c_thumb,w_300/') : null) ||
+                  (item.content?.content_type === 'documento' && item.content?.cover_image) ||
+                  null;
+
+                return (
+                  <Card key={item.id} className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="cursor-move mt-1">
+                        <GripVertical className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      {thumbnail && (
+                        <div className="w-24 h-16 rounded overflow-hidden flex-shrink-0 bg-muted">
+                          <img
+                            src={thumbnail}
+                            alt={item.content?.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">
+                            {item.content?.content_type === 'video' ? '🎥' : 
+                             item.content?.content_type === 'lectura' ? '📖' :
+                             item.content?.content_type === 'documento' ? '📄' :
+                             item.content?.content_type === 'quiz' ? '📝' : '❓'}
+                          </span>
+                          <div className="flex-1">
+                            <h4 className="font-medium">{item.content?.title || 'Cápsula'}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Posición {index + 1}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {item.is_required && (
+                            <Badge variant="secondary" className="text-xs">
+                              Obligatoria
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-xs">
+                            {item.content?.category}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {item.is_required && (
-                          <Badge variant="secondary" className="text-xs">
-                            Obligatoria
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className="text-xs">
-                          {item.content?.category}
-                        </Badge>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveContent(item.id)}
+                          disabled={removeContent.isPending}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveContent(item.id)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           </ScrollArea>
         ) : (
