@@ -10,10 +10,11 @@ import { useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { usePathProgress } from "@/hooks/usePathProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
-import { ArrowLeft, Map, List } from "lucide-react";
+import { ArrowLeft, Map, List, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PathMapView } from "@/components/learning-paths/PathMapView";
 import { PathInfoCard } from "@/components/PathInfoCard";
+import { SharePathSheet } from "@/components/SharePathSheet";
 
 const ViewLearningPath = () => {
   const { id } = useParams<{ id: string }>();
@@ -224,8 +225,22 @@ const ViewLearningPath = () => {
           </Button>
         </div>
 
-        {/* View toggle button */}
-        <div className="absolute top-4 right-4 z-50">
+        {/* Action buttons */}
+        <div className="absolute top-4 right-4 z-50 flex gap-2">
+          <SharePathSheet
+            pathId={id!}
+            pathTitle={pathTitle}
+            isPublic={pathInfo?.is_public ?? true}
+            trigger={
+              <Button
+                variant="secondary"
+                size="icon"
+                className="rounded-full bg-background/80 backdrop-blur-sm"
+              >
+                <Share2 className="w-5 h-5" />
+              </Button>
+            }
+          />
           <Button
             variant="secondary"
             size="icon"
@@ -264,8 +279,22 @@ const ViewLearningPath = () => {
         </Button>
       </div>
 
-      {/* View toggle button */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Action buttons */}
+      <div className="absolute top-4 right-4 z-50 flex gap-2">
+        <SharePathSheet
+          pathId={id!}
+          pathTitle={pathTitle}
+          isPublic={pathInfo?.is_public ?? true}
+          trigger={
+            <Button
+              variant="secondary"
+              size="icon"
+              className="rounded-full bg-background/80 backdrop-blur-sm"
+            >
+              <Share2 className="w-5 h-5" />
+            </Button>
+          }
+        />
         <Button
           variant="secondary"
           size="icon"
@@ -292,6 +321,7 @@ const ViewLearningPath = () => {
           objectives={pathInfo?.objectives}
           coverUrl={pathInfo?.cover_url}
           contentCount={contentData.length}
+          isPublic={pathInfo?.is_public ?? true}
           onStart={() => {
             // Scroll to first content capsule
             const container = document.querySelector('.snap-y');

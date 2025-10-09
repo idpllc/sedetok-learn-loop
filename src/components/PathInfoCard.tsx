@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Clock, Award, Target, ChevronRight } from "lucide-react";
+import { BookOpen, Clock, Award, Target, ChevronRight, Share2 } from "lucide-react";
 import { forwardRef } from "react";
+import { SharePathSheet } from "@/components/SharePathSheet";
 
 interface PathInfoCardProps {
   pathId: string;
@@ -16,12 +17,14 @@ interface PathInfoCardProps {
   objectives?: string;
   coverUrl?: string;
   contentCount: number;
+  isPublic?: boolean;
   onStart: () => void;
   onNext?: () => void;
   hasNext?: boolean;
 }
 
 export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
+  pathId,
   title,
   description,
   subject,
@@ -33,6 +36,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   objectives,
   coverUrl,
   contentCount,
+  isPublic = true,
   onStart,
   onNext,
   hasNext,
@@ -135,15 +139,33 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
           </div>
         )}
 
-        {/* CTA Button */}
-        <Button
-          size="lg"
-          onClick={onStart}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xl px-12 py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300"
-        >
-          Empezar Ruta
-          <ChevronRight className="w-6 h-6 ml-2" />
-        </Button>
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full max-w-md mb-4">
+          <Button
+            size="lg"
+            onClick={onStart}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xl px-12 py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+          >
+            Empezar Ruta
+            <ChevronRight className="w-6 h-6 ml-2" />
+          </Button>
+          
+          <SharePathSheet
+            pathId={pathId}
+            pathTitle={title}
+            isPublic={isPublic}
+            trigger={
+              <Button
+                size="lg"
+                variant="outline"
+                className="font-semibold text-lg px-8 py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+              >
+                <Share2 className="w-5 h-5 mr-2" />
+                Compartir
+              </Button>
+            }
+          />
+        </div>
 
         {/* Hint to scroll */}
         {hasNext && (
