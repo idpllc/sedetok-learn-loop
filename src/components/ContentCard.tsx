@@ -19,6 +19,7 @@ import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollow } from "@/hooks/useFollow";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ContentCardProps {
   id: string;
@@ -81,6 +82,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 }, ref) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { likeMutation, saveMutation } = useContent();
   const { awardXP } = useXP();
   const { isFollowing, toggleFollow, isProcessing } = useFollow(creatorId);
@@ -551,7 +553,13 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             <QuizViewer 
               quizId={id} 
               lastAttempt={lastAttempt}
-              onComplete={() => setQuizModalOpen(false)}
+              onComplete={() => {
+                setQuizModalOpen(false);
+                // Refrescar los intentos del quiz después de completarlo
+                if (user) {
+                  queryClient.invalidateQueries({ queryKey: ["quiz-attempts", id, user.id] });
+                }
+              }}
             />
           </DialogContent>
         </Dialog>
