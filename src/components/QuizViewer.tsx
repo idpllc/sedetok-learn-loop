@@ -279,7 +279,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete }: QuizViewerProps)
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="h-full flex items-center justify-center p-6"
+            className="h-full flex items-center justify-center px-2 py-6 md:p-6"
           >
             <div className="w-full max-w-2xl space-y-6">
               {/* Question number and points */}
