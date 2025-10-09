@@ -264,7 +264,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           <div className="space-y-2">
             <div>
               <button 
-                onClick={() => navigate(`/profile`)}
+                onClick={() => navigate(`/profile/${creatorId}`)}
                 className="text-xl font-bold text-white mb-1 text-left hover:underline"
               >
                 {creator}
@@ -294,7 +294,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           {/* Creator avatar with follow button */}
           <div className="relative flex flex-col items-center">
             <button
-              onClick={() => navigate(`/profile`)}
+              onClick={() => navigate(`/profile/${creatorId}`)}
               className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg"
             >
               {creatorAvatar ? (

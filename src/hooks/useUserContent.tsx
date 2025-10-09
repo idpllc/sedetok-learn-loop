@@ -2,21 +2,37 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const useUserContent = () => {
+export const useUserContent = (userId?: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: userContent, isLoading } = useQuery({
-    queryKey: ["userContent"],
+    queryKey: ["userContent", userId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuario no autenticado");
+      let targetUserId = userId;
+      let isOwnContent = false;
+      
+      if (!targetUserId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Usuario no autenticado");
+        targetUserId = user.id;
+        isOwnContent = true;
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        isOwnContent = user?.id === targetUserId;
+      }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("content")
         .select("*")
-        .eq("creator_id", user.id)
-        .order("created_at", { ascending: false });
+        .eq("creator_id", targetUserId);
+
+      // Only filter by is_public if viewing someone else's profile
+      if (!isOwnContent) {
+        query = query.eq("is_public", true);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       return data;

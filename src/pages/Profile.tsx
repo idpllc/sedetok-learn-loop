@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut, UserPlus, UserCheck } from "lucide-react";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { PDFViewer } from "@/components/PDFViewer";
@@ -21,17 +21,41 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserContent } from "@/hooks/useUserContent";
+import { useFollow } from "@/hooks/useFollow";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { userId } = useParams();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent();
+  const isOwnProfile = !userId || userId === user?.id;
+  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(userId);
+  const { isFollowing, toggleFollow, isProcessing } = useFollow(userId || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; title: string } | null>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
+
+  const { data: profileData } = useQuery({
+    queryKey: ["profile", userId],
+    queryFn: async () => {
+      const targetUserId = userId || user?.id;
+      if (!targetUserId) return null;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", targetUserId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId || !!user?.id,
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -44,10 +68,10 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && isOwnProfile) {
       navigate("/auth");
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, isOwnProfile]);
 
   const handleDelete = (contentId: string) => {
     setContentToDelete(contentId);
@@ -83,36 +107,38 @@ const Profile = () => {
               {item.description || "Sin descripción"}
             </CardDescription>
           </div>
-          <div className="flex gap-1 ml-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => toggleVisibility(item.id, item.is_public)}
-              title={item.is_public ? "Ocultar" : "Publicar"}
-            >
-              {item.is_public ? (
-                <Eye className="h-4 w-4" />
-              ) : (
-                <EyeOff className="h-4 w-4 text-muted-foreground" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(`/edit/${item.id}`)}
-              title="Editar"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(item.id)}
-              title="Eliminar"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
+          {isOwnProfile && (
+            <div className="flex gap-1 ml-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => toggleVisibility(item.id, item.is_public)}
+                title={item.is_public ? "Ocultar" : "Publicar"}
+              >
+                {item.is_public ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(`/edit/${item.id}`)}
+                title="Editar"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(item.id)}
+                title="Eliminar"
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3 p-3 md:p-6 pt-0">
@@ -185,24 +211,51 @@ const Profile = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">Mi Perfil</h1>
+            <h1 className="text-xl font-bold">{isOwnProfile ? "Mi Perfil" : profileData?.username || "Perfil"}</h1>
             <p className="text-sm text-muted-foreground">
-              {user?.user_metadata?.username || user?.email}
+              {isOwnProfile 
+                ? (user?.user_metadata?.username || user?.email)
+                : (profileData?.full_name || profileData?.username || "Usuario")
+              }
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={openOnboarding} className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              <span className="hidden md:inline">Completar Perfil 360°</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
-              <UserCog className="w-4 h-4" />
-              <span className="hidden md:inline">Editar Perfil</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-2">
-              <LogOut className="w-4 h-4" />
-              <span className="hidden md:inline">Cerrar Sesión</span>
-            </Button>
+            {isOwnProfile ? (
+              <>
+                <Button variant="outline" size="sm" onClick={openOnboarding} className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden md:inline">Completar Perfil 360°</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
+                  <UserCog className="w-4 h-4" />
+                  <span className="hidden md:inline">Editar Perfil</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-2">
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden md:inline">Cerrar Sesión</span>
+                </Button>
+              </>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => toggleFollow(userId!)}
+                disabled={isProcessing}
+                className="flex items-center gap-2"
+              >
+                {isFollowing ? (
+                  <>
+                    <UserCheck className="w-4 h-4" />
+                    <span>Siguiendo</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4" />
+                    <span>Seguir</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </header>
