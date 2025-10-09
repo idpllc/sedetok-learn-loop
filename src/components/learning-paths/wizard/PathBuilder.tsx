@@ -328,9 +328,11 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                 <Button
                   size="sm"
                   variant={isAdded ? "secondary" : "default"}
-                  onClick={() => handleAddContent(item.id)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); handleAddContent(item.id); }}
                   disabled={addContent.isPending || isAdded}
                   className="flex-shrink-0"
+                  draggable={false}
                 >
                   {isAdded ? "Agregado" : "Agregar"}
                 </Button>
