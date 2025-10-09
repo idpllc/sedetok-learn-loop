@@ -33,20 +33,20 @@ export const PDFViewer = ({ fileUrl, onExpandClick }: PDFViewerProps) => {
         </div>
       )}
       
-      <div className="relative w-full h-48 overflow-hidden">
+      <div className="relative w-full h-[500px] overflow-hidden flex items-center justify-center bg-muted">
         <Document
           file={fileUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
           loading={
-            <div className="flex items-center justify-center h-48">
+            <div className="flex items-center justify-center h-[500px]">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           }
         >
           <Page
             pageNumber={1}
-            width={400}
+            width={Math.min(window.innerWidth * 0.8, 800)}
             renderTextLayer={false}
             renderAnnotationLayer={false}
           />

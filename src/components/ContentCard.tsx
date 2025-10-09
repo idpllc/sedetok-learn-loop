@@ -7,6 +7,8 @@ import { useXP } from "@/hooks/useXP";
 import { CommentsSheet } from "./CommentsSheet";
 import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
+import { PDFViewer } from "./PDFViewer";
+import { PDFModal } from "./PDFModal";
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -19,6 +21,7 @@ interface ContentCardProps {
   category: string;
   thumbnail?: string;
   videoUrl?: string;
+  documentUrl?: string;
   likes: number;
   comments: number;
   grade: string;
@@ -40,6 +43,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   category,
   thumbnail,
   videoUrl,
+  documentUrl,
   likes: initialLikes,
   comments: initialComments,
   grade,
@@ -56,6 +60,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const { awardXP } = useXP();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
   useViews(id);
   
   // Visibility detection to show action buttons only for the in-view card (desktop)
@@ -125,6 +130,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     }
   };
 
+  const handleExpandPdf = () => {
+    setPdfModalOpen(true);
+  };
+
   return (
     <div ref={setRefs} className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-black">
       {/* Video/Content container */}
@@ -141,6 +150,15 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             contentId={id}
             onVideoComplete={handleVideoComplete}
           />
+        ) : documentUrl ? (
+          <div className="w-full h-full flex items-center justify-center p-4 cursor-pointer" onClick={handleExpandPdf}>
+            <div className="w-full max-w-2xl">
+              <PDFViewer 
+                fileUrl={documentUrl}
+                onExpandClick={handleExpandPdf}
+              />
+            </div>
+          </div>
         ) : thumbnail ? (
           <img 
             src={thumbnail} 
@@ -234,6 +252,16 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         onOpenChange={setAuthModalOpen}
         onSuccess={handleAuthSuccess}
       />
+
+      {/* PDF Modal */}
+      {documentUrl && (
+        <PDFModal
+          open={pdfModalOpen}
+          onOpenChange={setPdfModalOpen}
+          fileUrl={documentUrl}
+          title={title}
+        />
+      )}
     </div>
   );
 });

@@ -194,6 +194,7 @@ const Index = () => {
             category={item.category}
             thumbnail={item.thumbnail_url || item.thumbnail}
             videoUrl={item.video_url}
+            documentUrl={item.documento_url}
             likes={item.likes_count || item.likes}
             comments={item.comments_count || item.comments}
             grade={item.grade_level || item.grade}
