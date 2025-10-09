@@ -55,10 +55,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
   const [tagInput, setTagInput] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   const [videoPreview, setVideoPreview] = useState<string>("");
   const [documentPreview, setDocumentPreview] = useState<string>("");
+  const [thumbnailDragActive, setThumbnailDragActive] = useState(false);
   const [videoDragActive, setVideoDragActive] = useState(false);
   const [documentDragActive, setDocumentDragActive] = useState(false);
 
@@ -73,25 +76,74 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
       });
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
+      if (contentData.thumbnail_url) setThumbnailPreview(contentData.thumbnail_url);
       if (contentData.video_url) setVideoPreview(contentData.video_url);
       if (contentData.document_url) setDocumentPreview(contentData.document_url.split('/').pop() || "");
     }
   }, [editMode, contentData]);
 
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && validateImageFile(file)) {
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+      
+      // Auto-detect content type based on file
+      if (!formData.content_type && !videoFile && !documentFile) {
+        // If only thumbnail is uploaded, don't auto-select type
+      }
+    }
+  };
+
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && validateVideoFile(file)) {
       setVideoFile(file);
       setVideoPreview(URL.createObjectURL(file));
+      
+      // Auto-detect content type as video
+      if (!formData.content_type) {
+        setFormData({ ...formData, content_type: "video" as ContentType });
+      }
     }
   };
 
   const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && validateDocumentFile(file)) {
       setDocumentFile(file);
       setDocumentPreview(file.name);
+      
+      // Auto-detect content type as document
+      if (!formData.content_type) {
+        setFormData({ ...formData, content_type: "document" as ContentType });
+      }
     }
+  };
+
+  const validateImageFile = (file: File): boolean => {
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Tipo de archivo no válido",
+        description: "Por favor sube una imagen válida (JPG, PNG, WEBP)",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (file.size > maxSize) {
+      toast({
+        title: "Archivo muy grande",
+        description: "La imagen no debe superar los 10MB",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
   };
 
   const validateVideoFile = (file: File): boolean => {
@@ -144,6 +196,17 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     return true;
   };
 
+  const handleThumbnailDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setThumbnailDragActive(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file && validateImageFile(file)) {
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleVideoDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setVideoDragActive(false);
@@ -152,6 +215,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     if (file && validateVideoFile(file)) {
       setVideoFile(file);
       setVideoPreview(URL.createObjectURL(file));
+      
+      // Auto-detect content type as video
+      if (!formData.content_type) {
+        setFormData({ ...formData, content_type: "video" as ContentType });
+      }
     }
   };
 
@@ -163,11 +231,26 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
     if (file && validateDocumentFile(file)) {
       setDocumentFile(file);
       setDocumentPreview(file.name);
+      
+      // Auto-detect content type as document
+      if (!formData.content_type) {
+        setFormData({ ...formData, content_type: "document" as ContentType });
+      }
     }
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+  };
+
+  const handleThumbnailDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setThumbnailDragActive(true);
+  };
+
+  const handleThumbnailDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setThumbnailDragActive(false);
   };
 
   const handleVideoDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
@@ -212,9 +295,16 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
       let documentUrl: string | undefined;
       let thumbnailUrl: string | undefined;
 
+      if (thumbnailFile) {
+        thumbnailUrl = await uploadFile(thumbnailFile, "raw");
+      }
+
       if (videoFile) {
         videoUrl = await uploadFile(videoFile, "video");
-        thumbnailUrl = videoUrl.replace(/\.[^/.]+$/, ".jpg");
+        // Only auto-generate thumbnail if user didn't provide one
+        if (!thumbnailUrl) {
+          thumbnailUrl = videoUrl.replace(/\.[^/.]+$/, ".jpg");
+        }
       }
 
       if (documentFile) {
@@ -255,6 +345,72 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="thumbnail">Imagen de Portada</Label>
+        <div
+          onDrop={handleThumbnailDrop}
+          onDragOver={handleDragOver}
+          onDragEnter={handleThumbnailDragEnter}
+          onDragLeave={handleThumbnailDragLeave}
+          className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
+            thumbnailDragActive
+              ? "border-primary bg-primary/5"
+              : "border-border hover:border-primary/50"
+          }`}
+        >
+          <Input
+            id="thumbnail"
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            onChange={handleThumbnailChange}
+            className="hidden"
+          />
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+              thumbnailDragActive ? "bg-primary/20" : "bg-muted"
+            }`}>
+              <Upload className={`w-8 h-8 ${thumbnailDragActive ? "text-primary" : "text-muted-foreground"}`} />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium mb-1">
+                {thumbnailDragActive ? "Suelta la imagen aquí" : "Arrastra tu imagen aquí"}
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                o haz click para seleccionar
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Formatos: JPG, PNG, WEBP (máx. 10MB)
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => document.getElementById("thumbnail")?.click()}
+            >
+              Seleccionar archivo
+            </Button>
+          </div>
+        </div>
+        {thumbnailPreview && (
+          <div className="relative">
+            <img src={thumbnailPreview} alt="Preview" className="w-full rounded-lg mt-2 max-h-[300px] object-cover" />
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="absolute top-4 right-4"
+              onClick={() => {
+                setThumbnailFile(null);
+                setThumbnailPreview("");
+              }}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="title">Título de la Cápsula</Label>
         <Input
