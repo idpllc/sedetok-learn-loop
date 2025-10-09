@@ -147,7 +147,7 @@ export const usePathContent = (pathId?: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["path-content"] });
+      queryClient.invalidateQueries({ queryKey: ["path-content", pathId] });
     },
     onError: (error: Error) => {
       toast({
@@ -171,7 +171,7 @@ export const usePathContent = (pathId?: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["path-content"] });
+      queryClient.invalidateQueries({ queryKey: ["path-content", pathId] });
     },
   });
 
@@ -185,7 +185,7 @@ export const usePathContent = (pathId?: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["path-content"] });
+      queryClient.invalidateQueries({ queryKey: ["path-content", pathId] });
     },
   });
 
@@ -201,7 +201,7 @@ export const usePathContent = (pathId?: string) => {
       await Promise.all(updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["path-content"] });
+      queryClient.invalidateQueries({ queryKey: ["path-content", pathId] });
     },
   });
 
