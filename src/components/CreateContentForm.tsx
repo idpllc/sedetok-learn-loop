@@ -356,10 +356,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   // Quiz wizard rendering
   if (isQuizMode && quizStep > 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 pb-6">
         {/* Steps indicator */}
-        <div className="flex items-center justify-between">
-          {[1, 2, 3].map((step, index) => (
+        <div className="flex items-center justify-between px-2">
+          {[1, 2].map((step, index) => (
             <div key={step} className="flex items-center flex-1">
               <div className="flex flex-col items-center">
                 <div
@@ -372,10 +372,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   {step}
                 </div>
                 <p className="text-xs mt-2 text-center hidden md:block">
-                  {step === 1 ? "Datos" : step === 2 ? "Preguntas" : "Configuración"}
+                  {step === 1 ? "Preguntas" : "Configuración"}
                 </p>
               </div>
-              {index < 2 && (
+              {index < 1 && (
                 <div
                   className={`flex-1 h-1 mx-2 ${
                     quizStep > step ? "bg-primary" : "bg-muted"
@@ -386,33 +386,27 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {quizStep === 1 ? "Preguntas del Quiz" : "Configuración Final"}
-            </CardTitle>
-            <CardDescription>
-              {quizStep === 1
-                ? "Agrega las preguntas que conformarán tu quiz"
-                : "Ajusta la configuración antes de publicar"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {quizStep === 1 && (
-              <QuizStep2 questions={quizQuestions} onChange={setQuizQuestions} />
-            )}
-            {quizStep === 2 && (
+        <div className="space-y-4">
+          {quizStep === 1 && (
+            <QuizStep2 questions={quizQuestions} onChange={setQuizQuestions} />
+          )}
+          {quizStep === 2 && (
+            <div className="border rounded-lg p-6 bg-card">
+              <h3 className="text-xl font-semibold mb-2">Configuración Final</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Ajusta la configuración antes de publicar
+              </p>
               <QuizStep3
                 formData={quizConfig}
                 questions={quizQuestions}
                 onChange={(field, value) => setQuizConfig({ ...quizConfig, [field]: value })}
               />
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </div>
 
         {/* Navigation buttons */}
-        <div className="flex justify-between">
+        <div className="flex justify-between pt-4">
           <Button
             variant="outline"
             onClick={() => setQuizStep(Math.max(0, quizStep - 1))}

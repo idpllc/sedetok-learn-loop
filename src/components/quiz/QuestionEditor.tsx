@@ -14,6 +14,33 @@ interface QuestionEditorProps {
 
 export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
   const updateField = (field: string, value: any) => {
+    // When changing to true/false, ensure we have exactly 2 options
+    if (field === "question_type" && value === "true_false") {
+      const updatedQuestion = {
+        ...question,
+        question_type: value,
+        options: [
+          { id: "true", option_text: "Verdadero", is_correct: false, order_index: 0 },
+          { id: "false", option_text: "Falso", is_correct: false, order_index: 1 },
+        ],
+      };
+      onChange(updatedQuestion);
+      return;
+    }
+    
+    // When changing to short answer, ensure we have exactly 1 option
+    if (field === "question_type" && value === "short_answer") {
+      const updatedQuestion = {
+        ...question,
+        question_type: value,
+        options: [
+          { id: "answer", option_text: "", is_correct: true, order_index: 0 },
+        ],
+      };
+      onChange(updatedQuestion);
+      return;
+    }
+    
     onChange({ ...question, [field]: value });
   };
 
@@ -31,8 +58,8 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
     const newOptions = [...question.options];
     newOptions[index] = { ...newOptions[index], [field]: value };
     
-    // For single-choice questions, uncheck others when one is checked
-    if (field === "is_correct" && value === true && question.question_type === "multiple_choice") {
+    // For true/false questions, only one can be correct
+    if (field === "is_correct" && value === true && question.question_type === "true_false") {
       newOptions.forEach((opt, i) => {
         if (i !== index) opt.is_correct = false;
       });
@@ -61,8 +88,6 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
             <SelectItem value="multiple_choice">Selección múltiple</SelectItem>
             <SelectItem value="true_false">Verdadero / Falso</SelectItem>
             <SelectItem value="short_answer">Respuesta corta</SelectItem>
-            <SelectItem value="matching">Relacionar columnas</SelectItem>
-            <SelectItem value="ordering">Ordenar pasos</SelectItem>
           </SelectContent>
         </Select>
       </div>
