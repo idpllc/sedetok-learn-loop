@@ -133,7 +133,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     likeMutation.mutate({ contentId: id, isLiked, isQuiz });
     // Award XP only when liking (not unliking)
     if (!isLiked) {
-      awardXP(id, 'like');
+      awardXP(id, 'like', isQuiz);
     }
   };
 
@@ -147,7 +147,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     saveMutation.mutate({ contentId: id, isSaved, isQuiz });
     // Award XP only when saving (not unsaving)
     if (!isSaved) {
-      awardXP(id, 'save');
+      awardXP(id, 'save', isQuiz);
     }
   };
 
@@ -155,10 +155,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     const isQuiz = contentType === 'quiz';
     if (pendingAction === 'like') {
       likeMutation.mutate({ contentId: id, isLiked: false, isQuiz });
-      awardXP(id, 'like');
+      awardXP(id, 'like', isQuiz);
     } else if (pendingAction === 'save') {
       saveMutation.mutate({ contentId: id, isSaved: false, isQuiz });
-      awardXP(id, 'save');
+      awardXP(id, 'save', isQuiz);
     }
     setPendingAction(null);
   };
@@ -537,6 +537,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         tags={tags}
         creatorAvatar={creatorAvatar}
         commentsCount={initialComments}
+        isQuiz={contentType === 'quiz'}
       />
 
       {/* Quiz Viewer Dialog */}
@@ -545,6 +546,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
+              <p className="text-sm text-muted-foreground">{description}</p>
             </DialogHeader>
             <QuizViewer 
               quizId={id} 

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 type ActionType = 'view_complete' | 'like' | 'save' | 'comment';
 
 export const useXP = () => {
-  const awardXP = async (contentId: string, actionType: ActionType) => {
+  const awardXP = async (contentId: string, actionType: ActionType, isQuiz: boolean = false) => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) return;
@@ -13,7 +13,8 @@ export const useXP = () => {
       const { error } = await supabase.rpc('award_xp_for_action', {
         p_user_id: user.id,
         p_content_id: contentId,
-        p_action_type: actionType
+        p_action_type: actionType,
+        p_is_quiz: isQuiz
       });
 
       if (error) throw error;

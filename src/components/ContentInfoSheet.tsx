@@ -23,6 +23,7 @@ interface ContentInfoSheetProps {
   tags: string[];
   creatorAvatar?: string;
   commentsCount: number;
+  isQuiz?: boolean;
 }
 
 export function ContentInfoSheet({ 
@@ -35,17 +36,18 @@ export function ContentInfoSheet({
   institution, 
   tags,
   creatorAvatar,
-  commentsCount
+  commentsCount,
+  isQuiz = false
 }: ContentInfoSheetProps) {
   const [newComment, setNewComment] = useState("");
   const { user } = useAuth();
   const { awardXP } = useXP();
   
   const handleCommentAdded = () => {
-    awardXP(contentId, 'comment');
+    awardXP(contentId, 'comment', isQuiz);
   };
   
-  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, false, handleCommentAdded);
+  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, isQuiz, handleCommentAdded);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;

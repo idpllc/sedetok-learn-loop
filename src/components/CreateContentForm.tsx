@@ -60,6 +60,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     final_message: "¡Excelente trabajo! Has completado el quiz.",
   });
   
+  // Load quiz questions if editing a quiz
+  const quizId = editMode && contentData?.content_type === 'quiz' ? contentData?.id : undefined;
+  const { questions: loadedQuestions, isLoading: questionsLoading } = useQuizQuestions(quizId);
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -87,11 +91,21 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         category: contentData.category,
         grade_level: contentData.grade_level,
         content_type: contentData.content_type,
-        difficulty: "basico",
+        difficulty: (contentData as any).difficulty || "basico",
       });
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
       setRichText((contentData as any).rich_text || "");
+      
+      // Load quiz config if editing a quiz
+      if (contentData.content_type === 'quiz') {
+        setQuizConfig({
+          time_limit: (contentData as any).time_limit,
+          random_order: (contentData as any).random_order || false,
+          final_message: (contentData as any).final_message || "¡Excelente trabajo! Has completado el quiz.",
+        });
+      }
+      
       if (contentData.video_url) {
         setFilePreview(contentData.video_url);
         setFileType('video');
@@ -104,6 +118,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       }
     }
   }, [editMode, contentData]);
+  
+  // Load quiz questions when available
+  useEffect(() => {
+    if (loadedQuestions && loadedQuestions.length > 0) {
+      setQuizQuestions(loadedQuestions as any);
+    }
+  }, [loadedQuestions]);
 
   // Update page title based on content type
   useEffect(() => {

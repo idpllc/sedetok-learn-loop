@@ -923,25 +923,28 @@ export type Database = {
       user_xp_log: {
         Row: {
           action_type: string
-          content_id: string
+          content_id: string | null
           created_at: string | null
           id: string
+          quiz_id: string | null
           user_id: string
           xp_amount: number
         }
         Insert: {
           action_type: string
-          content_id: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
+          quiz_id?: string | null
           user_id: string
           xp_amount: number
         }
         Update: {
           action_type?: string
-          content_id?: string
+          content_id?: string | null
           created_at?: string | null
           id?: string
+          quiz_id?: string | null
           user_id?: string
           xp_amount?: number
         }
@@ -953,6 +956,13 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_xp_log_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
@@ -961,7 +971,14 @@ export type Database = {
     }
     Functions: {
       award_xp_for_action: {
-        Args: { p_action_type: string; p_content_id: string; p_user_id: string }
+        Args:
+          | {
+              p_action_type: string
+              p_content_id: string
+              p_is_quiz?: boolean
+              p_user_id: string
+            }
+          | { p_action_type: string; p_content_id: string; p_user_id: string }
         Returns: undefined
       }
       decrement_comments_count: {
