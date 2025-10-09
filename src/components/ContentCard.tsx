@@ -319,7 +319,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   }}
                   className="bg-white hover:bg-white/90 text-purple-600 font-bold text-lg px-8 py-6 shadow-2xl hover:scale-105 transition-transform pointer-events-auto"
                 >
-                  {hasAttempted ? '🔄 Volver a responder' : '🎯 Responder Quiz'}
+                  {hasAttempted ? '🔄 Responder nuevamente' : '🎯 Responder Quiz'}
                 </Button>
               </div>
             </div>
