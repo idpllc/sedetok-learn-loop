@@ -296,33 +296,35 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
               }}
               title="Arrastra para agregar al constructor"
             >
-              <div className="flex items-start gap-3">
-                {thumbnail && (
-                  <div className="w-20 h-14 rounded overflow-hidden flex-shrink-0 bg-muted">
-                    <img
-                      src={thumbnail}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">
-                      {item.content_type === 'video' ? '🎥' : 
-                       item.content_type === 'lectura' ? '📖' :
-                       item.content_type === 'documento' ? '📄' :
-                       item.content_type === 'quiz' ? '📝' : '❓'}
-                    </span>
-                    <h4 className="font-medium text-sm truncate">{item.title}</h4>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="secondary" className="text-xs">
-                      {item.category}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {item.grade_level}
-                    </Badge>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  {thumbnail && (
+                    <div className="w-20 h-14 rounded overflow-hidden flex-shrink-0 bg-muted">
+                      <img
+                        src={thumbnail}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg">
+                        {item.content_type === 'video' ? '🎥' : 
+                         item.content_type === 'lectura' ? '📖' :
+                         item.content_type === 'documento' ? '📄' :
+                         item.content_type === 'quiz' ? '📝' : '❓'}
+                      </span>
+                      <h4 className="font-medium text-sm truncate">{item.title}</h4>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary" className="text-xs">
+                        {item.category}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {item.grade_level}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -331,7 +333,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); handleAddContent(item.id); }}
                   disabled={addContent.isPending || isAdded}
-                  className="flex-shrink-0"
+                  className="w-full"
                   draggable={false}
                 >
                   {isAdded ? "Agregado" : "Agregar"}
