@@ -59,6 +59,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
   const [filePreview, setFilePreview] = useState<string>("");
   const [fileType, setFileType] = useState<'video' | 'document' | 'image' | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [richText, setRichText] = useState("");
 
   useEffect(() => {
     if (editMode && contentData) {
@@ -71,6 +72,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
       });
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
+      setRichText((contentData as any).rich_text || "");
       if (contentData.video_url) {
         setFilePreview(contentData.video_url);
         setFileType('video');
@@ -239,6 +241,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
         video_url: videoUrl || (editMode ? contentData?.video_url : undefined),
         document_url: documentUrl || (editMode ? contentData?.document_url : undefined),
         thumbnail_url: thumbnailUrl || (editMode ? contentData?.thumbnail_url : undefined),
+        rich_text: formData.content_type === 'lectura' ? richText : null,
       };
 
       if (editMode && contentData?.id && onUpdate) {
@@ -273,121 +276,136 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="file">Contenido de la Cápsula</Label>
-        <div
-          onDrop={handleFileDrop}
-          onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
-            dragActive
-              ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50"
-          }`}
-        >
-          <Input
-            id="file"
-            type="file"
-            accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,application/pdf,image/jpeg,image/jpg,image/png,image/webp"
-            onChange={handleFileChange}
-            className="hidden"
-            disabled={editMode}
+      {formData.content_type === 'lectura' ? (
+        <div className="space-y-2">
+          <Label htmlFor="richText">Contenido de la Lectura</Label>
+          <Textarea
+            id="richText"
+            value={richText}
+            onChange={(e) => setRichText(e.target.value)}
+            placeholder="Escribe aquí el contenido completo de la lectura..."
+            className="min-h-[300px] resize-y"
+            required
           />
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
-              dragActive ? "bg-primary/20" : "bg-muted"
-            }`}>
-              {getFileTypeIcon()}
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium mb-1">
-                {dragActive ? `Suelta tu ${getFileTypeText()} aquí` : "Arrastra tu archivo aquí"}
-              </p>
-              <p className="text-xs text-muted-foreground mb-3">
-                o haz click para seleccionar
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Videos (MP4, MOV, AVI, MKV), PDFs o Imágenes (JPG, PNG, WEBP)
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Máx: Videos 500MB | PDFs 50MB | Imágenes 10MB
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => document.getElementById("file")?.click()}
-              disabled={editMode}
-            >
-              Seleccionar archivo
-            </Button>
-          </div>
         </div>
-        {filePreview && (
-          <div className="relative">
-            {fileType === 'video' && (
-              <>
-                <video src={filePreview} controls className="w-full rounded-lg mt-2" />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-4 right-4"
-                  onClick={() => {
-                    setUploadedFile(null);
-                    setFilePreview("");
-                    setFileType(null);
-                    setFormData({ ...formData, content_type: "" as ContentType });
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-            {fileType === 'image' && (
-              <>
-                <img src={filePreview} alt="Preview" className="w-full rounded-lg mt-2 max-h-[300px] object-cover" />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-4 right-4"
-                  onClick={() => {
-                    setUploadedFile(null);
-                    setFilePreview("");
-                    setFileType(null);
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-            {fileType === 'document' && (
-              <div className="flex items-center justify-between gap-2 p-4 bg-muted rounded-lg mt-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-medium">{filePreview}</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setUploadedFile(null);
-                    setFilePreview("");
-                    setFileType(null);
-                    setFormData({ ...formData, content_type: "" as ContentType });
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+      ) : (
+        <div className="space-y-2">
+          <Label htmlFor="file">Contenido de la Cápsula</Label>
+          <div
+            onDrop={handleFileDrop}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            className={`relative border-2 border-dashed rounded-lg p-8 transition-colors ${
+              dragActive
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50"
+            }`}
+          >
+            <Input
+              id="file"
+              type="file"
+              accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,application/pdf,image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="hidden"
+              disabled={editMode}
+            />
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                dragActive ? "bg-primary/20" : "bg-muted"
+              }`}>
+                {getFileTypeIcon()}
               </div>
-            )}
+              <div className="text-center">
+                <p className="text-sm font-medium mb-1">
+                  {dragActive ? `Suelta tu ${getFileTypeText()} aquí` : "Arrastra tu archivo aquí"}
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  o haz click para seleccionar
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Videos (MP4, MOV, AVI, MKV), PDFs o Imágenes (JPG, PNG, WEBP)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Máx: Videos 500MB | PDFs 50MB | Imágenes 10MB
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById("file")?.click()}
+                disabled={editMode}
+              >
+                Seleccionar archivo
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+          {filePreview && (
+            <div className="relative">
+              {fileType === 'video' && (
+                <>
+                  <video src={filePreview} controls className="w-full rounded-lg mt-2" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-4 right-4"
+                    onClick={() => {
+                      setUploadedFile(null);
+                      setFilePreview("");
+                      setFileType(null);
+                      setFormData({ ...formData, content_type: "" as ContentType });
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+              {fileType === 'image' && (
+                <>
+                  <img src={filePreview} alt="Preview" className="w-full rounded-lg mt-2 max-h-[300px] object-cover" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-4 right-4"
+                    onClick={() => {
+                      setUploadedFile(null);
+                      setFilePreview("");
+                      setFileType(null);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+              {fileType === 'document' && (
+                <div className="flex items-center justify-between gap-2 p-4 bg-muted rounded-lg mt-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <span className="text-sm font-medium">{filePreview}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setUploadedFile(null);
+                      setFilePreview("");
+                      setFileType(null);
+                      setFormData({ ...formData, content_type: "" as ContentType });
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
 
       <div className="space-y-2">
         <Label htmlFor="title">Título de la Cápsula</Label>
@@ -465,11 +483,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate }: C
           <SelectTrigger>
             <SelectValue placeholder="Selecciona tipo" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="video">Video</SelectItem>
-            <SelectItem value="document">Documento</SelectItem>
-            <SelectItem value="quiz">Quiz</SelectItem>
-          </SelectContent>
+            <SelectContent>
+              <SelectItem value="video">Video</SelectItem>
+              <SelectItem value="document">Documento</SelectItem>
+              <SelectItem value="lectura">Lectura</SelectItem>
+              <SelectItem value="quiz">Quiz</SelectItem>
+            </SelectContent>
         </Select>
       </div>
 

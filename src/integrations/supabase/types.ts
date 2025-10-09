@@ -106,6 +106,7 @@ export type Database = {
           id: string
           is_public: boolean | null
           likes_count: number | null
+          rich_text: string | null
           saves_count: number | null
           shares_count: number | null
           tags: string[] | null
@@ -127,6 +128,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           likes_count?: number | null
+          rich_text?: string | null
           saves_count?: number | null
           shares_count?: number | null
           tags?: string[] | null
@@ -148,6 +150,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           likes_count?: number | null
+          rich_text?: string | null
           saves_count?: number | null
           shares_count?: number | null
           tags?: string[] | null
@@ -824,7 +827,7 @@ export type Database = {
         | "arte"
         | "tecnologia"
         | "otros"
-      content_type: "video" | "document" | "quiz"
+      content_type: "video" | "document" | "quiz" | "lectura"
       frecuencia_estudio: "Diaria" | "Semanal" | "Esporádica"
       genero: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir"
       grade_level: "primaria" | "secundaria" | "preparatoria" | "universidad"
@@ -994,7 +997,7 @@ export const Constants = {
         "tecnologia",
         "otros",
       ],
-      content_type: ["video", "document", "quiz"],
+      content_type: ["video", "document", "quiz", "lectura"],
       frecuencia_estudio: ["Diaria", "Semanal", "Esporádica"],
       genero: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
       grade_level: ["primaria", "secundaria", "preparatoria", "universidad"],

@@ -17,6 +17,7 @@ interface CreateContentData {
   video_url?: string;
   document_url?: string;
   thumbnail_url?: string;
+  rich_text?: string | null;
 }
 
 export const useCreateContent = () => {

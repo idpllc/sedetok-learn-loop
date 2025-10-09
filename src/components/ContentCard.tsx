@@ -9,6 +9,8 @@ import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
 import { PDFViewer } from "./PDFViewer";
 import { PDFModal } from "./PDFModal";
+import { ReadingModal } from "./ReadingModal";
+import { BookOpen } from "lucide-react";
 import { ContentInfoSheet } from "./ContentInfoSheet";
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +29,8 @@ interface ContentCardProps {
   thumbnail?: string;
   videoUrl?: string;
   documentUrl?: string;
+  richText?: string;
+  contentType?: string;
   likes: number;
   comments: number;
   grade: string;
@@ -53,6 +57,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   thumbnail,
   videoUrl,
   documentUrl,
+  richText,
+  contentType,
   likes: initialLikes,
   comments: initialComments,
   grade,
@@ -74,6 +80,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPdfContent, setShowPdfContent] = useState(true);
@@ -154,6 +161,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     setPdfModalOpen(true);
   };
 
+  const handleExpandReading = () => {
+    setIsReadingModalOpen(true);
+  };
+
   const handlePlayStateChange = (playing: boolean) => {
     setIsPlaying(playing);
     onPlayStateChange?.(playing);
@@ -228,6 +239,26 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 fileUrl={documentUrl}
                 onExpandClick={handleExpandPdf}
               />
+            </div>
+          </div>
+        ) : contentType === 'lectura' && richText ? (
+          <div className="w-full h-full flex items-center justify-center p-4">
+            <div className="w-full max-w-2xl bg-background/95 backdrop-blur-sm rounded-lg p-6 shadow-xl overflow-hidden">
+              <div className="prose prose-sm max-w-none line-clamp-[20] text-foreground">
+                <div className="whitespace-pre-wrap leading-relaxed">
+                  {richText}
+                </div>
+              </div>
+              <div className="mt-6 flex justify-center">
+                <Button
+                  size="lg"
+                  onClick={handleExpandReading}
+                  className="flex items-center gap-2 shadow-lg"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Leer más
+                </Button>
+              </div>
             </div>
           </div>
         ) : thumbnail ? (
@@ -418,6 +449,16 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           onOpenChange={setPdfModalOpen}
           fileUrl={documentUrl}
           title={title}
+        />
+      )}
+
+      {/* Reading Modal */}
+      {richText && (
+        <ReadingModal
+          isOpen={isReadingModalOpen}
+          onClose={() => setIsReadingModalOpen(false)}
+          title={title}
+          content={richText}
         />
       )}
 
