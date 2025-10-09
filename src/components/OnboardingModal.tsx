@@ -65,11 +65,38 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
     try {
       console.log("Saving progress:", { currentStep, formData });
       
+      // Process formData to ensure proper formatting for database
+      const processedData: any = {};
+      
+      for (const [key, value] of Object.entries(formData)) {
+        // Handle array fields
+        if (key === 'areas_interes' && Array.isArray(value)) {
+          processedData[key] = value;
+        }
+        // Handle comma-separated strings that should become arrays
+        else if ((key === 'profesiones_de_interes' || key === 'habilidades_a_desarrollar') && 
+                 typeof value === 'string' && value.trim()) {
+          processedData[key] = value.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        // Handle temas_favoritos similarly
+        else if (key === 'temas_favoritos' && typeof value === 'string' && value.trim()) {
+          processedData[key] = value.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        // Handle numeric fields
+        else if (key === 'nivel_motivacion' && value) {
+          processedData[key] = typeof value === 'string' ? parseInt(value) : value;
+        }
+        // Handle other fields
+        else if (value !== undefined && value !== null && value !== '') {
+          processedData[key] = value;
+        }
+      }
+      
       const { error } = await supabase
         .from("profiles")
         .update({
           onboarding_paso_actual: currentStep,
-          ...formData,
+          ...processedData,
         })
         .eq("id", user.id);
 
@@ -152,12 +179,39 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
     try {
       console.log("Completing onboarding with data:", formData);
       
+      // Process formData to ensure proper formatting for database
+      const processedData: any = {};
+      
+      for (const [key, value] of Object.entries(formData)) {
+        // Handle array fields
+        if (key === 'areas_interes' && Array.isArray(value)) {
+          processedData[key] = value;
+        }
+        // Handle comma-separated strings that should become arrays
+        else if ((key === 'profesiones_de_interes' || key === 'habilidades_a_desarrollar') && 
+                 typeof value === 'string' && value.trim()) {
+          processedData[key] = value.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        // Handle temas_favoritos similarly
+        else if (key === 'temas_favoritos' && typeof value === 'string' && value.trim()) {
+          processedData[key] = value.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        // Handle numeric fields
+        else if (key === 'nivel_motivacion' && value) {
+          processedData[key] = typeof value === 'string' ? parseInt(value) : value;
+        }
+        // Handle other fields
+        else if (value !== undefined && value !== null && value !== '') {
+          processedData[key] = value;
+        }
+      }
+      
       const { error } = await supabase
         .from("profiles")
         .update({
           perfil_completo_360: true,
           onboarding_paso_actual: totalSteps,
-          ...formData,
+          ...processedData,
         })
         .eq("id", user.id);
 
