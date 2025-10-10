@@ -1,5 +1,5 @@
 
-import { Toaster as Sonner } from "@/components/ui/sonner";
+
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -24,7 +24,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       
-      <Sonner />
+      
       <PWAInstallPrompt />
       <Routes>
           <Route path="/" element={<Index />} />
