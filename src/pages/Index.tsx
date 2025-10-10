@@ -9,7 +9,7 @@ import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 const mockContent = [
   {
@@ -179,40 +179,36 @@ const Index = () => {
 
   return (
     <div className="relative">
-      {/* Top tabs navigation */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm">
-        <div className="px-4 py-2">
-          <Tabs value={currentTab} onValueChange={(value) => {
-            if (value === "para-ti") navigate("/");
-            else if (value === "explorar") navigate("/search");
-            else if (value === "rutas") navigate("/learning-paths");
-          }}>
-            <TabsList className="w-full grid grid-cols-3 bg-transparent h-12 p-0">
-              <TabsTrigger 
-                value="explorar"
-                className="data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-foreground text-muted-foreground rounded-none font-semibold"
-              >
-                Explorar
-              </TabsTrigger>
-              <TabsTrigger 
-                value="para-ti"
-                className="data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-foreground text-muted-foreground rounded-none font-semibold"
-              >
-                Para ti
-              </TabsTrigger>
-              <TabsTrigger 
-                value="rutas"
-                className="data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-foreground text-muted-foreground rounded-none font-semibold"
-              >
-                Rutas
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+      {/* Top navigation links */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex gap-6">
+        <button
+          onClick={() => navigate("/search")}
+          className={`text-sm font-semibold transition-colors ${
+            currentTab === "explorar" ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          Explorar
+        </button>
+        <button
+          onClick={() => navigate("/")}
+          className={`text-sm font-semibold transition-colors ${
+            currentTab === "para-ti" ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          Para ti
+        </button>
+        <button
+          onClick={() => navigate("/learning-paths")}
+          className={`text-sm font-semibold transition-colors ${
+            currentTab === "rutas" ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          Rutas
+        </button>
       </div>
 
-      {/* Feed container with snap scroll - add top padding for tabs */}
-      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth pt-14">
+      {/* Feed container with snap scroll */}
+      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
         {contentData.map((item: any, index: number) => {
           const videoRef = (ref: VideoPlayerRef | null) => {
             if (ref) {
