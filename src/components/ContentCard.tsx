@@ -221,6 +221,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     const newVolume = parseFloat(e.target.value);
     videoPlayerRef.current?.setVolume(newVolume);
     setVolume(newVolume);
+    setIsMuted(newVolume === 0);
   };
 
   // Sync volume slider visibility on mount
@@ -392,9 +393,14 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 
         {/* Desktop volume controls - left side horizontal */}
         {videoUrl && (
-          <div className="hidden md:flex fixed left-6 bottom-6 z-50 items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="hidden md:flex fixed left-6 bottom-6 z-50 items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            onMouseEnter={() => setShowVolumeSlider(true)}
+            onMouseLeave={() => setShowVolumeSlider(false)}
+          >
             <button
-              onClick={(e) => { e.stopPropagation(); toggleMute(); }}
+              onClick={(e) => { e.stopPropagation(); toggleMute(); setShowVolumeSlider(true); }}
               className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
             >
               {isMuted || volume === 0 ? (
@@ -410,7 +416,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               step="0.1"
               value={isMuted ? 0 : volume}
               onChange={(e) => { e.stopPropagation(); handleVolumeChange(e); }}
-              className="w-32 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
+              onFocus={() => setShowVolumeSlider(true)}
+              onBlur={() => setShowVolumeSlider(false)}
+              aria-hidden={!showVolumeSlider}
+              className={`${showVolumeSlider ? 'w-32 opacity-100' : 'w-0 opacity-0 pointer-events-none'} transition-all duration-200 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md`}
             />
           </div>
         )}
