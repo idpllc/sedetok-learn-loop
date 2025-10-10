@@ -185,7 +185,7 @@ export const usePathContent = (pathId?: string) => {
         .from("learning_path_content")
         .insert([content])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -209,7 +209,7 @@ export const usePathContent = (pathId?: string) => {
         .update(updates)
         .eq("id", id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

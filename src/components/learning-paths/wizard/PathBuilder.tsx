@@ -333,7 +333,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                   onMouseDown={(e) => e.stopPropagation()}
                   onClick={(e) => { e.stopPropagation(); handleAddContent(item.id); }}
                   disabled={addContent.isPending || isAdded}
-                  className="w-full"
+                  className="w-auto px-6"
                   draggable={false}
                 >
                   {isAdded ? "Agregado" : "Agregar"}
@@ -385,7 +385,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                 <p className="text-muted-foreground mb-4">
                   Crea una nueva cápsula
                 </p>
-                <Button onClick={() => window.open('/create-content', '_blank')}>
+                <Button onClick={() => window.open('/create', '_blank')}>
                   <Plus className="w-4 h-4 mr-2" />
                   Crear Cápsula
                 </Button>

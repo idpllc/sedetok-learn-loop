@@ -36,6 +36,7 @@ const CreateLearningPath = () => {
     allow_collaboration: false,
     required_routes: [],
     tipo_aprendizaje: "",
+    estimated_duration: 0,
   });
 
   // Cargar datos existentes si estamos en modo edición
@@ -73,6 +74,7 @@ const CreateLearningPath = () => {
             allow_collaboration: data.allow_collaboration || false,
             required_routes: data.required_routes || [],
             tipo_aprendizaje: data.tipo_aprendizaje || "",
+            estimated_duration: data.estimated_duration || 0,
           });
         }
       } catch (error: any) {
