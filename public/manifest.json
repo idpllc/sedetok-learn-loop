@@ -1,0 +1,32 @@
+{
+  "name": "SEDETOK - Aprende con Videos Educativos",
+  "short_name": "SEDETOK",
+  "description": "Plataforma educativa interactiva estilo TikTok. Descubre contenido educativo en video, documentos y quizzes de manera divertida y dinámica.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#7C3AED",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://storage.googleapis.com/gpt-engineer-file-uploads/Y6COrr67ZRX0cfWL1VOGkV8F2Pv1/uploads/1760026930730-favicon sede.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://storage.googleapis.com/gpt-engineer-file-uploads/Y6COrr67ZRX0cfWL1VOGkV8F2Pv1/uploads/1760026930730-favicon sede.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "learning"],
+  "screenshots": [
+    {
+      "src": "https://storage.googleapis.com/gpt-engineer-file-uploads/Y6COrr67ZRX0cfWL1VOGkV8F2Pv1/social-images/social-1760027066186-2486c7d6-d9a2-4ee3-bfc2-577b1a194076.jpeg",
+      "sizes": "1280x720",
+      "type": "image/jpeg"
+    }
+  ]
+}
