@@ -33,6 +33,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   onVideoWatched
 }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('videoMuted');
@@ -44,6 +45,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   });
   const [isVertical, setIsVertical] = useState(true);
   const hasWatchedRef = useRef(false);
+  const [isInView, setIsInView] = useState(false);
 
   useImperativeHandle(ref, () => ({
     pause: () => {
@@ -64,6 +66,42 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     },
     isPlaying
   }));
+
+  // IntersectionObserver to detect when video is in view
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting && entry.intersectionRatio > 0.5);
+      },
+      { threshold: [0.5, 0.75, 1] }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // Auto-play when video comes into view
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isInView) {
+      video.play().then(() => {
+        setIsPlaying(true);
+        onPlayStateChange?.(true);
+      }).catch(() => {
+        // Autoplay failed, user interaction required
+        setIsPlaying(false);
+      });
+    } else {
+      video.pause();
+      setIsPlaying(false);
+      onPlayStateChange?.(false);
+    }
+  }, [isInView, onPlayStateChange]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -102,26 +140,12 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       // Ensure volume settings persist after data loads
       video.volume = volume;
       video.muted = isMuted;
-      // Auto-play when data is loaded
-      video.play().then(() => {
-        setIsPlaying(true);
-        onPlayStateChange?.(true);
-      }).catch(() => {
-        // Autoplay failed, user interaction required
-        setIsPlaying(false);
-      });
     };
 
     // Apply settings immediately if video is already loaded
     if (video.readyState >= 2) {
       video.volume = volume;
       video.muted = isMuted;
-      video.play().then(() => {
-        setIsPlaying(true);
-        onPlayStateChange?.(true);
-      }).catch(() => {
-        setIsPlaying(false);
-      });
     }
 
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -135,7 +159,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       video.removeEventListener('ended', handleVideoEnded);
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted, onPlayStateChange]);
+  }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -182,7 +206,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
+    <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
       <video
         ref={videoRef}
         src={videoUrl}
@@ -195,7 +219,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         } transition-all`}
         loop
         playsInline
-        autoPlay
         muted={isMuted}
         onClick={togglePlay}
       />
