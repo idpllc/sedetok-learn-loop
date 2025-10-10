@@ -1,7 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { useEffect, useState } from "react";
-
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
@@ -21,41 +20,34 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ClientOnly({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
-  return <>{children}</>;
-}
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <ClientOnly>
-        <Toaster />
-        <Sonner />
-      </ClientOnly>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
       <PWAInstallPrompt />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/achievements" element={<Achievements />} />
-        <Route path="/create" element={<CreateContent />} />
-        <Route path="/edit/:id" element={<EditContent />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/:userId" element={<Profile />} />
-        <Route path="/profile/edit" element={<EditProfile />} />
-        <Route path="/learning-paths" element={<LearningPaths />} />
-        <Route path="/learning-paths/create" element={<CreateLearningPath />} />
-        <Route path="/learning-paths/edit/:id" element={<CreateLearningPath />} />
-        <Route path="/learning-paths/view/:id" element={<ViewLearningPath />} />
-        <Route path="/learning-paths/:id" element={<ViewLearningPath />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/achievements" element={<Achievements />} />
+          <Route path="/create" element={<CreateContent />} />
+          <Route path="/edit/:id" element={<EditContent />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/learning-paths" element={<LearningPaths />} />
+          <Route path="/learning-paths/create" element={<CreateLearningPath />} />
+          <Route path="/learning-paths/edit/:id" element={<CreateLearningPath />} />
+          <Route path="/learning-paths/view/:id" element={<ViewLearningPath />} />
+          <Route path="/learning-paths/:id" element={<ViewLearningPath />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 

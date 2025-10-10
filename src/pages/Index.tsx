@@ -179,49 +179,32 @@ const Index = () => {
 
   return (
     <div className="relative">
-      {/* Top navigation - Horizontal style with transparent background */}
-      <div className="fixed top-0 left-0 right-0 z-[90] bg-transparent">
-        <div className="flex items-center justify-center gap-8 h-16 px-4">
-          <button
-            onClick={() => navigate("/search")}
-            className={`relative text-base font-semibold transition-all ${
-              currentTab === "explorar" 
-                ? "text-white" 
-                : "text-white/60 hover:text-white/80"
-            }`}
-          >
-            Explorar
-            {currentTab === "explorar" && (
-              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
-            )}
-          </button>
-          <button
-            onClick={() => navigate("/")}
-            className={`relative text-base font-semibold transition-all ${
-              currentTab === "para-ti" 
-                ? "text-white" 
-                : "text-white/60 hover:text-white/80"
-            }`}
-          >
-            Para ti
-            {currentTab === "para-ti" && (
-              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
-            )}
-          </button>
-          <button
-            onClick={() => navigate("/learning-paths")}
-            className={`relative text-base font-semibold transition-all ${
-              currentTab === "rutas" 
-                ? "text-white" 
-                : "text-white/60 hover:text-white/80"
-            }`}
-          >
-            Rutas
-            {currentTab === "rutas" && (
-              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
-            )}
-          </button>
-        </div>
+      {/* Top navigation links */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center">
+        <button
+          onClick={() => navigate("/search")}
+          className={`text-sm font-semibold transition-colors ${
+            currentTab === "explorar" ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          Explorar
+        </button>
+        <button
+          onClick={() => navigate("/")}
+          className={`text-sm font-semibold transition-colors ${
+            currentTab === "para-ti" ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          Para ti
+        </button>
+        <button
+          onClick={() => navigate("/learning-paths")}
+          className={`text-sm font-semibold transition-colors ${
+            currentTab === "rutas" ? "text-foreground" : "text-muted-foreground"
+          }`}
+        >
+          Rutas
+        </button>
       </div>
 
       {/* Feed container with snap scroll */}

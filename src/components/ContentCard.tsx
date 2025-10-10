@@ -391,40 +391,36 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0" />
 
-        {/* Desktop volume controls - top left corner */}
+        {/* Desktop volume controls - top left corner like TikTok */}
         {videoUrl && (
           <div
-            className="hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/70 backdrop-blur-md rounded-full px-3 py-2 shadow-2xl pointer-events-auto"
+            className="hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
           >
             <button
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                toggleMute(); 
-              }}
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform hover:bg-white/20"
+              onClick={(e) => { e.stopPropagation(); toggleMute(); setShowVolumeSlider(true); }}
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-5 h-5 text-white drop-shadow-lg" />
+                <VolumeX className="w-5 h-5 text-white" />
               ) : (
-                <Volume2 className="w-5 h-5 text-white drop-shadow-lg" />
+                <Volume2 className="w-5 h-5 text-white" />
               )}
             </button>
-            <div
-              className={`${showVolumeSlider ? 'w-24 opacity-100' : 'w-0 opacity-0 pointer-events-none'} transition-all duration-300 overflow-hidden`}
-            >
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={isMuted ? 0 : volume}
-                onChange={(e) => { e.stopPropagation(); handleVolumeChange(e); }}
-                className="w-full h-1 appearance-none bg-white/30 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
-              />
-            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={isMuted ? 0 : volume}
+              onChange={(e) => { e.stopPropagation(); handleVolumeChange(e); }}
+              onFocus={() => setShowVolumeSlider(true)}
+              onBlur={() => setShowVolumeSlider(false)}
+              aria-hidden={!showVolumeSlider}
+              className={`${showVolumeSlider ? 'w-24 opacity-100' : 'w-0 opacity-0 pointer-events-none'} transition-all duration-200 h-1 appearance-none bg-white/30 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md`}
+            />
           </div>
         )}
 
