@@ -180,7 +180,7 @@ const Index = () => {
   return (
     <div className="relative">
       {/* Top navigation links */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex gap-6 justify-center py-3">
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center">
         <button
           onClick={() => navigate("/search")}
           className={`text-sm font-semibold transition-colors ${
