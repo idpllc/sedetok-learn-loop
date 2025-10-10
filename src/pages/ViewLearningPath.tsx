@@ -322,6 +322,7 @@ const ViewLearningPath = () => {
           coverUrl={pathInfo?.cover_url}
           contentCount={contentData.length}
           isPublic={pathInfo?.is_public ?? true}
+          creatorId={pathInfo?.creator_id}
           onStart={() => {
             // Scroll to first content capsule
             const container = document.querySelector('.snap-y');

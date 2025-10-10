@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -10,15 +10,20 @@ import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/useAuth";
 
 const CreateLearningPath = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const cloneId = searchParams.get("clone");
   const { toast } = useToast();
-  const { createPath, updatePath } = useLearningPaths();
+  const { user } = useAuth();
+  const { createPath, updatePath, clonePath } = useLearningPaths();
   const [currentStep, setCurrentStep] = useState(1);
   const [pathId, setPathId] = useState<string | null>(id || null);
-  const [isLoading, setIsLoading] = useState(!!id);
+  const [isLoading, setIsLoading] = useState(!!id || !!cloneId);
+  const [isCloning, setIsCloning] = useState(!!cloneId);
   const [pathData, setPathData] = useState<any>({
     title: "",
     description: "",
@@ -39,10 +44,12 @@ const CreateLearningPath = () => {
     estimated_duration: 0,
   });
 
-  // Cargar datos existentes si estamos en modo edición
+  // Cargar datos existentes si estamos en modo edición o clonación
   useEffect(() => {
     const loadPathData = async () => {
-      if (!id) {
+      const sourceId = id || cloneId;
+      
+      if (!sourceId) {
         setIsLoading(false);
         return;
       }
@@ -51,14 +58,25 @@ const CreateLearningPath = () => {
         const { data, error } = await supabase
           .from("learning_paths")
           .select("*")
-          .eq("id", id)
+          .eq("id", sourceId)
           .maybeSingle();
 
         if (error) throw error;
 
         if (data) {
-          setPathData({
-            title: data.title || "",
+          // Verificar permisos en modo edición
+          if (id && data.creator_id !== user?.id) {
+            toast({
+              title: "Acceso denegado",
+              description: "Solo el creador puede editar esta ruta",
+              variant: "destructive",
+            });
+            navigate("/learning-paths");
+            return;
+          }
+
+          const loadedData = {
+            title: cloneId ? `${data.title} (Copia)` : (data.title || ""),
             description: data.description || "",
             objectives: data.objectives || "",
             subject: data.subject || "",
@@ -67,7 +85,7 @@ const CreateLearningPath = () => {
             level: data.level || "",
             language: data.language || "Español",
             category: data.category || "matematicas",
-            is_public: data.is_public || false,
+            is_public: cloneId ? false : (data.is_public || false),
             cover_url: data.cover_url || "",
             enforce_order: data.enforce_order || false,
             require_quiz_pass: data.require_quiz_pass || false,
@@ -75,13 +93,22 @@ const CreateLearningPath = () => {
             required_routes: data.required_routes || [],
             tipo_aprendizaje: data.tipo_aprendizaje || "",
             estimated_duration: data.estimated_duration || 0,
-          });
+          };
+          
+          setPathData(loadedData);
+
+          // Si es clonación, crear la ruta inmediatamente
+          if (cloneId) {
+            const result = await clonePath.mutateAsync(cloneId);
+            setPathId(result.id);
+            setIsCloning(false);
+          }
         }
       } catch (error: any) {
         console.error("Error loading path:", error);
         toast({
           title: "Error",
-          description: "No se pudo cargar la ruta",
+          description: cloneId ? "No se pudo clonar la ruta" : "No se pudo cargar la ruta",
           variant: "destructive",
         });
         navigate("/learning-paths");
@@ -91,7 +118,7 @@ const CreateLearningPath = () => {
     };
 
     loadPathData();
-  }, [id, navigate, toast]);
+  }, [id, cloneId, navigate, toast, user, clonePath]);
 
   const steps = [
     { number: 1, title: "Información Básica", component: PathBasicInfo },
@@ -127,8 +154,61 @@ const CreateLearningPath = () => {
       const result = await createPath.mutateAsync(pathData);
       setPathId(result.id);
     } else if (pathId) {
-      // Actualizar la ruta existente
-      await updatePath.mutateAsync({ id: pathId, updates: pathData });
+      // Si es el último paso, validar que no exista una ruta idéntica
+      if (currentStep === steps.length) {
+        const { data: pathContent } = await supabase
+          .from("learning_path_content")
+          .select("content_id, quiz_id")
+          .eq("path_id", pathId)
+          .order("order_index");
+
+        if (pathContent && pathContent.length > 0) {
+          // Buscar rutas con el mismo contenido
+          const contentIds = pathContent.map(c => c.content_id).filter(Boolean);
+          const quizIds = pathContent.map(c => c.quiz_id).filter(Boolean);
+
+          // Verificar si existe otra ruta publicada con exactamente el mismo contenido
+          const { data: existingPaths } = await supabase
+            .from("learning_paths")
+            .select(`
+              id,
+              learning_path_content(content_id, quiz_id)
+            `)
+            .neq("id", pathId)
+            .eq("status", "published");
+
+          const hasDuplicate = existingPaths?.some(path => {
+            const existingContent = path.learning_path_content || [];
+            if (existingContent.length !== pathContent.length) return false;
+            
+            const existingContentIds = existingContent.map((c: any) => c.content_id).filter(Boolean).sort();
+            const existingQuizIds = existingContent.map((c: any) => c.quiz_id).filter(Boolean).sort();
+            const currentContentIds = contentIds.sort();
+            const currentQuizIds = quizIds.sort();
+
+            return JSON.stringify(existingContentIds) === JSON.stringify(currentContentIds) &&
+                   JSON.stringify(existingQuizIds) === JSON.stringify(currentQuizIds);
+          });
+
+          if (hasDuplicate) {
+            toast({
+              title: "Ruta duplicada",
+              description: "Ya existe una ruta publicada con exactamente el mismo contenido. Por favor, agrega o modifica las cápsulas antes de publicar.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+
+        // Actualizar status a published
+        await updatePath.mutateAsync({ 
+          id: pathId, 
+          updates: { ...pathData, status: 'published' } 
+        });
+      } else {
+        // Actualizar la ruta existente en pasos intermedios
+        await updatePath.mutateAsync({ id: pathId, updates: pathData });
+      }
     }
 
     if (currentStep < steps.length) {
@@ -175,7 +255,7 @@ const CreateLearningPath = () => {
               </Button>
               <div>
                 <h1 className="text-xl font-bold">
-                  {id ? "Editar" : "Crear"} Ruta de Aprendizaje
+                  {id ? "Editar" : isCloning ? "Clonando" : "Crear"} Ruta de Aprendizaje
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Paso {currentStep} de {steps.length}: {steps[currentStep - 1].title}

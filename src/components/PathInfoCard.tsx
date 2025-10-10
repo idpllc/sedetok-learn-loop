@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Clock, Award, Target, ChevronRight, Share2 } from "lucide-react";
+import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Copy } from "lucide-react";
 import { forwardRef } from "react";
 import { SharePathSheet } from "@/components/SharePathSheet";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PathInfoCardProps {
   pathId: string;
@@ -18,6 +20,7 @@ interface PathInfoCardProps {
   coverUrl?: string;
   contentCount: number;
   isPublic?: boolean;
+  creatorId?: string;
   onStart: () => void;
   onNext?: () => void;
   hasNext?: boolean;
@@ -37,10 +40,14 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   coverUrl,
   contentCount,
   isPublic = true,
+  creatorId,
   onStart,
   onNext,
   hasNext,
 }, ref) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isCreator = user?.id === creatorId;
   return (
     <div 
       ref={ref}
@@ -149,6 +156,28 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             Empezar Ruta
             <ChevronRight className="w-5 h-5 md:w-6 md:h-6 ml-2" />
           </Button>
+          
+          {isCreator ? (
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate(`/create-learning-path/${pathId}`)}
+              className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+            >
+              <Edit className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+              Editar
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate(`/create-learning-path?clone=${pathId}`)}
+              className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+            >
+              <Copy className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+              Clonar
+            </Button>
+          )}
           
           <SharePathSheet
             pathId={pathId}

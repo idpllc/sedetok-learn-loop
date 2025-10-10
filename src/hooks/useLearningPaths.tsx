@@ -145,12 +145,82 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
     },
   });
 
+  const clonePath = useMutation({
+    mutationFn: async (sourcePathId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      // Get source path
+      const { data: sourcePath, error: pathError } = await supabase
+        .from("learning_paths")
+        .select("*")
+        .eq("id", sourcePathId)
+        .single();
+
+      if (pathError) throw pathError;
+
+      // Get source path content
+      const { data: sourceContent, error: contentError } = await supabase
+        .from("learning_path_content")
+        .select("*")
+        .eq("path_id", sourcePathId);
+
+      if (contentError) throw contentError;
+
+      // Create new path (without id and creator_id)
+      const { id: _, creator_id: __, created_at, updated_at, ...pathData } = sourcePath;
+      const { data: newPath, error: newPathError } = await supabase
+        .from("learning_paths")
+        .insert([{ 
+          ...pathData, 
+          creator_id: user.id,
+          title: `${pathData.title} (Copia)`,
+          status: 'draft'
+        }])
+        .select()
+        .single();
+
+      if (newPathError) throw newPathError;
+
+      // Clone content
+      if (sourceContent && sourceContent.length > 0) {
+        const contentToInsert = sourceContent.map(item => {
+          const { id, path_id, created_at, ...itemData } = item;
+          return { ...itemData, path_id: newPath.id };
+        });
+
+        const { error: insertError } = await supabase
+          .from("learning_path_content")
+          .insert(contentToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      return newPath;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["learning-paths"] });
+      toast({
+        title: "Ruta clonada",
+        description: "La ruta ha sido clonada exitosamente",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     paths,
     isLoading,
     createPath,
     updatePath,
     deletePath,
+    clonePath,
   };
 };
 
