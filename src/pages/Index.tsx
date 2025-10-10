@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const mockContent = [
   {
@@ -80,6 +81,7 @@ const mockContent = [
 
 const Index = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const contentIdFromUrl = searchParams.get("content");
   const { user, loading: authLoading } = useAuth();
@@ -89,6 +91,10 @@ const Index = () => {
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
+
+  const currentTab = location.pathname === "/" ? "para-ti" : 
+                     location.pathname === "/search" ? "explorar" : 
+                     location.pathname === "/learning-paths" ? "rutas" : "para-ti";
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
     Object.entries(videoRefs.current).forEach(([id, ref]) => {
@@ -173,8 +179,40 @@ const Index = () => {
 
   return (
     <div className="relative">
-      {/* Feed container with snap scroll */}
-      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
+      {/* Top tabs navigation */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
+        <div className="container mx-auto px-4 py-3">
+          <Tabs value={currentTab} onValueChange={(value) => {
+            if (value === "para-ti") navigate("/");
+            else if (value === "explorar") navigate("/search");
+            else if (value === "rutas") navigate("/learning-paths");
+          }}>
+            <TabsList className="w-full grid grid-cols-3 bg-white/10">
+              <TabsTrigger 
+                value="para-ti"
+                className="data-[state=active]:bg-white data-[state=active]:text-black text-white"
+              >
+                Para ti
+              </TabsTrigger>
+              <TabsTrigger 
+                value="explorar"
+                className="data-[state=active]:bg-white data-[state=active]:text-black text-white"
+              >
+                Explorar
+              </TabsTrigger>
+              <TabsTrigger 
+                value="rutas"
+                className="data-[state=active]:bg-white data-[state=active]:text-black text-white"
+              >
+                Rutas
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Feed container with snap scroll - add top padding for tabs */}
+      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth pt-16">
         {contentData.map((item: any, index: number) => {
           const videoRef = (ref: VideoPlayerRef | null) => {
             if (ref) {

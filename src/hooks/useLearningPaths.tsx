@@ -53,43 +53,15 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         if (error) throw error;
         return (data || []) as any[];
       } else {
-        // All paths: created by user OR where user has progress
-        const [createdPaths, progressData] = await Promise.all([
-          supabase
-            .from("learning_paths")
-            .select("*")
-            .eq("creator_id", userId),
-          supabase
-            .from("user_path_progress")
-            .select("path_id")
-            .eq("user_id", userId)
-        ]);
-
-        if (createdPaths.error) throw createdPaths.error;
-        if (progressData.error) throw progressData.error;
-
-        const progressPathIds = [...new Set(progressData.data?.map(p => p.path_id) || [])];
-        const createdPathIds = new Set(createdPaths.data?.map(p => p.id) || []);
-        
-        // Get paths where user has progress but didn't create
-        const takenPathIds = progressPathIds.filter(id => !createdPathIds.has(id));
-        
-        if (takenPathIds.length === 0) {
-          return createdPaths.data || [];
-        }
-        
-        const { data: takenPaths, error: takenError } = await supabase
+        // All public paths
+        const { data, error } = await supabase
           .from("learning_paths")
           .select("*")
-          .in("id", takenPathIds);
+          .eq("is_public", true)
+          .order("created_at", { ascending: false });
         
-        if (takenError) throw takenError;
-        
-        // Combine and sort by created_at
-        const allPaths = [...(createdPaths.data || []), ...(takenPaths || [])];
-        return allPaths.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        if (error) throw error;
+        return (data || []) as any[];
       }
     },
   }) as { data: any[] | undefined; isLoading: boolean };
