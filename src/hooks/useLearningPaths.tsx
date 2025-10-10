@@ -98,6 +98,19 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
 
   const updatePath = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      // Verificar que el usuario sea el creador
+      const { data: path, error: fetchError } = await supabase
+        .from("learning_paths")
+        .select("creator_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (path.creator_id !== user.id) throw new Error("Solo el creador puede actualizar esta ruta");
+
       const { data, error } = await supabase
         .from("learning_paths")
         .update(updates)
@@ -126,6 +139,19 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
 
   const deletePath = useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      // Verificar que el usuario sea el creador
+      const { data: path, error: fetchError } = await supabase
+        .from("learning_paths")
+        .select("creator_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (path.creator_id !== user.id) throw new Error("Solo el creador puede eliminar esta ruta");
+
       const { error } = await supabase.from("learning_paths").delete().eq("id", id);
       if (error) throw error;
     },
