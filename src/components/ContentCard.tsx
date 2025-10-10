@@ -391,10 +391,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0" />
 
-        {/* Desktop volume controls - left side horizontal */}
+        {/* Desktop volume controls - top left corner like TikTok */}
         {videoUrl && (
           <div
-            className="hidden md:flex fixed left-6 bottom-6 z-50 items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
+            className="hidden md:flex absolute left-4 top-4 z-50 items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
@@ -404,9 +404,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-5 h-5 text-black" />
+                <VolumeX className="w-5 h-5 text-white" />
               ) : (
-                <Volume2 className="w-5 h-5 text-black" />
+                <Volume2 className="w-5 h-5 text-white" />
               )}
             </button>
             <input
@@ -419,20 +419,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               onFocus={() => setShowVolumeSlider(true)}
               onBlur={() => setShowVolumeSlider(false)}
               aria-hidden={!showVolumeSlider}
-              className={`${showVolumeSlider ? 'w-32 opacity-100' : 'w-0 opacity-0 pointer-events-none'} transition-all duration-200 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md`}
+              className={`${showVolumeSlider ? 'w-24 opacity-100' : 'w-0 opacity-0 pointer-events-none'} transition-all duration-200 h-1 appearance-none bg-white/30 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md`}
             />
           </div>
         )}
-
-        {/* Category badge */}
-        <div className="absolute top-4 left-4 z-10">
-          <Badge className="bg-primary text-primary-foreground font-semibold">{category}</Badge>
-        </div>
-
-        {/* Grade badge */}
-        <div className="absolute top-4 right-4 z-10">
-          <Badge variant="secondary" className="font-semibold">{grade}</Badge>
-        </div>
 
         {/* Content info */}
         <div className="absolute bottom-24 md:bottom-20 left-0 right-0 px-4 md:px-6 pb-4 z-10">
@@ -451,7 +441,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               {/* Description excerpt with "más" link */}
               {description && (
                 <button 
-                  className="text-sm text-white/90 text-left block"
+                  className="text-sm text-white/90 text-left block mb-2"
                   onClick={() => setInfoSheetOpen(true)}
                 >
                   {description.length > 80 ? `${description.slice(0, 80)}...` : description}
@@ -460,6 +450,16 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   )}
                 </button>
               )}
+              
+              {/* Category and grade badges below description */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge className="bg-primary/90 text-primary-foreground font-semibold text-xs">
+                  {category}
+                </Badge>
+                <Badge variant="secondary" className="font-semibold text-xs bg-white/20 text-white border-white/30">
+                  {grade}
+                </Badge>
+              </div>
             </div>
           </div>
         </div>
