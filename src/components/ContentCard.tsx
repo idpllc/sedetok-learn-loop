@@ -394,7 +394,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         {/* Desktop volume controls - bottom left corner */}
         {videoUrl && (
           <div
-            className="flex absolute left-4 bottom-24 z-[100] items-center gap-2 bg-black/70 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
+            className="flex absolute left-4 bottom-4 md:bottom-6 z-[200] items-center gap-2 bg-black/70 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
