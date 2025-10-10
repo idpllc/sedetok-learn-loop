@@ -392,9 +392,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 
         {/* Desktop volume controls - left side horizontal */}
         {videoUrl && (
-          <div className="hidden md:flex absolute left-4 bottom-24 z-30 items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
+          <div className="hidden md:flex fixed left-6 bottom-6 z-50 items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={toggleMute}
+              onClick={(e) => { e.stopPropagation(); toggleMute(); }}
               className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
             >
               {isMuted || volume === 0 ? (
@@ -409,8 +409,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               max="1"
               step="0.1"
               value={isMuted ? 0 : volume}
-              onChange={handleVolumeChange}
-              className="w-28 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
+              onChange={(e) => { e.stopPropagation(); handleVolumeChange(e); }}
+              className="w-32 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
             />
           </div>
         )}
