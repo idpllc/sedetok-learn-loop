@@ -219,7 +219,7 @@ const ViewLearningPath = () => {
             variant="secondary"
             size="icon"
             onClick={() => navigate("/learning-paths")}
-            className="rounded-full bg-background/80 backdrop-blur-sm"
+            className="rounded-full bg-background/95 backdrop-blur-md border-2 border-border/50 shadow-lg"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -235,7 +235,7 @@ const ViewLearningPath = () => {
               <Button
                 variant="secondary"
                 size="icon"
-                className="rounded-full bg-background/80 backdrop-blur-sm"
+                className="rounded-full bg-background/95 backdrop-blur-md border-2 border-border/50 shadow-lg"
               >
                 <Share2 className="w-5 h-5" />
               </Button>
@@ -245,7 +245,7 @@ const ViewLearningPath = () => {
             variant="secondary"
             size="icon"
             onClick={() => setViewMode("cards")}
-            className="rounded-full bg-background/80 backdrop-blur-sm"
+            className="rounded-full bg-background/95 backdrop-blur-md border-2 border-border/50 shadow-lg"
           >
             <List className="w-5 h-5" />
           </Button>
@@ -273,7 +273,7 @@ const ViewLearningPath = () => {
           variant="secondary"
           size="icon"
           onClick={() => navigate("/learning-paths")}
-          className="rounded-full bg-background/80 backdrop-blur-sm"
+          className="rounded-full bg-background/95 backdrop-blur-md border-2 border-border/50 shadow-lg"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
@@ -289,7 +289,7 @@ const ViewLearningPath = () => {
             <Button
               variant="secondary"
               size="icon"
-              className="rounded-full bg-background/80 backdrop-blur-sm"
+              className="rounded-full bg-background/95 backdrop-blur-md border-2 border-border/50 shadow-lg"
             >
               <Share2 className="w-5 h-5" />
             </Button>
@@ -299,7 +299,7 @@ const ViewLearningPath = () => {
           variant="secondary"
           size="icon"
           onClick={() => setViewMode("map")}
-          className="rounded-full bg-background/80 backdrop-blur-sm"
+          className="rounded-full bg-background/95 backdrop-blur-md border-2 border-border/50 shadow-lg"
         >
           <Map className="w-5 h-5" />
         </Button>

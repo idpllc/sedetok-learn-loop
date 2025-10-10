@@ -133,6 +133,9 @@ const CreateLearningPath = () => {
 
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
+    } else {
+      // Último paso - redirigir a mis rutas
+      navigate("/learning-paths");
     }
   };
 
