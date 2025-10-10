@@ -24,6 +24,7 @@ const CreateLearningPath = () => {
   const [pathId, setPathId] = useState<string | null>(id || null);
   const [isLoading, setIsLoading] = useState(!!id || !!cloneId);
   const [isCloning, setIsCloning] = useState(!!cloneId);
+  const [originalPathTitle, setOriginalPathTitle] = useState<string>("");
   const [pathData, setPathData] = useState<any>({
     title: "",
     description: "",
@@ -75,6 +76,11 @@ const CreateLearningPath = () => {
             return;
           }
 
+          // Guardar el título original para mostrarlo en el título del clon
+          if (cloneId) {
+            setOriginalPathTitle(data.title || "");
+          }
+
           const loadedData = {
             title: cloneId ? `${data.title} (Copia)` : (data.title || ""),
             description: data.description || "",
@@ -96,13 +102,6 @@ const CreateLearningPath = () => {
           };
           
           setPathData(loadedData);
-
-          // Si es clonación, crear la ruta inmediatamente
-          if (cloneId) {
-            const result = await clonePath.mutateAsync(cloneId);
-            setPathId(result.id);
-            setIsCloning(false);
-          }
         }
       } catch (error: any) {
         console.error("Error loading path:", error);
@@ -149,10 +148,15 @@ const CreateLearningPath = () => {
   }
 
   const handleNext = async () => {
-    // Si es el primer paso, crear la ruta
-    if (currentStep === 1 && !pathId) {
+    // Si es el primer paso y no es clonación, crear la ruta
+    if (currentStep === 1 && !pathId && !cloneId) {
       const result = await createPath.mutateAsync(pathData);
       setPathId(result.id);
+    } else if (currentStep === 1 && !pathId && cloneId) {
+      // Si es clonación, crear la ruta clonada
+      const result = await clonePath.mutateAsync(cloneId);
+      setPathId(result.id);
+      setIsCloning(false);
     } else if (pathId) {
       // Si es el último paso, validar que no exista una ruta idéntica
       if (currentStep === steps.length) {
@@ -255,7 +259,7 @@ const CreateLearningPath = () => {
               </Button>
               <div>
                 <h1 className="text-xl font-bold">
-                  {id ? "Editar" : isCloning ? "Clonando" : "Crear"} Ruta de Aprendizaje
+                  {id ? "Editar" : isCloning ? `Clonar de: ${originalPathTitle}` : "Crear"} Ruta de Aprendizaje
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Paso {currentStep} de {steps.length}: {steps[currentStep - 1].title}
