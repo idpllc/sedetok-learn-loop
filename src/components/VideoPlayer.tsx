@@ -102,12 +102,26 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       // Ensure volume settings persist after data loads
       video.volume = volume;
       video.muted = isMuted;
+      // Auto-play when data is loaded
+      video.play().then(() => {
+        setIsPlaying(true);
+        onPlayStateChange?.(true);
+      }).catch(() => {
+        // Autoplay failed, user interaction required
+        setIsPlaying(false);
+      });
     };
 
     // Apply settings immediately if video is already loaded
     if (video.readyState >= 2) {
       video.volume = volume;
       video.muted = isMuted;
+      video.play().then(() => {
+        setIsPlaying(true);
+        onPlayStateChange?.(true);
+      }).catch(() => {
+        setIsPlaying(false);
+      });
     }
 
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
@@ -121,7 +135,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       video.removeEventListener('ended', handleVideoEnded);
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
+  }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted, onPlayStateChange]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -181,6 +195,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         } transition-all`}
         loop
         playsInline
+        autoPlay
+        muted={isMuted}
         onClick={togglePlay}
       />
 
