@@ -17,6 +17,8 @@ interface VideoPlayerProps {
 export interface VideoPlayerRef {
   pause: () => void;
   play: () => void;
+  setMuted: (muted: boolean) => void;
+  setVolume: (volume: number) => void;
   isPlaying: boolean;
 }
 
@@ -48,7 +50,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const [isInView, setIsInView] = useState(false);
   const manualPauseRef = useRef(false);
 
-  useImperativeHandle(ref, () => ({
+useImperativeHandle(ref, () => ({
     pause: () => {
       const video = videoRef.current;
       if (video) {
@@ -63,6 +65,32 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
           // Ignore autoplay errors
         });
         setIsPlaying(true);
+      }
+    },
+    setMuted: (muted: boolean) => {
+      const video = videoRef.current;
+      if (video) {
+        video.muted = muted;
+        setIsMuted(muted);
+        localStorage.setItem('videoMuted', JSON.stringify(muted));
+      }
+    },
+    setVolume: (v: number) => {
+      const video = videoRef.current;
+      if (video) {
+        const vol = Math.max(0, Math.min(1, v));
+        video.volume = vol;
+        setVolume(vol);
+        localStorage.setItem('videoVolume', vol.toString());
+        if (vol === 0) {
+          video.muted = true;
+          setIsMuted(true);
+          localStorage.setItem('videoMuted', JSON.stringify(true));
+        } else if (isMuted) {
+          video.muted = false;
+          setIsMuted(false);
+          localStorage.setItem('videoMuted', JSON.stringify(false));
+        }
       }
     },
     isPlaying
@@ -226,7 +254,6 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         } transition-all`}
         loop
         playsInline
-        muted={isMuted}
         onClick={togglePlay}
       />
 

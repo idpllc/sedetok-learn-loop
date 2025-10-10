@@ -212,40 +212,15 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   };
 
   const toggleMute = () => {
-    const video = document.querySelector(`video[data-content-id="${id}"]`) as HTMLVideoElement;
-    if (video) {
-      const newMutedState = !isMuted;
-      video.muted = newMutedState;
-      setIsMuted(newMutedState);
-      localStorage.setItem('videoMuted', JSON.stringify(newMutedState));
-      
-      // Show volume slider when unmuting
-      if (!newMutedState) {
-        setShowVolumeSlider(true);
-      }
-    }
+    const newMutedState = !isMuted;
+    videoPlayerRef.current?.setMuted(newMutedState);
+    setIsMuted(newMutedState);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = document.querySelector(`video[data-content-id="${id}"]`) as HTMLVideoElement;
-    if (video) {
-      const newVolume = parseFloat(e.target.value);
-      video.volume = newVolume;
-      setVolume(newVolume);
-      localStorage.setItem('videoVolume', newVolume.toString());
-      
-      if (newVolume === 0) {
-        setIsMuted(true);
-        video.muted = true;
-        localStorage.setItem('videoMuted', JSON.stringify(true));
-      } else {
-        if (isMuted) {
-          setIsMuted(false);
-          video.muted = false;
-          localStorage.setItem('videoMuted', JSON.stringify(false));
-        }
-      }
-    }
+    const newVolume = parseFloat(e.target.value);
+    videoPlayerRef.current?.setVolume(newVolume);
+    setVolume(newVolume);
   };
 
   // Sync volume slider visibility on mount
@@ -415,6 +390,31 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0" />
 
+        {/* Desktop volume controls - left side horizontal */}
+        {videoUrl && (
+          <div className="hidden md:flex absolute left-4 bottom-24 z-30 items-center gap-3 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
+            <button
+              onClick={toggleMute}
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform"
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX className="w-5 h-5 text-black" />
+              ) : (
+                <Volume2 className="w-5 h-5 text-black" />
+              )}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={isMuted ? 0 : volume}
+              onChange={handleVolumeChange}
+              className="w-28 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
+            />
+          </div>
+        )}
+
         {/* Category badge */}
         <div className="absolute top-4 left-4 z-10">
           <Badge className="bg-primary text-primary-foreground font-semibold">{category}</Badge>
@@ -545,36 +545,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 )}
               </button>
 
-              <div className="hidden md:flex flex-col items-center gap-2">
-                <button
-                  onClick={() => {
-                    toggleMute();
-                    setShowVolumeSlider(!showVolumeSlider);
-                  }}
-                  className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform shadow-lg hover:bg-white"
-                >
-                  {isMuted || volume === 0 ? (
-                    <VolumeX className="w-5 h-5 text-black" />
-                  ) : (
-                    <Volume2 className="w-5 h-5 text-black" />
-                  )}
-                </button>
-
-                {showVolumeSlider && (
-                  <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.1"
-                      value={isMuted ? 0 : volume}
-                      onChange={handleVolumeChange}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-24 h-1 appearance-none bg-gray-300 rounded-full cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:shadow-md"
-                    />
-                  </div>
-                )}
-              </div>
+                {/* volume controls moved to left side */}
             </>
           )}
         </div>
