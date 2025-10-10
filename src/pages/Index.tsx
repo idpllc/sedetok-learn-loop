@@ -179,15 +179,15 @@ const Index = () => {
 
   return (
     <div className="relative">
-      {/* Top navigation - TikTok style */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/50 to-transparent pt-safe">
-        <div className="flex items-center justify-center gap-8 h-14">
+      {/* Top navigation - Horizontal style with transparent background */}
+      <div className="fixed top-0 left-0 right-0 z-[90] bg-transparent">
+        <div className="flex items-center justify-center gap-8 h-16 px-4">
           <button
             onClick={() => navigate("/search")}
             className={`relative text-base font-semibold transition-all ${
               currentTab === "explorar" 
-                ? "text-white scale-110" 
-                : "text-white/70 hover:text-white/90"
+                ? "text-white" 
+                : "text-white/60 hover:text-white/80"
             }`}
           >
             Explorar
@@ -199,8 +199,8 @@ const Index = () => {
             onClick={() => navigate("/")}
             className={`relative text-base font-semibold transition-all ${
               currentTab === "para-ti" 
-                ? "text-white scale-110" 
-                : "text-white/70 hover:text-white/90"
+                ? "text-white" 
+                : "text-white/60 hover:text-white/80"
             }`}
           >
             Para ti
@@ -212,8 +212,8 @@ const Index = () => {
             onClick={() => navigate("/learning-paths")}
             className={`relative text-base font-semibold transition-all ${
               currentTab === "rutas" 
-                ? "text-white scale-110" 
-                : "text-white/70 hover:text-white/90"
+                ? "text-white" 
+                : "text-white/60 hover:text-white/80"
             }`}
           >
             Rutas

@@ -391,10 +391,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0" />
 
-        {/* Desktop volume controls - top left corner like TikTok */}
+        {/* Desktop volume controls - top left corner */}
         {videoUrl && (
           <div
-            className="hidden md:flex absolute left-4 top-20 z-[999] items-center gap-2 bg-black/70 backdrop-blur-md rounded-full px-3 py-2 shadow-2xl pointer-events-auto"
+            className="hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/70 backdrop-blur-md rounded-full px-3 py-2 shadow-2xl pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
