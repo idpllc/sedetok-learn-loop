@@ -180,29 +180,29 @@ const Index = () => {
   return (
     <div className="relative">
       {/* Top tabs navigation */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10">
-        <div className="container mx-auto px-4 py-3">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm">
+        <div className="px-4 py-2">
           <Tabs value={currentTab} onValueChange={(value) => {
             if (value === "para-ti") navigate("/");
             else if (value === "explorar") navigate("/search");
             else if (value === "rutas") navigate("/learning-paths");
           }}>
-            <TabsList className="w-full grid grid-cols-3 bg-white/10">
-              <TabsTrigger 
-                value="para-ti"
-                className="data-[state=active]:bg-white data-[state=active]:text-black text-white"
-              >
-                Para ti
-              </TabsTrigger>
+            <TabsList className="w-full grid grid-cols-3 bg-transparent h-12 p-0">
               <TabsTrigger 
                 value="explorar"
-                className="data-[state=active]:bg-white data-[state=active]:text-black text-white"
+                className="data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-foreground text-muted-foreground rounded-none font-semibold"
               >
                 Explorar
               </TabsTrigger>
               <TabsTrigger 
+                value="para-ti"
+                className="data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-foreground text-muted-foreground rounded-none font-semibold"
+              >
+                Para ti
+              </TabsTrigger>
+              <TabsTrigger 
                 value="rutas"
-                className="data-[state=active]:bg-white data-[state=active]:text-black text-white"
+                className="data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-foreground text-muted-foreground rounded-none font-semibold"
               >
                 Rutas
               </TabsTrigger>
@@ -212,7 +212,7 @@ const Index = () => {
       </div>
 
       {/* Feed container with snap scroll - add top padding for tabs */}
-      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth pt-16">
+      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth pt-14">
         {contentData.map((item: any, index: number) => {
           const videoRef = (ref: VideoPlayerRef | null) => {
             if (ref) {
