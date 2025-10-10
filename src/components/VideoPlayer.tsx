@@ -46,6 +46,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const [isVertical, setIsVertical] = useState(true);
   const hasWatchedRef = useRef(false);
   const [isInView, setIsInView] = useState(false);
+  const manualPauseRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     pause: () => {
@@ -89,17 +90,21 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     if (!video) return;
 
     if (isInView) {
-      video.play().then(() => {
-        setIsPlaying(true);
-        onPlayStateChange?.(true);
-      }).catch(() => {
-        // Autoplay failed, user interaction required
-        setIsPlaying(false);
-      });
+      // Only auto-play if user hasn't manually paused
+      if (!manualPauseRef.current) {
+        video.play().then(() => {
+          setIsPlaying(true);
+          onPlayStateChange?.(true);
+        }).catch(() => {
+          setIsPlaying(false);
+        });
+      }
     } else {
       video.pause();
       setIsPlaying(false);
       onPlayStateChange?.(false);
+      // Reset manual pause when video goes out of view
+      manualPauseRef.current = false;
     }
   }, [isInView, onPlayStateChange]);
 
@@ -168,8 +173,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     const newPlayingState = !isPlaying;
     if (newPlayingState) {
       video.play();
+      manualPauseRef.current = false;
     } else {
       video.pause();
+      manualPauseRef.current = true;
     }
     setIsPlaying(newPlayingState);
     onPlayStateChange?.(newPlayingState);
