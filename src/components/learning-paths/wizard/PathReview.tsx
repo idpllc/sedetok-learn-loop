@@ -12,7 +12,7 @@ interface PathReviewProps {
   pathId: string | null;
 }
 
-export const PathReview = ({ data, pathId }: PathReviewProps) => {
+export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
   const { contents, isLoading } = usePathContent(pathId || undefined);
   const { paths: requiredPaths } = useLearningPaths();
 
@@ -21,6 +21,15 @@ export const PathReview = ({ data, pathId }: PathReviewProps) => {
   
   const totalXP = contents?.reduce((acc, item: any) => 
     acc + (item.xp_reward || 0), 0) || 0;
+
+  // Actualizar estimated_duration y total_xp cuando se calculen
+  if (totalDuration !== data.estimated_duration || totalXP !== data.total_xp) {
+    onChange({
+      ...data,
+      estimated_duration: totalDuration,
+      total_xp: totalXP,
+    });
+  }
 
   const requiredRoutesData = requiredPaths?.filter(path => 
     data.required_routes?.includes(path.id)

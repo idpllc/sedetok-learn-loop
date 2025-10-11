@@ -148,12 +148,12 @@ const CreateLearningPath = () => {
   }
 
   const handleNext = async () => {
-    // Si es el primer paso y no es clonación, crear la ruta
+    // Si es el primer paso y no es clonación, crear la ruta (sin toast)
     if (currentStep === 1 && !pathId && !cloneId) {
       const result = await createPath.mutateAsync(pathData);
       setPathId(result.id);
     } else if (currentStep === 1 && !pathId && cloneId) {
-      // Si es clonación, crear la ruta clonada
+      // Si es clonación, crear la ruta clonada (sin toast)
       const result = await clonePath.mutateAsync(cloneId);
       setPathId(result.id);
       setIsCloning(false);
@@ -204,13 +204,23 @@ const CreateLearningPath = () => {
           }
         }
 
-        // Actualizar status a published
+        // Actualizar status a published y mostrar toast
         await updatePath.mutateAsync({ 
           id: pathId, 
-          updates: { ...pathData, status: 'published' } 
+          updates: { 
+            ...pathData, 
+            status: 'published',
+            estimated_duration: pathData.estimated_duration,
+            total_xp: pathData.total_xp 
+          } 
+        });
+        
+        toast({
+          title: "¡Ruta publicada!",
+          description: "Tu ruta de aprendizaje ha sido publicada exitosamente",
         });
       } else {
-        // Actualizar la ruta existente en pasos intermedios
+        // Actualizar la ruta existente en pasos intermedios (sin toast)
         await updatePath.mutateAsync({ id: pathId, updates: pathData });
       }
     }
