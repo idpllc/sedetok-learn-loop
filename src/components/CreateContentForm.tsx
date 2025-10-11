@@ -138,7 +138,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     if (onTitleChange) {
       const titles: Record<ContentType, string> = {
         video: "Crear Video",
-        document: "Crear Recurso",
+        document: "Crear Documento",
         lectura: "Crear Lectura",
         quiz: "Crear Quiz",
       };
@@ -171,7 +171,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     if (!type) {
       toastHook({
         title: "Tipo de archivo no válido",
-        description: "Por favor sube un video (MP4, MOV, AVI, MKV), recurso (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) o imagen (JPG, PNG, WEBP)",
+        description: "Por favor sube un video (MP4, MOV, AVI, MKV), documento (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) o imagen (JPG, PNG, WEBP)",
         variant: "destructive",
       });
       return false;
@@ -420,7 +420,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
   const getFileTypeText = () => {
     if (fileType === 'video') return 'Video';
-    if (fileType === 'document') return 'Recurso PDF';
+    if (fileType === 'document') return 'Documento PDF';
     if (fileType === 'image') return 'Imagen';
     return 'contenido';
   };
@@ -561,7 +561,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="video">Video</SelectItem>
-            <SelectItem value="document">Recurso</SelectItem>
+            <SelectItem value="document">Documento</SelectItem>
             <SelectItem value="lectura">Lectura</SelectItem>
             <SelectItem value="quiz">Quiz</SelectItem>
           </SelectContent>
@@ -638,10 +638,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                       o haz click para seleccionar
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Videos (MP4, MOV, AVI, MKV), Recursos (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) o Imágenes (JPG, PNG, WEBP)
+                      Videos (MP4, MOV, AVI, MKV), Documentos (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) o Imágenes (JPG, PNG, WEBP)
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Máx: Videos 500MB | Recursos 50MB | Imágenes 10MB
+                      Máx: Videos 500MB | Documentos 50MB | Imágenes 10MB
                     </p>
                   </div>
                   <Button
@@ -718,12 +718,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 </div>
               )}
 
-              {/* Portada opcional para recursos */}
+              {/* Portada opcional para documentos */}
               {fileType === 'document' && (
                 <div className="space-y-2 mt-4 p-4 border rounded-lg bg-muted/50">
-                  <Label htmlFor="thumbnail">Portada del Recurso (Opcional)</Label>
+                  <Label htmlFor="thumbnail">Portada del Documento (Opcional)</Label>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Sube una imagen para previsualizar el recurso
+                    Sube una imagen para previsualizar el documento
                   </p>
                   <Input
                     id="thumbnail"
@@ -759,7 +759,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                     <div className="relative mt-2">
                       <img 
                         src={thumbnailPreview} 
-                        alt="Portada del recurso" 
+                        alt="Portada del documento" 
                         className="w-full rounded-lg max-h-[200px] object-cover"
                       />
                       <Button
