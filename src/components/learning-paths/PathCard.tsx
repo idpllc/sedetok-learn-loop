@@ -127,7 +127,7 @@ export const PathCard = ({ path }: PathCardProps) => {
             <DropdownMenuContent align="end" className="w-48">
               {isCreator && (
                 <>
-                  <DropdownMenuItem onClick={() => navigate(`/learning-paths/edit/${path.id}`)}>
+                  <DropdownMenuItem onClick={() => navigate(`/create-learning-path/${path.id}`)}>
                     <Edit className="w-4 h-4 mr-2" />
                     Editar
                   </DropdownMenuItem>
@@ -147,7 +147,7 @@ export const PathCard = ({ path }: PathCardProps) => {
                 </>
               )}
               {!isCreator && (
-                <DropdownMenuItem onClick={() => navigate(`/learning-paths/create?clone=${path.id}`)}>
+                <DropdownMenuItem onClick={() => navigate(`/create-learning-path?clone=${path.id}`)}>
                   <Copy className="w-4 h-4 mr-2" />
                   Clonar
                 </DropdownMenuItem>

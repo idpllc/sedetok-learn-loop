@@ -161,7 +161,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate(`/learning-paths/edit/${pathId}`)}
+              onClick={() => navigate(`/create-learning-path/${pathId}`)}
               className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
             >
               <Edit className="w-4 h-4 md:w-5 md:h-5 mr-2" />
@@ -171,7 +171,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate(`/learning-paths/create?clone=${pathId}`)}
+              onClick={() => navigate(`/create-learning-path?clone=${pathId}`)}
               className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
             >
               <Copy className="w-4 h-4 md:w-5 md:h-5 mr-2" />
