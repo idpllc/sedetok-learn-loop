@@ -47,7 +47,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
 }, ref) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isCreator = Boolean(user?.id && creatorId && user.id === creatorId);
+  const isCreator = user?.id === creatorId;
   return (
     <div 
       ref={ref}

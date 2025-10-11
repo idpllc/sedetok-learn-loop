@@ -25,7 +25,7 @@ export const PathCard = ({ path }: PathCardProps) => {
   const { updatePath, deletePath } = useLearningPaths();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  const isCreator = Boolean(user?.id && path?.creator_id && user.id === path.creator_id);
+  const isCreator = user?.id === path.creator_id;
 
   const handleToggleVisibility = async () => {
     await updatePath.mutateAsync({
