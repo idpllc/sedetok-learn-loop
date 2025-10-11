@@ -93,9 +93,14 @@ export function ApiConfiguration() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Autenticación</label>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Key className="w-4 h-4" />
-              <span>API Key en header <code className="px-1 py-0.5 bg-muted rounded">x-api-key</code></span>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Key className="w-4 h-4" />
+                <span>API Key en header <code className="px-1 py-0.5 bg-muted rounded">x-api-key</code></span>
+              </div>
+              <p className="text-xs pl-6">
+                ✓ Localhost/127.0.0.1: No requiere autenticación (desarrollo)
+              </p>
             </div>
           </div>
 

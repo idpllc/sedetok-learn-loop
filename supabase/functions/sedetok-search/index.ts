@@ -5,6 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Credentials': 'true',
 };
 
 // Rate limiting map (simple in-memory, resets on function cold start)
@@ -56,19 +57,25 @@ serve(async (req) => {
     const apiKey = req.headers.get('x-api-key');
     const authHeader = req.headers.get('authorization');
     const expectedApiKey = Deno.env.get('SEDETOK_API_KEY');
+    const origin = req.headers.get('origin') || '';
+    
+    // Allow localhost/development without authentication
+    const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+    
+    if (!isLocalhost) {
+      if (!apiKey && !authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    if (!apiKey && !authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (apiKey && apiKey !== expectedApiKey) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid API key' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (apiKey && apiKey !== expectedApiKey) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid API key' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Rate limiting
