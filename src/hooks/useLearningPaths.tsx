@@ -71,23 +71,42 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
+      console.log("Creating path with user:", user.id);
+
       const { data, error } = await supabase
         .from("learning_paths")
-        .insert([{ ...path, creator_id: user.id }])
+        .insert([{ 
+          ...path, 
+          creator_id: user.id,
+          status: path.status || 'draft'
+        }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating path:", error);
+        throw error;
+      }
+      
+      console.log("Path created successfully:", data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidar todas las queries de learning-paths para forzar refetch
       queryClient.invalidateQueries({ queryKey: ["learning-paths"] });
+      // También invalidar queries específicas del usuario
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: ["learning-paths", userId] });
+        queryClient.invalidateQueries({ queryKey: ["learning-paths", userId, "created"] });
+      }
+      console.log("Queries invalidated after creating path:", data.id);
       toast({
         title: "Ruta creada",
         description: "La ruta de aprendizaje ha sido creada exitosamente",
       });
     },
     onError: (error: Error) => {
+      console.error("Create path error:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -101,6 +120,8 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
+      console.log("Updating path:", id, "by user:", user.id);
+
       // Verificar que el usuario sea el creador
       const { data: path, error: fetchError } = await supabase
         .from("learning_paths")
@@ -108,8 +129,16 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         .eq("id", id)
         .single();
 
-      if (fetchError) throw fetchError;
-      if (path.creator_id !== user.id) throw new Error("Solo el creador puede actualizar esta ruta");
+      if (fetchError) {
+        console.error("Error fetching path for update:", fetchError);
+        throw fetchError;
+      }
+      
+      console.log("Path creator_id:", path.creator_id, "User id:", user.id);
+      
+      if (path.creator_id !== user.id) {
+        throw new Error("Solo el creador puede actualizar esta ruta");
+      }
 
       const { data, error } = await supabase
         .from("learning_paths")
@@ -118,17 +147,28 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating path:", error);
+        throw error;
+      }
+      
+      console.log("Path updated successfully:", data);
       return data;
     },
     onSuccess: () => {
+      // Invalidar todas las queries de learning-paths
       queryClient.invalidateQueries({ queryKey: ["learning-paths"] });
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: ["learning-paths", userId] });
+        queryClient.invalidateQueries({ queryKey: ["learning-paths", userId, "created"] });
+      }
       toast({
         title: "Ruta actualizada",
         description: "La ruta ha sido actualizada exitosamente",
       });
     },
     onError: (error: Error) => {
+      console.error("Update path error:", error);
       toast({
         title: "Error",
         description: error.message,

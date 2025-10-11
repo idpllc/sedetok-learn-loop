@@ -19,7 +19,7 @@ const CreateLearningPath = () => {
   const cloneId = searchParams.get("clone");
   const { toast } = useToast();
   const { user } = useAuth();
-  const { createPath, updatePath, clonePath } = useLearningPaths();
+  const { createPath, updatePath, clonePath } = useLearningPaths(user?.id, 'created');
   const [currentStep, setCurrentStep] = useState(1);
   const [pathId, setPathId] = useState<string | null>(id || null);
   const [isLoading, setIsLoading] = useState(!!id || !!cloneId);
