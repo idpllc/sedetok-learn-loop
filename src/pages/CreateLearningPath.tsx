@@ -259,7 +259,7 @@ const CreateLearningPath = () => {
               </Button>
               <div>
                 <h1 className="text-xl font-bold">
-                  {id ? "Editar" : isCloning ? `Clonar: ${originalPathTitle}` : "Crear"} Ruta de Aprendizaje
+                  {id ? "Editar" : isCloning ? `Clonar de: ${originalPathTitle}` : "Crear"} Ruta de Aprendizaje
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   Paso {currentStep} de {steps.length}: {steps[currentStep - 1].title}

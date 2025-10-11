@@ -81,7 +81,7 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
           className="flex items-center gap-2 shadow-lg bg-primary hover:bg-primary/90"
         >
           <Maximize2 className="w-4 h-4" />
-          Ampliar recurso
+          Ampliar lectura
         </Button>
       </div>
 
