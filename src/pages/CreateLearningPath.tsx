@@ -18,7 +18,7 @@ const CreateLearningPath = () => {
   const [searchParams] = useSearchParams();
   const cloneId = searchParams.get("clone");
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { createPath, updatePath, clonePath } = useLearningPaths(user?.id, 'created');
   const [currentStep, setCurrentStep] = useState(1);
   const [pathId, setPathId] = useState<string | null>(id || null);
@@ -47,6 +47,11 @@ const CreateLearningPath = () => {
 
   // Cargar datos existentes si estamos en modo edición o clonación
   useEffect(() => {
+    // Esperar a que la autenticación esté lista antes de validar permisos de edición
+    if (id && authLoading) {
+      return;
+    }
+
     const loadPathData = async () => {
       const sourceId = id || cloneId;
       
@@ -66,14 +71,25 @@ const CreateLearningPath = () => {
 
         if (data) {
           // Verificar permisos en modo edición
-          if (id && data.creator_id !== user?.id) {
-            toast({
-              title: "Acceso denegado",
-              description: "Solo el creador puede editar esta ruta",
-              variant: "destructive",
-            });
-            navigate("/learning-paths");
-            return;
+          if (id) {
+            if (!user) {
+              toast({
+                title: "Inicia sesión",
+                description: "Debes iniciar sesión para editar esta ruta",
+                variant: "destructive",
+              });
+              navigate("/auth");
+              return;
+            }
+            if (data.creator_id !== user.id) {
+              toast({
+                title: "Acceso denegado",
+                description: "Solo el creador puede editar esta ruta",
+                variant: "destructive",
+              });
+              navigate("/learning-paths");
+              return;
+            }
           }
 
           // Guardar el título original para mostrarlo en el título del clon
@@ -117,7 +133,7 @@ const CreateLearningPath = () => {
     };
 
     loadPathData();
-  }, [id, cloneId, navigate, toast, user, clonePath]);
+  }, [id, cloneId, navigate, toast, user, clonePath, authLoading]);
 
   const steps = [
     { number: 1, title: "Información Básica", component: PathBasicInfo },
