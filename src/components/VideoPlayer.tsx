@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown } from "lucide-react";
+import { Slider } from "./ui/slider";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -49,6 +50,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const hasWatchedRef = useRef(false);
   const [isInView, setIsInView] = useState(false);
   const manualPauseRef = useRef(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [showControls, setShowControls] = useState(false);
 
 useImperativeHandle(ref, () => ({
     pause: () => {
@@ -160,6 +164,7 @@ useImperativeHandle(ref, () => ({
     };
 
     const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
       // Mark as watched when 95% of video is played
       if (video.duration && video.currentTime / video.duration >= 0.95) {
         if (!hasWatchedRef.current && onVideoWatched) {
@@ -167,6 +172,10 @@ useImperativeHandle(ref, () => ({
           onVideoWatched();
         }
       }
+    };
+
+    const handleDurationChange = () => {
+      setDuration(video.duration);
     };
 
     const handleLoadedData = () => {
@@ -185,12 +194,14 @@ useImperativeHandle(ref, () => ({
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('ended', handleVideoEnded);
     video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('durationchange', handleDurationChange);
     
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('ended', handleVideoEnded);
       video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('durationchange', handleDurationChange);
     };
   }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
 
@@ -240,8 +251,29 @@ useImperativeHandle(ref, () => ({
     }
   };
 
+  const handleProgressChange = (value: number[]) => {
+    const video = videoRef.current;
+    if (!video || !duration) return;
+    
+    const newTime = (value[0] / 100) * duration;
+    video.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
+    <div 
+      ref={containerRef} 
+      className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" 
+      data-content-id={contentId}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}
+    >
       <video
         ref={videoRef}
         src={videoUrl}
@@ -285,6 +317,31 @@ useImperativeHandle(ref, () => ({
             <ChevronDown className="w-6 h-6 text-black" />
           </button>
         )}
+      </div>
+
+      {/* Progress bar - Always visible at bottom */}
+      <div 
+        className={`absolute bottom-0 left-0 right-0 z-30 px-4 pb-3 transition-opacity duration-300 ${
+          showControls || !isPlaying ? 'opacity-100' : 'opacity-0'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bg-black/60 backdrop-blur-sm rounded-lg px-4 py-3 space-y-2">
+          {/* Progress slider */}
+          <Slider
+            value={[duration ? (currentTime / duration) * 100 : 0]}
+            onValueChange={handleProgressChange}
+            max={100}
+            step={0.1}
+            className="cursor-pointer"
+          />
+          
+          {/* Time display */}
+          <div className="flex justify-between items-center text-white text-xs">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
