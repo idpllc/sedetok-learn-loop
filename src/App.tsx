@@ -23,9 +23,6 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <Toaster />
-    <Sonner />
-    <PWAInstallPrompt />
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Index />} />
@@ -46,6 +43,9 @@ const App = () => (
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Toaster />
+      <Sonner />
+      <PWAInstallPrompt />
     </BrowserRouter>
   </QueryClientProvider>
 );
