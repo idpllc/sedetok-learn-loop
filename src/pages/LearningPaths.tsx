@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { Plus, Search, Filter, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { PathFilters } from "@/components/learning-paths/PathFilters";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const LearningPaths = () => {
-  const navigate = useNavigate();
+  
   const { user } = useAuth();
   const [pathFilter, setPathFilter] = useState<'all' | 'created' | 'taken'>('all');
   const { paths, isLoading } = useLearningPaths(user?.id, pathFilter);
@@ -43,18 +43,18 @@ const LearningPaths = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate("/")}
-              >
-                <ArrowLeft className="w-5 h-5" />
+              <Button variant="ghost" size="icon" asChild>
+                <a href="/" aria-label="Volver al inicio">
+                  <ArrowLeft className="w-5 h-5" />
+                </a>
               </Button>
               <h1 className="text-2xl font-bold">Mis Rutas de Aprendizaje</h1>
             </div>
-            <Button onClick={() => navigate("/learning-paths/create")}>
-              <Plus className="w-4 h-4 mr-2" />
-              Crear Ruta
+            <Button asChild>
+              <a href="/learning-paths/create" aria-label="Crear Ruta">
+                <Plus className="w-4 h-4 mr-2" />
+                Crear Ruta
+              </a>
             </Button>
           </div>
           
@@ -127,9 +127,11 @@ const LearningPaths = () => {
             <p className="text-muted-foreground mb-4">
               Crea tu primera ruta de aprendizaje
             </p>
-            <Button onClick={() => navigate("/learning-paths/create")}>
-              <Plus className="w-4 h-4 mr-2" />
-              Crear Ruta
+            <Button asChild>
+              <a href="/learning-paths/create" aria-label="Crear Ruta">
+                <Plus className="w-4 h-4 mr-2" />
+                Crear Ruta
+              </a>
             </Button>
           </div>
         )}
