@@ -219,7 +219,7 @@ const ViewLearningPath = () => {
             variant="secondary"
             size="icon"
             onClick={() => navigate("/learning-paths")}
-            className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
+            className="rounded-full bg-background/80 backdrop-blur-sm"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
@@ -235,7 +235,7 @@ const ViewLearningPath = () => {
               <Button
                 variant="secondary"
                 size="icon"
-                className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
+                className="rounded-full bg-background/80 backdrop-blur-sm"
               >
                 <Share2 className="w-5 h-5" />
               </Button>
@@ -245,7 +245,7 @@ const ViewLearningPath = () => {
             variant="secondary"
             size="icon"
             onClick={() => setViewMode("cards")}
-            className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
+            className="rounded-full bg-background/80 backdrop-blur-sm"
           >
             <List className="w-5 h-5" />
           </Button>
@@ -273,7 +273,7 @@ const ViewLearningPath = () => {
           variant="secondary"
           size="icon"
           onClick={() => navigate("/learning-paths")}
-          className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
+          className="rounded-full bg-background/80 backdrop-blur-sm"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
@@ -289,7 +289,7 @@ const ViewLearningPath = () => {
             <Button
               variant="secondary"
               size="icon"
-              className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
+              className="rounded-full bg-background/80 backdrop-blur-sm"
             >
               <Share2 className="w-5 h-5" />
             </Button>
@@ -299,7 +299,7 @@ const ViewLearningPath = () => {
           variant="secondary"
           size="icon"
           onClick={() => setViewMode("map")}
-          className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
+          className="rounded-full bg-background/80 backdrop-blur-sm"
         >
           <Map className="w-5 h-5" />
         </Button>
@@ -322,7 +322,6 @@ const ViewLearningPath = () => {
           coverUrl={pathInfo?.cover_url}
           contentCount={contentData.length}
           isPublic={pathInfo?.is_public ?? true}
-          creatorId={pathInfo?.creator_id}
           onStart={() => {
             // Scroll to first content capsule
             const container = document.querySelector('.snap-y');

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +9,6 @@ import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
-
 
 const mockContent = [
   {
@@ -81,7 +80,6 @@ const mockContent = [
 
 const Index = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
   const contentIdFromUrl = searchParams.get("content");
   const { user, loading: authLoading } = useAuth();
@@ -91,10 +89,6 @@ const Index = () => {
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
-
-  const currentTab = location.pathname === "/" ? "para-ti" : 
-                     location.pathname === "/search" ? "explorar" : 
-                     location.pathname === "/learning-paths" ? "rutas" : "para-ti";
 
   const pauseAllVideos = useCallback((exceptId?: string) => {
     Object.entries(videoRefs.current).forEach(([id, ref]) => {
@@ -179,34 +173,6 @@ const Index = () => {
 
   return (
     <div className="relative">
-      {/* Top navigation links */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center">
-        <button
-          onClick={() => navigate("/search")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "explorar" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Explorar
-        </button>
-        <button
-          onClick={() => navigate("/")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "para-ti" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Para ti
-        </button>
-        <button
-          onClick={() => navigate("/learning-paths")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "rutas" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Rutas
-        </button>
-      </div>
-
       {/* Feed container with snap scroll */}
       <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
         {contentData.map((item: any, index: number) => {
