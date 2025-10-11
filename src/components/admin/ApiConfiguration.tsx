@@ -89,6 +89,9 @@ export function ApiConfiguration() {
                 )}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              💡 Para usar un dominio personalizado, configura el secret <code className="px-1 py-0.5 bg-muted rounded">CUSTOM_DOMAIN</code> (ej: https://tudominio.com). Esto cambiará las URLs en los resultados.
+            </p>
           </div>
 
           <div className="space-y-2">

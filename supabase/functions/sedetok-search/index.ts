@@ -164,7 +164,10 @@ serve(async (req) => {
     }
 
     // Transform results to required format
-    const baseUrl = supabaseUrl.replace('.supabase.co', '.lovableproject.com');
+    // Use custom domain if configured, otherwise fall back to default
+    const customDomain = Deno.env.get('CUSTOM_DOMAIN');
+    const baseUrl = customDomain || supabaseUrl.replace('.supabase.co', '.lovableproject.com');
+    
     const results = (data || []).map(path => ({
       id: path.id,
       name: path.title,
