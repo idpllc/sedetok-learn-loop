@@ -53,43 +53,15 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         if (error) throw error;
         return (data || []) as any[];
       } else {
-        // All paths: created by user OR where user has progress
-        const [createdPaths, progressData] = await Promise.all([
-          supabase
-            .from("learning_paths")
-            .select("*")
-            .eq("creator_id", userId),
-          supabase
-            .from("user_path_progress")
-            .select("path_id")
-            .eq("user_id", userId)
-        ]);
-
-        if (createdPaths.error) throw createdPaths.error;
-        if (progressData.error) throw progressData.error;
-
-        const progressPathIds = [...new Set(progressData.data?.map(p => p.path_id) || [])];
-        const createdPathIds = new Set(createdPaths.data?.map(p => p.id) || []);
-        
-        // Get paths where user has progress but didn't create
-        const takenPathIds = progressPathIds.filter(id => !createdPathIds.has(id));
-        
-        if (takenPathIds.length === 0) {
-          return createdPaths.data || [];
-        }
-        
-        const { data: takenPaths, error: takenError } = await supabase
+        // All public paths
+        const { data, error } = await supabase
           .from("learning_paths")
           .select("*")
-          .in("id", takenPathIds);
+          .eq("is_public", true)
+          .order("created_at", { ascending: false });
         
-        if (takenError) throw takenError;
-        
-        // Combine and sort by created_at
-        const allPaths = [...(createdPaths.data || []), ...(takenPaths || [])];
-        return allPaths.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        if (error) throw error;
+        return (data || []) as any[];
       }
     },
   }) as { data: any[] | undefined; isLoading: boolean };
@@ -126,6 +98,19 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
 
   const updatePath = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      // Verificar que el usuario sea el creador
+      const { data: path, error: fetchError } = await supabase
+        .from("learning_paths")
+        .select("creator_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (path.creator_id !== user.id) throw new Error("Solo el creador puede actualizar esta ruta");
+
       const { data, error } = await supabase
         .from("learning_paths")
         .update(updates)
@@ -154,6 +139,19 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
 
   const deletePath = useMutation({
     mutationFn: async (id: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      // Verificar que el usuario sea el creador
+      const { data: path, error: fetchError } = await supabase
+        .from("learning_paths")
+        .select("creator_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (path.creator_id !== user.id) throw new Error("Solo el creador puede eliminar esta ruta");
+
       const { error } = await supabase.from("learning_paths").delete().eq("id", id);
       if (error) throw error;
     },
@@ -173,12 +171,82 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
     },
   });
 
+  const clonePath = useMutation({
+    mutationFn: async (sourcePathId: string) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      // Get source path
+      const { data: sourcePath, error: pathError } = await supabase
+        .from("learning_paths")
+        .select("*")
+        .eq("id", sourcePathId)
+        .single();
+
+      if (pathError) throw pathError;
+
+      // Get source path content
+      const { data: sourceContent, error: contentError } = await supabase
+        .from("learning_path_content")
+        .select("*")
+        .eq("path_id", sourcePathId);
+
+      if (contentError) throw contentError;
+
+      // Create new path (without id and creator_id)
+      const { id: _, creator_id: __, created_at, updated_at, ...pathData } = sourcePath;
+      const { data: newPath, error: newPathError } = await supabase
+        .from("learning_paths")
+        .insert([{ 
+          ...pathData, 
+          creator_id: user.id,
+          title: `${pathData.title} (Copia)`,
+          status: 'draft'
+        }])
+        .select()
+        .single();
+
+      if (newPathError) throw newPathError;
+
+      // Clone content
+      if (sourceContent && sourceContent.length > 0) {
+        const contentToInsert = sourceContent.map(item => {
+          const { id, path_id, created_at, ...itemData } = item;
+          return { ...itemData, path_id: newPath.id };
+        });
+
+        const { error: insertError } = await supabase
+          .from("learning_path_content")
+          .insert(contentToInsert);
+
+        if (insertError) throw insertError;
+      }
+
+      return newPath;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["learning-paths"] });
+      toast({
+        title: "Ruta clonada",
+        description: "La ruta ha sido clonada exitosamente",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     paths,
     isLoading,
     createPath,
     updatePath,
     deletePath,
+    clonePath,
   };
 };
 
@@ -213,7 +281,7 @@ export const usePathContent = (pathId?: string) => {
         .from("learning_path_content")
         .insert([content])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -237,7 +305,7 @@ export const usePathContent = (pathId?: string) => {
         .update(updates)
         .eq("id", id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

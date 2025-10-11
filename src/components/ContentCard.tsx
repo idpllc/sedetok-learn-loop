@@ -394,7 +394,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         {/* Desktop volume controls - top left corner like TikTok */}
         {videoUrl && (
           <div
-            className="hidden md:flex absolute left-4 top-4 z-50 items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
+            className="hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}

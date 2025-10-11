@@ -181,6 +181,22 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
         </div>
 
         <div>
+          <Label htmlFor="estimated_duration">Duración estimada (minutos)</Label>
+          <Input
+            id="estimated_duration"
+            type="number"
+            min="0"
+            placeholder="Ej: 60"
+            value={data.estimated_duration || ""}
+            onChange={(e) => onChange({ ...data, estimated_duration: parseInt(e.target.value) || 0 })}
+            className="mt-1.5"
+          />
+          <p className="text-sm text-muted-foreground mt-1">
+            Tiempo aproximado para completar toda la ruta
+          </p>
+        </div>
+
+        <div>
           <ImageUpload
             value={data.cover_url}
             onChange={(url) => onChange({ ...data, cover_url: url })}

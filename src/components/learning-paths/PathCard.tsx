@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PathCardProps {
   path: any;
@@ -20,8 +21,11 @@ interface PathCardProps {
 
 export const PathCard = ({ path }: PathCardProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { updatePath, deletePath } = useLearningPaths();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  const isCreator = user?.id === path.creator_id;
 
   const handleToggleVisibility = async () => {
     await updatePath.mutateAsync({
@@ -121,39 +125,49 @@ export const PathCard = ({ path }: PathCardProps) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate(`/learning-paths/edit/${path.id}`)}>
-                <Edit className="w-4 h-4 mr-2" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDuplicate}>
-                <Copy className="w-4 h-4 mr-2" />
-                Duplicar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleToggleVisibility}>
-                {path.is_public ? (
-                  <>
-                    <EyeOff className="w-4 h-4 mr-2" />
-                    Hacer privada
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Hacer pública
-                  </>
-                )}
-              </DropdownMenuItem>
+              {isCreator && (
+                <>
+                  <DropdownMenuItem onClick={() => navigate(`/learning-paths/edit/${path.id}`)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleToggleVisibility}>
+                    {path.is_public ? (
+                      <>
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        Hacer privada
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Hacer pública
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </>
+              )}
+              {!isCreator && (
+                <DropdownMenuItem onClick={() => navigate(`/learning-paths/create?clone=${path.id}`)}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Clonar
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem>
                 <Share2 className="w-4 h-4 mr-2" />
                 Compartir
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setShowDeleteDialog(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Eliminar
-              </DropdownMenuItem>
+              {isCreator && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </CardFooter>
