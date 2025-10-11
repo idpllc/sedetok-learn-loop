@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.upload-to-cloudinary]
 verify_jwt = true
+
+[functions.sedetok-search]
+verify_jwt = false

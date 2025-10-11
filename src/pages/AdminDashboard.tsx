@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { ApiConfiguration } from "@/components/admin/ApiConfiguration";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -253,15 +254,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configuración del Sistema</CardTitle>
-                <CardDescription>Opciones de configuración general</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Panel de configuración en desarrollo...</p>
-              </CardContent>
-            </Card>
+            <ApiConfiguration />
           </TabsContent>
         </Tabs>
       </div>
