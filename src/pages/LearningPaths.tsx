@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { Link } from "react-router-dom";
 import { Plus, Search, Filter, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,17 +45,17 @@ const LearningPaths = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" asChild>
-                <a href="/" aria-label="Volver al inicio">
+                <Link to="/" aria-label="Volver al inicio">
                   <ArrowLeft className="w-5 h-5" />
-                </a>
+                </Link>
               </Button>
               <h1 className="text-2xl font-bold">Mis Rutas de Aprendizaje</h1>
             </div>
             <Button asChild>
-              <a href="/learning-paths/create" aria-label="Crear Ruta">
+              <Link to="/learning-paths/create" aria-label="Crear Ruta">
                 <Plus className="w-4 h-4 mr-2" />
                 Crear Ruta
-              </a>
+              </Link>
             </Button>
           </div>
           
@@ -128,10 +129,10 @@ const LearningPaths = () => {
               Crea tu primera ruta de aprendizaje
             </p>
             <Button asChild>
-              <a href="/learning-paths/create" aria-label="Crear Ruta">
+              <Link to="/learning-paths/create" aria-label="Crear Ruta">
                 <Plus className="w-4 h-4 mr-2" />
                 Crear Ruta
-              </a>
+              </Link>
             </Button>
           </div>
         )}
