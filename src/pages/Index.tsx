@@ -179,32 +179,49 @@ const Index = () => {
 
   return (
     <div className="relative">
-      {/* Top navigation links */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center">
-        <button
-          onClick={() => navigate("/search")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "explorar" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Explorar
-        </button>
-        <button
-          onClick={() => navigate("/")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "para-ti" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Para ti
-        </button>
-        <button
-          onClick={() => navigate("/learning-paths")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "rutas" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Rutas
-        </button>
+      {/* Top navigation - TikTok style */}
+      <div className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/50 to-transparent pt-safe">
+        <div className="flex items-center justify-center gap-8 h-14">
+          <button
+            onClick={() => navigate("/search")}
+            className={`relative text-base font-semibold transition-all ${
+              currentTab === "explorar" 
+                ? "text-white scale-110" 
+                : "text-white/70 hover:text-white/90"
+            }`}
+          >
+            Explorar
+            {currentTab === "explorar" && (
+              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
+            )}
+          </button>
+          <button
+            onClick={() => navigate("/")}
+            className={`relative text-base font-semibold transition-all ${
+              currentTab === "para-ti" 
+                ? "text-white scale-110" 
+                : "text-white/70 hover:text-white/90"
+            }`}
+          >
+            Para ti
+            {currentTab === "para-ti" && (
+              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
+            )}
+          </button>
+          <button
+            onClick={() => navigate("/learning-paths")}
+            className={`relative text-base font-semibold transition-all ${
+              currentTab === "rutas" 
+                ? "text-white scale-110" 
+                : "text-white/70 hover:text-white/90"
+            }`}
+          >
+            Rutas
+            {currentTab === "rutas" && (
+              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-white rounded-full" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Feed container with snap scroll */}

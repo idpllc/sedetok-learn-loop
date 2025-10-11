@@ -34,13 +34,6 @@ export const PWAInstallPrompt = () => {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Fallback: show prompt after 10s even if the event hasn't fired (will show tips)
-    const timer = setTimeout(() => {
-      if (!isInstalled && !dismissed) {
-        setShowPrompt(true);
-      }
-    }, 10000);
-
     // Hide prompt once app is installed
     const installedHandler = () => {
       localStorage.setItem('pwa-install-dismissed', 'true');
@@ -52,23 +45,26 @@ export const PWAInstallPrompt = () => {
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
       window.removeEventListener('appinstalled', installedHandler);
-      clearTimeout(timer);
     };
   }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
 
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-      localStorage.setItem('pwa-install-dismissed', 'true');
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+        localStorage.setItem('pwa-install-dismissed', 'true');
+      }
+
+      setDeferredPrompt(null);
+      setShowPrompt(false);
+    } catch (error) {
+      console.error('Error showing install prompt:', error);
     }
-
-    setDeferredPrompt(null);
-    setShowPrompt(false);
   };
 
   const handleDismiss = () => {
@@ -76,7 +72,7 @@ export const PWAInstallPrompt = () => {
     setShowPrompt(false);
   };
 
-  if (!showPrompt) return null;
+  if (!showPrompt || !deferredPrompt) return null;
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-5 md:left-auto md:right-4 md:max-w-md">
@@ -105,10 +101,9 @@ export const PWAInstallPrompt = () => {
             
             <div className="flex gap-2">
               <Button
-                onClick={deferredPrompt ? handleInstall : undefined}
+                onClick={handleInstall}
                 size="sm"
                 className="flex-1"
-                disabled={!deferredPrompt}
               >
                 Instalar
               </Button>
