@@ -118,7 +118,7 @@ const Achievements = () => {
   return (
     <>
       <Sidebar />
-      <div className="min-h-screen bg-background pb-20 md:ml-64">
+      <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
       <header className="sticky top-0 z-10 bg-card border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">

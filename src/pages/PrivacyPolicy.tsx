@@ -58,7 +58,7 @@ const PrivacyPolicy = () => {
   return (
     <>
       <Sidebar />
-      <div className="min-h-screen bg-background pb-20 md:ml-64">
+      <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-card border-b border-border">
           <div className="max-w-4xl mx-auto px-4 py-4">

@@ -150,7 +150,7 @@ const EditProfile = () => {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center pt-20 md:pt-0">
         <div className="text-center space-y-4">
           <div className="text-6xl mb-4 animate-pulse">📚</div>
           <p className="text-muted-foreground">Verificando acceso...</p>
@@ -161,7 +161,7 @@ const EditProfile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <div className="min-h-screen bg-background pb-20 pt-20 md:pt-0">
         <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
           <div className="flex items-center gap-3 max-w-4xl mx-auto">
             <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
@@ -180,7 +180,7 @@ const EditProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 pt-20 md:pt-0">
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
         <div className="flex items-center gap-3 max-w-4xl mx-auto">
           <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>

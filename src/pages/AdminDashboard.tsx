@@ -31,7 +31,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background pt-20 md:pt-0">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
@@ -39,7 +39,7 @@ export default function AdminDashboard() {
 
   if (!isSuperAdmin) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 pt-24 md:pt-4">
         <Shield className="w-16 h-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold mb-2">Acceso Denegado</h1>
         <p className="text-muted-foreground mb-6">No tienes permisos para acceder a esta página</p>
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-20 md:pt-0">
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
