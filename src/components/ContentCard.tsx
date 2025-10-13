@@ -609,23 +609,25 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       {/* Quiz Viewer Dialog */}
       {contentType === 'quiz' && (
         <Dialog open={quizModalOpen} onOpenChange={setQuizModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
-            <QuizViewer 
-              quizId={id} 
-              lastAttempt={lastAttempt}
-              onComplete={() => {
-                setQuizModalOpen(false);
-                // Refrescar los intentos del quiz después de completarlo
-                if (user) {
-                  queryClient.invalidateQueries({ queryKey: ["quiz-attempts", id, user.id] });
-                }
-              }}
-              onQuizComplete={(passed) => {
-                if (passed && onQuizComplete) {
-                  onQuizComplete(passed);
-                }
-              }}
-            />
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[90vh] overflow-hidden p-0">
+            <div className="h-[90vh] overflow-y-auto overflow-x-hidden">
+              <QuizViewer 
+                quizId={id} 
+                lastAttempt={lastAttempt}
+                onComplete={() => {
+                  setQuizModalOpen(false);
+                  // Refrescar los intentos del quiz después de completarlo
+                  if (user) {
+                    queryClient.invalidateQueries({ queryKey: ["quiz-attempts", id, user.id] });
+                  }
+                }}
+                onQuizComplete={(passed) => {
+                  if (passed && onQuizComplete) {
+                    onQuizComplete(passed);
+                  }
+                }}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       )}
