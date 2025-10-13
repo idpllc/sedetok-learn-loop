@@ -1,9 +1,7 @@
-const CACHE_NAME = 'sedetok-v1';
+const CACHE_NAME = 'sedetok-v3';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/src/main.tsx',
-  '/src/index.css'
+  '/index.html'
 ];
 
 self.addEventListener('install', (event) => {
@@ -14,22 +12,33 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Bypass caching for dev modules and source files
+  if (
+    url.pathname.startsWith('/@vite') ||
+    url.pathname.startsWith('/node_modules/.vite') ||
+    url.pathname.startsWith('/src/')
+  ) {
+    return; // Let the browser handle it normally
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
         if (response) {
           return response;
         }
-        return fetch(event.request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+        return fetch(event.request).then((networkResponse) => {
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
           }
-          const responseToCache = response.clone();
+          const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME)
             .then((cache) => {
               cache.put(event.request, responseToCache);
             });
-          return response;
+          return networkResponse;
         });
       })
   );
@@ -41,7 +50,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (!cacheWhitelist.includes(cacheName)) {
             return caches.delete(cacheName);
           }
         })

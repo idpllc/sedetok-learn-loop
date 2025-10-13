@@ -1,4 +1,6 @@
-import React, { Suspense, lazy } from "react";
+import React from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -18,9 +20,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-const Toaster = lazy(() => import("@/components/ui/toaster").then(m => ({ default: m.Toaster })));
-const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
-
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -44,10 +43,8 @@ const App = () => (
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Suspense fallback={null}>
-        <Toaster />
-        <Sonner />
-      </Suspense>
+      <Toaster />
+      <Sonner />
       <PWAInstallPrompt />
     </BrowserRouter>
   </QueryClientProvider>
