@@ -95,7 +95,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     const searchParams = new URLSearchParams(window.location.search);
     const typeParam = searchParams.get('type');
     if (typeParam && !editMode) {
-      setFormData(prev => ({ ...prev, content_type: typeParam as ContentType | any }));
+      if (typeParam === 'learning_path') {
+        setFormData(prev => ({ ...prev, content_type: 'learning_path' as any }));
+      } else {
+        setFormData(prev => ({ ...prev, content_type: typeParam as ContentType }));
+      }
     }
   }, [editMode]);
   
@@ -747,7 +751,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         <Label htmlFor="content_type">Tipo de Contenido *</Label>
         <Select
           value={formData.content_type}
-          onValueChange={(value) => setFormData({ ...formData, content_type: value as ContentType })}
+          onValueChange={(value) => {
+            if (value === 'learning_path') {
+              setFormData({ ...formData, content_type: value as any });
+            } else {
+              setFormData({ ...formData, content_type: value as ContentType });
+            }
+          }}
           required
           disabled={editMode}
         >
