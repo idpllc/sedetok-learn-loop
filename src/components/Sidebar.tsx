@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
+import sedefyLogo from "@/assets/sedefy-logo.png";
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -32,7 +33,7 @@ export const Sidebar = () => {
       <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex-col z-50">
         {/* Logo */}
         <div className="p-6 border-b border-border">
-          <h1 className="text-2xl font-bold text-primary">Sedefy</h1>
+          <img src={sedefyLogo} alt="Sedefy" className="h-8 w-auto" />
         </div>
 
         {/* Navigation */}

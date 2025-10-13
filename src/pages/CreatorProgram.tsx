@@ -59,6 +59,12 @@ const CreatorProgram = () => {
       benefits: ["Badge de verificación", "Publicación prioritaria", "Soporte dedicado", "Contenido destacado"],
       color: "from-amber-500/20 to-amber-600/20",
     },
+    {
+      name: "Creador Monetizado",
+      description: "Elegible para Monetización",
+      benefits: ["2,000+ seguidores", "10,000+ reproducciones", "Monetiza tu contenido", "Ingresos por visualizaciones"],
+      color: "from-emerald-500/20 to-emerald-600/20",
+    },
   ];
 
   return (
@@ -124,12 +130,12 @@ const CreatorProgram = () => {
           {/* Verification Levels */}
           <section className="space-y-6">
             <h2 className="text-3xl font-bold text-center">Proceso de Verificación</h2>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {verificationLevels.map((level) => (
                 <Card key={level.name} className={`bg-gradient-to-br ${level.color}`}>
                   <CardHeader>
-                    <CardTitle>{level.name}</CardTitle>
-                    <Badge variant="secondary" className="w-fit">
+                    <CardTitle className="text-base">{level.name}</CardTitle>
+                    <Badge variant="secondary" className="w-fit text-xs">
                       {level.description}
                     </Badge>
                   </CardHeader>
@@ -146,6 +152,43 @@ const CreatorProgram = () => {
                 </Card>
               ))}
             </div>
+          </section>
+
+          {/* Monetization Requirements */}
+          <section className="space-y-6">
+            <h2 className="text-3xl font-bold text-center">Requisitos para Monetización</h2>
+            <Card className="border-primary/50 bg-gradient-to-br from-primary/5 to-primary/10">
+              <CardContent className="p-8">
+                <div className="text-center space-y-6">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium">
+                    <DollarSign className="w-4 h-4" />
+                    Programa de Monetización
+                  </div>
+                  <p className="text-muted-foreground max-w-2xl mx-auto">
+                    Para ser elegible para monetización, tu cuenta de creador debe cumplir con los siguientes requisitos mínimos:
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-6 mt-8">
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <Users className="w-12 h-12 text-primary mx-auto mb-3" />
+                        <div className="text-3xl font-bold text-primary mb-2">2,000+</div>
+                        <p className="text-sm text-muted-foreground">Seguidores mínimos</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-6 text-center">
+                        <TrendingUp className="w-12 h-12 text-primary mx-auto mb-3" />
+                        <div className="text-3xl font-bold text-primary mb-2">10,000+</div>
+                        <p className="text-sm text-muted-foreground">Reproducciones totales</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <p className="text-sm text-muted-foreground italic pt-4">
+                    Una vez alcanzados estos requisitos, podrás aplicar al programa de monetización y comenzar a generar ingresos por tu contenido educativo.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </section>
 
           {/* Requirements */}
