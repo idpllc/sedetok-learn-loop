@@ -252,9 +252,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             onPlayStateChange={handlePlayStateChange}
             onVideoWatched={onVideoWatched}
           />
-        ) : documentUrl ? (
+        ) : documentUrl || (contentType === 'documento' && thumbnail) ? (
           <div className="w-full h-full flex items-center justify-center relative pointer-events-none">
-            {/* Thumbnail background */}
+            {/* Thumbnail/cover background */}
             {thumbnail && (
               <img 
                 src={thumbnail} 
@@ -272,9 +272,12 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 size="lg"
                 onClick={(e) => {
                   e.stopPropagation();
+                  const resourceUrl = documentUrl || thumbnail;
+                  if (!resourceUrl) return;
+                  
                   const link = document.createElement('a');
-                  link.href = documentUrl;
-                  link.download = documentUrl.split('/').pop() || 'documento';
+                  link.href = resourceUrl;
+                  link.download = resourceUrl.split('/').pop() || 'recurso';
                   link.target = '_blank';
                   document.body.appendChild(link);
                   link.click();

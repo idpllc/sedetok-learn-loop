@@ -371,7 +371,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         } else if (fileType === 'document') {
           documentUrl = await uploadFile(uploadedFile, "raw");
         } else if (fileType === 'image') {
-          thumbnailUrl = await uploadFile(uploadedFile, "raw");
+          // Para imágenes, guardar como documento Y thumbnail para poder descargar y previsualizar
+          const imageUrl = await uploadFile(uploadedFile, "raw");
+          documentUrl = imageUrl;
+          thumbnailUrl = imageUrl;
         }
       }
 
@@ -637,11 +640,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                     <p className="text-xs text-muted-foreground mb-3">
                       o haz click para seleccionar
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                     <p className="text-xs text-muted-foreground">
                       Videos (MP4, MOV, AVI, MKV), Recursos (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX) o Imágenes (JPG, PNG, WEBP)
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Máx: Videos 500MB | Recursos 50MB | Imágenes 10MB
+                      Máx: Videos 500MB | Recursos y imágenes 50MB
                     </p>
                   </div>
                   <Button
@@ -718,12 +721,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 </div>
               )}
 
-              {/* Portada opcional para recursos */}
+              {/* Portada opcional para recursos (documentos) */}
               {fileType === 'document' && (
                 <div className="space-y-2 mt-4 p-4 border rounded-lg bg-muted/50">
-                  <Label htmlFor="thumbnail">Portada del Recurso (Opcional)</Label>
+                  <Label htmlFor="thumbnail">Imagen de Portada del Recurso (Opcional)</Label>
                   <p className="text-xs text-muted-foreground mb-2">
-                    Sube una imagen para previsualizar el recurso
+                    Sube una imagen de portada para previsualizar el recurso. Esta imagen se mostrará como fondo cuando se visualice el recurso.
                   </p>
                   <Input
                     id="thumbnail"

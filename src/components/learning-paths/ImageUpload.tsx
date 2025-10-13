@@ -16,7 +16,7 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
   const { toast } = useToast();
   const { uploadFile, uploading } = useCloudinary();
 
-  const handleUpload = useCallback(async (file: File) => {
+  const handleUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Error",
@@ -54,36 +54,41 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
     } finally {
       setIsUploading(false);
     }
-  }, [uploadFile, onChange, toast]);
+  };
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
 
     const file = e.dataTransfer.files[0];
     if (file) {
       handleUpload(file);
     }
-  }, [handleUpload]);
+  };
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(true);
-  }, []);
+  };
 
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
-  }, []);
+  };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
     const file = e.target.files?.[0];
     if (file) {
       handleUpload(file);
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onChange("");
   };
 
@@ -103,7 +108,7 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
               type="button"
               variant="secondary"
               size="sm"
-              onClick={handleRemove}
+              onClick={(e) => handleRemove(e)}
             >
               <X className="w-4 h-4 mr-2" />
               Eliminar
