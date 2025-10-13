@@ -288,11 +288,11 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -300, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="h-full flex items-center justify-center px-2 py-6 md:p-6"
+            className="h-full flex items-center justify-center px-3 py-4 md:p-6"
           >
-            <div className="w-full max-w-2xl space-y-6">
+            <div className="w-full max-w-2xl space-y-4 md:space-y-6">
               {/* Question number and points */}
-              <div className="flex justify-between items-center text-sm">
+              <div className="flex justify-between items-center text-xs md:text-sm">
                 <span className="font-semibold">
                   Pregunta {currentQuestion + 1} de {questions.length}
                 </span>
@@ -301,14 +301,14 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
               {/* Question */}
               <Card>
-                <CardContent className="p-3 md:p-6 space-y-6">
-                  <h3 className="text-xl font-bold">{currentQ.question_text}</h3>
+                <CardContent className="p-3 md:p-6 space-y-4 md:space-y-6">
+                  <h3 className="text-base md:text-xl font-bold leading-tight">{currentQ.question_text}</h3>
 
                   {currentQ.image_url && (
                     <img
                       src={currentQ.image_url}
                       alt="Question"
-                      className="w-full rounded-lg max-h-64 object-cover"
+                      className="w-full rounded-lg max-h-48 md:max-h-64 object-cover"
                     />
                   )}
 
@@ -324,20 +324,30 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
                    {/* Options for multiple choice and true/false */}
                    {(currentQ.question_type === "multiple_choice" || currentQ.question_type === "true_false") && (
-                    <div className="space-y-3">
+                    <div className="space-y-2 md:space-y-3">
                       {currentQ.quiz_options
                         .sort((a, b) => a.order_index - b.order_index)
-                        .map((option) => {
+                        .map((option, index) => {
                           const isSelected = selectedAnswer === option.id;
                           const isCorrect = option.is_correct;
                           const showResult = showFeedback && isSelected;
                           const showCorrectFromPrevious = showPreviousResults && !showFeedback && isCorrect;
+                          
+                          // Array de colores vibrantes para estudiantes
+                          const colors = [
+                            'bg-gradient-to-r from-blue-400/20 to-blue-500/20 border-blue-400 hover:from-blue-400/30 hover:to-blue-500/30',
+                            'bg-gradient-to-r from-purple-400/20 to-purple-500/20 border-purple-400 hover:from-purple-400/30 hover:to-purple-500/30',
+                            'bg-gradient-to-r from-pink-400/20 to-pink-500/20 border-pink-400 hover:from-pink-400/30 hover:to-pink-500/30',
+                            'bg-gradient-to-r from-orange-400/20 to-orange-500/20 border-orange-400 hover:from-orange-400/30 hover:to-orange-500/30',
+                            'bg-gradient-to-r from-teal-400/20 to-teal-500/20 border-teal-400 hover:from-teal-400/30 hover:to-teal-500/30',
+                          ];
+                          const colorClass = !showFeedback ? colors[index % colors.length] : '';
 
                           return (
                             <Button
                               key={option.id}
                               variant="outline"
-                              className={`w-full justify-start text-left h-auto p-4 ${
+                              className={`w-full justify-start text-left h-auto p-3 md:p-4 text-sm md:text-base ${
                                 showResult
                                   ? isCorrect
                                     ? "bg-green-100 border-green-500 dark:bg-green-900/20"
@@ -346,7 +356,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                                   ? "bg-green-50 border-green-300 dark:bg-green-900/10"
                                   : isSelected
                                   ? "bg-primary/10 border-primary"
-                                  : ""
+                                  : colorClass
                               }`}
                               onClick={() => handleAnswer(option.id)}
                               disabled={showFeedback}
@@ -355,9 +365,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                               {showResult && (
                                 <span className="ml-2">
                                   {isCorrect ? (
-                                    <Check className="h-5 w-5 text-green-600" />
+                                    <Check className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                                   ) : (
-                                    <X className="h-5 w-5 text-red-600" />
+                                    <X className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
                                   )}
                                 </span>
                               )}
@@ -380,7 +390,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                           value={shortAnswerText}
                           onChange={(e) => setShortAnswerText(e.target.value)}
                           placeholder="Escribe tu respuesta aquí..."
-                          className={`text-base ${
+                          className={`text-sm md:text-base ${
                             showFeedback
                               ? isAnswerCorrect
                                 ? "bg-green-100 border-green-500 dark:bg-green-900/20"
@@ -397,9 +407,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                         {showFeedback && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2">
                             {isAnswerCorrect ? (
-                              <Check className="h-5 w-5 text-green-600" />
+                              <Check className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                             ) : (
-                              <X className="h-5 w-5 text-red-600" />
+                              <X className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
                             )}
                           </div>
                         )}
@@ -417,8 +427,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
                       {showFeedback && !isAnswerCorrect && (
                         <div className="p-3 bg-muted rounded-lg">
-                          <p className="text-sm font-semibold mb-1">Respuesta correcta:</p>
-                          <p className="text-sm">{currentQ.quiz_options[0]?.option_text}</p>
+                          <p className="text-xs md:text-sm font-semibold mb-1">Respuesta correcta:</p>
+                          <p className="text-xs md:text-sm">{currentQ.quiz_options[0]?.option_text}</p>
                         </div>
                       )}
                     </div>
@@ -429,20 +439,20 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`p-4 rounded-lg ${
+                      className={`p-3 md:p-4 rounded-lg text-sm md:text-base ${
                         isAnswerCorrect 
                           ? "bg-green-100 dark:bg-green-900/20" 
                           : "bg-red-100 dark:bg-red-900/20"
                       }`}
                     >
                       {isAnswerCorrect && currentQ.feedback_correct && (
-                        <p className="text-sm">{currentQ.feedback_correct}</p>
+                        <p>{currentQ.feedback_correct}</p>
                       )}
                       {!isAnswerCorrect && currentQ.feedback_incorrect && (
-                        <p className="text-sm">{currentQ.feedback_incorrect}</p>
+                        <p>{currentQ.feedback_incorrect}</p>
                       )}
                       {!currentQ.feedback_correct && !currentQ.feedback_incorrect && currentQ.feedback && (
-                        <p className="text-sm">{currentQ.feedback}</p>
+                        <p>{currentQ.feedback}</p>
                       )}
                     </motion.div>
                   )}
@@ -450,24 +460,31 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
               </Card>
 
               {/* Navigation */}
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-2">
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={handlePrevious}
                   disabled={currentQuestion === 0}
+                  className="text-xs md:text-sm"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                   Anterior
                 </Button>
 
-                <div className="text-sm font-semibold">
-                  Puntos: {score} / {maxScore}
+                <div className="text-xs md:text-sm font-semibold">
+                  {score} / {maxScore}
                 </div>
 
-                <Button onClick={handleNext} disabled={!showFeedback}>
+                <Button 
+                  size="sm"
+                  onClick={handleNext} 
+                  disabled={!showFeedback}
+                  className="text-xs md:text-sm"
+                >
                   {currentQuestion === questions.length - 1 ? "Finalizar" : "Siguiente"}
                   {currentQuestion < questions.length - 1 && (
-                    <ChevronRight className="h-4 w-4 ml-2" />
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4 ml-1" />
                   )}
                 </Button>
               </div>

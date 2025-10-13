@@ -609,11 +609,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       {/* Quiz Viewer Dialog */}
       {contentType === 'quiz' && (
         <Dialog open={quizModalOpen} onOpenChange={setQuizModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{title}</DialogTitle>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
             <QuizViewer 
               quizId={id} 
               lastAttempt={lastAttempt}
