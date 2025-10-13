@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown, Maximize, Minimize } from "lucide-react";
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -49,6 +49,9 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const hasWatchedRef = useRef(false);
   const [isInView, setIsInView] = useState(false);
   const manualPauseRef = useRef(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
 useImperativeHandle(ref, () => ({
     pause: () => {
@@ -143,6 +146,7 @@ useImperativeHandle(ref, () => ({
     const handleLoadedMetadata = () => {
       const aspectRatio = video.videoWidth / video.videoHeight;
       setIsVertical(aspectRatio < 1);
+      setDuration(video.duration);
       // Apply saved volume and mute settings after metadata loads
       video.volume = volume;
       video.muted = isMuted;
@@ -160,6 +164,7 @@ useImperativeHandle(ref, () => ({
     };
 
     const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
       // Mark as watched when 95% of video is played
       if (video.duration && video.currentTime / video.duration >= 0.95) {
         if (!hasWatchedRef.current && onVideoWatched) {
@@ -175,6 +180,10 @@ useImperativeHandle(ref, () => ({
       video.muted = isMuted;
     };
 
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
     // Apply settings immediately if video is already loaded
     if (video.readyState >= 2) {
       video.volume = volume;
@@ -185,12 +194,14 @@ useImperativeHandle(ref, () => ({
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('ended', handleVideoEnded);
     video.addEventListener('timeupdate', handleTimeUpdate);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
     
     return () => {
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('ended', handleVideoEnded);
       video.removeEventListener('timeupdate', handleTimeUpdate);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
 
@@ -240,6 +251,43 @@ useImperativeHandle(ref, () => ({
     }
   };
 
+  const toggleFullscreen = async () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    try {
+      if (!document.fullscreenElement) {
+        await container.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error('Error toggling fullscreen:', error);
+    }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const video = videoRef.current;
+    if (!video || !duration) return;
+
+    const progressBar = e.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * duration;
+    
+    video.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
     <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
       <video
@@ -285,6 +333,35 @@ useImperativeHandle(ref, () => ({
             <ChevronDown className="w-6 h-6 text-black" />
           </button>
         )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/60 to-transparent pt-8 pb-2 px-4">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-white text-xs font-medium">{formatTime(currentTime)}</span>
+          <div 
+            className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
+            onClick={handleProgressClick}
+          >
+            <div 
+              className="h-full bg-primary rounded-full transition-all relative group-hover:h-1.5"
+              style={{ width: `${progress}%` }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+          <span className="text-white text-xs font-medium">{formatTime(duration)}</span>
+          <button
+            onClick={toggleFullscreen}
+            className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+          >
+            {isFullscreen ? (
+              <Minimize className="w-4 h-4 text-white" />
+            ) : (
+              <Maximize className="w-4 h-4 text-white" />
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
