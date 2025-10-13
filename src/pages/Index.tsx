@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
-import { BottomNav } from "@/components/BottomNav";
 import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
@@ -245,9 +244,6 @@ const Index = () => {
           );
         })}
       </div>
-
-      {/* Bottom navigation - solo móvil y tablet */}
-      <BottomNav />
 
       {/* Onboarding modal */}
       {user && (

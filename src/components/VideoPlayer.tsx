@@ -335,9 +335,9 @@ useImperativeHandle(ref, () => ({
         )}
       </div>
 
-      {/* Progress bar - just above bottom nav on mobile, at bottom on desktop */}
-      <div className="absolute bottom-[80px] md:bottom-0 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
-        <div className="flex items-center gap-2 px-2 py-0.5 md:px-3 md:py-2">
+      {/* Progress bar - at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-3 py-2">
           <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
             className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
