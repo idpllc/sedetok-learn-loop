@@ -335,9 +335,9 @@ useImperativeHandle(ref, () => ({
         )}
       </div>
 
-      {/* Progress bar */}
-      <div className="absolute bottom-20 md:bottom-2 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
-        <div className="flex items-center gap-2 px-3 py-2">
+      {/* Progress bar - just above bottom nav on mobile, at bottom on desktop */}
+      <div className="absolute bottom-20 md:bottom-0 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2">
           <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
             className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
@@ -354,23 +354,17 @@ useImperativeHandle(ref, () => ({
         </div>
       </div>
 
-      {/* Fullscreen button - only for horizontal videos */}
+      {/* Fullscreen button - only for horizontal videos, top right corner */}
       {!isVertical && (
-        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-30">
+        <div className="absolute top-4 right-4 z-30">
           <button
             onClick={toggleFullscreen}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-black/80 backdrop-blur-sm hover:bg-black/90 transition-colors"
+            className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
           >
             {isFullscreen ? (
-              <>
-                <Minimize className="w-4 h-4 text-white" />
-                <span className="text-white text-sm font-medium">Salir de pantalla completa</span>
-              </>
+              <Minimize className="w-5 h-5 text-white" />
             ) : (
-              <>
-                <Maximize className="w-4 h-4 text-white" />
-                <span className="text-white text-sm font-medium">Pantalla completa</span>
-              </>
+              <Maximize className="w-5 h-5 text-white" />
             )}
           </button>
         </div>

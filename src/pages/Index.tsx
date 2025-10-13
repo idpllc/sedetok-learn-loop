@@ -185,33 +185,6 @@ const Index = () => {
       
       {/* Main content con margen para el sidebar en desktop */}
       <div className="md:ml-64">
-        {/* Top navigation links - solo móvil */}
-        <div className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center">
-        <button
-          onClick={() => navigate("/search")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "explorar" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Explorar
-        </button>
-        <button
-          onClick={() => navigate("/")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "para-ti" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Para ti
-        </button>
-        <button
-          onClick={() => navigate("/learning-paths")}
-          className={`text-sm font-semibold transition-colors ${
-            currentTab === "rutas" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          Rutas
-        </button>
-      </div>
 
       {/* Feed container with snap scroll */}
       <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
