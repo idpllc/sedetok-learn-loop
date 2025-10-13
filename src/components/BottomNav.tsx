@@ -10,6 +10,13 @@ export const BottomNav = () => {
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
+  // Hide BottomNav on learning path viewing routes
+  const isViewingPath = location.pathname.startsWith("/learning-paths/");
+  
+  if (isViewingPath) {
+    return null;
+  }
+
   const handleCreateClick = () => {
     if (!user) {
       setAuthModalOpen(true);
