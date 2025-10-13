@@ -150,6 +150,8 @@ useImperativeHandle(ref, () => ({
       // Apply saved volume and mute settings after metadata loads
       video.volume = volume;
       video.muted = isMuted;
+      const percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
+      window.dispatchEvent(new CustomEvent('video-progress', { detail: { progress: percent, currentTime: video.currentTime, duration: video.duration } }));
     };
 
     const handleVideoEnded = () => {
@@ -161,10 +163,13 @@ useImperativeHandle(ref, () => ({
         hasWatchedRef.current = true;
         onVideoWatched();
       }
+      window.dispatchEvent(new CustomEvent('video-progress', { detail: { progress: 100, currentTime: video.duration, duration: video.duration } }));
     };
 
     const handleTimeUpdate = () => {
       setCurrentTime(video.currentTime);
+      const percent = video.duration ? (video.currentTime / video.duration) * 100 : 0;
+      window.dispatchEvent(new CustomEvent('video-progress', { detail: { progress: percent, currentTime: video.currentTime, duration: video.duration } }));
       // Mark as watched when 95% of video is played
       if (video.duration && video.currentTime / video.duration >= 0.95) {
         if (!hasWatchedRef.current && onVideoWatched) {
@@ -336,8 +341,8 @@ useImperativeHandle(ref, () => ({
       </div>
 
       {/* Progress bar - just above bottom nav on mobile, at bottom on desktop */}
-      <div className="absolute bottom-20 md:bottom-0 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
-        <div className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2">
+      <div className="hidden md:block absolute bottom-0 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-3 py-2">
           <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
             className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
