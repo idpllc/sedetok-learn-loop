@@ -318,6 +318,12 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                       <h4 className="font-medium text-sm truncate">{item.title}</h4>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="default" className="text-xs">
+                        {item.content_type === 'video' ? 'Video' : 
+                         item.content_type === 'lectura' ? 'Lectura' :
+                         item.content_type === 'documento' ? 'Documento' :
+                         item.content_type === 'quiz' ? 'Quiz' : 'Contenido'}
+                      </Badge>
                       <Badge variant="secondary" className="text-xs">
                         {item.category}
                       </Badge>
