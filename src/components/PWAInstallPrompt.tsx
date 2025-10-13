@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
-import { X, Download } from "lucide-react";
+import { Share, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,6 +17,7 @@ interface BeforeInstallPromptEvent extends Event {
 export const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     // Check if already installed
@@ -19,22 +26,26 @@ export const PWAInstallPrompt = () => {
     
     if (isInstalled) return;
 
+    // Detect iOS
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const iOS = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(iOS);
+
     // Check if user dismissed before
     const dismissed = localStorage.getItem('pwa-install-dismissed');
     if (dismissed) return;
 
-    // Capture the beforeinstallprompt event and show prompt soon after
+    // For Android/Chrome: Capture the beforeinstallprompt event
     const handler = (e: Event) => {
       e.preventDefault();
       const bip = e as BeforeInstallPromptEvent;
       setDeferredPrompt(bip);
-      // Surface the prompt shortly after the event fires
-      setTimeout(() => setShowPrompt(true), 1000);
+      setTimeout(() => setShowPrompt(true), 2000);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Fallback: show prompt after 10s even if the event hasn't fired (will show tips)
+    // For iOS or fallback: show prompt after 10s
     const timer = setTimeout(() => {
       if (!isInstalled && !dismissed) {
         setShowPrompt(true);
@@ -76,53 +87,72 @@ export const PWAInstallPrompt = () => {
     setShowPrompt(false);
   };
 
-  if (!showPrompt) return null;
-
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 animate-in slide-in-from-bottom-5 md:left-auto md:right-4 md:max-w-md">
-      <Card className="relative p-4 shadow-lg border-primary/20 bg-gradient-to-br from-background via-background to-primary/5">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 h-6 w-6"
-          onClick={handleDismiss}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        
-        <div className="flex items-start gap-3 pr-8">
-          <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
-            <Download className="h-6 w-6 text-white" />
+    <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
+      <DialogContent className="sm:max-w-md">
+        <div className="flex flex-col items-center text-center gap-6 py-4">
+          {/* Logo */}
+          <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center">
+            <img 
+              src="/sedefy-logo.png" 
+              alt="SEDETOK" 
+              className="w-12 h-12 object-contain"
+            />
           </div>
-          
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground mb-1">
-              Instalar SEDETOK
-            </h3>
-            <p className="text-sm text-muted-foreground mb-3">
-              Instala la app para una mejor experiencia y acceso rápido desde tu dispositivo.
-            </p>
-            
-            <div className="flex gap-2">
+
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-2xl font-bold">
+              Obtén la experiencia completa
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              Disfruta más contenido educativo y funciones increíbles en la app
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="w-full space-y-3">
+            {/* Install button for Android/Chrome */}
+            {!isIOS && deferredPrompt && (
               <Button
-                onClick={deferredPrompt ? handleInstall : undefined}
-                size="sm"
-                className="flex-1"
-                disabled={!deferredPrompt}
+                onClick={handleInstall}
+                size="lg"
+                className="w-full h-12 text-base font-semibold"
               >
-                Instalar
+                Abrir SEDETOK
               </Button>
-              <Button
-                onClick={handleDismiss}
-                variant="outline"
-                size="sm"
-              >
-                Ahora no
-              </Button>
-            </div>
+            )}
+
+            {/* Instructions for iOS */}
+            {isIOS && (
+              <div className="space-y-4 text-sm text-muted-foreground">
+                <p className="font-medium text-foreground">Para instalar en iOS:</p>
+                <div className="flex items-start gap-3 text-left">
+                  <Share className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p>1. Toca el botón de compartir</p>
+                    <p className="text-xs opacity-75">(abajo en Safari)</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 text-left">
+                  <Plus className="w-5 h-5 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p>2. Selecciona "Añadir a pantalla de inicio"</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Not now button */}
+            <Button
+              onClick={handleDismiss}
+              variant="ghost"
+              size="lg"
+              className="w-full h-12 text-base"
+            >
+              Ahora no
+            </Button>
           </div>
         </div>
-      </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
