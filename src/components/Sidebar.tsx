@@ -170,8 +170,8 @@ export const Sidebar = () => {
         <SidebarContent />
       </aside>
 
-      {/* Mobile/Tablet Hamburger Menu */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
+      {/* Mobile/Tablet Hamburger Menu and Quick Links */}
+      <div className="md:hidden fixed top-4 left-4 z-50 flex items-center gap-3">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button
@@ -186,6 +186,26 @@ export const Sidebar = () => {
             <SidebarContent />
           </SheetContent>
         </Sheet>
+
+        {/* Quick Links */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/learning-paths")}
+            className="text-white font-medium bg-black/60 backdrop-blur-sm hover:bg-black/80 border border-white/20 rounded-full px-4 h-10 shadow-lg"
+          >
+            Rutas
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/search")}
+            className="text-white font-medium bg-black/60 backdrop-blur-sm hover:bg-black/80 border border-white/20 rounded-full px-4 h-10 shadow-lg"
+          >
+            Explorar
+          </Button>
+        </div>
       </div>
 
       <AuthModal 
