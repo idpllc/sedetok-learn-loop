@@ -171,18 +171,18 @@ export const Sidebar = () => {
       </aside>
 
       {/* Mobile/Tablet Hamburger Menu */}
-      <div className="md:hidden fixed top-4 right-4 z-50">
+      <div className="md:hidden fixed top-4 left-4 z-50">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button
               variant="default"
               size="icon"
-              className="w-12 h-12 rounded-full shadow-lg bg-primary hover:bg-primary/90"
+              className="w-10 h-10 rounded-full shadow-lg bg-black/60 backdrop-blur-sm hover:bg-black/80"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 text-white" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
+          <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
             <SidebarContent />
           </SheetContent>
         </Sheet>
