@@ -336,8 +336,8 @@ useImperativeHandle(ref, () => ({
       </div>
 
       {/* Progress bar - just above bottom nav on mobile, at bottom on desktop */}
-      <div className="absolute bottom-20 md:bottom-0 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
-        <div className="flex items-center gap-2 px-2 py-1 md:px-3 md:py-2">
+      <div className="absolute bottom-[80px] md:bottom-0 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-2 py-0.5 md:px-3 md:py-2">
           <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
             className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
@@ -354,21 +354,19 @@ useImperativeHandle(ref, () => ({
         </div>
       </div>
 
-      {/* Fullscreen button - only for horizontal videos, top right corner */}
-      {!isVertical && (
-        <div className="absolute top-4 right-4 z-30">
-          <button
-            onClick={toggleFullscreen}
-            className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
-          >
-            {isFullscreen ? (
-              <Minimize className="w-5 h-5 text-white" />
-            ) : (
-              <Maximize className="w-5 h-5 text-white" />
-            )}
-          </button>
-        </div>
-      )}
+      {/* Fullscreen button - top right corner */}
+      <div className="absolute top-4 right-4 z-30">
+        <button
+          onClick={toggleFullscreen}
+          className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
+        >
+          {isFullscreen ? (
+            <Minimize className="w-5 h-5 text-white" />
+          ) : (
+            <Maximize className="w-5 h-5 text-white" />
+          )}
+        </button>
+      </div>
     </div>
   );
 });
