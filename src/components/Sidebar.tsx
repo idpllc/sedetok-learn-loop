@@ -32,7 +32,7 @@ export const Sidebar = () => {
       <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex-col z-50">
         {/* Logo */}
         <div className="p-6 border-b border-border">
-          <h1 className="text-2xl font-bold text-primary">Sedetok</h1>
+          <h1 className="text-2xl font-bold text-primary">Sedefy</h1>
         </div>
 
         {/* Navigation */}
@@ -69,8 +69,34 @@ export const Sidebar = () => {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border text-xs text-muted-foreground">
-          <p>© 2025 Sedetok</p>
+        <div className="p-4 border-t border-border">
+          <nav className="space-y-2 text-xs text-muted-foreground">
+            <button
+              onClick={() => navigate("/about")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Sobre Sedefy
+            </button>
+            <button
+              onClick={() => navigate("/creator-program")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Programa de creadores
+            </button>
+            <button
+              onClick={() => navigate("/terms")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Términos y condiciones
+            </button>
+            <button
+              onClick={() => navigate("/privacy")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Política de privacidad
+            </button>
+          </nav>
+          <p className="mt-4 text-xs text-muted-foreground">© 2025 Sedefy</p>
         </div>
       </aside>
 

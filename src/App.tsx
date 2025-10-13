@@ -17,6 +17,10 @@ import LearningPaths from "./pages/LearningPaths";
 import CreateLearningPath from "./pages/CreateLearningPath";
 import ViewLearningPath from "./pages/ViewLearningPath";
 import AdminDashboard from "./pages/AdminDashboard";
+import AboutSedefy from "./pages/AboutSedefy";
+import CreatorProgram from "./pages/CreatorProgram";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +44,10 @@ const App = () => (
         <Route path="/learning-paths/view/:id" element={<ViewLearningPath />} />
         <Route path="/learning-paths/:id" element={<ViewLearningPath />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/about" element={<AboutSedefy />} />
+        <Route path="/creator-program" element={<CreatorProgram />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
