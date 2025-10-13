@@ -336,7 +336,7 @@ useImperativeHandle(ref, () => ({
       </div>
 
       {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/60 to-transparent pt-8 pb-2 px-4">
+      <div className="absolute bottom-20 md:bottom-2 left-0 right-0 z-30 bg-gradient-to-t from-black/60 to-transparent pt-8 pb-2 px-4">
         <div className="flex items-center gap-3 mb-2">
           <span className="text-white text-xs font-medium">{formatTime(currentTime)}</span>
           <div 
