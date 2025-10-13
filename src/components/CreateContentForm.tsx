@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Video, FileText, Loader2, X, ArrowRight } from "lucide-react";
+import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,16 +8,22 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useCreateContent } from "@/hooks/useCreateContent";
 import { useQuizzes, useQuizQuestions } from "@/hooks/useQuizzes";
+import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { useAuth } from "@/hooks/useAuth";
 import { Database } from "@/integrations/supabase/types";
 import { QuizStep2, QuizQuestion } from "./quiz/QuizStep2";
 import { QuizStep3 } from "./quiz/QuizStep3";
+import { PathBasicInfo } from "./learning-paths/wizard/PathBasicInfo";
+import { PathBuilder } from "./learning-paths/wizard/PathBuilder";
+import { PathReview } from "./learning-paths/wizard/PathReview";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -51,6 +57,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const { createMutation } = useCreateContent();
   const { createQuiz, updateQuiz } = useQuizzes();
   const { createQuestion, deleteQuestion } = useQuizQuestions();
+  const { createPath, updatePath } = useLearningPaths(user?.id, 'created');
   const [isUpdating, setIsUpdating] = useState(false);
   const [quizStep, setQuizStep] = useState(0); // 0 = basic form, 1 = questions, 2 = config
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -59,6 +66,38 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     random_order: false,
     final_message: "¡Excelente trabajo! Has completado el quiz.",
   });
+  
+  // Learning Path states
+  const [pathStep, setPathStep] = useState(1); // 1 = basic info, 2 = builder, 3 = review
+  const [pathId, setPathId] = useState<string | null>(null);
+  const [pathData, setPathData] = useState<any>({
+    title: "",
+    description: "",
+    objectives: "",
+    subject: "",
+    topic: "",
+    grade_level: "primaria",
+    level: "",
+    language: "Español",
+    category: "matematicas",
+    is_public: false,
+    cover_url: "",
+    enforce_order: false,
+    require_quiz_pass: false,
+    allow_collaboration: false,
+    required_routes: [],
+    tipo_aprendizaje: "",
+    estimated_duration: 0,
+  });
+
+  // Detect URL parameter for content type
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const typeParam = searchParams.get('type');
+    if (typeParam && !editMode) {
+      setFormData(prev => ({ ...prev, content_type: typeParam as ContentType | any }));
+    }
+  }, [editMode]);
   
   // Load quiz questions if editing a quiz
   const quizId = editMode && contentData?.content_type === 'quiz' ? contentData?.id : undefined;
@@ -136,13 +175,14 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   // Update page title based on content type
   useEffect(() => {
     if (onTitleChange) {
-      const titles: Record<ContentType, string> = {
+      const titles: Record<ContentType | 'learning_path', string> = {
         video: "Crear Video",
         document: "Crear Recurso",
         lectura: "Crear Lectura",
         quiz: "Crear Quiz",
+        learning_path: "Crear Ruta de Aprendizaje",
       };
-      onTitleChange(formData.content_type ? titles[formData.content_type] : "Crear Contenido");
+      onTitleChange(formData.content_type ? titles[formData.content_type as ContentType | 'learning_path'] : "Crear Contenido");
     }
   }, [formData.content_type, onTitleChange]);
 
@@ -413,6 +453,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
   const isLoading = uploading || createMutation.isPending || isUpdating;
   const isQuizMode = formData.content_type === 'quiz';
+  const isPathMode = formData.content_type === 'learning_path' as any;
 
   const getFileTypeIcon = () => {
     if (!fileType) return <Upload className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
@@ -427,6 +468,157 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     if (fileType === 'image') return 'Imagen';
     return 'contenido';
   };
+
+  // Learning Path wizard rendering
+  if (isPathMode && pathStep > 0) {
+    const pathSteps = [
+      { number: 1, title: "Información Básica", component: PathBasicInfo },
+      { number: 2, title: "Constructor Visual", component: PathBuilder },
+      { number: 3, title: "Revisión y Publicación", component: PathReview },
+    ];
+    const progress = (pathStep / pathSteps.length) * 100;
+    const CurrentPathComponent = pathSteps[pathStep - 1].component;
+
+    const handlePathNext = async () => {
+      if (pathStep === 1 && !pathId) {
+        const result = await createPath.mutateAsync(pathData);
+        setPathId(result.id);
+      } else if (pathId) {
+        if (pathStep === pathSteps.length) {
+          const { data: pathContent } = await supabase
+            .from("learning_path_content")
+            .select("content_id, quiz_id")
+            .eq("path_id", pathId)
+            .order("order_index");
+
+          if (pathContent && pathContent.length > 0) {
+            const contentIds = pathContent.map(c => c.content_id).filter(Boolean);
+            const quizIds = pathContent.map(c => c.quiz_id).filter(Boolean);
+
+            const { data: existingPaths } = await supabase
+              .from("learning_paths")
+              .select(`id, learning_path_content(content_id, quiz_id)`)
+              .neq("id", pathId)
+              .eq("status", "published");
+
+            const hasDuplicate = existingPaths?.some(path => {
+              const existingContent = path.learning_path_content || [];
+              if (existingContent.length !== pathContent.length) return false;
+              
+              const existingContentIds = existingContent.map((c: any) => c.content_id).filter(Boolean).sort();
+              const existingQuizIds = existingContent.map((c: any) => c.quiz_id).filter(Boolean).sort();
+              const currentContentIds = contentIds.sort();
+              const currentQuizIds = quizIds.sort();
+
+              return JSON.stringify(existingContentIds) === JSON.stringify(currentContentIds) &&
+                     JSON.stringify(existingQuizIds) === JSON.stringify(currentQuizIds);
+            });
+
+            if (hasDuplicate) {
+              toast.error("Ya existe una ruta publicada con exactamente el mismo contenido");
+              return;
+            }
+          }
+
+          await updatePath.mutateAsync({ 
+            id: pathId, 
+            updates: { 
+              ...pathData, 
+              status: 'published',
+              estimated_duration: pathData.estimated_duration,
+              total_xp: pathData.total_xp 
+            } 
+          });
+          
+          toast.success("¡Ruta publicada exitosamente!");
+          navigate("/learning-paths");
+          return;
+        } else {
+          await updatePath.mutateAsync({ id: pathId, updates: pathData });
+        }
+      }
+
+      if (pathStep < pathSteps.length) {
+        setPathStep(pathStep + 1);
+      }
+    };
+
+    const handlePathPrevious = () => {
+      if (pathStep > 1) {
+        setPathStep(pathStep - 1);
+      } else {
+        setFormData({ ...formData, content_type: "" as ContentType });
+        setPathStep(1);
+      }
+    };
+
+    const handlePathSaveDraft = async () => {
+      if (pathId) {
+        await updatePath.mutateAsync({ id: pathId, updates: pathData as any });
+      } else {
+        const result = await createPath.mutateAsync(pathData as any);
+        setPathId(result.id);
+      }
+      toast.success("Borrador guardado");
+      navigate("/learning-paths");
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Progress */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">
+              Paso {pathStep} de {pathSteps.length}: {pathSteps[pathStep - 1].title}
+            </span>
+            <Button variant="outline" size="sm" onClick={handlePathSaveDraft}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar borrador
+            </Button>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+
+        {/* Path wizard step */}
+        <CurrentPathComponent
+          data={pathData}
+          onChange={setPathData}
+          pathId={pathId}
+        />
+
+        {/* Navigation */}
+        <div className="flex justify-between items-center pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={handlePathPrevious}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {pathStep === 1 ? "Cancelar" : "Anterior"}
+          </Button>
+
+          <div className="flex gap-2">
+            {pathSteps.map((step) => (
+              <div
+                key={step.number}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  step.number === pathStep
+                    ? "bg-primary"
+                    : step.number < pathStep
+                    ? "bg-primary/50"
+                    : "bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+
+          <Button onClick={handlePathNext} disabled={createPath.isPending || updatePath.isPending}>
+            {pathStep === pathSteps.length ? "Publicar" : "Siguiente"}
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Quiz wizard rendering
   if (isQuizMode && quizStep > 0) {
@@ -563,10 +755,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <SelectValue placeholder="Selecciona tipo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="video">Video</SelectItem>
-            <SelectItem value="document">Recurso</SelectItem>
-            <SelectItem value="lectura">Lectura</SelectItem>
-            <SelectItem value="quiz">Quiz</SelectItem>
+            <SelectItem value="video">🎥 Video</SelectItem>
+            <SelectItem value="document">📄 Recurso</SelectItem>
+            <SelectItem value="lectura">📖 Lectura</SelectItem>
+            <SelectItem value="quiz">📝 Quiz</SelectItem>
+            <SelectItem value="learning_path">🗺️ Ruta de Aprendizaje</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -591,7 +784,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {/* Contenido según tipo */}
-      {!isQuizMode && (
+      {!isQuizMode && !isPathMode && (
         <>
           {formData.content_type === 'lectura' ? (
             <div className="space-y-2">
@@ -898,6 +1091,29 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         >
           <ArrowRight className="w-4 h-4 mr-2" />
           Crear Preguntas y Respuestas
+        </Button>
+      ) : isPathMode ? (
+        <Button 
+          type="button" 
+          className="w-full"
+          onClick={() => {
+            if (!formData.title) {
+              toast.error("Por favor ingresa un título para la ruta");
+              return;
+            }
+            setPathData({
+              ...pathData,
+              title: formData.title,
+              description: formData.description,
+              category: formData.category,
+              grade_level: formData.grade_level,
+            });
+            setPathStep(1);
+          }}
+          disabled={!formData.title}
+        >
+          <ArrowRight className="w-4 h-4 mr-2" />
+          Configurar Ruta de Aprendizaje
         </Button>
       ) : (
         <Button type="submit" className="w-full" disabled={isLoading}>

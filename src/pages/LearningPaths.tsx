@@ -52,7 +52,7 @@ const LearningPaths = () => {
               <h1 className="text-2xl font-bold">Mis Rutas de Aprendizaje</h1>
             </div>
             <Button asChild>
-              <Link to="/learning-paths/create" aria-label="Crear Ruta">
+              <Link to="/create?type=learning_path" aria-label="Crear Ruta">
                 <Plus className="w-4 h-4 mr-2" />
                 Crear Ruta
               </Link>
@@ -129,7 +129,7 @@ const LearningPaths = () => {
               Crea tu primera ruta de aprendizaje
             </p>
             <Button asChild>
-              <Link to="/learning-paths/create" aria-label="Crear Ruta">
+              <Link to="/create?type=learning_path" aria-label="Crear Ruta">
                 <Plus className="w-4 h-4 mr-2" />
                 Crear Ruta
               </Link>
