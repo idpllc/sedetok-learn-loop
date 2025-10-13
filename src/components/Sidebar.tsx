@@ -1,16 +1,18 @@
-import { Home, Search, Map, Award, User, Plus } from "lucide-react";
+import { Home, Search, Map, Award, User, Plus, LogIn, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 
 export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleCreateClick = () => {
     if (!user) {
@@ -18,6 +20,22 @@ export const Sidebar = () => {
       return;
     }
     navigate("/create");
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
+  };
+
+  const handleAuthAction = () => {
+    if (user) {
+      signOut();
+    } else {
+      setAuthModalOpen(true);
+    }
   };
 
   const menuItems = [
@@ -34,6 +52,22 @@ export const Sidebar = () => {
         {/* Logo */}
         <div className="p-6 border-b border-border">
           <img src={sedefyLogo} alt="Sedefy" className="h-8 w-auto" />
+        </div>
+
+        {/* Search Bar */}
+        <div className="p-4 border-b border-border">
+          <form onSubmit={handleSearch}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar contenido..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </form>
         </div>
 
         {/* Navigation */}
@@ -58,14 +92,35 @@ export const Sidebar = () => {
             );
           })}
 
-          {/* Create Button - Destacado */}
+          {/* Create Button - Secondary variant */}
           <Button
             onClick={handleCreateClick}
-            className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-6"
+            variant="secondary"
+            className="w-full mt-4 font-medium py-6"
             size="lg"
           >
             <Plus className="w-6 h-6 mr-2" />
             Crear
+          </Button>
+
+          {/* Auth Button */}
+          <Button
+            onClick={handleAuthAction}
+            variant={user ? "ghost" : "outline"}
+            className="w-full mt-2 font-medium"
+            size="lg"
+          >
+            {user ? (
+              <>
+                <LogOut className="w-5 h-5 mr-2" />
+                Cerrar Sesión
+              </>
+            ) : (
+              <>
+                <LogIn className="w-5 h-5 mr-2" />
+                Iniciar Sesión
+              </>
+            )}
           </Button>
         </nav>
 

@@ -12,13 +12,14 @@ import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Database } from "@/integrations/supabase/types";
 import { Heart, MessageCircle, Bookmark, Eye, Play, FileText, ClipboardCheck, Share2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
 type SearchContentType = ContentType | "learning_path" | "all";
 
 const Search = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { content, isLoading: contentLoading, likeMutation, saveMutation } = useContent();
   const { paths, isLoading: pathsLoading } = useLearningPaths();
   const { likes } = useUserLikes();
@@ -28,6 +29,14 @@ const Search = () => {
   const [combinedContent, setCombinedContent] = useState<any[]>([]);
 
   const isLoading = contentLoading || pathsLoading;
+
+  // Inicializar el query desde la URL
+  useEffect(() => {
+    const queryFromUrl = searchParams.get('q');
+    if (queryFromUrl) {
+      setSearchQuery(queryFromUrl);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const combined = [
