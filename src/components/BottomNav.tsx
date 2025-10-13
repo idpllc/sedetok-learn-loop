@@ -55,12 +55,10 @@ export const BottomNav = () => {
           {/* Create button - Center */}
           <button
             onClick={handleCreateClick}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all text-muted-foreground hover:text-foreground"
           >
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center -mt-6 shadow-lg">
-              <Plus className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xs font-medium text-foreground">Crear</span>
+            <Plus className="w-5 h-5" />
+            <span className="text-xs font-medium">Crear</span>
           </button>
 
           {/* Right tabs */}

@@ -335,8 +335,8 @@ useImperativeHandle(ref, () => ({
         )}
       </div>
 
-      {/* Progress bar - positioned above bottom nav */}
-      <div className="absolute bottom-20 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm">
+      {/* Progress bar */}
+      <div className="absolute bottom-20 md:bottom-2 left-0 right-0 z-30 md:bg-black/80 md:backdrop-blur-sm">
         <div className="flex items-center gap-2 px-3 py-2">
           <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
