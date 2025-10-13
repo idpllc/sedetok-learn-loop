@@ -185,8 +185,8 @@ const Index = () => {
       
       {/* Main content con margen para el sidebar en desktop */}
       <div className="md:ml-64">
-        {/* Top navigation links */}
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center md:left-[calc(50%+128px)]">
+        {/* Top navigation links - solo móvil */}
+        <div className="md:hidden fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center">
         <button
           onClick={() => navigate("/search")}
           className={`text-sm font-semibold transition-colors ${
