@@ -1,6 +1,6 @@
 import { Home, Search, Award, User, Plus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -9,23 +9,6 @@ export const BottomNav = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-
-  const [videoProgress, setVideoProgress] = useState<{ progress: number; currentTime: number; duration: number }>({
-    progress: 0,
-    currentTime: 0,
-    duration: 0,
-  });
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const ce = e as CustomEvent<{ progress: number; currentTime: number; duration: number }>;
-      if (ce.detail && typeof ce.detail.progress === 'number') {
-        setVideoProgress(ce.detail);
-      }
-    };
-    window.addEventListener('video-progress', handler as EventListener);
-    return () => window.removeEventListener('video-progress', handler as EventListener);
-  }, []);
 
   const handleCreateClick = () => {
     if (!user) {
@@ -48,11 +31,7 @@ export const BottomNav = () => {
   return (
     <>
       {/* Bottom Navigation - visible en móvil y tablet, oculto en desktop */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border relative">
-        {/* Top progress bar */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-foreground/20">
-          <div className="h-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, videoProgress.progress))}%` }} />
-        </div>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border">
         <div className="flex items-center justify-around h-20 max-w-3xl mx-auto px-4">
           {/* Left tabs */}
           {leftTabs.map((tab) => {
