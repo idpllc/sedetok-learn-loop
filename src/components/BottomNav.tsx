@@ -1,15 +1,21 @@
-import { Home, Search, Award, User, Plus, Menu } from "lucide-react";
+import { Home, Search, Award, User, Plus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "./ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Solo mostrar en móvil y tablet
+  if (!isMobile) {
+    return null;
+  }
 
   const handleCreateClick = () => {
     if (!user) {

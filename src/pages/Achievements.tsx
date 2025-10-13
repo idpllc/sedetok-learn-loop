@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BottomNav } from "@/components/BottomNav";
+import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -115,7 +116,9 @@ const Achievements = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <>
+      <Sidebar />
+      <div className="min-h-screen bg-background pb-20 md:ml-64">
       <header className="sticky top-0 z-10 bg-card border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
@@ -305,6 +308,7 @@ const Achievements = () => {
 
       <BottomNav />
     </div>
+    </>
   );
 };
 

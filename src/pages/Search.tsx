@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { BottomNav } from "@/components/BottomNav";
+import { Sidebar } from "@/components/Sidebar";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,7 +88,9 @@ const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <>
+      <Sidebar />
+      <div className="min-h-screen bg-background pb-20 md:ml-64">
       <header className="sticky top-0 z-10 bg-card border-b border-border">
         <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
           <div className="flex items-center gap-3">
@@ -343,6 +346,7 @@ const Search = () => {
 
       <BottomNav />
     </div>
+    </>
   );
 };
 

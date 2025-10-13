@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
+import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
@@ -179,8 +180,13 @@ const Index = () => {
 
   return (
     <div className="relative">
-      {/* Top navigation links */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center">
+      {/* Sidebar para desktop */}
+      <Sidebar />
+      
+      {/* Main content con margen para el sidebar en desktop */}
+      <div className="md:ml-64">
+        {/* Top navigation links */}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 flex gap-6 justify-center md:left-[calc(50%+128px)]">
         <button
           onClick={() => navigate("/search")}
           className={`text-sm font-semibold transition-colors ${
@@ -267,7 +273,7 @@ const Index = () => {
         })}
       </div>
 
-      {/* Bottom navigation - now as floating button */}
+      {/* Bottom navigation - solo móvil y tablet */}
       <BottomNav />
 
       {/* Onboarding modal */}
@@ -281,6 +287,7 @@ const Index = () => {
           <OnboardingTeaser onOpenOnboarding={openOnboarding} />
         </>
       )}
+      </div>
     </div>
   );
 };

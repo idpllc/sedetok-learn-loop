@@ -5,6 +5,8 @@ import { Plus, Search, Filter, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Sidebar } from "@/components/Sidebar";
+import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { PathCard } from "@/components/learning-paths/PathCard";
@@ -39,7 +41,9 @@ const LearningPaths = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <>
+      <Sidebar />
+      <div className="min-h-screen bg-background pb-20 md:ml-64">
       <header className="sticky top-0 z-10 bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
@@ -137,7 +141,10 @@ const LearningPaths = () => {
           </div>
         )}
       </main>
+      
+      <BottomNav />
     </div>
+    </>
   );
 };
 

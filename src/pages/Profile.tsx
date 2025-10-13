@@ -5,6 +5,7 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { PDFViewer } from "@/components/PDFViewer";
 import { PDFModal } from "@/components/PDFModal";
+import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -208,18 +209,23 @@ const Profile = () => {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <>
+        <Sidebar />
+        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64">
         <div className="text-center space-y-4">
           <div className="text-6xl mb-4 animate-pulse">📚</div>
           <p className="text-muted-foreground">Verificando acceso...</p>
         </div>
       </div>
+      </>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background pb-20">
+      <>
+        <Sidebar />
+        <div className="min-h-screen bg-background pb-20 md:ml-64">
         <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
           <div className="flex items-center gap-3 max-w-6xl mx-auto">
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
@@ -234,11 +240,14 @@ const Profile = () => {
           ))}
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <>
+      <Sidebar />
+      <div className="min-h-screen bg-background pb-20 md:ml-64">
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
         <div className="flex items-center gap-3 max-w-6xl mx-auto">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
@@ -449,6 +458,7 @@ const Profile = () => {
         />
       )}
     </div>
+    </>
   );
 };
 
