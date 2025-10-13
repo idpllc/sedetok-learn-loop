@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import sedefyLogo from "@/assets/sedefy-logo.png";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +16,12 @@ export const Sidebar = () => {
   const { user, signOut } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const scrollDirection = useScrollDirection();
+
+  // Routes where the menu should NOT hide on scroll (capsule viewing routes)
+  const capsuleViewRoutes = ["/"];
+  const shouldHideOnScroll = !capsuleViewRoutes.includes(location.pathname);
+  const isMenuVisible = !shouldHideOnScroll || scrollDirection !== "down";
 
   const handleCreateClick = () => {
     if (!user) {
@@ -171,7 +178,9 @@ export const Sidebar = () => {
       </aside>
 
       {/* Mobile/Tablet Hamburger Menu and Quick Links */}
-      <div className="md:hidden fixed top-4 left-4 z-50 flex items-center gap-3">
+      <div className={`md:hidden fixed top-4 left-4 z-50 flex items-center gap-3 transition-all duration-300 ${
+        isMenuVisible ? "translate-y-0 opacity-100" : "-translate-y-20 opacity-0 pointer-events-none"
+      }`}>
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button
