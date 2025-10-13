@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { MoreVertical, Edit, Copy, Share2, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ interface PathCardProps {
 }
 
 export const PathCard = ({ path }: PathCardProps) => {
-  const navigate = useNavigate();
+  
   const { user } = useAuth();
   const { updatePath, deletePath } = useLearningPaths();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -64,9 +64,9 @@ export const PathCard = ({ path }: PathCardProps) => {
   return (
     <>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group">
-        <div
-          className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative"
-          onClick={() => navigate(`/learning-paths/view/${path.id}`)}
+        <Link
+          to={`/learning-paths/view/${path.id}`}
+          className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 relative block"
         >
           {path.cover_url || path.thumbnail_url ? (
             <img
@@ -87,9 +87,9 @@ export const PathCard = ({ path }: PathCardProps) => {
               <Badge variant="secondary">Pública</Badge>
             )}
           </div>
-        </div>
+        </Link>
 
-        <CardContent className="p-4" onClick={() => navigate(`/learning-paths/view/${path.id}`)}>
+        <CardContent className="p-4">
           <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {path.title}
           </h3>
@@ -127,9 +127,11 @@ export const PathCard = ({ path }: PathCardProps) => {
             <DropdownMenuContent align="end" className="w-48">
               {isCreator && (
                 <>
-                  <DropdownMenuItem onClick={() => navigate(`/learning-paths/edit/${path.id}`)}>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Editar
+                  <DropdownMenuItem asChild>
+                    <Link to={`/learning-paths/edit/${path.id}`}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Editar
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleToggleVisibility}>
                     {path.is_public ? (
@@ -147,9 +149,11 @@ export const PathCard = ({ path }: PathCardProps) => {
                 </>
               )}
               {!isCreator && (
-                <DropdownMenuItem onClick={() => navigate(`/learning-paths/create?clone=${path.id}`)}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Clonar
+                <DropdownMenuItem asChild>
+                  <Link to={`/learning-paths/create?clone=${path.id}`}>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Clonar
+                  </Link>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem>
