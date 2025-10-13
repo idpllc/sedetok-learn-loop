@@ -11,52 +11,52 @@ const CreatorProgram = () => {
 
   const benefits = [
     {
-      icon: DollarSign,
-      title: "Monetización",
-      description: "Gana dinero compartiendo tu conocimiento con la comunidad.",
+      icon: Award,
+      title: "Verificación de Creador",
+      description: "Obtén el badge de creador verificado y destaca en la plataforma.",
     },
     {
       icon: Users,
       title: "Audiencia Global",
-      description: "Alcanza a miles de estudiantes en todo el mundo.",
+      description: "Alcanza a miles de estudiantes en todo el mundo con tu contenido.",
     },
     {
       icon: TrendingUp,
-      title: "Crecimiento",
-      description: "Herramientas y analytics para hacer crecer tu contenido.",
+      title: "Analytics y Estadísticas",
+      description: "Herramientas para medir el impacto de tu contenido educativo.",
     },
     {
-      icon: Award,
-      title: "Reconocimiento",
-      description: "Badge de creador verificado y destaque en la plataforma.",
+      icon: Video,
+      title: "Contenido Destacado",
+      description: "Tu contenido aprobado aparecerá en secciones destacadas de la plataforma.",
     },
   ];
 
   const requirements = [
-    "Ser mayor de 18 años",
-    "Tener al menos 1,000 seguidores",
+    "Crear una cuenta en Sedefy",
     "Publicar contenido educativo de calidad",
     "Cumplir con las políticas de la comunidad",
-    "Tener al menos 10 publicaciones",
+    "Pasar el proceso de revisión de contenido",
+    "Mantener estándares educativos",
   ];
 
-  const tiers = [
+  const verificationLevels = [
     {
-      name: "Creador Emergente",
-      followers: "1K - 10K",
-      benefits: ["Monetización básica", "Analytics básicos", "Badge de creador"],
+      name: "Creador Nuevo",
+      description: "Inicio del Proceso",
+      benefits: ["Publica contenido libremente", "Contenido sujeto a revisión", "Acceso a herramientas básicas"],
       color: "from-blue-500/20 to-blue-600/20",
     },
     {
-      name: "Creador Establecido",
-      followers: "10K - 50K",
-      benefits: ["Mayor % de ingresos", "Analytics avanzados", "Soporte prioritario", "Colaboraciones"],
+      name: "Creador Aprobado",
+      description: "Contenido Revisado",
+      benefits: ["Contenido aprobado publicado", "Feedback del equipo de revisión", "Mejores posiciones en búsqueda"],
       color: "from-purple-500/20 to-purple-600/20",
     },
     {
-      name: "Creador Elite",
-      followers: "50K+",
-      benefits: ["Máximo % de ingresos", "Manager dedicado", "Eventos exclusivos", "Merchandising"],
+      name: "Creador Verificado",
+      description: "Cuenta Verificada",
+      benefits: ["Badge de verificación", "Publicación prioritaria", "Soporte dedicado", "Contenido destacado"],
       color: "from-amber-500/20 to-amber-600/20",
     },
   ];
@@ -86,13 +86,13 @@ const CreatorProgram = () => {
               Programa de Creadores
             </div>
             <h1 className="text-4xl md:text-5xl font-bold">
-              Comparte tu Conocimiento,<br />Gana Reconocimiento
+              Comparte tu Conocimiento,<br />Inspira a Otros
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Únete al programa de creadores de Sedefy y monetiza tu pasión por enseñar mientras impactas la vida de miles de estudiantes.
+              Cualquier persona puede ser creador en Sedefy. Publica contenido educativo de calidad y conviértete en un creador verificado de nuestra comunidad.
             </p>
-            <Button size="lg" className="mt-4" onClick={() => navigate("/auth")}>
-              Aplicar Ahora
+            <Button size="lg" className="mt-4" onClick={() => navigate("/create")}>
+              Comenzar a Crear
             </Button>
           </section>
 
@@ -121,21 +121,21 @@ const CreatorProgram = () => {
             </div>
           </section>
 
-          {/* Tiers */}
+          {/* Verification Levels */}
           <section className="space-y-6">
-            <h2 className="text-3xl font-bold text-center">Niveles de Creadores</h2>
+            <h2 className="text-3xl font-bold text-center">Proceso de Verificación</h2>
             <div className="grid md:grid-cols-3 gap-6">
-              {tiers.map((tier) => (
-                <Card key={tier.name} className={`bg-gradient-to-br ${tier.color}`}>
+              {verificationLevels.map((level) => (
+                <Card key={level.name} className={`bg-gradient-to-br ${level.color}`}>
                   <CardHeader>
-                    <CardTitle>{tier.name}</CardTitle>
+                    <CardTitle>{level.name}</CardTitle>
                     <Badge variant="secondary" className="w-fit">
-                      {tier.followers} seguidores
+                      {level.description}
                     </Badge>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {tier.benefits.map((benefit) => (
+                      {level.benefits.map((benefit) => (
                         <li key={benefit} className="flex items-start gap-2 text-sm">
                           <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                           <span>{benefit}</span>
@@ -168,22 +168,27 @@ const CreatorProgram = () => {
           {/* How it works */}
           <section className="space-y-6">
             <h2 className="text-3xl font-bold text-center">¿Cómo Funciona?</h2>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-4 gap-6">
               {[
                 {
                   step: "1",
-                  title: "Aplica",
-                  description: "Completa el formulario de aplicación con tu información y portfolio.",
+                  title: "Crea tu Cuenta",
+                  description: "Regístrate gratis en Sedefy y completa tu perfil de creador.",
                 },
                 {
                   step: "2",
-                  title: "Revisión",
-                  description: "Nuestro equipo revisará tu aplicación en 48 horas.",
+                  title: "Publica Contenido",
+                  description: "Crea y publica videos, documentos o quizzes educativos de calidad.",
                 },
                 {
                   step: "3",
-                  title: "Crea",
-                  description: "Una vez aprobado, comienza a crear y monetizar tu contenido.",
+                  title: "Revisión",
+                  description: "Nuestro equipo revisa tu contenido para asegurar calidad educativa.",
+                },
+                {
+                  step: "4",
+                  title: "Verificación",
+                  description: "Una vez aprobado consistentemente, obtén tu verificación de creador.",
                 },
               ].map((item) => (
                 <Card key={item.step}>
@@ -199,16 +204,56 @@ const CreatorProgram = () => {
             </div>
           </section>
 
+          {/* Review Process */}
+          <section className="space-y-6">
+            <h2 className="text-3xl font-bold text-center">Proceso de Revisión de Contenido</h2>
+            <Card>
+              <CardContent className="p-8 space-y-6">
+                <p className="text-muted-foreground text-center">
+                  Todo el contenido publicado en Sedefy pasa por un proceso de revisión para garantizar la calidad educativa y el cumplimiento de nuestras políticas.
+                </p>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-primary" />
+                      Qué Revisamos
+                    </h3>
+                    <ul className="space-y-2 text-sm text-muted-foreground ml-7">
+                      <li>• Calidad del contenido educativo</li>
+                      <li>• Precisión de la información</li>
+                      <li>• Cumplimiento de políticas</li>
+                      <li>• Respeto a derechos de autor</li>
+                      <li>• Adecuación del nivel educativo</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      <Award className="w-5 h-5 text-primary" />
+                      Beneficios de la Aprobación
+                    </h3>
+                    <ul className="space-y-2 text-sm text-muted-foreground ml-7">
+                      <li>• Contenido visible públicamente</li>
+                      <li>• Mayor alcance en búsquedas</li>
+                      <li>• Posibilidad de destacarse</li>
+                      <li>• Camino a verificación</li>
+                      <li>• Reconocimiento en la comunidad</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+
           {/* CTA */}
           <section className="text-center py-8">
             <Card className="border-primary bg-gradient-to-br from-primary/10 to-secondary/10">
               <CardContent className="p-8 space-y-4">
                 <h2 className="text-2xl font-bold">¿Listo para Comenzar?</h2>
                 <p className="text-muted-foreground max-w-xl mx-auto">
-                  Aplica al programa de creadores hoy y comienza a monetizar tu pasión por enseñar.
+                  Únete a la comunidad de creadores de Sedefy hoy. Comparte tu conocimiento y ayuda a miles de estudiantes a aprender.
                 </p>
-                <Button size="lg" onClick={() => navigate("/auth")}>
-                  Aplicar al Programa
+                <Button size="lg" onClick={() => navigate("/create")}>
+                  Crear mi Primer Contenido
                 </Button>
               </CardContent>
             </Card>
