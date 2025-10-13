@@ -335,10 +335,10 @@ useImperativeHandle(ref, () => ({
         )}
       </div>
 
-      {/* Progress bar */}
-      <div className="absolute bottom-20 md:bottom-2 left-0 right-0 z-30 bg-gradient-to-t from-black/60 to-transparent pt-8 pb-2 px-4">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="text-white text-xs font-medium">{formatTime(currentTime)}</span>
+      {/* Progress bar - positioned above bottom nav */}
+      <div className="absolute bottom-20 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm">
+        <div className="flex items-center gap-2 px-3 py-2">
+          <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
             className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
             onClick={handleProgressClick}
@@ -350,19 +350,31 @@ useImperativeHandle(ref, () => ({
               <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
-          <span className="text-white text-xs font-medium">{formatTime(duration)}</span>
+          <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(duration)}</span>
+        </div>
+      </div>
+
+      {/* Fullscreen button - only for horizontal videos */}
+      {!isVertical && (
+        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-30">
           <button
             onClick={toggleFullscreen}
-            className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-black/80 backdrop-blur-sm hover:bg-black/90 transition-colors"
           >
             {isFullscreen ? (
-              <Minimize className="w-4 h-4 text-white" />
+              <>
+                <Minimize className="w-4 h-4 text-white" />
+                <span className="text-white text-sm font-medium">Salir de pantalla completa</span>
+              </>
             ) : (
-              <Maximize className="w-4 h-4 text-white" />
+              <>
+                <Maximize className="w-4 h-4 text-white" />
+                <span className="text-white text-sm font-medium">Pantalla completa</span>
+              </>
             )}
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 });
