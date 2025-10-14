@@ -24,6 +24,8 @@ import { PathReview } from "./learning-paths/wizard/PathReview";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Combobox } from "@/components/ui/combobox";
+import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -1013,25 +1015,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="category">Categoría *</Label>
-          <Select
+          <Label htmlFor="category">Categoría / Asignatura *</Label>
+          <Combobox
+            options={subjects}
             value={formData.category}
-            onValueChange={(value) => setFormData({ ...formData, category: value as CategoryType })}
-            required
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="matematicas">Matemáticas</SelectItem>
-              <SelectItem value="ciencias">Ciencias</SelectItem>
-              <SelectItem value="lenguaje">Lenguaje</SelectItem>
-              <SelectItem value="historia">Historia</SelectItem>
-              <SelectItem value="arte">Arte</SelectItem>
-              <SelectItem value="tecnologia">Tecnología</SelectItem>
-              <SelectItem value="otros">Otros</SelectItem>
-            </SelectContent>
-          </Select>
+            onChange={(value) => {
+              // Map the subject to the correct category enum for the database
+              const categoryValue = subjectToCategoryMap[value] || value;
+              setFormData({ ...formData, category: categoryValue as CategoryType });
+            }}
+            placeholder="Selecciona asignatura"
+            searchPlaceholder="Buscar asignatura..."
+            emptyMessage="No se encontró la asignatura."
+          />
         </div>
 
         <div className="space-y-2">
