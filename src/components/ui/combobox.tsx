@@ -1,4 +1,4 @@
-import * as React from "react"
+import { useState } from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -40,7 +40,7 @@ export function Combobox({
   emptyMessage = "No se encontraron resultados.",
   className,
 }: ComboboxProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = useState(false)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
