@@ -16,29 +16,31 @@ interface QuestionEditorProps {
 
 export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
   const updateField = (field: string, value: any) => {
-    // When changing to true/false, ensure we have exactly 2 options
-    if (field === "question_type" && value === "true_false") {
-      const updatedQuestion = {
-        ...question,
-        question_type: value,
-        options: [
+    // When changing question type, reset options to match new type
+    if (field === "question_type") {
+      let newOptions = [];
+      
+      if (value === "true_false") {
+        newOptions = [
           { id: "true", option_text: "Verdadero", is_correct: false, order_index: 0 },
           { id: "false", option_text: "Falso", is_correct: false, order_index: 1 },
-        ],
-      };
-      onChange(updatedQuestion);
-      return;
-    }
-    
-    // When changing to short answer, ensure we have at least 1 option
-    if (field === "question_type" && value === "short_answer") {
+        ];
+      } else if (value === "short_answer") {
+        newOptions = [
+          { id: "answer-1", option_text: "", is_correct: true, order_index: 0 },
+        ];
+      } else if (value === "multiple_choice") {
+        newOptions = [
+          { id: `opt-1`, option_text: "", is_correct: false, order_index: 0 },
+          { id: `opt-2`, option_text: "", is_correct: false, order_index: 1 },
+        ];
+      }
+      
       const updatedQuestion = {
         ...question,
         question_type: value,
-        comparison_mode: question.comparison_mode || 'exact',
-        options: question.options.length > 0 ? question.options : [
-          { id: "answer-1", option_text: "", is_correct: true, order_index: 0 },
-        ],
+        options: newOptions,
+        comparison_mode: value === "short_answer" ? (question.comparison_mode || 'exact') : undefined,
       };
       onChange(updatedQuestion);
       return;

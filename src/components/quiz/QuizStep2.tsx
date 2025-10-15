@@ -165,24 +165,26 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6"
+                      className="h-7 w-7 hover:bg-primary-foreground/20"
                       onClick={(e) => {
                         e.stopPropagation();
                         duplicateQuestion(index);
                       }}
+                      title="Duplicar pregunta"
                     >
-                      <Copy className="h-3 w-3" />
+                      <Copy className="h-4 w-4" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6"
+                      className="h-7 w-7 hover:bg-destructive/20 hover:text-destructive"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteQuestion(index);
                       }}
+                      title="Eliminar pregunta"
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
