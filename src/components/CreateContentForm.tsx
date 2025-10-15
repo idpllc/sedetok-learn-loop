@@ -132,11 +132,16 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
   useEffect(() => {
     if (editMode && contentData) {
+      // Find the subject value from the label stored in DB
+      const subjectValue = (contentData as any).subject 
+        ? subjects.find(s => s.label === (contentData as any).subject)?.value || (contentData as any).subject
+        : contentData.category;
+      
       setFormData({
         title: contentData.title,
         description: contentData.description || "",
         category: contentData.category,
-        subject: (contentData as any).subject,
+        subject: subjectValue,
         grade_level: contentData.grade_level,
         content_type: contentData.content_type,
         difficulty: (contentData as any).difficulty || "basico",
@@ -333,7 +338,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         title: formData.title,
         description: formData.description,
         category: formData.category,
-        subject: (formData as any).subject,
+        subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
         grade_level: formData.grade_level,
         difficulty: formData.difficulty,
         is_public: isPublic,
@@ -435,7 +440,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         title: formData.title,
         description: formData.description,
         category: formData.category,
-        subject: (formData as any).subject,
+        subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
         grade_level: formData.grade_level,
         content_type: formData.content_type,
         tags: tags,
@@ -490,7 +495,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
     const handlePathNext = async () => {
       if (pathStep === 1 && !pathId) {
-        const result = await createPath.mutateAsync(pathData);
+        // Convert subject value to label before saving
+        const pathDataToSave = {
+          ...pathData,
+          subject: pathData.subject ? subjects.find(s => s.value === pathData.subject)?.label || pathData.subject : pathData.subject
+        };
+        const result = await createPath.mutateAsync(pathDataToSave);
         setPathId(result.id);
       } else if (pathId) {
         if (pathStep === pathSteps.length) {
@@ -532,7 +542,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           await updatePath.mutateAsync({ 
             id: pathId, 
             updates: { 
-              ...pathData, 
+              ...pathData,
+              subject: pathData.subject ? subjects.find(s => s.value === pathData.subject)?.label || pathData.subject : pathData.subject,
               status: 'published',
               estimated_duration: pathData.estimated_duration,
               total_xp: pathData.total_xp 
@@ -543,7 +554,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           navigate("/learning-paths");
           return;
         } else {
-          await updatePath.mutateAsync({ id: pathId, updates: pathData });
+          const pathDataToSave = {
+            ...pathData,
+            subject: pathData.subject ? subjects.find(s => s.value === pathData.subject)?.label || pathData.subject : pathData.subject
+          };
+          await updatePath.mutateAsync({ id: pathId, updates: pathDataToSave });
         }
       }
 
@@ -562,10 +577,14 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     };
 
     const handlePathSaveDraft = async () => {
+      const pathDataToSave = {
+        ...pathData,
+        subject: pathData.subject ? subjects.find(s => s.value === pathData.subject)?.label || pathData.subject : pathData.subject
+      };
       if (pathId) {
-        await updatePath.mutateAsync({ id: pathId, updates: pathData as any });
+        await updatePath.mutateAsync({ id: pathId, updates: pathDataToSave as any });
       } else {
-        const result = await createPath.mutateAsync(pathData as any);
+        const result = await createPath.mutateAsync(pathDataToSave as any);
         setPathId(result.id);
       }
       toast.success("Borrador guardado");
@@ -1021,12 +1040,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           <Label htmlFor="category">Categoría / Asignatura *</Label>
           <Combobox
             options={subjects}
-            value={(formData as any).subject || formData.category}
+            value={(formData as any).subject || ""}
             onChange={(value) => {
               // Map the subject to the correct category enum for the database
               const categoryValue = subjectToCategoryMap[value] || value;
-              const subjectLabel = subjects.find(s => s.value === value)?.label || value;
-              setFormData({ ...formData, category: categoryValue as CategoryType, subject: subjectLabel } as any);
+              setFormData({ ...formData, category: categoryValue as CategoryType, subject: value } as any);
             }}
             placeholder="Selecciona asignatura"
             searchPlaceholder="Buscar asignatura..."

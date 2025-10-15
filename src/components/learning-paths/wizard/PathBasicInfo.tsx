@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { RouteSearchModal } from "@/components/learning-paths/RouteSearchModal";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
+import { Combobox } from "@/components/ui/combobox";
+import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 
 const learningTypes = [
   { value: "Visual", label: "Visual" },
@@ -25,11 +27,6 @@ interface PathBasicInfoProps {
 export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const [showRouteSearch, setShowRouteSearch] = useState(false);
   const [requiresPrerequisites, setRequiresPrerequisites] = useState(false);
-
-  const subjects = [
-    "Matemáticas", "Ciencias", "Lenguaje", "Ciencias Sociales",
-    "Inglés", "Educación Física", "Artes", "Tecnología"
-  ];
 
   const grades = [
     { value: "primaria", label: "Primaria" },
@@ -91,21 +88,17 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="subject">Asignatura *</Label>
-            <Select
-              value={data.subject}
-              onValueChange={(value) => onChange({ ...data, subject: value })}
-            >
-              <SelectTrigger id="subject" className="mt-1.5">
-                <SelectValue placeholder="Seleccionar" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject} value={subject}>
-                    {subject}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={subjects}
+              value={data.subject || ""}
+              onChange={(value) => {
+                const categoryValue = subjectToCategoryMap[value] || value;
+                onChange({ ...data, subject: value, category: categoryValue });
+              }}
+              placeholder="Selecciona asignatura"
+              searchPlaceholder="Buscar asignatura..."
+              emptyMessage="No se encontró la asignatura."
+            />
           </div>
 
           <div>
