@@ -31,6 +31,7 @@ interface ContentCardProps {
   institution?: string;
   tags: string[];
   category: string;
+  subject?: string;
   thumbnail?: string;
   videoUrl?: string;
   documentUrl?: string;
@@ -66,6 +67,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   institution,
   tags,
   category,
+  subject,
   thumbnail,
   videoUrl,
   documentUrl,
@@ -457,7 +459,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               {/* Category and grade badges below description */}
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge className="bg-primary/90 text-primary-foreground font-semibold text-xs">
-                  {category}
+                  {subject || category}
                 </Badge>
                 <Badge variant="secondary" className="font-semibold text-xs bg-white/20 text-white border-white/30">
                   {grade}

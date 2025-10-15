@@ -12,6 +12,7 @@ interface CreateContentData {
   title: string;
   description?: string;
   category: CategoryType;
+  subject?: string;
   grade_level: GradeLevel;
   content_type: ContentType;
   tags?: string[];

@@ -221,7 +221,7 @@ const Search = () => {
                       {/* Category badge */}
                       <div className="absolute top-3 right-3">
                         <Badge variant="secondary" className="capitalize">
-                          {item.category}
+                          {item.subject || item.category}
                         </Badge>
                       </div>
                     </div>

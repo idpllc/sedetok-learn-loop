@@ -186,6 +186,7 @@ const ViewLearningPath = () => {
           creatorAvatar: profile?.avatar_url,
           tags: content.tags || [],
           category: content.category,
+          subject: content.subject,
           thumbnail_url: content.thumbnail_url,
           video_url: content.video_url,
           documento_url: content.document_url,

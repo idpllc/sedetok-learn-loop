@@ -171,7 +171,7 @@ const Profile = () => {
           
           {/* Tags */}
           <div className="flex items-center gap-2 flex-wrap pt-2">
-            <Badge variant="secondary" className="text-xs">{item.category}</Badge>
+            <Badge variant="secondary" className="text-xs">{item.subject || item.category}</Badge>
             <Badge variant="outline" className="text-xs">{item.grade_level}</Badge>
             {!item.is_public && (
               <Badge variant="destructive" className="text-xs">Privado</Badge>

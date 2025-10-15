@@ -119,6 +119,7 @@ export type Database = {
           rich_text: string | null
           saves_count: number | null
           shares_count: number | null
+          subject: string | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string
@@ -141,6 +142,7 @@ export type Database = {
           rich_text?: string | null
           saves_count?: number | null
           shares_count?: number | null
+          subject?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
@@ -163,6 +165,7 @@ export type Database = {
           rich_text?: string | null
           saves_count?: number | null
           shares_count?: number | null
+          subject?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
@@ -797,6 +800,7 @@ export type Database = {
           is_public: boolean | null
           random_order: boolean | null
           status: Database["public"]["Enums"]["quiz_status"] | null
+          subject: string | null
           thumbnail_url: string | null
           time_limit: number | null
           title: string
@@ -814,6 +818,7 @@ export type Database = {
           is_public?: boolean | null
           random_order?: boolean | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
+          subject?: string | null
           thumbnail_url?: string | null
           time_limit?: number | null
           title: string
@@ -831,6 +836,7 @@ export type Database = {
           is_public?: boolean | null
           random_order?: boolean | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
+          subject?: string | null
           thumbnail_url?: string | null
           time_limit?: number | null
           title?: string

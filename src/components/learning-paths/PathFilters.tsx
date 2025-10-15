@@ -1,5 +1,6 @@
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { subjects } from "@/lib/subjects";
 
 interface PathFiltersProps {
   filters: {
@@ -12,17 +13,6 @@ interface PathFiltersProps {
 }
 
 export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
-  const subjects = [
-    "Matemáticas",
-    "Ciencias",
-    "Lenguaje",
-    "Ciencias Sociales",
-    "Inglés",
-    "Educación Física",
-    "Artes",
-    "Tecnología",
-  ];
-
   const grades = [
     { value: "primaria", label: "Primaria" },
     { value: "secundaria", label: "Secundaria" },
@@ -45,8 +35,8 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
               </SelectTrigger>
               <SelectContent>
                 {subjects.map((subject) => (
-                  <SelectItem key={subject} value={subject}>
-                    {subject}
+                  <SelectItem key={subject.value} value={subject.label}>
+                    {subject.label}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -211,6 +211,7 @@ const Index = () => {
               creatorAvatar={item.profiles?.avatar_url}
               tags={Array.isArray(item.tags) ? item.tags : []}
               category={item.category}
+              subject={item.subject}
               thumbnail={item.thumbnail_url || item.thumbnail}
               videoUrl={item.video_url}
               documentUrl={item.document_url}

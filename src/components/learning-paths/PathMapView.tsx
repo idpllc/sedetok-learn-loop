@@ -171,9 +171,9 @@ export const PathMapView = ({
                     "flex gap-2 mt-2 flex-wrap",
                     index % 2 === 0 ? "justify-start" : "justify-end"
                   )}>
-                    {content.category && (
+                    {(content.subject || content.category) && (
                       <span className="bg-secondary text-secondary-foreground text-xs px-2 py-0.5 rounded-full font-medium">
-                        {content.category}
+                        {content.subject || content.category}
                       </span>
                     )}
                     {content.grade_level && (

@@ -350,7 +350,7 @@ export function ContentManagement() {
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.title}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{item.category}</Badge>
+                          <Badge variant="outline">{item.subject || item.category}</Badge>
                         </TableCell>
                         <TableCell>{item.profiles?.username || 'Desconocido'}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">

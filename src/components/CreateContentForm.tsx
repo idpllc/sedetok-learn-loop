@@ -136,10 +136,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         title: contentData.title,
         description: contentData.description || "",
         category: contentData.category,
+        subject: (contentData as any).subject,
         grade_level: contentData.grade_level,
         content_type: contentData.content_type,
         difficulty: (contentData as any).difficulty || "basico",
-      });
+      } as any);
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
       setRichText((contentData as any).rich_text || "");
@@ -332,6 +333,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         title: formData.title,
         description: formData.description,
         category: formData.category,
+        subject: (formData as any).subject,
         grade_level: formData.grade_level,
         difficulty: formData.difficulty,
         is_public: isPublic,
@@ -433,6 +435,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         title: formData.title,
         description: formData.description,
         category: formData.category,
+        subject: (formData as any).subject,
         grade_level: formData.grade_level,
         content_type: formData.content_type,
         tags: tags,
@@ -1018,11 +1021,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           <Label htmlFor="category">Categoría / Asignatura *</Label>
           <Combobox
             options={subjects}
-            value={formData.category}
+            value={(formData as any).subject || formData.category}
             onChange={(value) => {
               // Map the subject to the correct category enum for the database
               const categoryValue = subjectToCategoryMap[value] || value;
-              setFormData({ ...formData, category: categoryValue as CategoryType });
+              const subjectLabel = subjects.find(s => s.value === value)?.label || value;
+              setFormData({ ...formData, category: categoryValue as CategoryType, subject: subjectLabel } as any);
             }}
             placeholder="Selecciona asignatura"
             searchPlaceholder="Buscar asignatura..."
