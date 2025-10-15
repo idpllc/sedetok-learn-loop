@@ -1,3 +1,7 @@
+# Sitemap
+Sitemap: https://1b5fcdcc-9515-4ad7-a26f-48e6459b8585.lovableproject.com/sitemap.xml
+
+# Robots principales
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +14,11 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# Permitir a todos los demás
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api/
+
+# Crawl delay
+Crawl-delay: 1

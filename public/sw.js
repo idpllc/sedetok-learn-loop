@@ -1,4 +1,8 @@
-const CACHE_NAME = 'sedetok-v3';
+// Este archivo es generado automáticamente por vite-plugin-pwa
+// No es necesario editarlo manualmente
+// El service worker será generado en tiempo de build
+
+const CACHE_NAME = 'sedetok-v4';
 const urlsToCache = [
   '/',
   '/index.html'
@@ -9,6 +13,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -20,7 +25,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/node_modules/.vite') ||
     url.pathname.startsWith('/src/')
   ) {
-    return; // Let the browser handle it normally
+    return;
   }
 
   event.respondWith(
@@ -39,6 +44,9 @@ self.addEventListener('fetch', (event) => {
               cache.put(event.request, responseToCache);
             });
           return networkResponse;
+        }).catch(() => {
+          // Fallback offline
+          return caches.match('/');
         });
       })
   );
@@ -55,6 +63,6 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
