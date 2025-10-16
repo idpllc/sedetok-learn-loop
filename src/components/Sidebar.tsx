@@ -69,14 +69,18 @@ export const Sidebar = () => {
 
       {/* Search Bar */}
       <div className="p-4 border-b border-border">
-        <form onSubmit={handleSearch}>
+        <form onSubmit={handleSearch} onClick={(e) => e.stopPropagation()}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Buscar contenido..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                e.stopPropagation();
+                setSearchQuery(e.target.value);
+              }}
+              onClick={(e) => e.stopPropagation()}
               className="pl-10"
             />
           </div>
