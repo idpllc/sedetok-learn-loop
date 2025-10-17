@@ -23,6 +23,7 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import CreatorContent from "./pages/CreatorContent";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:userId" element={<Profile />} />
         <Route path="/profile/edit" element={<EditProfile />} />
+        <Route path="/creator/:userId/content" element={<CreatorContent />} />
         <Route path="/learning-paths" element={<LearningPaths />} />
         <Route path="/learning-paths/create" element={<CreateLearningPath />} />
         <Route path="/learning-paths/edit/:id" element={<CreateLearningPath />} />

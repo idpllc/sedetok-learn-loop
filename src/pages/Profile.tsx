@@ -103,8 +103,15 @@ const Profile = () => {
   const ContentItem = ({ item }: { item: any }) => {
     const scientist = item.content_type === 'quiz' ? getQuizScientistIcon(item.category) : null;
     
+    const handleContentClick = () => {
+      navigate(`/creator/${userId || user?.id}/content?content=${item.id}`);
+    };
+    
     return (
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+      <Card 
+        className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+        onClick={handleContentClick}
+      >
         <div className="relative">
           {/* Thumbnail/Preview */}
           <div className="relative aspect-video w-full overflow-hidden bg-muted">
