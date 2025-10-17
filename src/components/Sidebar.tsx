@@ -90,6 +90,10 @@ export const Sidebar = () => {
               onMouseDown={(e) => e.stopPropagation()}
               onPointerDownCapture={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
+              onKeyDownCapture={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              autoFocus
+              autoComplete="off"
               className="pl-10"
             />
           </div>

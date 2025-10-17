@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Share, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import sedefyLogo from "@/assets/sedefy-logo.png";
 import {
   Dialog,
   DialogContent,
@@ -94,8 +95,8 @@ export const PWAInstallPrompt = () => {
           {/* Logo */}
           <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center">
             <img 
-              src="/sedefy-logo.png" 
-              alt="SEDETOK" 
+              src={sedefyLogo} 
+              alt="Sedefy - logo" 
               className="w-12 h-12 object-contain"
             />
           </div>
