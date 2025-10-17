@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Copy } from "lucide-react";
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { SharePathSheet } from "@/components/SharePathSheet";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -48,6 +48,14 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   const navigate = useNavigate();
   const { user } = useAuth();
   const isCreator = Boolean(user?.id && creatorId && user.id === creatorId);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  
+  const MAX_DESCRIPTION_LENGTH = 150;
+  const shouldTruncateDescription = description && description.length > MAX_DESCRIPTION_LENGTH;
+  const displayDescription = shouldTruncateDescription && !isDescriptionExpanded
+    ? description.substring(0, MAX_DESCRIPTION_LENGTH) + "..."
+    : description;
+  
   return (
     <div 
       ref={ref}
@@ -103,9 +111,21 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
 
         {/* Description */}
         {description && (
-          <p className="text-center text-sm md:text-lg text-muted-foreground mb-4 md:mb-8 max-w-xl leading-relaxed">
-            {description}
-          </p>
+          <div className="text-center mb-4 md:mb-8 max-w-xl">
+            <p className="text-sm md:text-lg text-muted-foreground leading-relaxed">
+              {displayDescription}
+            </p>
+            {shouldTruncateDescription && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                className="mt-2 text-primary hover:text-primary/80"
+              >
+                {isDescriptionExpanded ? "Ver menos" : "Ver más"}
+              </Button>
+            )}
+          </div>
         )}
 
         {/* Stats row */}

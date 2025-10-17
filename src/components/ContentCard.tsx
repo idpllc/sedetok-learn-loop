@@ -332,8 +332,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       className="w-32 h-32 mx-auto rounded-full shadow-2xl border-4 border-white/30 object-cover animate-bounce"
                     />
                   </div>
-                  <h3 className="text-3xl font-bold text-white mb-3">{title}</h3>
-                  <p className="text-white/90 text-lg">Quiz con {scientist.name}</p>
+                  <h3 className="text-xl md:text-2xl font-bold text-white mb-4">{title}</h3>
                   
                   {hasAttempted && lastAttempt && (
                     <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
