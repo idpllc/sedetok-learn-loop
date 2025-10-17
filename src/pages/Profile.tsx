@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map } from "lucide-react";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { PDFViewer } from "@/components/PDFViewer";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserContent } from "@/hooks/useUserContent";
+import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { useFollow } from "@/hooks/useFollow";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
@@ -34,9 +35,12 @@ const Profile = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const isOwnProfile = !userId || userId === user?.id;
   const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(userId);
+  const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(userId || user?.id, 'created');
   const { isFollowing, toggleFollow, isProcessing } = useFollow(userId || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
+  const [pathToDelete, setPathToDelete] = useState<string | null>(null);
+  const [deletePathDialogOpen, setDeletePathDialogOpen] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; title: string } | null>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
@@ -88,6 +92,19 @@ const Profile = () => {
     }
   };
 
+  const handleDeletePath = (pathId: string) => {
+    setPathToDelete(pathId);
+    setDeletePathDialogOpen(true);
+  };
+
+  const confirmDeletePath = () => {
+    if (pathToDelete) {
+      deletePath.mutate(pathToDelete);
+      setDeletePathDialogOpen(false);
+      setPathToDelete(null);
+    }
+  };
+
   const toggleVisibility = (contentId: string, isPublic: boolean) => {
     updateMutation.mutate({
       contentId,
@@ -99,6 +116,88 @@ const Profile = () => {
   const documentContent = userContent?.filter(c => c.content_type === "document") || [];
   const readingContent = userContent?.filter(c => c.content_type === "lectura") || [];
   const quizContent = userContent?.filter(c => c.content_type === "quiz") || [];
+
+  const PathItem = ({ path }: { path: any }) => (
+    <Card 
+      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => navigate(`/learning-paths/${path.id}`)}
+    >
+      <div className="relative">
+        <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20">
+          {path.thumbnail_url || path.cover_url ? (
+            <img 
+              src={path.thumbnail_url || path.cover_url} 
+              alt={path.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <Map className="w-12 h-12" />
+            </div>
+          )}
+        </div>
+        
+        {isOwnProfile && (
+          <div className="absolute top-2 right-2 flex gap-1">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-foreground/90 backdrop-blur-sm hover:bg-foreground text-background"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/learning-paths/edit/${path.id}`);
+              }}
+              title="Editar"
+            >
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              className="h-8 w-8 backdrop-blur-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeletePath(path.id);
+              }}
+              title="Eliminar"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <CardHeader className="space-y-2 p-4">
+        <CardTitle className="text-base line-clamp-2">{path.title}</CardTitle>
+        <CardDescription className="text-sm line-clamp-2">
+          {path.description || "Sin descripción"}
+        </CardDescription>
+        
+        <div className="flex items-center gap-2 flex-wrap pt-2">
+          <Badge variant="secondary" className="text-xs">{path.subject || path.category}</Badge>
+          <Badge variant="outline" className="text-xs">{path.grade_level}</Badge>
+          <Badge variant="outline" className="text-xs">{path.level || "Básico"}</Badge>
+          {!path.is_public && (
+            <Badge variant="destructive" className="text-xs">Privado</Badge>
+          )}
+          {path.status === 'draft' && (
+            <Badge variant="secondary" className="text-xs">Borrador</Badge>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-4 pt-0">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            📚 <span className="text-foreground font-medium">{path.estimated_duration || 0} min</span>
+          </span>
+          <span className="flex items-center gap-1">
+            ⭐ <span className="text-foreground font-medium">{path.total_xp || 0} XP</span>
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const ContentItem = ({ item }: { item: any }) => {
     const scientist = item.content_type === 'quiz' ? getQuizScientistIcon(item.category) : null;
@@ -357,7 +456,7 @@ const Profile = () => {
 
         {/* Content tabs */}
         <Tabs defaultValue="videos" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="videos" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">Videos</span> ({videoContent.length})
@@ -373,6 +472,10 @@ const Profile = () => {
             <TabsTrigger value="quizzes" className="flex items-center gap-2">
               <HelpCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Quizzes</span> ({quizContent.length})
+            </TabsTrigger>
+            <TabsTrigger value="paths" className="flex items-center gap-2">
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">Rutas</span> ({learningPaths?.length || 0})
             </TabsTrigger>
           </TabsList>
 
@@ -427,6 +530,32 @@ const Profile = () => {
               )}
             </div>
           </TabsContent>
+
+          <TabsContent value="paths" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {pathsLoading ? (
+                [1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-64 w-full" />
+                ))
+              ) : learningPaths && learningPaths.length > 0 ? (
+                learningPaths.map((path) => <PathItem key={path.id} path={path} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  <Map className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No tienes rutas de aprendizaje aún</p>
+                  {isOwnProfile && (
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => navigate("/learning-paths/create")}
+                    >
+                      Crear ruta de aprendizaje
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
       </main>
 
@@ -442,6 +571,24 @@ const Profile = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete path confirmation dialog */}
+      <AlertDialog open={deletePathDialogOpen} onOpenChange={setDeletePathDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La ruta de aprendizaje será eliminada permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeletePath} className="bg-destructive hover:bg-destructive/90">
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
