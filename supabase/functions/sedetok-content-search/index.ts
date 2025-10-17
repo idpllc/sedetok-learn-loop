@@ -30,14 +30,6 @@ function checkRateLimit(key: string): boolean {
   return true;
 }
 
-function normalizeLevel(level: string | null): string {
-  if (!level) return 'basico';
-  const normalized = level.toLowerCase().trim();
-  if (normalized.includes('intermedio') || normalized.includes('medio')) return 'intermedio';
-  if (normalized.includes('avanzado') || normalized.includes('alto')) return 'avanzado';
-  return 'basico';
-}
-
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -92,7 +84,7 @@ serve(async (req) => {
     const q = url.searchParams.get('q');
     const grado = url.searchParams.get('grado');
     const asignatura = url.searchParams.get('asignatura');
-    const nivel = url.searchParams.get('nivel');
+    const tipo = url.searchParams.get('tipo'); // video, documento, lectura
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
     const page = Math.max(parseInt(url.searchParams.get('page') || '1'), 1);
     const sort = url.searchParams.get('sort') || 'relevance_desc';
@@ -111,9 +103,8 @@ serve(async (req) => {
 
     // Build query
     let query = supabase
-      .from('learning_paths')
-      .select('id, title, description, cover_url, thumbnail_url, level, status, is_public, grade_level, category, subject, tags, created_at', { count: 'exact' })
-      .eq('status', 'published')
+      .from('content')
+      .select('id, title, description, thumbnail_url, video_url, document_url, content_type, grade_level, category, subject, tags, views_count, likes_count, created_at', { count: 'exact' })
       .eq('is_public', true);
 
     // Full-text search on title and description
@@ -129,15 +120,20 @@ serve(async (req) => {
       query = query.ilike('subject', `%${asignatura}%`);
     }
 
-    if (nivel) {
-      const normalizedNivel = normalizeLevel(nivel);
-      query = query.eq('level', normalizedNivel);
+    if (tipo) {
+      query = query.eq('content_type', tipo);
     }
 
     // Apply sorting
     switch (sort) {
       case 'created_desc':
         query = query.order('created_at', { ascending: false });
+        break;
+      case 'views_desc':
+        query = query.order('views_count', { ascending: false });
+        break;
+      case 'likes_desc':
+        query = query.order('likes_count', { ascending: false });
         break;
       case 'name_asc':
         query = query.order('title', { ascending: true });
@@ -168,14 +164,16 @@ serve(async (req) => {
     const customDomain = Deno.env.get('CUSTOM_DOMAIN');
     const baseUrl = customDomain || supabaseUrl.replace('.supabase.co', '.lovableproject.com');
     
-    const results = (data || []).map(path => ({
-      id: path.id,
-      name: path.title,
-      description: path.description || '',
-      coverImage: path.cover_url || path.thumbnail_url || '',
-      url: `${baseUrl}/learning-paths/${path.id}`,
-      level: normalizeLevel(path.level),
-      tags: path.tags || [],
+    const results = (data || []).map(content => ({
+      id: content.id,
+      name: content.title,
+      description: content.description || '',
+      thumbnail: content.thumbnail_url || '',
+      url: `${baseUrl}/?contentId=${content.id}`,
+      type: content.content_type,
+      tags: content.tags || [],
+      views: content.views_count || 0,
+      likes: content.likes_count || 0,
     }));
 
     const totalPages = Math.ceil((count || 0) / limit);
