@@ -1133,6 +1133,14 @@ export type Database = {
           | { p_action_type: string; p_content_id: string; p_user_id: string }
         Returns: undefined
       }
+      award_xp_for_path_creation: {
+        Args: { p_path_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      award_xp_for_quiz_creation: {
+        Args: { p_quiz_id: string; p_user_id: string }
+        Returns: boolean
+      }
       award_xp_for_upload: {
         Args: { p_content_id: string; p_user_id: string }
         Returns: boolean

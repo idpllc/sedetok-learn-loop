@@ -43,11 +43,20 @@ export const useQuizzes = (creatorId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (quiz) => {
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
+      
+      // Award 1500 XP for creating a quiz
+      if (quiz.creator_id) {
+        await supabase.rpc('award_xp_for_quiz_creation', {
+          p_user_id: quiz.creator_id,
+          p_quiz_id: quiz.id
+        });
+      }
+      
       toast({
-        title: "Quiz creado",
-        description: "El quiz ha sido creado exitosamente",
+        title: "¡Quiz creado!",
+        description: "El quiz ha sido creado exitosamente. ¡+1500 XP!",
       });
     },
     onError: (error: Error) => {

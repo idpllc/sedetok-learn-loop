@@ -97,7 +97,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
       console.log("Path created successfully:", data);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Invalidar todas las queries de learning-paths para forzar refetch
       queryClient.invalidateQueries({ queryKey: ["learning-paths"] });
       // También invalidar queries específicas del usuario
@@ -106,9 +106,18 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         queryClient.invalidateQueries({ queryKey: ["learning-paths", userId, "created"] });
       }
       console.log("Queries invalidated after creating path:", data.id);
+      
+      // Award 3000 XP for creating a learning path
+      if (data.creator_id) {
+        await supabase.rpc('award_xp_for_path_creation', {
+          p_user_id: data.creator_id,
+          p_path_id: data.id
+        });
+      }
+      
       toast({
-        title: "Ruta creada",
-        description: "La ruta de aprendizaje ha sido creada exitosamente",
+        title: "¡Ruta creada!",
+        description: "La ruta de aprendizaje ha sido creada exitosamente. ¡+3000 XP!",
       });
     },
     onError: (error: Error) => {
