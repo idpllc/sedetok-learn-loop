@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { RouteSearchModal } from "@/components/learning-paths/RouteSearchModal";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
+import { Badge } from "@/components/ui/badge";
 
 const learningTypes = [
   { value: "Visual", label: "Visual" },
@@ -27,6 +28,7 @@ interface PathBasicInfoProps {
 export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const [showRouteSearch, setShowRouteSearch] = useState(false);
   const [requiresPrerequisites, setRequiresPrerequisites] = useState(false);
+  const [tagInput, setTagInput] = useState("");
 
   const grades = [
     { value: "primaria", label: "Primaria" },
@@ -47,6 +49,22 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const handleSelectRoutes = (routes: string[]) => {
     onChange({ ...data, required_routes: routes });
     setShowRouteSearch(false);
+  };
+
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && tagInput.trim()) {
+      e.preventDefault();
+      const currentTags = data.tags || [];
+      if (!currentTags.includes(tagInput.trim())) {
+        onChange({ ...data, tags: [...currentTags, tagInput.trim()] });
+      }
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const currentTags = data.tags || [];
+    onChange({ ...data, tags: currentTags.filter((tag: string) => tag !== tagToRemove) });
   };
 
   return (
@@ -187,6 +205,34 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
           <p className="text-sm text-muted-foreground mt-1">
             Tiempo aproximado para completar toda la ruta
           </p>
+        </div>
+
+        <div>
+          <Label htmlFor="tags">Etiquetas</Label>
+          <Input
+            id="tags"
+            placeholder="Escribe una etiqueta y presiona Enter"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleAddTag}
+            className="mt-1.5"
+          />
+          <p className="text-sm text-muted-foreground mt-1">
+            Agrega etiquetas para facilitar la búsqueda de esta ruta
+          </p>
+          {data.tags && data.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {data.tags.map((tag: string, index: number) => (
+                <Badge key={index} variant="secondary" className="gap-1">
+                  {tag}
+                  <X
+                    className="w-3 h-3 cursor-pointer"
+                    onClick={() => handleRemoveTag(tag)}
+                  />
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

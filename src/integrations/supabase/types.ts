@@ -303,6 +303,7 @@ export type Database = {
           required_routes: string[] | null
           status: string | null
           subject: string | null
+          tags: string[] | null
           thumbnail_url: string | null
           tipo_aprendizaje:
             | Database["public"]["Enums"]["tipo_aprendizaje"]
@@ -331,6 +332,7 @@ export type Database = {
           required_routes?: string[] | null
           status?: string | null
           subject?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           tipo_aprendizaje?:
             | Database["public"]["Enums"]["tipo_aprendizaje"]
@@ -359,6 +361,7 @@ export type Database = {
           required_routes?: string[] | null
           status?: string | null
           subject?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           tipo_aprendizaje?:
             | Database["public"]["Enums"]["tipo_aprendizaje"]
