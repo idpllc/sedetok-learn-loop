@@ -22,10 +22,17 @@ export const useUserContent = (userId?: string) => {
         isOwnContent = user?.id === targetUserId;
       }
 
-      // Fetch regular content
+      // Fetch regular content with profile data
       let contentQuery = supabase
         .from("content")
-        .select("*")
+        .select(`
+          *,
+          profiles:creator_id (
+            username,
+            avatar_url,
+            institution
+          )
+        `)
         .eq("creator_id", targetUserId);
 
       if (!isOwnContent) {
@@ -35,10 +42,17 @@ export const useUserContent = (userId?: string) => {
       const { data: contentData, error: contentError } = await contentQuery.order("created_at", { ascending: false });
       if (contentError) throw contentError;
 
-      // Fetch quizzes
+      // Fetch quizzes with profile data
       let quizQuery = supabase
         .from("quizzes")
-        .select("*")
+        .select(`
+          *,
+          profiles:creator_id (
+            username,
+            avatar_url,
+            institution
+          )
+        `)
         .eq("creator_id", targetUserId);
 
       if (!isOwnContent) {
