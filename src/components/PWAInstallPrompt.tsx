@@ -118,7 +118,7 @@ export const PWAInstallPrompt = () => {
                 size="lg"
                 className="w-full h-12 text-base font-semibold"
               >
-                Abrir SEDETOK
+                Instalar SEDETOK
               </Button>
             )}
 

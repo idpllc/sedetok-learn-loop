@@ -90,9 +90,7 @@ export const Sidebar = () => {
               onMouseDown={(e) => e.stopPropagation()}
               onPointerDownCapture={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              onKeyDownCapture={(e) => e.stopPropagation()}
-              onFocus={(e) => e.stopPropagation()}
-              autoFocus
+              onKeyDown={(e) => e.stopPropagation()}
               autoComplete="off"
               className="pl-10"
             />
@@ -157,6 +155,12 @@ export const Sidebar = () => {
       {/* Footer */}
       <div className="p-4 border-t border-border">
         <nav className="space-y-2 text-xs text-muted-foreground">
+          <button
+            onClick={() => handleNavigate("/install")}
+            className="block hover:text-foreground transition-colors font-medium text-primary"
+          >
+            Instalar App
+          </button>
           <button
             onClick={() => handleNavigate("/about")}
             className="block hover:text-foreground transition-colors"
