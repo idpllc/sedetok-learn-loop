@@ -49,12 +49,19 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   const { user } = useAuth();
   const isCreator = Boolean(user?.id && creatorId && user.id === creatorId);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isObjectivesExpanded, setIsObjectivesExpanded] = useState(false);
   
   const MAX_DESCRIPTION_LENGTH = 150;
   const shouldTruncateDescription = description && description.length > MAX_DESCRIPTION_LENGTH;
   const displayDescription = shouldTruncateDescription && !isDescriptionExpanded
     ? description.substring(0, MAX_DESCRIPTION_LENGTH) + "..."
     : description;
+
+  const MAX_OBJECTIVES_LENGTH = 150;
+  const shouldTruncateObjectives = objectives && objectives.length > MAX_OBJECTIVES_LENGTH;
+  const displayObjectives = shouldTruncateObjectives && !isObjectivesExpanded
+    ? objectives.substring(0, MAX_OBJECTIVES_LENGTH) + "..."
+    : objectives;
   
   return (
     <div 
@@ -161,8 +168,18 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
               <h3 className="font-semibold text-base md:text-lg">Objetivos</h3>
             </div>
             <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-              {objectives}
+              {displayObjectives}
             </p>
+            {shouldTruncateObjectives && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsObjectivesExpanded(!isObjectivesExpanded)}
+                className="mt-2 text-primary hover:text-primary/80"
+              >
+                {isObjectivesExpanded ? "Ver menos" : "Ver más"}
+              </Button>
+            )}
           </div>
         )}
 
