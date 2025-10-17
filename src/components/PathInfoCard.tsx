@@ -121,17 +121,15 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
           <div className="text-center mb-4 md:mb-8 max-w-xl">
             <p className="text-sm md:text-lg text-muted-foreground leading-relaxed">
               {displayDescription}
+              {shouldTruncateDescription && (
+                <button
+                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                  className="ml-1 text-primary hover:text-primary/80 font-medium underline"
+                >
+                  {isDescriptionExpanded ? "Ver menos" : "Ver más"}
+                </button>
+              )}
             </p>
-            {shouldTruncateDescription && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                className="mt-2 text-primary hover:text-primary/80"
-              >
-                {isDescriptionExpanded ? "Ver menos" : "Ver más"}
-              </Button>
-            )}
           </div>
         )}
 
@@ -169,17 +167,15 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             </div>
             <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
               {displayObjectives}
+              {shouldTruncateObjectives && (
+                <button
+                  onClick={() => setIsObjectivesExpanded(!isObjectivesExpanded)}
+                  className="ml-1 text-primary hover:text-primary/80 font-medium underline"
+                >
+                  {isObjectivesExpanded ? "Ver menos" : "Ver más"}
+                </button>
+              )}
             </p>
-            {shouldTruncateObjectives && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsObjectivesExpanded(!isObjectivesExpanded)}
-                className="mt-2 text-primary hover:text-primary/80"
-              >
-                {isObjectivesExpanded ? "Ver menos" : "Ver más"}
-              </Button>
-            )}
           </div>
         )}
 
