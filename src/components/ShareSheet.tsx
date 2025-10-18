@@ -17,7 +17,8 @@ export const ShareSheet = ({ contentId, contentTitle, isQuiz, sharesCount = 0 }:
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const shareUrl = `${window.location.origin}/?content=${contentId}`;
+  const paramName = isQuiz ? 'quiz' : 'content';
+  const shareUrl = `${window.location.origin}/?${paramName}=${contentId}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(contentTitle);
 

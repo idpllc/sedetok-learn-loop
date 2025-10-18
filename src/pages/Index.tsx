@@ -84,6 +84,8 @@ const Index = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const contentIdFromUrl = searchParams.get("content");
+  const quizIdFromUrl = searchParams.get("quiz");
+  const pathIdFromUrl = searchParams.get("path");
   const { user, loading: authLoading } = useAuth();
   const { content, isLoading } = useContent();
   const { likes } = useUserLikes();
@@ -138,8 +140,9 @@ const Index = () => {
 
   // Scroll to specific content when contentId is in URL
   useEffect(() => {
-    if (contentIdFromUrl && content && containerRef.current) {
-      const contentIndex = content.findIndex((item) => item.id === contentIdFromUrl);
+    const targetId = contentIdFromUrl || quizIdFromUrl;
+    if (targetId && content && containerRef.current) {
+      const contentIndex = content.findIndex((item) => item.id === targetId);
       if (contentIndex !== -1) {
         setTimeout(() => {
           const container = containerRef.current;
@@ -150,7 +153,14 @@ const Index = () => {
         }, 300);
       }
     }
-  }, [contentIdFromUrl, content]);
+  }, [contentIdFromUrl, quizIdFromUrl, content]);
+
+  // Redirect to learning path when pathId is in URL
+  useEffect(() => {
+    if (pathIdFromUrl) {
+      navigate(`/learning-paths/${pathIdFromUrl}`);
+    }
+  }, [pathIdFromUrl, navigate]);
 
   if (isLoading) {
     return (
