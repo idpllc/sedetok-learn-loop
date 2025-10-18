@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePathContent, useLearningPaths } from "@/hooks/useLearningPaths";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { subjects } from "@/lib/subjects";
 
 interface PathReviewProps {
   data: any;
@@ -40,6 +41,10 @@ export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
   const requiredRoutesData = requiredPaths?.filter(path => 
     data.required_routes?.includes(path.id)
   ) || [];
+
+  const subjectLabel = data.subject
+    ? (subjects.find(s => s.value === data.subject)?.label || subjects.find(s => s.label === data.subject)?.label || data.subject)
+    : "";
 
   const checklist = [
     {
@@ -169,7 +174,7 @@ export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
           )}
 
           <div className="flex gap-2 flex-wrap">
-            {data.subject && <Badge>{data.subject}</Badge>}
+            {subjectLabel && <Badge>{subjectLabel}</Badge>}
             {data.grade_level && <Badge variant="outline">{data.grade_level}</Badge>}
             {data.level && <Badge variant="secondary">{data.level}</Badge>}
             {data.is_public && <Badge className="bg-green-500">Pública</Badge>}

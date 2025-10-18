@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus, Search, GripVertical, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
@@ -23,7 +24,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
-  const { contents, addContent, removeContent, reorderContents } = usePathContent(pathId || undefined);
+  const { contents, addContent, removeContent, reorderContents, updateContent } = usePathContent(pathId || undefined);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -182,6 +183,14 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
         description: "No se pudo actualizar el orden",
         variant: "destructive",
       });
+    }
+};
+
+  const handleUpdateItem = async (id: string, updates: any) => {
+    try {
+      await updateContent.mutateAsync({ id, updates });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "No se pudo actualizar la cápsula", variant: "destructive" });
     }
   };
 
@@ -477,12 +486,36 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {item.is_required && (
-                            <Badge variant="secondary" className="text-xs">
-                              Obligatoria
-                            </Badge>
-                          )}
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Obligatoria</span>
+                            <Switch
+                              checked={!!item.is_required}
+                              onCheckedChange={(checked) => handleUpdateItem(item.id, { is_required: checked })}
+                            />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">⏱️</span>
+                            <Input
+                              type="number"
+                              min={0}
+                              className="h-8 w-24"
+                              value={item.estimated_time_minutes ?? 0}
+                              onChange={(e) => handleUpdateItem(item.id, { estimated_time_minutes: Math.max(0, parseInt(e.target.value || '0')) })}
+                            />
+                            <span className="text-xs text-muted-foreground ml-1">min</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground">⚡</span>
+                            <Input
+                              type="number"
+                              min={0}
+                              className="h-8 w-24"
+                              value={item.xp_reward ?? 0}
+                              onChange={(e) => handleUpdateItem(item.id, { xp_reward: Math.max(0, parseInt(e.target.value || '0')) })}
+                            />
+                            <span className="text-xs text-muted-foreground ml-1">XP</span>
+                          </div>
                           <Badge variant="outline" className="text-xs">
                             {itemData?.category}
                           </Badge>
