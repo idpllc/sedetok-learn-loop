@@ -372,6 +372,10 @@ const Profile = () => {
           <div className="flex items-center gap-2">
             {isOwnProfile ? (
               <>
+                <Button variant="default" size="sm" onClick={() => document.getElementById('professional-tab')?.click()} className="flex items-center gap-2">
+                  <Briefcase className="w-4 h-4" />
+                  <span className="hidden md:inline">Perfil Profesional</span>
+                </Button>
                 <Button variant="outline" size="sm" onClick={openOnboarding} className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
                   <span className="hidden md:inline">Completar Perfil 360°</span>
@@ -479,7 +483,7 @@ const Profile = () => {
               <span className="hidden sm:inline">Rutas</span> ({learningPaths?.length || 0})
             </TabsTrigger>
             {isOwnProfile && (
-              <TabsTrigger value="professional" className="flex items-center gap-2">
+              <TabsTrigger value="professional" id="professional-tab" className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4" />
                 <span className="hidden sm:inline">Perfil Profesional</span>
               </TabsTrigger>
