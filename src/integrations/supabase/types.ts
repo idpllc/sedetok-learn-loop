@@ -1000,9 +1000,11 @@ export type Database = {
       }
       user_quiz_results: {
         Row: {
+          area_academica: string | null
           completed_at: string | null
           id: string
           max_score: number
+          no_documento: string | null
           passed: boolean | null
           quiz_id: string
           score: number
@@ -1010,9 +1012,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          area_academica?: string | null
           completed_at?: string | null
           id?: string
           max_score: number
+          no_documento?: string | null
           passed?: boolean | null
           quiz_id: string
           score: number
@@ -1020,9 +1024,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          area_academica?: string | null
           completed_at?: string | null
           id?: string
           max_score?: number
+          no_documento?: string | null
           passed?: boolean | null
           quiz_id?: string
           score?: number

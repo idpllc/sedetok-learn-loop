@@ -199,13 +199,21 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
         const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
         const passed = normalizedScore >= 60; // 60% to pass
 
-        await supabase.from("user_quiz_results").insert({
+        const { data, error } = await supabase.from("user_quiz_results").insert({
           user_id: user.id,
           quiz_id: quizId,
           score: normalizedScore,
           max_score: 100,
           passed,
-        });
+        }).select();
+
+        if (error) {
+          console.error("Error saving quiz result:", error);
+          toast.error("Error al guardar el resultado del quiz");
+          return;
+        }
+
+        console.log("Quiz result saved successfully:", data);
 
         if (passed) {
           toast.success("¡Felicitaciones! Has aprobado el quiz");
@@ -214,6 +222,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
             onQuizComplete(true);
           }
         } else {
+          toast.info("Sigue practicando para mejorar tu puntuación");
           if (onQuizComplete) {
             onQuizComplete(false);
           }
@@ -223,6 +232,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
         queryClient.invalidateQueries({ queryKey: ["quiz-attempts", quizId, user.id] });
       } catch (error) {
         console.error("Error saving quiz result:", error);
+        toast.error("Error al guardar el resultado del quiz");
       }
     }
 
