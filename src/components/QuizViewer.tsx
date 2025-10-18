@@ -213,23 +213,44 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
         passed
       });
 
-      const { data, error } = await supabase.from("user_quiz_results").insert({
+      const payload = {
         user_id: user.id,
         quiz_id: quizId,
         score: normalizedScore,
         max_score: 100,
         passed,
-        area_academica: null,
-        no_documento: null
-      }).select();
+      };
 
-      if (error) {
-        console.error("Error saving quiz result:", error);
-        toast.error(`Error al guardar el resultado: ${error.message}`);
+      // Try insert including optional columns; if columns don't exist yet, retry without them
+      let insertError: any = null;
+      let insertData: any = null;
+
+      const attempt1 = await supabase
+        .from("user_quiz_results")
+        .insert({ ...payload, area_academica: null, no_documento: null })
+        .select();
+
+      if (attempt1.error) {
+        insertError = attempt1.error;
+        console.warn("Insert with optional columns failed, retrying without them:", insertError?.message);
+        const attempt2 = await supabase
+          .from("user_quiz_results")
+          .insert(payload)
+          .select();
+        insertError = attempt2.error;
+        insertData = attempt2.data;
+      } else {
+        insertData = attempt1.data;
+      }
+
+      if (insertError) {
+        console.error("Error saving quiz result:", insertError);
+        const msg = insertError?.message || "Error desconocido";
+        toast.error(`Error al guardar el resultado: ${msg}`);
         return;
       }
 
-      console.log("Quiz result saved successfully:", data);
+      console.log("Quiz result saved successfully:", insertData);
 
       if (passed) {
         toast.success("¡Felicitaciones! Has aprobado el quiz");
