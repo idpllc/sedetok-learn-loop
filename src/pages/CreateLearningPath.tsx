@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { subjects } from "@/lib/subjects";
 
 const CreateLearningPath = () => {
   const navigate = useNavigate();
@@ -98,11 +99,15 @@ const CreateLearningPath = () => {
             setOriginalPathTitle(data.title || "");
           }
 
+          const subjectValue = data.subject
+            ? (subjects.find(s => s.label === data.subject)?.value || subjects.find(s => s.value === data.subject)?.value || data.subject)
+            : "";
+
           const loadedData = {
             title: cloneId ? `${data.title} (Copia)` : (data.title || ""),
             description: data.description || "",
             objectives: data.objectives || "",
-            subject: data.subject || "",
+            subject: subjectValue,
             topic: data.topic || "",
             grade_level: data.grade_level || "primaria",
             level: data.level || "",
@@ -223,10 +228,12 @@ const CreateLearningPath = () => {
         }
 
         // Actualizar status a published y mostrar toast
+        const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
         await updatePath.mutateAsync({ 
           id: pathId, 
           updates: { 
-            ...pathData, 
+            ...pathData,
+            subject: subjectLabel,
             status: 'published',
             estimated_duration: pathData.estimated_duration,
             tags: pathData.tags || [],
@@ -240,7 +247,8 @@ const CreateLearningPath = () => {
         });
       } else {
         // Actualizar la ruta existente en pasos intermedios (sin toast)
-        await updatePath.mutateAsync({ id: pathId, updates: pathData });
+        const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
+        await updatePath.mutateAsync({ id: pathId, updates: { ...pathData, subject: subjectLabel } });
       }
     }
 
@@ -259,13 +267,14 @@ const CreateLearningPath = () => {
   };
 
   const handleSaveDraft = async () => {
+    const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
     if (pathId) {
       await updatePath.mutateAsync({
         id: pathId,
-        updates: pathData as any,
+        updates: { ...(pathData as any), subject: subjectLabel },
       });
     } else {
-      const result = await createPath.mutateAsync(pathData as any);
+      const result = await createPath.mutateAsync({ ...(pathData as any), subject: subjectLabel });
       setPathId(result.id);
     }
     navigate("/learning-paths");

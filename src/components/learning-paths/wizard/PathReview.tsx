@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { CheckCircle2, AlertCircle, Clock, Trophy, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,14 +23,19 @@ export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
   const totalXP = contents?.reduce((acc, item: any) => 
     acc + (item.xp_reward || 0), 0) || 0;
 
-  // Actualizar estimated_duration y total_xp cuando se calculen
-  if (totalDuration !== data.estimated_duration || totalXP !== data.total_xp) {
-    onChange({
-      ...data,
-      estimated_duration: totalDuration,
-      total_xp: totalXP,
-    });
-  }
+  // Actualizar estimated_duration y total_xp cuando se calculen (sin sobrescribir manualmente con 0)
+  useEffect(() => {
+    const updates: any = {};
+    if (totalDuration > 0 && totalDuration !== (data.estimated_duration ?? 0)) {
+      updates.estimated_duration = totalDuration;
+    }
+    if (totalXP !== (data.total_xp ?? 0)) {
+      updates.total_xp = totalXP;
+    }
+    if (Object.keys(updates).length > 0) {
+      onChange({ ...data, ...updates });
+    }
+  }, [totalDuration, totalXP]);
 
   const requiredRoutesData = requiredPaths?.filter(path => 
     data.required_routes?.includes(path.id)
