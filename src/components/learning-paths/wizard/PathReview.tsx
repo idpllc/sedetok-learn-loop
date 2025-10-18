@@ -149,7 +149,7 @@ export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
 
             <div className="text-center p-4 rounded-lg bg-muted">
               <Clock className="w-6 h-6 mx-auto mb-1 text-primary" />
-              <div className="text-2xl font-bold">{totalDuration}</div>
+              <div className="text-2xl font-bold">{totalDuration > 0 ? totalDuration : (data.estimated_duration ?? 0)}</div>
               <div className="text-sm text-muted-foreground">Minutos</div>
             </div>
 

@@ -29,6 +29,12 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const [showRouteSearch, setShowRouteSearch] = useState(false);
   const [requiresPrerequisites, setRequiresPrerequisites] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  // Coerce tags to array for rendering/logic
+  const tagsArray: string[] = Array.isArray(data.tags)
+    ? data.tags
+    : (typeof data.tags === "string"
+        ? (() => { try { const p = JSON.parse(data.tags); return Array.isArray(p) ? p : data.tags.split(/[,;|]/).map((t:string)=>t.trim()).filter(Boolean);} catch { return data.tags.split(/[,;|]/).map((t:string)=>t.trim()).filter(Boolean);} })()
+        : []);
 
   // Normaliza etiquetas provenientes de la BD (array, string JSON o cadena separada por comas)
   useEffect(() => {
@@ -55,10 +61,10 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
       current.length !== normalized.length ||
       current.some((t: string, i: number) => t !== normalized[i]);
 
-    if (normalized.length > 0 && different) {
+    if (different) {
       onChange({ ...data, tags: normalized });
     }
-  }, []);
+  }, [data.tags]);
 
   const grades = [
     { value: "primaria", label: "Primaria" },
@@ -85,7 +91,7 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
     if (e.key === 'Enter' && tagInput.trim()) {
       e.preventDefault();
       const newTag = tagInput.trim();
-      const currentTags: string[] = Array.isArray(data.tags) ? data.tags : [];
+      const currentTags: string[] = tagsArray;
       const exists = currentTags.some(t => t.toLowerCase() === newTag.toLowerCase());
       const updated = exists ? currentTags : [...currentTags, newTag];
       onChange({ ...data, tags: updated });
@@ -94,7 +100,7 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    const currentTags = data.tags || [];
+    const currentTags = tagsArray;
     onChange({ ...data, tags: currentTags.filter((tag: string) => tag !== tagToRemove) });
   };
 
@@ -251,9 +257,9 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
           <p className="text-sm text-muted-foreground mt-1">
             Agrega etiquetas para facilitar la búsqueda de esta ruta
           </p>
-          {data.tags && data.tags.length > 0 && (
+          {tagsArray.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
-              {data.tags.map((tag: string, index: number) => (
+              {tagsArray.map((tag: string, index: number) => (
                 <Badge key={index} variant="secondary" className="gap-1">
                   {tag}
                   <X

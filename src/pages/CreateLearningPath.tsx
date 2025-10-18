@@ -270,13 +270,18 @@ const CreateLearningPath = () => {
 
   const handleSaveDraft = async () => {
     const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
+    const tagsNormalized = Array.isArray(pathData.tags)
+      ? pathData.tags
+      : (typeof pathData.tags === 'string'
+          ? (() => { try { const p = JSON.parse(pathData.tags); return Array.isArray(p) ? p : String(pathData.tags).split(/[,;|]/).map((t:any)=>String(t).trim()).filter(Boolean);} catch { return String(pathData.tags).split(/[,;|]/).map((t:any)=>String(t).trim()).filter(Boolean);} })()
+          : []);
     if (pathId) {
       await updatePath.mutateAsync({
         id: pathId,
-        updates: { ...(pathData as any), subject: subjectLabel },
+        updates: { ...(pathData as any), subject: subjectLabel, tags: tagsNormalized },
       });
     } else {
-      const result = await createPath.mutateAsync({ ...(pathData as any), subject: subjectLabel });
+      const result = await createPath.mutateAsync({ ...(pathData as any), subject: subjectLabel, tags: tagsNormalized });
       setPathId(result.id);
     }
     navigate("/learning-paths");
