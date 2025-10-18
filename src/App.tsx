@@ -42,9 +42,9 @@ const App = () => (
           <Route path="/create" element={<CreateContent />} />
           <Route path="/edit/:id" element={<EditContent />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/profile/professional" element={<ProfessionalProfile />} />
+          <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/creator/:userId/content" element={<CreatorContent />} />
           <Route path="/learning-paths" element={<LearningPaths />} />
           <Route path="/learning-paths/create" element={<CreateLearningPath />} />
