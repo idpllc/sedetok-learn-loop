@@ -8,6 +8,7 @@ interface OGData {
   description: string;
   image?: string;
   type: string;
+  url: string;
 }
 
 export const OpenGraphHandler = () => {
@@ -29,11 +30,18 @@ export const OpenGraphHandler = () => {
           .single();
 
         if (data && !error) {
+          const imageUrl = data.thumbnail_url 
+            ? (data.thumbnail_url.startsWith('http') 
+                ? data.thumbnail_url 
+                : `${window.location.origin}${data.thumbnail_url}`)
+            : undefined;
+
           setOgData({
-            title: data.title,
+            title: `${data.title} - SEDETOK`,
             description: data.description || "Descubre este contenido en SEDETOK",
-            image: data.thumbnail_url || undefined,
+            image: imageUrl,
             type: data.content_type === "video" ? "video.other" : "article",
+            url: window.location.href,
           });
         }
       } else if (quizId) {
@@ -45,11 +53,18 @@ export const OpenGraphHandler = () => {
           .single();
 
         if (data && !error) {
+          const imageUrl = data.thumbnail_url 
+            ? (data.thumbnail_url.startsWith('http') 
+                ? data.thumbnail_url 
+                : `${window.location.origin}${data.thumbnail_url}`)
+            : undefined;
+
           setOgData({
-            title: data.title,
+            title: `${data.title} - SEDETOK`,
             description: data.description || "Pon a prueba tus conocimientos con este quiz en SEDETOK",
-            image: data.thumbnail_url || undefined,
+            image: imageUrl,
             type: "article",
+            url: window.location.href,
           });
         }
       } else if (pathId) {
@@ -61,11 +76,18 @@ export const OpenGraphHandler = () => {
           .single();
 
         if (data && !error) {
+          const imageUrl = data.thumbnail_url 
+            ? (data.thumbnail_url.startsWith('http') 
+                ? data.thumbnail_url 
+                : `${window.location.origin}${data.thumbnail_url}`)
+            : undefined;
+
           setOgData({
-            title: data.title,
+            title: `${data.title} - SEDETOK`,
             description: data.description || "Explora esta ruta de aprendizaje en SEDETOK",
-            image: data.thumbnail_url || undefined,
+            image: imageUrl,
             type: "article",
+            url: window.location.href,
           });
         }
       }
@@ -92,22 +114,41 @@ export const OpenGraphHandler = () => {
 
   return (
     <Helmet>
-      <title>{ogData.title} - SEDETOK</title>
+      <title>{ogData.title}</title>
       <meta name="description" content={ogData.description} />
       
       {/* Open Graph meta tags */}
       <meta property="og:title" content={ogData.title} />
       <meta property="og:description" content={ogData.description} />
       <meta property="og:type" content={ogData.type} />
-      <meta property="og:url" content={window.location.href} />
-      {ogData.image && <meta property="og:image" content={ogData.image} />}
+      <meta property="og:url" content={ogData.url} />
+      {ogData.image && (
+        <>
+          <meta property="og:image" content={ogData.image} />
+          <meta property="og:image:secure_url" content={ogData.image} />
+          <meta property="og:image:type" content="image/jpeg" />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta property="og:image:alt" content={ogData.title} />
+        </>
+      )}
       <meta property="og:site_name" content="SEDETOK" />
+      <meta property="og:locale" content="es_ES" />
       
       {/* Twitter Card meta tags */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={ogData.title} />
       <meta name="twitter:description" content={ogData.description} />
-      {ogData.image && <meta name="twitter:image" content={ogData.image} />}
+      {ogData.image && (
+        <>
+          <meta name="twitter:image" content={ogData.image} />
+          <meta name="twitter:image:alt" content={ogData.title} />
+        </>
+      )}
+      <meta name="twitter:site" content="@SEDETOK" />
+      
+      {/* Facebook meta tags */}
+      <meta property="fb:app_id" content="SEDETOK" />
     </Helmet>
   );
 };
