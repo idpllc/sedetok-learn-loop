@@ -116,7 +116,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         </Card>
       </div>
 
-      {/* Gráfica de Radar */}
+      {/* Gráfica de Radar - Áreas Académicas */}
       <Card>
         <CardHeader>
           <CardTitle>Perfil Académico por Áreas</CardTitle>
@@ -149,6 +149,98 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
               </RadarChart>
             </ResponsiveContainer>
           </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Gráfica de Radar - Inteligencias Múltiples */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Perfil de Inteligencias Múltiples</CardTitle>
+          <CardDescription>
+            Identificación de tus 12 tipos de inteligencia basada en tu actividad académica
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[500px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={metrics.intelligenceRadarData}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis 
+                  dataKey="intelligence" 
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]}
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Radar
+                  name="Nivel"
+                  dataKey="score"
+                  stroke="hsl(var(--secondary))"
+                  fill="hsl(var(--secondary))"
+                  fillOpacity={0.3}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Detalles por Inteligencia */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tus Inteligencias Dominantes</CardTitle>
+          <CardDescription>
+            Análisis detallado de tus fortalezas según las inteligencias múltiples
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {metrics.intelligenceRadarData
+              .filter(intel => intel.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .map((intel, index) => {
+                const intelPerformance = getPerformanceLevel(intel.score);
+                return (
+                  <div key={index} className="flex items-start gap-4 p-4 rounded-lg border bg-card">
+                    <div className="text-4xl">{intel.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold">{intel.intelligence}</h4>
+                        <Badge variant={intelPerformance.variant} className="text-xs">
+                          {intel.score}%
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{intel.description}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>📹 {intel.videosWatched}</span>
+                        <span>📝 {intel.quizzesCompleted}</span>
+                        {intel.quizzesCompleted > 0 && (
+                          <span>📊 {intel.averageScore}%</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          
+          {metrics.intelligenceRadarData.filter(intel => intel.score === 0).length > 0 && (
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="font-semibold mb-3 text-muted-foreground">Inteligencias por desarrollar</h4>
+              <div className="flex flex-wrap gap-2">
+                {metrics.intelligenceRadarData
+                  .filter(intel => intel.score === 0)
+                  .map((intel, index) => (
+                    <Badge key={index} variant="outline" className="text-sm">
+                      {intel.icon} {intel.intelligence}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

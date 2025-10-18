@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { academicAreas, getAreaForSubject, AcademicAreaId } from "@/lib/academicAreas";
+import { intelligenceTypes, getIntelligencesForSubject, IntelligenceTypeId } from "@/lib/intelligenceTypes";
 
 export const useAcademicMetrics = (userId?: string) => {
   return useQuery({
@@ -19,6 +20,25 @@ export const useAcademicMetrics = (userId?: string) => {
 
       academicAreas.forEach(area => {
         areaMetrics[area.id] = {
+          videosWatched: 0,
+          quizzesCompleted: 0,
+          totalScore: 0,
+          quizCount: 0,
+          averageScore: 0
+        };
+      });
+
+      // Inicializar métricas por inteligencia
+      const intelligenceMetrics: Record<IntelligenceTypeId, {
+        videosWatched: number;
+        quizzesCompleted: number;
+        totalScore: number;
+        quizCount: number;
+        averageScore: number;
+      }> = {} as any;
+
+      intelligenceTypes.forEach(intelligence => {
+        intelligenceMetrics[intelligence.id] = {
           videosWatched: 0,
           quizzesCompleted: 0,
           totalScore: 0,
@@ -58,10 +78,19 @@ export const useAcademicMetrics = (userId?: string) => {
       if (watchedVideos) {
         watchedVideos.forEach((item: any) => {
           if (item.content?.subject) {
+            // Para áreas académicas
             const areaId = getAreaForSubject(item.content.subject);
             if (areaId && areaMetrics[areaId]) {
               areaMetrics[areaId].videosWatched++;
             }
+            
+            // Para inteligencias
+            const intelligenceIds = getIntelligencesForSubject(item.content.subject);
+            intelligenceIds.forEach(intId => {
+              if (intelligenceMetrics[intId]) {
+                intelligenceMetrics[intId].videosWatched++;
+              }
+            });
           }
         });
       }
@@ -70,12 +99,23 @@ export const useAcademicMetrics = (userId?: string) => {
       if (quizResults) {
         quizResults.forEach((result: any) => {
           if (result.quiz?.subject) {
+            // Para áreas académicas
             const areaId = getAreaForSubject(result.quiz.subject);
             if (areaId && areaMetrics[areaId]) {
               areaMetrics[areaId].quizzesCompleted++;
               areaMetrics[areaId].totalScore += result.score || 0;
               areaMetrics[areaId].quizCount++;
             }
+            
+            // Para inteligencias
+            const intelligenceIds = getIntelligencesForSubject(result.quiz.subject);
+            intelligenceIds.forEach(intId => {
+              if (intelligenceMetrics[intId]) {
+                intelligenceMetrics[intId].quizzesCompleted++;
+                intelligenceMetrics[intId].totalScore += result.score || 0;
+                intelligenceMetrics[intId].quizCount++;
+              }
+            });
           }
         });
       }
@@ -107,6 +147,34 @@ export const useAcademicMetrics = (userId?: string) => {
         };
       });
 
+      // Calcular inteligencias
+      const intelligenceRadarData = intelligenceTypes.map(intelligence => {
+        const metrics = intelligenceMetrics[intelligence.id];
+        
+        // Calcular promedio de quiz si hay resultados
+        if (metrics.quizCount > 0) {
+          metrics.averageScore = metrics.totalScore / metrics.quizCount;
+        }
+
+        // Calcular score general (combinando videos y quizzes)
+        const videoScore = Math.min((metrics.videosWatched * 10), 100);
+        const quizScore = metrics.averageScore;
+
+        const overallScore = metrics.quizCount > 0 
+          ? (videoScore * 0.5 + quizScore * 0.5)
+          : videoScore;
+
+        return {
+          intelligence: intelligence.name,
+          icon: intelligence.icon,
+          score: Math.round(overallScore),
+          videosWatched: metrics.videosWatched,
+          quizzesCompleted: metrics.quizzesCompleted,
+          averageScore: Math.round(metrics.averageScore),
+          description: intelligence.description
+        };
+      });
+
       // Calcular totales generales
       const totalVideos = Object.values(areaMetrics).reduce((sum, m) => sum + m.videosWatched, 0);
       const totalQuizzes = Object.values(areaMetrics).reduce((sum, m) => sum + m.quizzesCompleted, 0);
@@ -116,10 +184,12 @@ export const useAcademicMetrics = (userId?: string) => {
 
       return {
         radarData,
+        intelligenceRadarData,
         totalVideos,
         totalQuizzes,
         overallAverage,
-        areaMetrics
+        areaMetrics,
+        intelligenceMetrics
       };
     },
     enabled: !!userId
