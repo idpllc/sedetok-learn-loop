@@ -14,6 +14,7 @@ import CreateContent from "./pages/CreateContent";
 import EditContent from "./pages/EditContent";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
+import ProfessionalProfile from "./pages/ProfessionalProfile";
 import LearningPaths from "./pages/LearningPaths";
 import CreateLearningPath from "./pages/CreateLearningPath";
 import ViewLearningPath from "./pages/ViewLearningPath";
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile/professional" element={<ProfessionalProfile />} />
           <Route path="/creator/:userId/content" element={<CreatorContent />} />
           <Route path="/learning-paths" element={<LearningPaths />} />
           <Route path="/learning-paths/create" element={<CreateLearningPath />} />

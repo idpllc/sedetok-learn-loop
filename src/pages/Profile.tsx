@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, Eye, EyeOff, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase } from "lucide-react";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { PDFViewer } from "@/components/PDFViewer";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ProfessionalProfile } from "@/components/ProfessionalProfile";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +25,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserContent } from "@/hooks/useUserContent";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { useFollow } from "@/hooks/useFollow";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
@@ -372,7 +371,7 @@ const Profile = () => {
           <div className="flex items-center gap-2">
             {isOwnProfile ? (
               <>
-                <Button variant="default" size="sm" onClick={() => document.getElementById('professional-tab')?.click()} className="flex items-center gap-2">
+                <Button variant="default" size="sm" onClick={() => navigate("/profile/professional")} className="flex items-center gap-2">
                   <Briefcase className="w-4 h-4" />
                   <span className="hidden md:inline">Perfil Profesional</span>
                 </Button>
@@ -482,12 +481,6 @@ const Profile = () => {
               <Map className="w-4 h-4" />
               <span className="hidden sm:inline">Rutas</span> ({learningPaths?.length || 0})
             </TabsTrigger>
-            {isOwnProfile && (
-              <TabsTrigger value="professional" id="professional-tab" className="flex items-center gap-2">
-                <Briefcase className="w-4 h-4" />
-                <span className="hidden sm:inline">Perfil Profesional</span>
-              </TabsTrigger>
-            )}
           </TabsList>
 
           <TabsContent value="videos" className="mt-6">
@@ -567,12 +560,6 @@ const Profile = () => {
               )}
             </div>
           </TabsContent>
-
-          {isOwnProfile && (
-            <TabsContent value="professional" className="mt-6">
-              <ProfessionalProfile userId={user?.id} />
-            </TabsContent>
-          )}
         </Tabs>
       </main>
 
