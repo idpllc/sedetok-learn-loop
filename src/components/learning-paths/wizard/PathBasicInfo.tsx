@@ -62,7 +62,7 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
       current.some((t: string, i: number) => t !== normalized[i]);
 
     if (different) {
-      onChange({ ...data, tags: normalized });
+      onChange((prev: any) => ({ ...prev, tags: normalized }));
     }
   }, [data.tags]);
 
@@ -94,14 +94,14 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
       const currentTags: string[] = tagsArray;
       const exists = currentTags.some(t => t.toLowerCase() === newTag.toLowerCase());
       const updated = exists ? currentTags : [...currentTags, newTag];
-      onChange({ ...data, tags: updated });
+      onChange((prev: any) => ({ ...prev, tags: updated }));
       setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     const currentTags = tagsArray;
-    onChange({ ...data, tags: currentTags.filter((tag: string) => tag !== tagToRemove) });
+    onChange((prev: any) => ({ ...prev, tags: currentTags.filter((tag: string) => tag !== tagToRemove) }));
   };
 
   return (

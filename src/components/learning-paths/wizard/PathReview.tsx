@@ -34,7 +34,7 @@ export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
       updates.total_xp = totalXP;
     }
     if (Object.keys(updates).length > 0) {
-      onChange({ ...data, ...updates });
+      onChange((prev: any) => ({ ...prev, ...updates }));
     }
   }, [totalDuration, totalXP]);
 
