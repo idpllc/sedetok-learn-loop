@@ -173,7 +173,9 @@ const CreateLearningPath = () => {
   const handleNext = async () => {
     // Si es el primer paso y no es clonación, crear la ruta (sin toast)
     if (currentStep === 1 && !pathId && !cloneId) {
-      const result = await createPath.mutateAsync(pathData);
+      const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
+      const tags = Array.isArray(pathData.tags) ? pathData.tags : typeof pathData.tags === 'string' ? (() => { try { const p = JSON.parse(pathData.tags); return Array.isArray(p) ? p : String(pathData.tags).split(/[,;|]/).map((t:any)=>String(t).trim()).filter(Boolean);} catch { return String(pathData.tags).split(/[,;|]/).map((t:any)=>String(t).trim()).filter(Boolean);} })() : [];
+      const result = await createPath.mutateAsync({ ...pathData, subject: subjectLabel, tags });
       setPathId(result.id);
     } else if (currentStep === 1 && !pathId && cloneId) {
       // Si es clonación, crear la ruta clonada (sin toast)

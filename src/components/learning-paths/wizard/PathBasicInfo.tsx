@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,36 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const [requiresPrerequisites, setRequiresPrerequisites] = useState(false);
   const [tagInput, setTagInput] = useState("");
 
+  // Normaliza etiquetas provenientes de la BD (array, string JSON o cadena separada por comas)
+  useEffect(() => {
+    const raw = (data as any)?.tags as any;
+    let normalized: string[] = [];
+
+    if (Array.isArray(raw)) {
+      normalized = raw;
+    } else if (typeof raw === "string") {
+      try {
+        const parsed = JSON.parse(raw);
+        normalized = Array.isArray(parsed) ? parsed : raw.split(/[,;|]/);
+      } catch {
+        normalized = raw.split(/[,;|]/);
+      }
+    }
+
+    normalized = normalized
+      .map((t) => (t || "").toString().trim())
+      .filter((t) => t.length > 0);
+
+    const current = Array.isArray(data.tags) ? data.tags : [];
+    const different =
+      current.length !== normalized.length ||
+      current.some((t: string, i: number) => t !== normalized[i]);
+
+    if (normalized.length > 0 && different) {
+      onChange({ ...data, tags: normalized });
+    }
+  }, []);
+
   const grades = [
     { value: "primaria", label: "Primaria" },
     { value: "secundaria", label: "Secundaria" },
@@ -54,10 +84,11 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tagInput.trim()) {
       e.preventDefault();
-      const currentTags = data.tags || [];
-      if (!currentTags.includes(tagInput.trim())) {
-        onChange({ ...data, tags: [...currentTags, tagInput.trim()] });
-      }
+      const newTag = tagInput.trim();
+      const currentTags: string[] = Array.isArray(data.tags) ? data.tags : [];
+      const exists = currentTags.some(t => t.toLowerCase() === newTag.toLowerCase());
+      const updated = exists ? currentTags : [...currentTags, newTag];
+      onChange({ ...data, tags: updated });
       setTagInput("");
     }
   };
