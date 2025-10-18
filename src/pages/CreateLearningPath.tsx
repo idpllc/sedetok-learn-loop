@@ -43,6 +43,7 @@ const CreateLearningPath = () => {
     required_routes: [],
     tipo_aprendizaje: "",
     estimated_duration: 0,
+    tags: [],
   });
 
   // Cargar datos existentes si estamos en modo edición o clonación
@@ -115,6 +116,7 @@ const CreateLearningPath = () => {
             required_routes: data.required_routes || [],
             tipo_aprendizaje: data.tipo_aprendizaje || "",
             estimated_duration: data.estimated_duration || 0,
+            tags: data.tags || [],
           };
           
           setPathData(loadedData);
@@ -227,6 +229,7 @@ const CreateLearningPath = () => {
             ...pathData, 
             status: 'published',
             estimated_duration: pathData.estimated_duration,
+            tags: pathData.tags || [],
             total_xp: pathData.total_xp 
           } 
         });
