@@ -192,15 +192,18 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
     if (user) {
       try {
-        // Calculate max score
-        const maxScore = questions.reduce((sum, q) => sum + q.points, 0);
-        const passed = score >= maxScore * 0.6; // 60% to pass
+        // Calculate max score based on total points
+        const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+        
+        // Normalize score to 100
+        const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+        const passed = normalizedScore >= 60; // 60% to pass
 
         await supabase.from("user_quiz_results").insert({
           user_id: user.id,
           quiz_id: quizId,
-          score,
-          max_score: maxScore,
+          score: normalizedScore,
+          max_score: 100,
           passed,
         });
 
@@ -243,7 +246,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   }
 
   const currentQ = questions[currentQuestion];
-  const maxScore = questions.reduce((sum, q) => sum + q.points, 0);
+  const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+  const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
   
   // Show previous attempt results if available
   const showPreviousResults = lastAttempt && !isCompleted;
@@ -253,14 +257,14 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
       <div className="h-full flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
           <CardContent className="p-6 md:p-8 text-center space-y-6">
-            <div className="text-6xl">{score >= maxScore * 0.6 ? "🎉" : "📚"}</div>
+            <div className="text-6xl">{normalizedScore >= 60 ? "🎉" : "📚"}</div>
             <div>
               <h3 className="text-2xl font-bold mb-2">Quiz Completado</h3>
               <p className="text-4xl font-bold text-primary mb-2">
-                {score} / {maxScore}
+                {normalizedScore} / 100
               </p>
               <p className="text-muted-foreground">
-                {score >= maxScore * 0.6 ? "¡Excelente trabajo!" : "Sigue practicando"}
+                {normalizedScore >= 60 ? "¡Excelente trabajo!" : "Sigue practicando"}
               </p>
             </div>
           </CardContent>
@@ -473,7 +477,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                 </Button>
 
                 <div className="text-xs md:text-sm font-semibold flex-shrink-0">
-                  {score} / {maxScore}
+                  {normalizedScore} / 100
                 </div>
 
                 <Button 
