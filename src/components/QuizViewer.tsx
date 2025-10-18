@@ -39,6 +39,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [quizSubject, setQuizSubject] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [shortAnswerText, setShortAnswerText] = useState("");
@@ -49,11 +50,22 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
   useEffect(() => {
-    fetchQuestions();
+    fetchQuizData();
   }, [quizId]);
 
-  const fetchQuestions = async () => {
+  const fetchQuizData = async () => {
     try {
+      // Fetch quiz info to get subject
+      const { data: quizData, error: quizError } = await supabase
+        .from("quizzes")
+        .select("subject")
+        .eq("id", quizId)
+        .single();
+
+      if (quizError) throw quizError;
+      setQuizSubject(quizData?.subject || null);
+
+      // Fetch questions
       const { data, error } = await supabase
         .from("quiz_questions")
         .select("*, quiz_options(*)")
@@ -227,7 +239,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
       const attempt1 = await supabase
         .from("user_quiz_results")
-        .insert({ ...payload, area_academica: null, no_documento: null })
+        .insert({ ...payload, area_academica: quizSubject, no_documento: null })
         .select();
 
       if (attempt1.error) {
