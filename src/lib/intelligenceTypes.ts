@@ -142,5 +142,22 @@ export const getIntelligencesForSubject = (subject: string): IntelligenceTypeId[
     }
   }
   
+  // Si no se encontró coincidencia directa, mapear categorías generales
+  if (matchedIntelligences.length === 0) {
+    const categoryIntelligenceMap: Record<string, IntelligenceTypeId[]> = {
+      'matematicas': ['logico_matematica'],
+      'ciencias': ['logico_matematica', 'naturalista'],
+      'lenguaje': ['linguistico_verbal'],
+      'historia': ['linguistico_verbal', 'existencial'],
+      'ingles': ['linguistico_verbal'],
+      'tecnologia': ['digital_tecnologica', 'logico_matematica'],
+      'arte': ['visual_espacial', 'creativa_innovadora'],
+      'deportes': ['corporal_kinestesica'],
+      'musica': ['musical', 'creativa_innovadora']
+    };
+    
+    return categoryIntelligenceMap[normalizedSubject] || [];
+  }
+  
   return matchedIntelligences;
 };

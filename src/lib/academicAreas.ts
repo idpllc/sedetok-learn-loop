@@ -86,5 +86,17 @@ export const getAreaForSubject = (subject: string): AcademicAreaId | null => {
     }
   }
   
-  return null;
+  // Mapeo adicional para categorías generales
+  const categoryMap: Record<string, AcademicAreaId> = {
+    'matematicas': 'matematicas',
+    'ciencias': 'ciencias_naturales',
+    'lenguaje': 'lengua_castellana',
+    'historia': 'ciencias_sociales',
+    'ingles': 'lenguas_extranjeras',
+    'tecnologia': 'tecnologia',
+    'arte': 'educacion_artistica',
+    'deportes': 'educacion_fisica'
+  };
+  
+  return categoryMap[normalizedSubject] || null;
 };

@@ -54,6 +54,7 @@ export const useAcademicMetrics = (userId?: string) => {
           content_id,
           content:content_id (
             subject,
+            category,
             content_type
           )
         `)
@@ -69,7 +70,8 @@ export const useAcademicMetrics = (userId?: string) => {
           max_score,
           quiz_id,
           quiz:quiz_id (
-            subject
+            subject,
+            category
           )
         `)
         .eq("user_id", userId);
@@ -77,15 +79,16 @@ export const useAcademicMetrics = (userId?: string) => {
       // Procesar videos vistos
       if (watchedVideos) {
         watchedVideos.forEach((item: any) => {
-          if (item.content?.subject) {
+          const subjectToUse = item.content?.subject || item.content?.category;
+          if (subjectToUse) {
             // Para áreas académicas
-            const areaId = getAreaForSubject(item.content.subject);
+            const areaId = getAreaForSubject(subjectToUse);
             if (areaId && areaMetrics[areaId]) {
               areaMetrics[areaId].videosWatched++;
             }
             
             // Para inteligencias
-            const intelligenceIds = getIntelligencesForSubject(item.content.subject);
+            const intelligenceIds = getIntelligencesForSubject(subjectToUse);
             intelligenceIds.forEach(intId => {
               if (intelligenceMetrics[intId]) {
                 intelligenceMetrics[intId].videosWatched++;
@@ -98,9 +101,10 @@ export const useAcademicMetrics = (userId?: string) => {
       // Procesar quizzes completados
       if (quizResults) {
         quizResults.forEach((result: any) => {
-          if (result.quiz?.subject) {
+          const subjectToUse = result.quiz?.subject || result.quiz?.category;
+          if (subjectToUse) {
             // Para áreas académicas
-            const areaId = getAreaForSubject(result.quiz.subject);
+            const areaId = getAreaForSubject(subjectToUse);
             if (areaId && areaMetrics[areaId]) {
               areaMetrics[areaId].quizzesCompleted++;
               areaMetrics[areaId].totalScore += result.score || 0;
@@ -108,7 +112,7 @@ export const useAcademicMetrics = (userId?: string) => {
             }
             
             // Para inteligencias
-            const intelligenceIds = getIntelligencesForSubject(result.quiz.subject);
+            const intelligenceIds = getIntelligencesForSubject(subjectToUse);
             intelligenceIds.forEach(intId => {
               if (intelligenceMetrics[intId]) {
                 intelligenceMetrics[intId].quizzesCompleted++;
