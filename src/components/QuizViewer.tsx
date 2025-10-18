@@ -190,50 +190,65 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const completeQuiz = async () => {
     setIsCompleted(true);
 
-    if (user) {
-      try {
-        // Calculate max score based on total points
-        const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-        
-        // Normalize score to 100
-        const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
-        const passed = normalizedScore >= 60; // 60% to pass
+    if (!user) {
+      console.error("No user logged in");
+      toast.error("Debes iniciar sesión para guardar tus resultados");
+      onComplete?.();
+      return;
+    }
 
-        const { data, error } = await supabase.from("user_quiz_results").insert({
-          user_id: user.id,
-          quiz_id: quizId,
-          score: normalizedScore,
-          max_score: 100,
-          passed,
-        }).select();
+    try {
+      // Calculate max score based on total points
+      const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+      
+      // Normalize score to 100
+      const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+      const passed = normalizedScore >= 60; // 60% to pass
 
-        if (error) {
-          console.error("Error saving quiz result:", error);
-          toast.error("Error al guardar el resultado del quiz");
-          return;
-        }
+      console.log("Attempting to save quiz result:", {
+        user_id: user.id,
+        quiz_id: quizId,
+        score: normalizedScore,
+        max_score: 100,
+        passed
+      });
 
-        console.log("Quiz result saved successfully:", data);
+      const { data, error } = await supabase.from("user_quiz_results").insert({
+        user_id: user.id,
+        quiz_id: quizId,
+        score: normalizedScore,
+        max_score: 100,
+        passed,
+        area_academica: null,
+        no_documento: null
+      }).select();
 
-        if (passed) {
-          toast.success("¡Felicitaciones! Has aprobado el quiz");
-          // Notify quiz completion
-          if (onQuizComplete) {
-            onQuizComplete(true);
-          }
-        } else {
-          toast.info("Sigue practicando para mejorar tu puntuación");
-          if (onQuizComplete) {
-            onQuizComplete(false);
-          }
-        }
-
-        // Invalidar la query para actualizar el último intento
-        queryClient.invalidateQueries({ queryKey: ["quiz-attempts", quizId, user.id] });
-      } catch (error) {
+      if (error) {
         console.error("Error saving quiz result:", error);
-        toast.error("Error al guardar el resultado del quiz");
+        toast.error(`Error al guardar el resultado: ${error.message}`);
+        return;
       }
+
+      console.log("Quiz result saved successfully:", data);
+
+      if (passed) {
+        toast.success("¡Felicitaciones! Has aprobado el quiz");
+        // Notify quiz completion
+        if (onQuizComplete) {
+          onQuizComplete(true);
+        }
+      } else {
+        toast.info("Sigue practicando para mejorar tu puntuación");
+        if (onQuizComplete) {
+          onQuizComplete(false);
+        }
+      }
+
+      // Invalidar la query para actualizar el último intento
+      queryClient.invalidateQueries({ queryKey: ["quiz-attempts", quizId, user.id] });
+    } catch (error) {
+      console.error("Error saving quiz result:", error);
+      toast.error("Error al guardar el resultado del quiz");
     }
 
     onComplete?.();
