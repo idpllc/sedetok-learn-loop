@@ -55,7 +55,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
   const [previousAnswerWasWrong, setPreviousAnswerWasWrong] = useState(false);
-  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState<Record<number, boolean>>({});
+  const [questionResults, setQuestionResults] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   useEffect(() => {
@@ -183,7 +184,10 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
     const currentQ = questions[currentQuestion];
     const selectedOption = currentQ.quiz_options.find((opt) => opt.id === optionId);
 
-    if (selectedOption?.is_correct) {
+    const correct = selectedOption?.is_correct || false;
+    setQuestionResults({ ...questionResults, [currentQuestion]: correct });
+
+    if (correct) {
       setScore(score + currentQ.points);
       setIsAnswerCorrect(true);
       setPreviousAnswerWasWrong(false);
@@ -206,6 +210,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
     setShowFeedback(true);
     setIsAnswerCorrect(isCorrect);
+    setQuestionResults({ ...questionResults, [currentQuestion]: isCorrect });
     setUserAnswers({ ...userAnswers, [currentQuestion]: shortAnswerText });
 
     if (isCorrect) {
@@ -223,6 +228,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
       setShortAnswerText("");
       setShowFeedback(false);
       setIsAnswerCorrect(false);
+      // Don't reset showCorrectAnswers - each question maintains its own state
     } else {
       completeQuiz();
     }
@@ -240,13 +246,15 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
       setShortAnswerText("");
       setShowFeedback(false);
       setIsAnswerCorrect(false);
-      setShowCorrectAnswers(false);
+      // Don't reset showCorrectAnswers - each question maintains its own state
     }
   };
 
   const handleShowAnswers = async () => {
-    await deductXP(500, "Ver respuestas correctas");
-    setShowCorrectAnswers(true);
+    const success = await deductXP(500, "Ver respuestas correctas");
+    if (success) {
+      setShowCorrectAnswers({ ...showCorrectAnswers, [currentQuestion]: true });
+    }
   };
 
   const handleExtendTime = async () => {
@@ -477,7 +485,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                           const isSelected = selectedAnswer === option.id;
                           const isCorrect = option.is_correct;
                           const showResult = showFeedback && isSelected;
-                          const showAsCorrect = showCorrectAnswers && isCorrect;
+                          const showAsCorrect = showCorrectAnswers[currentQuestion] && isCorrect;
                           
                           // Array de colores vibrantes para estudiantes
                           const colors = [
@@ -621,8 +629,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                 </CardContent>
               </Card>
 
-              {/* Show answers button */}
-              {showFeedback && !showCorrectAnswers && (
+              {/* Show answers button - only when failed and hasn't paid yet */}
+              {showFeedback && !isAnswerCorrect && !showCorrectAnswers[currentQuestion] && (
                 <div className="flex justify-center">
                   <Button
                     variant="outline"
