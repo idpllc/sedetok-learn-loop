@@ -58,12 +58,12 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
       // Fetch quiz info to get subject
       const { data: quizData, error: quizError } = await supabase
         .from("quizzes")
-        .select("subject")
+        .select("subject, category")
         .eq("id", quizId)
-        .single();
+        .maybeSingle();
 
       if (quizError) throw quizError;
-      setQuizSubject(quizData?.subject || null);
+      setQuizSubject(quizData?.subject || quizData?.category || null);
 
       // Fetch questions
       const { data, error } = await supabase
