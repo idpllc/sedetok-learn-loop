@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, X, Clock, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useXP } from "@/hooks/useXP";
 
 interface QuizViewerProps {
   quizId: string;
@@ -40,8 +41,10 @@ interface Question {
 export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: QuizViewerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { deductXP } = useXP();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quizSubject, setQuizSubject] = useState<string | null>(null);
+  const [quizTimeLimit, setQuizTimeLimit] = useState<number | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [shortAnswerText, setShortAnswerText] = useState("");
@@ -51,21 +54,50 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const [loading, setLoading] = useState(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
+  const [previousAnswerWasWrong, setPreviousAnswerWasWrong] = useState(false);
+  const [showCorrectAnswers, setShowCorrectAnswers] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [timerActive, setTimerActive] = useState(false);
   useEffect(() => {
     fetchQuizData();
   }, [quizId]);
 
+  useEffect(() => {
+    if (timeRemaining !== null && timeRemaining > 0 && timerActive && !isCompleted) {
+      const interval = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev === null || prev <= 1) {
+            setTimerActive(false);
+            toast.error("¡Tiempo agotado!");
+            completeQuiz();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [timeRemaining, timerActive, isCompleted]);
+
   const fetchQuizData = async () => {
     try {
-      // Fetch quiz info to get subject
+      // Fetch quiz info to get subject and time limit
       const { data: quizData, error: quizError } = await supabase
         .from("quizzes")
-        .select("subject, category")
+        .select("subject, category, time_limit")
         .eq("id", quizId)
         .maybeSingle();
 
       if (quizError) throw quizError;
       setQuizSubject(quizData?.subject || quizData?.category || null);
+      
+      // Set time limit if exists
+      if (quizData?.time_limit) {
+        setQuizTimeLimit(quizData.time_limit);
+        setTimeRemaining(quizData.time_limit * 60); // Convert minutes to seconds
+        setTimerActive(true);
+      }
 
       // Fetch questions
       const { data, error } = await supabase
@@ -154,8 +186,10 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
     if (selectedOption?.is_correct) {
       setScore(score + currentQ.points);
       setIsAnswerCorrect(true);
+      setPreviousAnswerWasWrong(false);
     } else {
       setIsAnswerCorrect(false);
+      setPreviousAnswerWasWrong(true);
     }
   };
 
@@ -176,6 +210,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
     if (isCorrect) {
       setScore(score + currentQ.points);
+      setPreviousAnswerWasWrong(false);
+    } else {
+      setPreviousAnswerWasWrong(true);
     }
   };
 
@@ -191,14 +228,39 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = async () => {
     if (currentQuestion > 0) {
+      // Deduct XP if previous answer was wrong
+      if (previousAnswerWasWrong) {
+        await deductXP(300, "Retroceder después de fallar");
+      }
+      
       setCurrentQuestion(currentQuestion - 1);
       setSelectedAnswer(null);
       setShortAnswerText("");
       setShowFeedback(false);
       setIsAnswerCorrect(false);
+      setShowCorrectAnswers(false);
     }
+  };
+
+  const handleShowAnswers = async () => {
+    await deductXP(500, "Ver respuestas correctas");
+    setShowCorrectAnswers(true);
+  };
+
+  const handleExtendTime = async () => {
+    const success = await deductXP(200, "Extender tiempo +1 minuto");
+    if (success) {
+      setTimeRemaining(prev => (prev || 0) + 60);
+      toast.success("¡Tiempo extendido!");
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const completeQuiz = async () => {
@@ -352,6 +414,26 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
             className="min-h-full flex items-center justify-center px-3 py-4 md:p-6"
           >
             <div className="w-full max-w-2xl space-y-4 md:space-y-6">
+              {/* Timer and controls */}
+              {timeRemaining !== null && (
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Clock className="h-4 w-4" />
+                    <span className={timeRemaining < 60 ? "text-red-500" : ""}>
+                      {formatTime(timeRemaining)}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExtendTime}
+                    className="text-xs"
+                  >
+                    +1 min (-200 XP)
+                  </Button>
+                </div>
+              )}
+
               {/* Question number and points */}
               <div className="flex justify-between items-center text-xs md:text-sm">
                 <span className="font-semibold">
@@ -395,6 +477,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                           const isSelected = selectedAnswer === option.id;
                           const isCorrect = option.is_correct;
                           const showResult = showFeedback && isSelected;
+                          const showAsCorrect = showCorrectAnswers && isCorrect;
                           
                           // Array de colores vibrantes para estudiantes
                           const colors = [
@@ -404,14 +487,16 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                             'bg-gradient-to-r from-orange-400/20 to-orange-500/20 border-orange-400 hover:from-orange-400/30 hover:to-orange-500/30',
                             'bg-gradient-to-r from-teal-400/20 to-teal-500/20 border-teal-400 hover:from-teal-400/30 hover:to-teal-500/30',
                           ];
-                          const colorClass = !showFeedback ? colors[index % colors.length] : '';
+                          const colorClass = !showFeedback && !showCorrectAnswers ? colors[index % colors.length] : '';
 
                            return (
                             <Button
                               key={option.id}
                               variant="outline"
                               className={`w-full justify-start text-left h-auto min-h-[80px] p-3 md:p-4 text-sm md:text-base break-words whitespace-normal ${
-                                showResult
+                                showAsCorrect
+                                  ? "bg-green-100 border-green-500 dark:bg-green-900/20"
+                                  : showResult
                                   ? isCorrect
                                     ? "bg-green-100 border-green-500 dark:bg-green-900/20"
                                     : "bg-red-100 border-red-500 dark:bg-red-900/20"
@@ -444,9 +529,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                                 )}
                               </div>
                               
-                              {showResult && (
+                              {(showResult || showAsCorrect) && (
                                 <span className="ml-2 flex-shrink-0 self-start">
-                                  {isCorrect ? (
+                                  {(isCorrect || showAsCorrect) ? (
                                     <Check className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                                   ) : (
                                     <X className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
@@ -536,6 +621,21 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                 </CardContent>
               </Card>
 
+              {/* Show answers button */}
+              {showFeedback && !showCorrectAnswers && (
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShowAnswers}
+                    className="text-xs md:text-sm"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver respuestas (-500 XP)
+                  </Button>
+                </div>
+              )}
+
               {/* Navigation */}
               <div className="flex justify-between items-center gap-2">
                 <Button
@@ -547,6 +647,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                 >
                   <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                   Anterior
+                  {previousAnswerWasWrong && currentQuestion > 0 && (
+                    <span className="ml-1 text-[10px] text-red-500">(-300 XP)</span>
+                  )}
                 </Button>
 
                 <div className="text-xs md:text-sm font-semibold flex-shrink-0">

@@ -4,6 +4,44 @@ import { toast } from "sonner";
 type ActionType = 'view_complete' | 'like' | 'save' | 'comment' | 'path_complete';
 
 export const useXP = () => {
+  const deductXP = async (amount: number, reason: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return false;
+
+    try {
+      // Get current XP
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('experience_points')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) return false;
+
+      const currentXP = profile.experience_points || 0;
+      const newXP = Math.max(0, currentXP - amount); // No bajar de 0
+
+      // Update XP
+      const { error } = await supabase
+        .from('profiles')
+        .update({ experience_points: newXP })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.error(`-${amount} XP`, {
+        description: reason,
+        duration: 2000
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deducting XP:', error);
+      return false;
+    }
+  };
+
   const awardPathCompletionXP = async (pathId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -65,7 +103,7 @@ export const useXP = () => {
     }
   };
 
-  return { awardXP, awardPathCompletionXP };
+  return { awardXP, awardPathCompletionXP, deductXP };
 };
 
 const getActionMessage = (actionType: ActionType): string => {
