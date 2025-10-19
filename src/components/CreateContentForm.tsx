@@ -346,6 +346,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         time_limit: quizConfig.time_limit,
         random_order: quizConfig.random_order,
         final_message: quizConfig.final_message,
+        tags: tags,
         creator_id: user.id,
       };
 

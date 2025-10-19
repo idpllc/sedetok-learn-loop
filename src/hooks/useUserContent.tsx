@@ -71,7 +71,7 @@ export const useUserContent = (userId?: string) => {
         saves_count: 0,
         shares_count: 0,
         comments_count: 0,
-        tags: [],
+        tags: quiz.tags || [],
       }));
 
       // Combine both arrays and sort by created_at

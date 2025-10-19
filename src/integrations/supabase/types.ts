@@ -810,6 +810,7 @@ export type Database = {
           random_order: boolean | null
           status: Database["public"]["Enums"]["quiz_status"] | null
           subject: string | null
+          tags: string[] | null
           thumbnail_url: string | null
           time_limit: number | null
           title: string
@@ -828,6 +829,7 @@ export type Database = {
           random_order?: boolean | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
           subject?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           time_limit?: number | null
           title: string
@@ -846,6 +848,7 @@ export type Database = {
           random_order?: boolean | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
           subject?: string | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           time_limit?: number | null
           title?: string
