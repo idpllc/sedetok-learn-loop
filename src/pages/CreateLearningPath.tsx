@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -15,6 +15,7 @@ import { subjects } from "@/lib/subjects";
 
 const CreateLearningPath = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const cloneId = searchParams.get("clone");
@@ -80,7 +81,7 @@ const CreateLearningPath = () => {
                 description: "Debes iniciar sesión para editar esta ruta",
                 variant: "destructive",
               });
-              navigate("/auth");
+              navigate("/auth", { state: { from: location.pathname } });
               return;
             }
             if (data.creator_id !== user.id) {

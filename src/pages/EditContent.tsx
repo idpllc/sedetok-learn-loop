@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreateContentForm } from "@/components/CreateContentForm";
@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const EditContent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
   const { userContent, isLoading, updateMutation } = useUserContent();
@@ -17,9 +18,9 @@ const EditContent = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/auth", { state: { from: location.pathname } });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, location]);
 
   useEffect(() => {
     if (userContent && id) {

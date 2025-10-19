@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase } from "lucide-react";
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
@@ -32,6 +32,7 @@ import { getQuizScientistIcon } from "@/lib/quizScientists";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userId } = useParams();
   const { user, loading: authLoading, signOut } = useAuth();
   const isOwnProfile = !userId || userId === user?.id;
@@ -66,7 +67,7 @@ const Profile = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/auth");
+    navigate("/auth", { replace: true });
   };
 
   const handleExpandPdf = (url: string, title: string) => {
@@ -76,9 +77,9 @@ const Profile = () => {
 
   useEffect(() => {
     if (!authLoading && !user && isOwnProfile) {
-      navigate("/auth");
+      navigate("/auth", { state: { from: location.pathname } });
     }
-  }, [user, authLoading, navigate, isOwnProfile]);
+  }, [user, authLoading, navigate, isOwnProfile, location]);
 
   const handleDelete = (contentId: string) => {
     setContentToDelete(contentId);
