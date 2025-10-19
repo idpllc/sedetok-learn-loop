@@ -10,6 +10,8 @@ import { QuizQuestion } from "./QuizStep2";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
+import { useCloudinary } from "@/hooks/useCloudinary";
+import { useToast } from "@/hooks/use-toast";
 
 interface QuestionEditorProps {
   question: QuizQuestion;
@@ -19,6 +21,54 @@ interface QuestionEditorProps {
 export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
   const [showQuestionImage, setShowQuestionImage] = useState(false);
   const [showQuestionVideo, setShowQuestionVideo] = useState(false);
+  const { uploadFile, uploading } = useCloudinary();
+  const { toast } = useToast();
+
+  const handlePasteImage = async (e: React.ClipboardEvent, target: 'question' | number) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        try {
+          toast({
+            title: "Subiendo imagen...",
+            description: "Por favor espera mientras se sube la imagen",
+          });
+
+          const url = await uploadFile(file);
+          if (url) {
+            if (target === 'question') {
+              updateField("image_url", url);
+              setShowQuestionImage(false);
+            } else {
+              updateOption(target, "image_url", url);
+              const newOptions = [...question.options];
+              newOptions[target].showImageInput = false;
+              updateField("options", newOptions);
+            }
+            
+            toast({
+              title: "Imagen cargada",
+              description: "La imagen se ha pegado exitosamente",
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "No se pudo cargar la imagen",
+            variant: "destructive",
+          });
+        }
+        break;
+      }
+    }
+  };
 
   const updateField = (field: string, value: any) => {
     // When changing question type, reset options to match new type
@@ -132,7 +182,8 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
         <Textarea
           value={question.question_text}
           onChange={(e) => updateField("question_text", e.target.value)}
-          placeholder="Escribe tu pregunta aquí"
+          onPaste={(e) => handlePasteImage(e, 'question')}
+          placeholder="Escribe tu pregunta aquí (puedes pegar imágenes con Ctrl+V)"
           rows={3}
         />
         
@@ -220,7 +271,8 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
                   <Input
                     value={option.option_text}
                     onChange={(e) => updateOption(index, "option_text", e.target.value)}
-                    placeholder={`Opción ${index + 1}`}
+                    onPaste={(e) => handlePasteImage(e, index)}
+                    placeholder={`Opción ${index + 1} (pega imágenes con Ctrl+V)`}
                     className="flex-1"
                   />
                   <Button
