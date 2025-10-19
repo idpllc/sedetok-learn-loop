@@ -135,19 +135,19 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label>URL de imagen (opcional)</Label>
-          <Input
+          <Label>Imagen de la pregunta (opcional)</Label>
+          <ImageUpload
             value={question.image_url || ""}
-            onChange={(e) => updateField("image_url", e.target.value)}
-            placeholder="https://..."
+            onChange={(url) => updateField("image_url", url)}
+            label="Subir imagen"
           />
         </div>
         <div>
-          <Label>URL de video YouTube (opcional)</Label>
-          <Input
+          <Label>Video de la pregunta (opcional)</Label>
+          <ImageUpload
             value={question.video_url || ""}
-            onChange={(e) => updateField("video_url", e.target.value)}
-            placeholder="https://youtube.com/watch?v=..."
+            onChange={(url) => updateField("video_url", url)}
+            label="Subir video"
           />
         </div>
       </div>
