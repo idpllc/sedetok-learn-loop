@@ -163,13 +163,17 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
                 }`}
                 onClick={() => setSelectedQuestion(index)}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="text-sm font-medium">Pregunta {index + 1}</span>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-7 w-7 hover:bg-primary-foreground/20"
+                      className={`h-7 w-7 ${
+                        selectedQuestion === index 
+                          ? "hover:bg-primary-foreground/20 text-primary-foreground" 
+                          : "hover:bg-muted-foreground/20"
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation();
                         duplicateQuestion(index);
@@ -181,7 +185,11 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-7 w-7 hover:bg-destructive/20 hover:text-destructive"
+                      className={`h-7 w-7 ${
+                        selectedQuestion === index 
+                          ? "hover:bg-destructive/30 text-primary-foreground hover:text-destructive" 
+                          : "hover:bg-destructive/20 hover:text-destructive"
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteQuestion(index);
@@ -192,7 +200,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs mt-1 truncate opacity-80">
+                <p className="text-xs line-clamp-2 opacity-80">
                   {q.question_text || "Sin título"}
                 </p>
               </div>
