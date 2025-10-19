@@ -274,19 +274,24 @@ const Achievements = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {achievementLevels.map((level, index) => (
-              <div
-                key={level.level}
-                className={`p-4 rounded-lg border ${
-                  index === 0 ? 'border-primary bg-primary/5' : 'border-border'
-                }`}
-              >
+            {achievementLevels.map((level, index) => {
+              const isCurrentLevel = user && myLevel === level.level;
+              return (
+                <div
+                  key={level.level}
+                  className={`p-4 rounded-lg border ${
+                    isCurrentLevel ? 'border-primary bg-primary/5' : 'border-border'
+                  }`}
+                >
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">{level.icon}</div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-lg">{level.level}</h3>
-                      <Badge variant={index === 0 ? "default" : "outline"}>
+                      <h3 className="font-bold text-lg">
+                        {level.level}
+                        {isCurrentLevel && <span className="ml-2 text-primary text-sm">(Actual)</span>}
+                      </h3>
+                      <Badge variant={isCurrentLevel ? "default" : "outline"}>
                         {level.xpRequired.toLocaleString()} XP
                       </Badge>
                     </div>
@@ -304,7 +309,8 @@ const Achievements = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
 
