@@ -391,6 +391,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             option_text: opt.option_text,
             is_correct: opt.is_correct,
             order_index: idx,
+            image_url: opt.image_url,
+            video_url: opt.video_url,
           })),
         } as any);
       }
