@@ -22,6 +22,17 @@ export const useXP = () => {
       const currentXP = profile.experience_points || 0;
       const newXP = Math.max(0, currentXP - amount); // No bajar de 0
 
+      // Log the XP deduction
+      const { error: logError } = await supabase
+        .from('user_xp_log')
+        .insert({
+          user_id: user.id,
+          action_type: reason,
+          xp_amount: -amount // Negative value for deductions
+        });
+
+      if (logError) throw logError;
+
       // Update XP
       const { error } = await supabase
         .from('profiles')
