@@ -238,7 +238,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
     if (currentQuestion > 0) {
       // Deduct XP if previous answer was wrong
       if (previousAnswerWasWrong) {
-        await deductXP(300, "Retroceder después de fallar");
+        await deductXP(300, "Retroceder después de fallar", quizId);
       }
       
       setCurrentQuestion(currentQuestion - 1);
@@ -251,14 +251,14 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   };
 
   const handleShowAnswers = async () => {
-    const success = await deductXP(500, "Ver respuestas correctas");
+    const success = await deductXP(500, "Ver respuestas correctas", quizId);
     if (success) {
       setShowCorrectAnswers({ ...showCorrectAnswers, [currentQuestion]: true });
     }
   };
 
   const handleExtendTime = async () => {
-    const success = await deductXP(200, "Extender tiempo +1 minuto");
+    const success = await deductXP(200, "Extender tiempo +1 minuto", quizId);
     if (success) {
       setTimeRemaining(prev => (prev || 0) + 60);
       toast.success("¡Tiempo extendido!");

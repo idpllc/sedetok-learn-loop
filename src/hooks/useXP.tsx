@@ -4,7 +4,7 @@ import { toast } from "sonner";
 type ActionType = 'view_complete' | 'like' | 'save' | 'comment' | 'path_complete';
 
 export const useXP = () => {
-  const deductXP = async (amount: number, reason: string) => {
+  const deductXP = async (amount: number, reason: string, quizId?: string, contentId?: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) return false;
@@ -28,7 +28,9 @@ export const useXP = () => {
         .insert({
           user_id: user.id,
           action_type: reason,
-          xp_amount: -amount // Negative value for deductions
+          xp_amount: -amount, // Negative value for deductions
+          quiz_id: quizId || null,
+          content_id: contentId || null
         });
 
       if (logError) throw logError;
