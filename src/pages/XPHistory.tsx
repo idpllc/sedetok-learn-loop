@@ -24,13 +24,16 @@ interface XPLogEntry {
 
 const XPHistory = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [xpLog, setXpLog] = useState<XPLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalGained, setTotalGained] = useState(0);
   const [totalSpent, setTotalSpent] = useState(0);
 
   useEffect(() => {
+    // Wait for auth to finish loading before checking user
+    if (authLoading) return;
+    
     if (!user) {
       navigate("/auth", { state: { from: "/xp-history" } });
       return;
@@ -58,7 +61,7 @@ const XPHistory = () => {
     };
 
     loadXPHistory();
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]);
 
   const getActionLabel = (actionType: string): string => {
     const labels: Record<string, string> = {
@@ -77,6 +80,21 @@ const XPHistory = () => {
     };
     return labels[actionType] || actionType;
   };
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <>
+        <Sidebar />
+        <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
+          <div className="flex items-center justify-center h-screen">
+            <p className="text-muted-foreground">Cargando...</p>
+          </div>
+        </div>
+        <BottomNav />
+      </>
+    );
+  }
 
   return (
     <>
