@@ -50,7 +50,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
       id: `temp-${Date.now()}`,
       question_type: "multiple_choice",
       question_text: "",
-      points: 10,
+      points: 0, // Will be calculated automatically as 100/numQuestions
       options: [
         { id: `opt-1`, option_text: "", is_correct: false, order_index: 0 },
         { id: `opt-2`, option_text: "", is_correct: false, order_index: 1 },

@@ -16,7 +16,7 @@ interface QuizStep3Props {
 }
 
 export const QuizStep3 = ({ formData, questions, onChange }: QuizStep3Props) => {
-  const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+  const pointsPerQuestion = questions.length > 0 ? Math.round(100 / questions.length * 100) / 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -32,9 +32,14 @@ export const QuizStep3 = ({ formData, questions, onChange }: QuizStep3Props) => 
               <p className="text-2xl font-bold">{questions.length}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Puntos totales</p>
-              <p className="text-2xl font-bold">{totalPoints}</p>
+              <p className="text-muted-foreground">Puntaje máximo</p>
+              <p className="text-2xl font-bold">100</p>
             </div>
+          </div>
+          <div className="pt-2 border-t">
+            <p className="text-sm text-muted-foreground">
+              Cada pregunta vale: <span className="font-semibold text-foreground">{pointsPerQuestion.toFixed(2)} puntos</span>
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -93,7 +98,7 @@ export const QuizStep3 = ({ formData, questions, onChange }: QuizStep3Props) => 
                   {index + 1}. {q.question_text || "Sin título"}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Tipo: {q.question_type} • {q.points} puntos
+                  Tipo: {q.question_type} • {pointsPerQuestion.toFixed(2)} puntos
                 </p>
               </div>
             ))}

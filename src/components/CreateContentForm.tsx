@@ -373,6 +373,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       }
 
       // Create all questions
+      const pointsPerQuestion = Math.round((100 / quizQuestions.length) * 100) / 100;
+      
       for (let i = 0; i < quizQuestions.length; i++) {
         const question = quizQuestions[i];
         await createQuestion.mutateAsync({
@@ -385,7 +387,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           feedback_correct: question.feedback_correct,
           feedback_incorrect: question.feedback_incorrect,
           comparison_mode: question.comparison_mode || 'exact',
-          points: question.points,
+          points: pointsPerQuestion,
           order_index: i,
           correct_answer: 0,
           options: question.options.map((opt, idx) => ({

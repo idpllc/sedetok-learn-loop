@@ -390,17 +390,6 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
           />
         </div>
       </div>
-
-      <div>
-        <Label>Puntos</Label>
-        <Input
-          type="number"
-          value={question.points}
-          onChange={(e) => updateField("points", parseInt(e.target.value) || 10)}
-          min={1}
-          max={100}
-        />
-      </div>
     </div>
   );
 };
