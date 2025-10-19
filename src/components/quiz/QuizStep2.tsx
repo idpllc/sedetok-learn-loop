@@ -155,7 +155,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
               className="w-full"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              {isGenerating ? "Generando..." : "Generar con IA"}
+              {isGenerating ? "Generando..." : "Generar con IA (1000 XP)"}
             </Button>
           )}
         </div>
