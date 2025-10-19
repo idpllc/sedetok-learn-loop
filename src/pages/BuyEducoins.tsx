@@ -135,6 +135,10 @@ export default function BuyEducoins() {
         test: true, // Cambiar a false en producción
       });
 
+      // Si estamos dentro de un iframe (como el preview), usar modo externo para evitar bloqueos del modal
+      const isInIframe = window.self !== window.top;
+      const externalMode = isInIframe ? "true" : "false";
+
       const data = {
         name: `${educoins} Educoins`,
         description: `Paquete de ${educoins} Educoins para Sedefy`,
@@ -145,7 +149,7 @@ export default function BuyEducoins() {
         tax: "0",
         country: "co",
         lang: "es",
-        external: "false",
+        external: externalMode,
         extra1: user.id,
         extra2: educoins.toString(),
         extra3: transactionRef,
@@ -159,7 +163,7 @@ export default function BuyEducoins() {
         doc_number: userDocNumber,
       } as any;
 
-      console.debug("ePayco checkout payload", data);
+      console.debug("ePayco checkout payload", { ...data, key_test: true, in_iframe: isInIframe });
       handler.open(data);
     } catch (error) {
       console.error("Error al iniciar checkout:", error);
