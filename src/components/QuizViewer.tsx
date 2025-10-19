@@ -369,7 +369,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                     <img
                       src={currentQ.image_url}
                       alt="Question"
-                      className="w-full rounded-lg max-h-48 md:max-h-64 object-cover"
+                      className="w-full rounded-lg max-h-80 object-contain"
                     />
                   )}
 
@@ -385,7 +385,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
                    {/* Options for multiple choice and true/false */}
                    {(currentQ.question_type === "multiple_choice" || currentQ.question_type === "true_false") && (
-                    <div className="space-y-2 md:space-y-3 w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
                       {currentQ.quiz_options
                         .sort((a, b) => a.order_index - b.order_index)
                         .map((option, index) => {
@@ -407,7 +407,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                             <Button
                               key={option.id}
                               variant="outline"
-                              className={`w-full justify-start text-left h-auto p-3 md:p-4 text-sm md:text-base break-words whitespace-normal ${
+                              className={`w-full justify-start text-left h-auto min-h-[80px] p-3 md:p-4 text-sm md:text-base break-words whitespace-normal ${
                                 showResult
                                   ? isCorrect
                                     ? "bg-green-100 border-green-500 dark:bg-green-900/20"
@@ -419,19 +419,19 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                               onClick={() => handleAnswer(option.id)}
                               disabled={showFeedback}
                             >
-                              <div className="flex-1 space-y-2">
+                              <div className="flex-1 space-y-2 flex flex-col">
                                 <span className="block break-words">{option.option_text}</span>
                                 
                                 {option.image_url && (
                                   <img 
                                     src={option.image_url} 
                                     alt="Option" 
-                                    className="w-full h-32 object-cover rounded mt-2"
+                                    className="w-full max-h-32 object-contain rounded"
                                   />
                                 )}
                                 
                                 {option.video_url && (
-                                  <div className="aspect-video w-full mt-2">
+                                  <div className="aspect-video w-full">
                                     <iframe
                                       src={option.video_url.replace("watch?v=", "embed/")}
                                       className="w-full h-full rounded"
@@ -442,7 +442,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                               </div>
                               
                               {showResult && (
-                                <span className="ml-2 flex-shrink-0">
+                                <span className="ml-2 flex-shrink-0 self-start">
                                   {isCorrect ? (
                                     <Check className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
                                   ) : (
