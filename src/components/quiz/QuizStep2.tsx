@@ -5,7 +5,7 @@ import { QuestionEditor } from "./QuestionEditor";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useXP } from "@/hooks/useXP";
+import { useEducoins } from "@/hooks/useEducoins";
 
 export interface QuizQuestion {
   id: string;
@@ -46,7 +46,7 @@ interface QuizStep2Props {
 export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) => {
   const [selectedQuestion, setSelectedQuestion] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { deductXP } = useXP();
+  const { deductEducoins } = useEducoins();
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -95,9 +95,9 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
       return;
     }
 
-    // Deduct XP: 2000 if document, 1000 if no document
-    const xpCost = quizContext.document_url ? 2000 : 1000;
-    const success = await deductXP(xpCost, `Generar preguntas con IA${quizContext.document_url ? ' (con documento)' : ''}`);
+    // Deduct Educoins: 2000 if document, 1000 if no document
+    const educoinCost = quizContext.document_url ? 2000 : 1000;
+    const success = await deductEducoins(educoinCost, `Generar preguntas con IA${quizContext.document_url ? ' (con documento)' : ''}`);
     if (!success) {
       return;
     }
@@ -158,7 +158,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
               className="w-full"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              {isGenerating ? "Generando..." : `Generar con IA (${quizContext.document_url ? '2000' : '1000'} XP)`}
+              {isGenerating ? "Generando..." : `Generar con IA (${quizContext.document_url ? '2000' : '1000'} Educoins)`}
             </Button>
           )}
         </div>

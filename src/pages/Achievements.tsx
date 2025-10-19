@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn, Crown, ArrowLeft, History } from "lucide-react";
+import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn, Crown, ArrowLeft, History, Coins } from "lucide-react";
 import { xpLevels, getUserLevel } from "@/lib/xpLevels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +10,12 @@ import { BottomNav } from "@/components/BottomNav";
 import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useEducoins } from "@/hooks/useEducoins";
 
 const Achievements = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { balance: educoinBalance } = useEducoins();
 
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [myXP, setMyXP] = useState<number | null>(null);
@@ -318,6 +320,44 @@ const Achievements = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Educoins Balance */}
+        {user && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Coins className="w-6 h-6 text-primary" />
+                <CardTitle>Educoins</CardTitle>
+              </div>
+              <CardDescription>Tu moneda virtual para funciones premium</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Balance actual</p>
+                    <p className="text-3xl font-bold text-primary">
+                      {educoinBalance ?? 0} <span className="text-lg">Educoins</span>
+                    </p>
+                  </div>
+                  <Coins className="w-16 h-16 text-primary/20" />
+                </div>
+                <div className="pt-4 border-t">
+                  <Button 
+                    onClick={() => navigate("/buy-educoins")}
+                    className="w-full gap-2"
+                  >
+                    <Coins className="w-4 h-4" />
+                    Comprar Educoins
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Usa Educoins para generar quizzes con IA
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
 
         {/* Achievement Levels */}

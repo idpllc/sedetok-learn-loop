@@ -27,6 +27,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import CreatorContent from "./pages/CreatorContent";
+import BuyEducoins from "./pages/BuyEducoins";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/xp-history" element={<XPHistory />} />
+          <Route path="/buy-educoins" element={<BuyEducoins />} />
           <Route path="/create" element={<CreateContent />} />
           <Route path="/edit/:id" element={<EditContent />} />
           <Route path="/profile" element={<Profile />} />

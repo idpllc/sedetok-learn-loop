@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.sedetok-content-search]
 verify_jwt = false
+
+[functions.process-epayco-payment]
+verify_jwt = false
