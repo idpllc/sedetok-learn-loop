@@ -9,7 +9,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface XPLogEntry {
@@ -40,10 +40,14 @@ const XPHistory = () => {
     }
 
     const loadXPHistory = async () => {
+      // Get date from 1 month ago
+      const oneMonthAgo = subMonths(new Date(), 1).toISOString();
+      
       const { data, error } = await supabase
         .from("user_xp_log")
         .select("*")
         .eq("user_id", user.id)
+        .gte("created_at", oneMonthAgo) // Only last month
         .order("created_at", { ascending: false });
 
       if (!error && data) {
@@ -151,7 +155,7 @@ const XPHistory = () => {
             <CardHeader>
               <CardTitle>Transacciones</CardTitle>
               <CardDescription>
-                Registro completo de tus puntos de experiencia
+                Últimos 30 días de actividad
               </CardDescription>
             </CardHeader>
             <CardContent>
