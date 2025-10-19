@@ -175,6 +175,7 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
       <div>
         <Label>Enunciado de la pregunta *</Label>
         <RichTextEditor
+          key={question.id}
           content={question.question_text}
           onChange={(content) => updateField("question_text", content)}
           placeholder="Escribe tu pregunta aquí (usa la barra de herramientas para formato y agregar imágenes)"
