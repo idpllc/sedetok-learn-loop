@@ -5,6 +5,7 @@ import { QuestionEditor } from "./QuestionEditor";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useXP } from "@/hooks/useXP";
 
 export interface QuizQuestion {
   id: string;
@@ -44,6 +45,7 @@ interface QuizStep2Props {
 export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) => {
   const [selectedQuestion, setSelectedQuestion] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { deductXP } = useXP();
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -89,6 +91,12 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
   const generateWithAI = async () => {
     if (!quizContext) {
       toast.error("Falta el contexto del quiz para generar preguntas");
+      return;
+    }
+
+    // Deduct 1000 XP for using AI
+    const success = await deductXP(1000, "Generar preguntas con IA");
+    if (!success) {
       return;
     }
 
