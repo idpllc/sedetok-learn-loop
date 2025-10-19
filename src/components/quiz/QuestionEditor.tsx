@@ -262,19 +262,34 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
 
           <div className="space-y-3">
             {question.options.map((option, index) => (
-              <div key={option.id} className="p-3 bg-muted rounded-lg space-y-3">
+              <div key={option.id} className="p-3 bg-muted rounded-lg">
                 <div className="flex items-center gap-3">
                   <Switch
                     checked={option.is_correct}
                     onCheckedChange={(checked) => updateOption(index, "is_correct", checked)}
                   />
-                  <Input
-                    value={option.option_text}
-                    onChange={(e) => updateOption(index, "option_text", e.target.value)}
-                    onPaste={(e) => handlePasteImage(e, index)}
-                    placeholder={`Opción ${index + 1} (pega imágenes con Ctrl+V)`}
-                    className="flex-1"
-                  />
+                  
+                  {/* Vista inline: imagen + input */}
+                  <div className="flex items-center gap-2 flex-1">
+                    {(option.image_url || option.showImageInput) && (
+                      <div className="shrink-0">
+                        <ImageUpload
+                          value={option.image_url || ""}
+                          onChange={(url) => updateOption(index, "image_url", url)}
+                          compact={true}
+                        />
+                      </div>
+                    )}
+                    
+                    <Input
+                      value={option.option_text}
+                      onChange={(e) => updateOption(index, "option_text", e.target.value)}
+                      onPaste={(e) => handlePasteImage(e, index)}
+                      placeholder={`Opción ${index + 1} (pega imágenes con Ctrl+V)`}
+                      className="flex-1"
+                    />
+                  </div>
+
                   <Button
                     size="icon"
                     variant="ghost"
@@ -302,18 +317,8 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
                   )}
                 </div>
 
-                {option.showImageInput && (
-                  <div className="space-y-2">
-                    <Label className="text-xs">Imagen de la opción</Label>
-                    <ImageUpload
-                      value={option.image_url || ""}
-                      onChange={(url) => updateOption(index, "image_url", url)}
-                    />
-                  </div>
-                )}
-
                 {option.showVideoInput && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-3">
                     <Label className="text-xs">URL de video YouTube</Label>
                     <Input
                       value={option.video_url || ""}
@@ -321,10 +326,6 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
                       placeholder="https://youtube.com/watch?v=..."
                     />
                   </div>
-                )}
-
-                {option.image_url && !option.showImageInput && (
-                  <img src={option.image_url} alt="Option" className="w-full h-24 object-cover rounded" />
                 )}
               </div>
             ))}

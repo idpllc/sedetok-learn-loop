@@ -8,9 +8,10 @@ interface ImageUploadProps {
   value?: string;
   onChange: (url: string) => void;
   label?: string;
+  compact?: boolean;
 }
 
-export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: ImageUploadProps) => {
+export const ImageUpload = ({ value, onChange, label = "Imagen de portada", compact = false }: ImageUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -97,7 +98,7 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
       <label className="text-sm font-medium">{label}</label>
       
       {value ? (
-        <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+        <div className={`relative rounded-lg overflow-hidden bg-muted ${compact ? 'h-20 w-20' : 'aspect-video'}`}>
           <img
             src={value}
             alt="Preview"
@@ -107,11 +108,11 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
             <Button
               type="button"
               variant="secondary"
-              size="sm"
+              size={compact ? "icon" : "sm"}
               onClick={(e) => handleRemove(e)}
             >
-              <X className="w-4 h-4 mr-2" />
-              Eliminar
+              <X className="w-4 h-4" />
+              {!compact && <span className="ml-2">Eliminar</span>}
             </Button>
           </div>
         </div>
@@ -120,45 +121,55 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada" }: Im
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          className={`relative aspect-video rounded-lg border-2 border-dashed transition-colors ${
+          className={`relative rounded-lg border-2 border-dashed transition-colors ${
+            compact ? 'h-20 w-20' : 'aspect-video'
+          } ${
             isDragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25 hover:border-muted-foreground/50"
           }`}
         >
           <div 
-            className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center p-4 pointer-events-none"
+            className={`absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none ${
+              compact ? 'gap-1 p-1' : 'gap-3 p-4'
+            }`}
           >
             {isUploading || uploading ? (
               <>
-                <Loader2 className="w-10 h-10 text-primary animate-spin" />
-                <p className="text-sm text-muted-foreground">
-                  Subiendo imagen...
-                </p>
+                <Loader2 className={`text-primary animate-spin ${compact ? 'w-5 h-5' : 'w-10 h-10'}`} />
+                {!compact && (
+                  <p className="text-sm text-muted-foreground">
+                    Subiendo imagen...
+                  </p>
+                )}
               </>
             ) : (
               <>
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Upload className="w-6 h-6 text-primary" />
+                <div className={`rounded-full bg-primary/10 flex items-center justify-center ${
+                  compact ? 'w-8 h-8' : 'w-12 h-12'
+                }`}>
+                  <Upload className={`text-primary ${compact ? 'w-4 h-4' : 'w-6 h-6'}`} />
                 </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">
-                    Arrastra una imagen aquí o haz clic para seleccionar
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    PNG, JPG o WEBP • Máx. 5MB
-                  </p>
-                </div>
+                {!compact && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">
+                      Arrastra una imagen aquí o haz clic para seleccionar
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG o WEBP • Máx. 5MB
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </div>
           
           <label 
-            htmlFor="image-upload" 
+            htmlFor={`image-upload-${compact ? 'compact' : 'full'}`}
             className="absolute inset-0 cursor-pointer"
           />
           <input
-            id="image-upload"
+            id={`image-upload-${compact ? 'compact' : 'full'}`}
             type="file"
             accept="image/*"
             onChange={handleFileInput}
