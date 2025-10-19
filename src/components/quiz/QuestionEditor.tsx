@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +17,9 @@ interface QuestionEditorProps {
 }
 
 export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
+  const [showQuestionImage, setShowQuestionImage] = useState(false);
+  const [showQuestionVideo, setShowQuestionVideo] = useState(false);
+
   const updateField = (field: string, value: any) => {
     // When changing question type, reset options to match new type
     if (field === "question_type") {
@@ -131,25 +135,66 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
           placeholder="Escribe tu pregunta aquí"
           rows={3}
         />
-      </div>
+        
+        {/* Botones pequeños para agregar media a la pregunta */}
+        <div className="flex gap-2 mt-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setShowQuestionImage(!showQuestionImage);
+              setShowQuestionVideo(false);
+            }}
+          >
+            <Image className="h-4 w-4 mr-1" />
+            Imagen
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setShowQuestionVideo(!showQuestionVideo);
+              setShowQuestionImage(false);
+            }}
+          >
+            <Video className="h-4 w-4 mr-1" />
+            Video
+          </Button>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label>Imagen de la pregunta (opcional)</Label>
-          <ImageUpload
-            value={question.image_url || ""}
-            onChange={(url) => updateField("image_url", url)}
-            label="Subir imagen"
+        {/* Sección de carga de imagen */}
+        {showQuestionImage && (
+          <div className="mt-3 space-y-2">
+            <Label className="text-xs">Imagen de la pregunta</Label>
+            <ImageUpload
+              value={question.image_url || ""}
+              onChange={(url) => updateField("image_url", url)}
+            />
+          </div>
+        )}
+
+        {/* Sección de carga de video */}
+        {showQuestionVideo && (
+          <div className="mt-3 space-y-2">
+            <Label className="text-xs">URL de video YouTube</Label>
+            <Input
+              value={question.video_url || ""}
+              onChange={(e) => updateField("video_url", e.target.value)}
+              placeholder="https://youtube.com/watch?v=..."
+            />
+          </div>
+        )}
+
+        {/* Preview de imagen si existe */}
+        {question.image_url && !showQuestionImage && (
+          <img 
+            src={question.image_url} 
+            alt="Question preview" 
+            className="w-full h-32 object-cover rounded mt-2"
           />
-        </div>
-        <div>
-          <Label>Video de la pregunta (opcional)</Label>
-          <ImageUpload
-            value={question.video_url || ""}
-            onChange={(url) => updateField("video_url", url)}
-            label="Subir video"
-          />
-        </div>
+        )}
       </div>
 
       {(question.question_type === "multiple_choice" || question.question_type === "true_false") && (
