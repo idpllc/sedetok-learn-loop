@@ -102,12 +102,15 @@ export const useAcademicMetrics = (userId?: string) => {
       if (quizResults) {
         quizResults.forEach((result: any) => {
           const subjectToUse = result.quiz?.subject || result.quiz?.category;
-          if (subjectToUse) {
+          if (subjectToUse && result.max_score && result.max_score > 0) {
+            // Convertir score a porcentaje
+            const scorePercentage = (result.score / result.max_score) * 100;
+            
             // Para áreas académicas
             const areaId = getAreaForSubject(subjectToUse);
             if (areaId && areaMetrics[areaId]) {
               areaMetrics[areaId].quizzesCompleted++;
-              areaMetrics[areaId].totalScore += result.score || 0;
+              areaMetrics[areaId].totalScore += scorePercentage;
               areaMetrics[areaId].quizCount++;
             }
             
@@ -116,7 +119,7 @@ export const useAcademicMetrics = (userId?: string) => {
             intelligenceIds.forEach(intId => {
               if (intelligenceMetrics[intId]) {
                 intelligenceMetrics[intId].quizzesCompleted++;
-                intelligenceMetrics[intId].totalScore += result.score || 0;
+                intelligenceMetrics[intId].totalScore += scorePercentage;
                 intelligenceMetrics[intId].quizCount++;
               }
             });
