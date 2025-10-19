@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +51,18 @@ export default function BuyEducoins() {
   const [docNumber, setDocNumber] = useState<string>("");
   const [pendingPurchase, setPendingPurchase] = useState<{ educoins: number; price: number } | null>(null);
   const [savingDoc, setSavingDoc] = useState(false);
+
+  // Preload ePayco checkout script once to avoid modal hang on first open
+  useEffect(() => {
+    if (!(window as any).ePayco) {
+      const script = document.createElement("script");
+      script.src = "https://checkout.epayco.co/checkout.js";
+      script.async = true;
+      document.body.appendChild(script);
+      script.onload = () => console.debug("ePayco script loaded");
+      script.onerror = () => console.error("Error cargando ePayco checkout.js");
+    }
+  }, []);
 
   const mapDocTypeToEpayco = (t: string): string => {
     const normalized = (t || "").toUpperCase();
@@ -127,9 +139,9 @@ export default function BuyEducoins() {
         name: `${educoins} Educoins`,
         description: `Paquete de ${educoins} Educoins para Sedefy`,
         invoice: transactionRef,
-        currency: "cop",
+        currency: "COP",
         amount: price.toString(),
-        tax_base: price.toString(),
+        tax_base: "0",
         tax: "0",
         country: "co",
         lang: "es",
@@ -138,6 +150,7 @@ export default function BuyEducoins() {
         extra2: educoins.toString(),
         extra3: transactionRef,
         confirmation: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-epayco-payment`,
+        method_confirmation: "POST",
         response: `${window.location.origin}/achievements`,
         name_billing: user.user_metadata?.full_name || "Usuario",
         email_billing: user.email || "",
@@ -146,6 +159,7 @@ export default function BuyEducoins() {
         doc_number: userDocNumber,
       } as any;
 
+      console.debug("ePayco checkout payload", data);
       handler.open(data);
     } catch (error) {
       console.error("Error al iniciar checkout:", error);
