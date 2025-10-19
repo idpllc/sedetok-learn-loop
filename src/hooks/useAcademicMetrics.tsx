@@ -136,14 +136,21 @@ export const useAcademicMetrics = (userId?: string) => {
           metrics.averageScore = metrics.totalScore / metrics.quizCount;
         }
 
-        // Calcular score general del área (combinando videos y quizzes)
-        // 50% peso videos, 50% peso quizzes
-        const videoScore = Math.min((metrics.videosWatched * 10), 100); // 10 puntos por video, máx 100
+        // Calcular score general del área
+        const videoScore = Math.min((metrics.videosWatched * 10), 100);
         const quizScore = metrics.averageScore; // ya está en escala 0-100
 
-        const overallScore = metrics.quizCount > 0 
-          ? (videoScore * 0.5 + quizScore * 0.5)
-          : videoScore;
+        let overallScore: number;
+        if (metrics.quizCount > 0 && metrics.videosWatched > 0) {
+          // Si hay ambos, promediar 50/50
+          overallScore = (videoScore * 0.5 + quizScore * 0.5);
+        } else if (metrics.quizCount > 0) {
+          // Solo quizzes, usar score de quizzes
+          overallScore = quizScore;
+        } else {
+          // Solo videos
+          overallScore = videoScore;
+        }
 
         return {
           area: area.name,
@@ -163,13 +170,21 @@ export const useAcademicMetrics = (userId?: string) => {
           metrics.averageScore = metrics.totalScore / metrics.quizCount;
         }
 
-        // Calcular score general (combinando videos y quizzes)
+        // Calcular score general
         const videoScore = Math.min((metrics.videosWatched * 10), 100);
         const quizScore = metrics.averageScore;
 
-        const overallScore = metrics.quizCount > 0 
-          ? (videoScore * 0.5 + quizScore * 0.5)
-          : videoScore;
+        let overallScore: number;
+        if (metrics.quizCount > 0 && metrics.videosWatched > 0) {
+          // Si hay ambos, promediar 50/50
+          overallScore = (videoScore * 0.5 + quizScore * 0.5);
+        } else if (metrics.quizCount > 0) {
+          // Solo quizzes, usar score de quizzes
+          overallScore = quizScore;
+        } else {
+          // Solo videos
+          overallScore = videoScore;
+        }
 
         return {
           intelligence: intelligence.name,
