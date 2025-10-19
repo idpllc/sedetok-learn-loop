@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn, Crown, ArrowLeft } from "lucide-react";
+import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn, Crown, ArrowLeft, History } from "lucide-react";
 import { xpLevels, getUserLevel } from "@/lib/xpLevels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -371,6 +371,28 @@ const Achievements = () => {
             })}
           </CardContent>
         </Card>
+
+        {/* Historial de XP */}
+        {user && (
+          <Card>
+            <CardContent className="p-6 text-center space-y-4">
+              <History className="w-12 h-12 text-primary mx-auto" />
+              <h3 className="text-xl font-bold">Historial de XP</h3>
+              <p className="text-muted-foreground">
+                Revisa todas tus ganancias y gastos de puntos de experiencia
+              </p>
+              <Button
+                size="lg"
+                onClick={() => navigate("/xp-history")}
+                className="w-full"
+                variant="outline"
+              >
+                <History className="w-4 h-4 mr-2" />
+                Ver Historial Completo
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* CTA */}
         {!user && (
