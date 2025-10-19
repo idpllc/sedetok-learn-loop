@@ -5,6 +5,7 @@ import { xpLevels, getUserLevel } from "@/lib/xpLevels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BottomNav } from "@/components/BottomNav";
 import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
@@ -213,54 +214,111 @@ const Achievements = () => {
                     </div>
                   </div>
                 </div>
+                <div className="pt-4 border-t">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Zap className="w-4 h-4" />
+                        ¿Cómo Ganar XP?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-6 h-6 text-primary" />
+                          <DialogTitle>¿Cómo Ganar XP?</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                          Realiza estas actividades para ganar puntos de experiencia
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        {xpActivities.map((activity) => {
+                          const Icon = activity.icon;
+                          return (
+                            <div
+                              key={activity.title}
+                              className="flex items-start gap-4 p-4 rounded-lg bg-card border"
+                            >
+                              <div className={`p-3 rounded-full bg-background ${activity.color}`}>
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  <h3 className="font-semibold">{activity.title}</h3>
+                                  <Badge variant="secondary" className="gap-1">
+                                    <TrendingUp className="w-3 h-3" />
+                                    +{activity.xp} XP
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {activity.description}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Inicia sesión para ver tu posición y puntos.</p>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">Inicia sesión para ver tu posición y puntos.</p>
+                <div className="pt-4 border-t">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Zap className="w-4 h-4" />
+                        ¿Cómo Ganar XP?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-6 h-6 text-primary" />
+                          <DialogTitle>¿Cómo Ganar XP?</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                          Inicia sesión para comenzar a ganar puntos de experiencia
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        {xpActivities.map((activity) => {
+                          const Icon = activity.icon;
+                          return (
+                            <div
+                              key={activity.title}
+                              className="flex items-start gap-4 p-4 rounded-lg bg-card border"
+                            >
+                              <div className={`p-3 rounded-full bg-background ${activity.color}`}>
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  <h3 className="font-semibold">{activity.title}</h3>
+                                  <Badge variant="secondary" className="gap-1">
+                                    <TrendingUp className="w-3 h-3" />
+                                    +{activity.xp} XP
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {activity.description}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* XP Info Card */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Zap className="w-6 h-6 text-primary" />
-              <CardTitle>¿Cómo Ganar XP?</CardTitle>
-            </div>
-            <CardDescription>
-              {user 
-                ? "Realiza estas actividades para ganar puntos de experiencia"
-                : "Inicia sesión para comenzar a ganar puntos de experiencia"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {xpActivities.map((activity) => {
-              const Icon = activity.icon;
-              return (
-                <div
-                  key={activity.title}
-                  className="flex items-start gap-4 p-4 rounded-lg bg-card border"
-                >
-                  <div className={`p-3 rounded-full bg-background ${activity.color}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold">{activity.title}</h3>
-                      <Badge variant="secondary" className="gap-1">
-                        <TrendingUp className="w-3 h-3" />
-                        +{activity.xp} XP
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {activity.description}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
 
         {/* Achievement Levels */}
         <Card>
