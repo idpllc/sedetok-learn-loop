@@ -363,7 +363,10 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
               {/* Question */}
               <Card>
                 <CardContent className="p-3 md:p-6 space-y-4 md:space-y-6">
-                  <h3 className="text-base md:text-xl font-bold leading-tight break-words">{currentQ.question_text}</h3>
+                  <div 
+                    className="prose prose-sm max-w-none text-base md:text-xl font-bold leading-tight break-words"
+                    dangerouslySetInnerHTML={{ __html: currentQ.question_text }}
+                  />
 
                   {currentQ.image_url && (
                     <img

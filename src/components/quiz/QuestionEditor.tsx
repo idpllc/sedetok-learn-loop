@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2, Info, Image, Video } from "lucide-react";
 import { QuizQuestion } from "./QuizStep2";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
+import { RichTextEditor } from "./RichTextEditor";
 
 interface QuestionEditorProps {
   question: QuizQuestion;
@@ -19,12 +19,11 @@ interface QuestionEditorProps {
 }
 
 export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
-  const [showQuestionImage, setShowQuestionImage] = useState(false);
   const [showQuestionVideo, setShowQuestionVideo] = useState(false);
   const { uploadFile, uploading } = useCloudinary();
   const { toast } = useToast();
 
-  const handlePasteImage = async (e: React.ClipboardEvent, target: 'question' | number) => {
+  const handlePasteImage = async (e: React.ClipboardEvent, target: number) => {
     const items = e.clipboardData?.items;
     if (!items) return;
 
@@ -43,17 +42,11 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
 
           const url = await uploadFile(file);
           if (url) {
-            if (target === 'question') {
-              // Actualiza la imagen del enunciado sin afectar otras propiedades
-              updateField("image_url", url);
-              setShowQuestionImage(false);
-            } else {
-              // Un solo update inmutable para evitar sobrescribir el estado previo
-              const newOptions = question.options.map((opt, i) =>
-                i === target ? { ...opt, image_url: url, showImageInput: false } : opt
-              );
-              updateField("options", newOptions);
-            }
+            // Un solo update inmutable para evitar sobrescribir el estado previo
+            const newOptions = question.options.map((opt, i) =>
+              i === target ? { ...opt, image_url: url, showImageInput: false } : opt
+            );
+            updateField("options", newOptions);
 
             toast({
               title: "Imagen cargada",
@@ -181,54 +174,28 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
 
       <div>
         <Label>Enunciado de la pregunta *</Label>
-        <Textarea
-          value={question.question_text}
-          onChange={(e) => updateField("question_text", e.target.value)}
-          onPaste={(e) => handlePasteImage(e, 'question')}
-          placeholder="Escribe tu pregunta aquí (puedes pegar imágenes con Ctrl+V)"
-          rows={3}
+        <RichTextEditor
+          content={question.question_text}
+          onChange={(content) => updateField("question_text", content)}
+          placeholder="Escribe tu pregunta aquí (usa la barra de herramientas para formato y agregar imágenes)"
         />
+        <p className="text-xs text-muted-foreground mt-1">
+          Puedes usar texto enriquecido, listas y agregar imágenes directamente desde el editor
+        </p>
         
-        {/* Botones pequeños para agregar media a la pregunta */}
-        <div className="flex gap-2 mt-2">
+        {/* Sección de video opcional */}
+        <div className="mt-3">
           <Button
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => {
-              setShowQuestionImage(!showQuestionImage);
-              setShowQuestionVideo(false);
-            }}
-          >
-            <Image className="h-4 w-4 mr-1" />
-            Imagen
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setShowQuestionVideo(!showQuestionVideo);
-              setShowQuestionImage(false);
-            }}
+            onClick={() => setShowQuestionVideo(!showQuestionVideo)}
           >
             <Video className="h-4 w-4 mr-1" />
-            Video
+            {showQuestionVideo ? "Ocultar video" : "Agregar video"}
           </Button>
         </div>
 
-        {/* Sección de carga de imagen */}
-        {showQuestionImage && (
-          <div className="mt-3 space-y-2">
-            <Label className="text-xs">Imagen de la pregunta</Label>
-            <ImageUpload
-              value={question.image_url || ""}
-              onChange={(url) => updateField("image_url", url)}
-            />
-          </div>
-        )}
-
-        {/* Sección de carga de video */}
         {showQuestionVideo && (
           <div className="mt-3 space-y-2">
             <Label className="text-xs">URL de video YouTube</Label>
@@ -238,15 +205,6 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
               placeholder="https://youtube.com/watch?v=..."
             />
           </div>
-        )}
-
-        {/* Preview de imagen si existe */}
-        {question.image_url && !showQuestionImage && (
-          <img 
-            src={question.image_url} 
-            alt="Question preview" 
-            className="w-full h-32 object-cover rounded mt-2"
-          />
         )}
       </div>
 
