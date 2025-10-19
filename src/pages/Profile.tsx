@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase } from "lucide-react";
+import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { PDFViewer } from "@/components/PDFViewer";
@@ -414,6 +415,34 @@ const Profile = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6">
+        {/* Profile Summary Card with Level */}
+        {profileData && (
+          <Card className="mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-6">
+                <div className="text-6xl">
+                  {getUserLevel(profileData.experience_points || 0).icon}
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold mb-1">
+                    {getUserLevel(profileData.experience_points || 0).level}
+                  </h2>
+                  <p className="text-lg text-muted-foreground mb-2">
+                    {(profileData.experience_points || 0).toLocaleString()} XP
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {getUserLevel(profileData.experience_points || 0).benefits.map((benefit, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {benefit}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-4 mb-6">
           <Card>

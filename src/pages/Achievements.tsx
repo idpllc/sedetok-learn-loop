@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn, Crown, ArrowLeft } from "lucide-react";
+import { xpLevels, getUserLevel } from "@/lib/xpLevels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ const Achievements = () => {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [myXP, setMyXP] = useState<number | null>(null);
   const [myRank, setMyRank] = useState<number | null>(null);
+  const [myLevel, setMyLevel] = useState<string>("Principiante");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,6 +41,11 @@ const Achievements = () => {
         if (me) {
           const xp = me.experience_points || 0;
           setMyXP(xp);
+          
+          // Calcular nivel actual
+          const level = getUserLevel(xp);
+          setMyLevel(level.level);
+          
           const { count } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
@@ -110,92 +117,8 @@ const Achievements = () => {
     },
   ];
 
-  const achievementLevels = [
-    {
-      level: "Principiante",
-      xpRequired: 0,
-      icon: "🌱",
-      benefits: ["Acceso al contenido público", "Perfil básico"],
-    },
-    {
-      level: "Estudiante",
-      xpRequired: 500,
-      icon: "📚",
-      benefits: ["Badge de estudiante", "Acceso a contenido exclusivo"],
-    },
-    {
-      level: "Explorador",
-      xpRequired: 2000,
-      icon: "🔍",
-      benefits: ["Badge de explorador", "Acceso a rutas de aprendizaje"],
-    },
-    {
-      level: "Investigador",
-      xpRequired: 5000,
-      icon: "🔬",
-      benefits: ["Badge de investigador", "Participar en proyectos especiales"],
-    },
-    {
-      level: "Experto",
-      xpRequired: 10000,
-      icon: "💡",
-      benefits: ["Badge de experto", "Crear contenido avanzado"],
-    },
-    {
-      level: "Maestro",
-      xpRequired: 25000,
-      icon: "🎓",
-      benefits: ["Badge de maestro", "Mentor de estudiantes"],
-    },
-    {
-      level: "Sabio",
-      xpRequired: 50000,
-      icon: "📖",
-      benefits: ["Badge de sabio", "Crear rutas de aprendizaje premium"],
-    },
-    {
-      level: "Erudito",
-      xpRequired: 100000,
-      icon: "🧠",
-      benefits: ["Badge de erudito", "Acceso a comunidad exclusiva"],
-    },
-    {
-      level: "Virtuoso",
-      xpRequired: 250000,
-      icon: "🎯",
-      benefits: ["Badge de virtuoso", "Colaborar con instituciones"],
-    },
-    {
-      level: "Prodigio",
-      xpRequired: 500000,
-      icon: "💫",
-      benefits: ["Badge de prodigio", "Certificaciones especiales"],
-    },
-    {
-      level: "Genio",
-      xpRequired: 1000000,
-      icon: "🌟",
-      benefits: ["Badge de genio", "Embajador de la plataforma"],
-    },
-    {
-      level: "Leyenda",
-      xpRequired: 2500000,
-      icon: "👑",
-      benefits: ["Badge de leyenda", "Influencer educativo oficial"],
-    },
-    {
-      level: "Mítico",
-      xpRequired: 5000000,
-      icon: "🏆",
-      benefits: ["Badge mítico", "Líder de comunidad global"],
-    },
-    {
-      level: "Inmortal",
-      xpRequired: 10000000,
-      icon: "⚡",
-      benefits: ["Badge inmortal", "Legado en la historia de la plataforma"],
-    },
-  ];
+  // Usar xpLevels importado en lugar de achievementLevels local
+  const achievementLevels = xpLevels;
 
   return (
     <>
@@ -270,14 +193,25 @@ const Achievements = () => {
             {loading ? (
               <p className="text-sm text-muted-foreground">Cargando...</p>
             ) : user ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Posición actual</p>
-                  <p className="text-2xl font-bold">#{myRank ?? '—'}</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Posición actual</p>
+                    <p className="text-2xl font-bold">#{myRank ?? '—'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Tus puntos</p>
+                    <p className="text-2xl font-bold">{(myXP ?? 0).toLocaleString()} XP</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Tus puntos</p>
-                  <p className="text-2xl font-bold">{(myXP ?? 0).toLocaleString()} XP</p>
+                <div className="pt-4 border-t">
+                  <div className="flex items-center gap-3">
+                    <div className="text-4xl">{getUserLevel(myXP ?? 0).icon}</div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nivel actual</p>
+                      <p className="text-xl font-bold">{myLevel}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
