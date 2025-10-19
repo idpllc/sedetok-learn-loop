@@ -306,9 +306,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const currentQ = questions[currentQuestion];
   const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
   const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
-  
-  // Show previous attempt results if available
-  const showPreviousResults = lastAttempt && !isCompleted;
 
   if (isCompleted) {
     return (
@@ -393,7 +390,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                           const isSelected = selectedAnswer === option.id;
                           const isCorrect = option.is_correct;
                           const showResult = showFeedback && isSelected;
-                          const showCorrectFromPrevious = showPreviousResults && !showFeedback && isCorrect;
                           
                           // Array de colores vibrantes para estudiantes
                           const colors = [
@@ -414,8 +410,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                                   ? isCorrect
                                     ? "bg-green-100 border-green-500 dark:bg-green-900/20"
                                     : "bg-red-100 border-red-500 dark:bg-red-900/20"
-                                  : showCorrectFromPrevious
-                                  ? "bg-green-50 border-green-300 dark:bg-green-900/10"
                                   : isSelected
                                   ? "bg-primary/10 border-primary"
                                   : colorClass
@@ -431,11 +425,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                                   ) : (
                                     <X className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
                                   )}
-                                </span>
-                              )}
-                              {showCorrectFromPrevious && !showFeedback && (
-                                <span className="ml-2 text-xs text-green-600 flex-shrink-0">
-                                  ✓ Correcta
                                 </span>
                               )}
                             </Button>
