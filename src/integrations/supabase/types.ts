@@ -1084,6 +1084,7 @@ export type Database = {
           content_id: string | null
           created_at: string | null
           id: string
+          path_id: string | null
           quiz_id: string | null
           user_id: string
           xp_amount: number
@@ -1093,6 +1094,7 @@ export type Database = {
           content_id?: string | null
           created_at?: string | null
           id?: string
+          path_id?: string | null
           quiz_id?: string | null
           user_id: string
           xp_amount: number
@@ -1102,6 +1104,7 @@ export type Database = {
           content_id?: string | null
           created_at?: string | null
           id?: string
+          path_id?: string | null
           quiz_id?: string | null
           user_id?: string
           xp_amount?: number
@@ -1112,6 +1115,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_xp_log_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
             referencedColumns: ["id"]
           },
           {
@@ -1129,14 +1139,12 @@ export type Database = {
     }
     Functions: {
       award_xp_for_action: {
-        Args:
-          | {
-              p_action_type: string
-              p_content_id: string
-              p_is_quiz?: boolean
-              p_user_id: string
-            }
-          | { p_action_type: string; p_content_id: string; p_user_id: string }
+        Args: {
+          p_action_type: string
+          p_content_id: string
+          p_is_quiz?: boolean
+          p_user_id: string
+        }
         Returns: undefined
       }
       award_xp_for_path_creation: {
