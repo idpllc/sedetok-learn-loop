@@ -3,9 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Coins, Check, ArrowLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { useEducoins } from "@/hooks/useEducoins";
+import { useProfileUpdate } from "@/hooks/useProfileUpdate";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { z } from "zod";
 
 declare global {
   interface Window {
@@ -39,6 +45,32 @@ export default function BuyEducoins() {
   const navigate = useNavigate();
   const { balance, createTransaction } = useEducoins();
   const [loadingPackage, setLoadingPackage] = useState<number | null>(null);
+  const { profile, updateProfile } = useProfileUpdate();
+  const [docModalOpen, setDocModalOpen] = useState(false);
+  const [docType, setDocType] = useState<string>("");
+  const [docNumber, setDocNumber] = useState<string>("");
+  const [pendingPurchase, setPendingPurchase] = useState<{ educoins: number; price: number } | null>(null);
+  const [savingDoc, setSavingDoc] = useState(false);
+
+  const mapDocTypeToEpayco = (t: string): string => {
+    const normalized = (t || "").toUpperCase();
+    if (["CC", "CEDULA", "CÉDULA", "CEDULA DE CIUDADANIA", "CÉDULA DE CIUDADANÍA"].includes(normalized)) return "CC";
+    if (["CE", "CEDULA DE EXTRANJERIA", "CÉDULA DE EXTRANJERÍA"].includes(normalized)) return "CE";
+    if (["TI", "TARJETA DE IDENTIDAD"].includes(normalized)) return "TI";
+    if (["NIT"].includes(normalized)) return "NIT";
+    if (["PP", "PASAPORTE", "PASSPORT"].includes(normalized)) return "PP";
+    return "CC";
+  };
+
+  const docSchema = z.object({
+    docType: z.enum(["CC", "CE", "TI", "NIT", "PP"], { required_error: "Selecciona el tipo de documento" }),
+    docNumber: z
+      .string()
+      .trim()
+      .min(5, "Número de documento demasiado corto")
+      .max(20, "Número de documento demasiado largo")
+      .regex(/^[0-9A-Za-z-]+$/, "Sólo números, letras y guiones"),
+  });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -48,9 +80,12 @@ export default function BuyEducoins() {
     }).format(price);
   };
 
-  const handleBuy = async (educoins: number, price: number) => {
-    setLoadingPackage(educoins);
-
+  const startCheckout = async (
+    educoins: number,
+    price: number,
+    userDocType: string,
+    userDocNumber: string
+  ) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -59,40 +94,33 @@ export default function BuyEducoins() {
         return;
       }
 
-      // Get public key from environment
       const publicKey = import.meta.env.VITE_EPAYCO_PUBLIC_KEY || "";
-
       if (!publicKey) {
         toast.error("Error de configuración. Contacta al administrador.");
         return;
       }
 
-      // Create transaction reference
       const transactionRef = `EDU-${Date.now()}-${user.id.slice(0, 8)}`;
 
-      // Create pending transaction
       await createTransaction.mutateAsync({
         amount: price,
         educoins,
         transactionRef,
       });
 
-      // Load ePayco script if not loaded
-      if (!window.ePayco) {
+      if (!(window as any).ePayco) {
         const script = document.createElement("script");
         script.src = "https://checkout.epayco.co/checkout.js";
         script.async = true;
         document.body.appendChild(script);
-
         await new Promise((resolve) => {
-          script.onload = resolve;
+          script.onload = resolve as any;
         });
       }
 
-      // Initialize ePayco checkout
-      const handler = window.ePayco.checkout.configure({
+      const handler = (window as any).ePayco.checkout.configure({
         key: publicKey,
-        test: true, // Cambiar a false cuando estés en producción
+        test: true, // Cambiar a false en producción
       });
 
       const data = {
@@ -114,18 +142,76 @@ export default function BuyEducoins() {
         name_billing: user.user_metadata?.full_name || "Usuario",
         email_billing: user.email || "",
         type_person: "0",
-        doc_type: "CC",
-        doc_number: "1000000000",
-      };
+        doc_type: mapDocTypeToEpayco(userDocType),
+        doc_number: userDocNumber,
+      } as any;
 
       handler.open(data);
     } catch (error) {
-      console.error("Error al procesar compra:", error);
+      console.error("Error al iniciar checkout:", error);
       toast.error("Error al procesar la compra. Intenta de nuevo.");
     } finally {
       setLoadingPackage(null);
     }
   };
+
+
+  const handleBuy = async (educoins: number, price: number) => {
+    setLoadingPackage(educoins);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Debes iniciar sesión para comprar Educoins");
+        navigate("/auth");
+        return;
+      }
+
+      const profileDocType = profile?.tipo_documento ? String(profile.tipo_documento) : "";
+      const profileDocNumber = profile?.numero_documento ? String(profile.numero_documento) : "";
+
+      if (!profileDocType || !profileDocNumber) {
+        // Abrir modal para capturar datos faltantes
+        setPendingPurchase({ educoins, price });
+        setDocType(profileDocType ? mapDocTypeToEpayco(profileDocType) : "");
+        setDocNumber(profileDocNumber || "");
+        setDocModalOpen(true);
+        setLoadingPackage(null);
+        return;
+      }
+
+      await startCheckout(educoins, price, profileDocType, profileDocNumber);
+    } catch (error) {
+      console.error("Error al procesar compra:", error);
+      toast.error("Error al procesar la compra. Intenta de nuevo.");
+      setLoadingPackage(null);
+    }
+  };
+
+  const handleSaveDoc = async () => {
+    if (!pendingPurchase) return;
+    try {
+      setSavingDoc(true);
+      const parsed = docSchema.parse({ docType, docNumber });
+      // Intentar guardar en el perfil para futuras compras
+      try {
+        await updateProfile({ tipo_documento: parsed.docType, numero_documento: parsed.docNumber });
+        toast.success("Datos guardados correctamente");
+      } catch (e: any) {
+        console.error("No se pudo guardar en perfil, se continuará con la compra:", e);
+      }
+      setDocModalOpen(false);
+      setLoadingPackage(pendingPurchase.educoins);
+      await startCheckout(pendingPurchase.educoins, pendingPurchase.price, parsed.docType, parsed.docNumber);
+      setPendingPurchase(null);
+    } catch (e: any) {
+      const msg = e?.message || "Datos inválidos";
+      toast.error(msg);
+    } finally {
+      setSavingDoc(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -192,7 +278,7 @@ export default function BuyEducoins() {
                 </ul>
                 <Button
                   onClick={() => handleBuy(pkg.educoins, pkg.price)}
-                  disabled={loadingPackage !== null}
+                  disabled={loadingPackage === pkg.educoins}
                   className="w-full"
                   variant={pkg.popular ? "default" : "outline"}
                 >
@@ -209,6 +295,70 @@ export default function BuyEducoins() {
             Los Educoins se agregarán automáticamente a tu cuenta una vez confirmado el pago
           </p>
         </div>
+
+        <Dialog
+          open={docModalOpen}
+          onOpenChange={(open) => {
+            setDocModalOpen(open);
+            if (!open) {
+              setPendingPurchase(null);
+              setLoadingPackage(null);
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Datos de identificación</DialogTitle>
+              <DialogDescription>
+                Para continuar con el pago necesitamos tu tipo y número de documento.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Tipo de documento</Label>
+                <Select value={docType} onValueChange={setDocType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CC">Cédula de Ciudadanía (CC)</SelectItem>
+                    <SelectItem value="CE">Cédula de Extranjería (CE)</SelectItem>
+                    <SelectItem value="TI">Tarjeta de Identidad (TI)</SelectItem>
+                    <SelectItem value="NIT">NIT</SelectItem>
+                    <SelectItem value="PP">Pasaporte (PP)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Número de documento</Label>
+                <Input
+                  value={docNumber}
+                  onChange={(e) => setDocNumber(e.target.value)}
+                  placeholder="Ingresa tu número de documento"
+                  inputMode="numeric"
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDocModalOpen(false);
+                  setPendingPurchase(null);
+                  setLoadingPackage(null);
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveDoc} disabled={savingDoc || !docType || !docNumber}>
+                {savingDoc ? "Guardando..." : "Guardar y continuar"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
