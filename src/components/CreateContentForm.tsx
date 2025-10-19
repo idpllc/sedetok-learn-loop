@@ -116,6 +116,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     grade_level: "" as GradeLevel,
     content_type: "" as ContentType,
     difficulty: "basico" as "basico" | "intermedio" | "avanzado",
+    document_url: "" as string | undefined,
   });
   
   const [tags, setTags] = useState<string[]>([]);
@@ -697,6 +698,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 category: formData.category,
                 grade_level: formData.grade_level,
                 difficulty: formData.difficulty,
+                document_url: formData.document_url,
               }}
             />
           )}
@@ -804,22 +806,97 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       </div>
 
       {isQuizMode && (
-        <div className="space-y-2">
-          <Label htmlFor="difficulty">Nivel de dificultad *</Label>
-          <Select
-            value={formData.difficulty}
-            onValueChange={(value) => setFormData({ ...formData, difficulty: value as any })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecciona el nivel" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="basico">Básico</SelectItem>
-              <SelectItem value="intermedio">Intermedio</SelectItem>
-              <SelectItem value="avanzado">Avanzado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="difficulty">Nivel de dificultad *</Label>
+            <Select
+              value={formData.difficulty}
+              onValueChange={(value) => setFormData({ ...formData, difficulty: value as any })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona el nivel" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="basico">Básico</SelectItem>
+                <SelectItem value="intermedio">Intermedio</SelectItem>
+                <SelectItem value="avanzado">Avanzado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="quiz-document">Documento de referencia (Opcional)</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Adjunta un PDF, DOC, DOCX, XLS o XLSX para generar preguntas con IA basadas en el documento (2000 XP)
+            </p>
+            
+            {!formData.document_url ? (
+              <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                <Input
+                  id="quiz-document-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    const validTypes = [
+                      'application/pdf',
+                      'application/msword',
+                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                      'application/vnd.ms-excel',
+                      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    ];
+
+                    if (!validTypes.includes(file.type)) {
+                      toast.error("Solo se permiten archivos PDF, DOC, DOCX, XLS, XLSX");
+                      return;
+                    }
+
+                    try {
+                      const url = await uploadFile(file, "raw");
+                      setFormData({ ...formData, document_url: url });
+                      toast.success("Documento adjuntado correctamente");
+                    } catch (error) {
+                      console.error("Error al subir documento:", error);
+                    }
+                  }}
+                  disabled={uploading}
+                  className="hidden"
+                />
+                <label htmlFor="quiz-document-upload" className="cursor-pointer">
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {uploading ? "Subiendo documento..." : "Haz clic para adjuntar un documento"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, DOC, DOCX, XLS, XLSX
+                    </p>
+                  </div>
+                </label>
+              </div>
+            ) : (
+              <div className="border rounded-lg p-4 flex items-center justify-between bg-muted/50">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <span className="text-sm">Documento adjuntado</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setFormData({ ...formData, document_url: undefined });
+                    toast.success("Documento eliminado");
+                  }}
+                  disabled={uploading}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Contenido según tipo */}

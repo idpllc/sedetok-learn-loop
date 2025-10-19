@@ -11,13 +11,36 @@ serve(async (req) => {
   }
 
   try {
-    const { title, description, category, grade_level, difficulty, numQuestions = 5 } = await req.json();
+    const { title, description, category, grade_level, difficulty, numQuestions = 5, document_url } = await req.json();
     
     if (!title || !category || !grade_level || !difficulty) {
       return new Response(
         JSON.stringify({ error: 'Faltan campos requeridos' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Fetch document content if provided
+    let documentContent = '';
+    if (document_url) {
+      try {
+        const docResponse = await fetch(document_url);
+        if (!docResponse.ok) {
+          console.error('Error al descargar el documento:', docResponse.status);
+        } else {
+          const contentType = docResponse.headers.get('content-type') || '';
+          if (contentType.includes('text') || contentType.includes('json')) {
+            documentContent = await docResponse.text();
+          } else {
+            // For binary files, get base64
+            const arrayBuffer = await docResponse.arrayBuffer();
+            const bytes = new Uint8Array(arrayBuffer);
+            documentContent = btoa(String.fromCharCode(...bytes));
+          }
+        }
+      } catch (err) {
+        console.error('Error al obtener el documento:', err);
+      }
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -35,15 +58,24 @@ IMPORTANTE:
 - Los puntos deben ser proporcionales a la dificultad (5-20 puntos)
 - Incluye retroalimentación educativa para respuestas correctas e incorrectas`;
 
-    const userPrompt = `Genera ${numQuestions} preguntas de quiz para:
+    let userPrompt = `Genera ${numQuestions} preguntas de quiz para:
 
 Título: ${title}
 Descripción: ${description || 'Sin descripción'}
 Asignatura: ${category}
 Nivel educativo: ${grade_level}
-Dificultad: ${difficulty}
+Dificultad: ${difficulty}`;
 
-Genera una mezcla de tipos de preguntas (opción múltiple, verdadero/falso, respuesta corta) apropiadas para este tema.`;
+    if (documentContent) {
+      userPrompt += `\n\nDOCUMENTO DE REFERENCIA:
+Analiza el siguiente documento y genera preguntas basadas en su contenido:
+
+${documentContent.substring(0, 50000)}
+
+IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido del documento adjunto.`;
+    } else {
+      userPrompt += `\n\nGenera una mezcla de tipos de preguntas (opción múltiple, verdadero/falso, respuesta corta) apropiadas para este tema.`;
+    }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

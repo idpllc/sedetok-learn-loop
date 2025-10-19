@@ -39,6 +39,7 @@ interface QuizStep2Props {
     category: string;
     grade_level: string;
     difficulty: string;
+    document_url?: string;
   };
 }
 
@@ -94,8 +95,9 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
       return;
     }
 
-    // Deduct 1000 XP for using AI
-    const success = await deductXP(1000, "Generar preguntas con IA");
+    // Deduct XP: 2000 if document, 1000 if no document
+    const xpCost = quizContext.document_url ? 2000 : 1000;
+    const success = await deductXP(xpCost, `Generar preguntas con IA${quizContext.document_url ? ' (con documento)' : ''}`);
     if (!success) {
       return;
     }
@@ -110,6 +112,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
           grade_level: quizContext.grade_level,
           difficulty: quizContext.difficulty,
           numQuestions: 5,
+          document_url: quizContext.document_url,
         }
       });
 
@@ -155,7 +158,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
               className="w-full"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              {isGenerating ? "Generando..." : "Generar con IA (1000 XP)"}
+              {isGenerating ? "Generando..." : `Generar con IA (${quizContext.document_url ? '2000' : '1000'} XP)`}
             </Button>
           )}
         </div>
