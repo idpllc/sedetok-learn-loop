@@ -38,7 +38,7 @@ const PACKAGES = [
 export default function BuyEducoins() {
   const navigate = useNavigate();
   const { balance, createTransaction } = useEducoins();
-  const [loading, setLoading] = useState(false);
+  const [loadingPackage, setLoadingPackage] = useState<number | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -49,7 +49,7 @@ export default function BuyEducoins() {
   };
 
   const handleBuy = async (educoins: number, price: number) => {
-    setLoading(true);
+    setLoadingPackage(educoins);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -101,7 +101,7 @@ export default function BuyEducoins() {
         invoice: transactionRef,
         currency: "cop",
         amount: price.toString(),
-        tax_base: "0",
+        tax_base: price.toString(),
         tax: "0",
         country: "co",
         lang: "es",
@@ -113,6 +113,9 @@ export default function BuyEducoins() {
         response: `${window.location.origin}/achievements`,
         name_billing: user.user_metadata?.full_name || "Usuario",
         email_billing: user.email || "",
+        type_person: "0",
+        doc_type: "CC",
+        doc_number: "1000000000",
       };
 
       handler.open(data);
@@ -120,7 +123,7 @@ export default function BuyEducoins() {
       console.error("Error al procesar compra:", error);
       toast.error("Error al procesar la compra. Intenta de nuevo.");
     } finally {
-      setLoading(false);
+      setLoadingPackage(null);
     }
   };
 
@@ -189,11 +192,11 @@ export default function BuyEducoins() {
                 </ul>
                 <Button
                   onClick={() => handleBuy(pkg.educoins, pkg.price)}
-                  disabled={loading}
+                  disabled={loadingPackage !== null}
                   className="w-full"
                   variant={pkg.popular ? "default" : "outline"}
                 >
-                  {loading ? "Procesando..." : "Comprar ahora"}
+                  {loadingPackage === pkg.educoins ? "Procesando..." : "Comprar ahora"}
                 </Button>
               </CardContent>
             </Card>
