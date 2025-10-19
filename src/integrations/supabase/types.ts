@@ -183,6 +183,45 @@ export type Database = {
           },
         ]
       }
+      educoin_transactions: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string | null
+          educoins: number
+          epayco_ref: string | null
+          id: string
+          payment_method: string
+          payment_status: string
+          transaction_ref: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string | null
+          educoins: number
+          epayco_ref?: string | null
+          id?: string
+          payment_method?: string
+          payment_status?: string
+          transaction_ref?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string | null
+          educoins?: number
+          epayco_ref?: string | null
+          id?: string
+          payment_method?: string
+          payment_status?: string
+          transaction_ref?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string | null
@@ -436,6 +475,7 @@ export type Database = {
           departamento: string | null
           desempenos_academicos: Json | null
           dificultades_aprendizaje: string | null
+          educoins: number
           experience_points: number | null
           fecha_nacimiento: string | null
           followers_count: number | null
@@ -507,6 +547,7 @@ export type Database = {
           departamento?: string | null
           desempenos_academicos?: Json | null
           dificultades_aprendizaje?: string | null
+          educoins?: number
           experience_points?: number | null
           fecha_nacimiento?: string | null
           followers_count?: number | null
@@ -582,6 +623,7 @@ export type Database = {
           departamento?: string | null
           desempenos_academicos?: Json | null
           dificultades_aprendizaje?: string | null
+          educoins?: number
           experience_points?: number | null
           fecha_nacimiento?: string | null
           followers_count?: number | null
