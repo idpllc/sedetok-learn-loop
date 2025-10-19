@@ -92,7 +92,7 @@ export default function BuyEducoins() {
       // Initialize ePayco checkout
       const handler = window.ePayco.checkout.configure({
         key: publicKey,
-        test: false,
+        test: true, // Cambiar a false cuando estés en producción
       });
 
       const data = {
