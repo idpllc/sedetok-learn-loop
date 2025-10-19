@@ -252,7 +252,10 @@ const Profile = () => {
                 variant="secondary"
                 size="icon"
                 className="h-8 w-8 bg-foreground/90 backdrop-blur-sm hover:bg-foreground text-background"
-                onClick={() => navigate(`/edit/${item.id}`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/edit/${item.id}`);
+                }}
                 title="Editar"
               >
                 <Edit className="h-3.5 w-3.5" />
@@ -261,7 +264,10 @@ const Profile = () => {
                 variant="destructive"
                 size="icon"
                 className="h-8 w-8 backdrop-blur-sm"
-                onClick={() => handleDelete(item.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(item.id);
+                }}
                 title="Eliminar"
               >
                 <Trash2 className="h-3.5 w-3.5" />
