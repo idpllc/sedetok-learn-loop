@@ -44,15 +44,17 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
           const url = await uploadFile(file);
           if (url) {
             if (target === 'question') {
+              // Actualiza la imagen del enunciado sin afectar otras propiedades
               updateField("image_url", url);
               setShowQuestionImage(false);
             } else {
-              updateOption(target, "image_url", url);
-              const newOptions = [...question.options];
-              newOptions[target].showImageInput = false;
+              // Un solo update inmutable para evitar sobrescribir el estado previo
+              const newOptions = question.options.map((opt, i) =>
+                i === target ? { ...opt, image_url: url, showImageInput: false } : opt
+              );
               updateField("options", newOptions);
             }
-            
+
             toast({
               title: "Imagen cargada",
               description: "La imagen se ha pegado exitosamente",

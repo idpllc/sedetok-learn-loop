@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useId } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,7 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada", comp
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   const { uploadFile, uploading } = useCloudinary();
+  const inputId = useId();
 
   const handleUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -165,11 +166,11 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada", comp
           </div>
           
           <label 
-            htmlFor={`image-upload-${compact ? 'compact' : 'full'}`}
+            htmlFor={inputId}
             className="absolute inset-0 cursor-pointer"
           />
           <input
-            id={`image-upload-${compact ? 'compact' : 'full'}`}
+            id={inputId}
             type="file"
             accept="image/*"
             onChange={handleFileInput}
