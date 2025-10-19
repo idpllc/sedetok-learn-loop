@@ -32,6 +32,8 @@ interface Question {
     option_text: string;
     is_correct: boolean;
     order_index: number;
+    image_url?: string;
+    video_url?: string;
   }>;
 }
 
@@ -401,7 +403,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                           ];
                           const colorClass = !showFeedback ? colors[index % colors.length] : '';
 
-                          return (
+                           return (
                             <Button
                               key={option.id}
                               variant="outline"
@@ -417,7 +419,28 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                               onClick={() => handleAnswer(option.id)}
                               disabled={showFeedback}
                             >
-                              <span className="flex-1 break-words">{option.option_text}</span>
+                              <div className="flex-1 space-y-2">
+                                <span className="block break-words">{option.option_text}</span>
+                                
+                                {option.image_url && (
+                                  <img 
+                                    src={option.image_url} 
+                                    alt="Option" 
+                                    className="w-full h-32 object-cover rounded mt-2"
+                                  />
+                                )}
+                                
+                                {option.video_url && (
+                                  <div className="aspect-video w-full mt-2">
+                                    <iframe
+                                      src={option.video_url.replace("watch?v=", "embed/")}
+                                      className="w-full h-full rounded"
+                                      allowFullScreen
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                              
                               {showResult && (
                                 <span className="ml-2 flex-shrink-0">
                                   {isCorrect ? (

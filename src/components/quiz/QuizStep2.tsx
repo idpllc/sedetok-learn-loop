@@ -22,6 +22,10 @@ export interface QuizQuestion {
     option_text: string;
     is_correct: boolean;
     order_index: number;
+    image_url?: string;
+    video_url?: string;
+    showImageInput?: boolean;
+    showVideoInput?: boolean;
   }>;
 }
 

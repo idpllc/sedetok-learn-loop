@@ -697,26 +697,32 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          image_url: string | null
           is_correct: boolean | null
           option_text: string
           order_index: number
           question_id: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
+          image_url?: string | null
           is_correct?: boolean | null
           option_text: string
           order_index: number
           question_id: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
+          image_url?: string | null
           is_correct?: boolean | null
           option_text?: string
           order_index?: number
           question_id?: string
+          video_url?: string | null
         }
         Relationships: [
           {

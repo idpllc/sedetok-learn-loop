@@ -4,10 +4,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Info } from "lucide-react";
+import { Plus, Trash2, Info, Image, Video } from "lucide-react";
 import { QuizQuestion } from "./QuizStep2";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 
 interface QuestionEditorProps {
   question: QuizQuestion;
@@ -83,6 +84,21 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
     updateField("options", newOptions);
   };
 
+  const toggleMediaType = (index: number, type: 'image' | 'video') => {
+    const newOptions = [...question.options];
+    const option = newOptions[index];
+    
+    if (type === 'image') {
+      option.showImageInput = !option.showImageInput;
+      option.showVideoInput = false;
+    } else {
+      option.showVideoInput = !option.showVideoInput;
+      option.showImageInput = false;
+    }
+    
+    updateField("options", newOptions);
+  };
+
   const removeOption = (index: number) => {
     const newOptions = question.options.filter((_, i) => i !== index);
     updateField("options", newOptions);
@@ -150,25 +166,68 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
 
           <div className="space-y-3">
             {question.options.map((option, index) => (
-              <div key={option.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <Switch
-                  checked={option.is_correct}
-                  onCheckedChange={(checked) => updateOption(index, "is_correct", checked)}
-                />
-                <Input
-                  value={option.option_text}
-                  onChange={(e) => updateOption(index, "option_text", e.target.value)}
-                  placeholder={`Opción ${index + 1}`}
-                  className="flex-1"
-                />
-                {question.question_type === "multiple_choice" && question.options.length > 2 && (
+              <div key={option.id} className="p-3 bg-muted rounded-lg space-y-3">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={option.is_correct}
+                    onCheckedChange={(checked) => updateOption(index, "is_correct", checked)}
+                  />
+                  <Input
+                    value={option.option_text}
+                    onChange={(e) => updateOption(index, "option_text", e.target.value)}
+                    placeholder={`Opción ${index + 1}`}
+                    className="flex-1"
+                  />
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => removeOption(index)}
+                    onClick={() => toggleMediaType(index, 'image')}
+                    title="Agregar imagen"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Image className="h-4 w-4" />
                   </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => toggleMediaType(index, 'video')}
+                    title="Agregar video"
+                  >
+                    <Video className="h-4 w-4" />
+                  </Button>
+                  {question.question_type === "multiple_choice" && question.options.length > 2 && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeOption(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                {option.showImageInput && (
+                  <div className="space-y-2">
+                    <Label className="text-xs">Imagen de la opción</Label>
+                    <ImageUpload
+                      value={option.image_url || ""}
+                      onChange={(url) => updateOption(index, "image_url", url)}
+                    />
+                  </div>
+                )}
+
+                {option.showVideoInput && (
+                  <div className="space-y-2">
+                    <Label className="text-xs">URL de video YouTube</Label>
+                    <Input
+                      value={option.video_url || ""}
+                      onChange={(e) => updateOption(index, "video_url", e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                  </div>
+                )}
+
+                {option.image_url && !option.showImageInput && (
+                  <img src={option.image_url} alt="Option" className="w-full h-24 object-cover rounded" />
                 )}
               </div>
             ))}

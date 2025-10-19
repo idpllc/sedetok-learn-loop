@@ -162,7 +162,9 @@ export const useQuizQuestions = (quizId?: string) => {
                 id: opt.id,
                 option_text: opt.option_text,
                 is_correct: opt.is_correct,
-                order_index: opt.order_index
+                order_index: opt.order_index,
+                image_url: opt.image_url,
+                video_url: opt.video_url
               }))
           : []
       }));
