@@ -1,6 +1,6 @@
 import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
@@ -23,42 +23,42 @@ export const Sidebar = () => {
   const shouldHideOnScroll = !capsuleViewRoutes.includes(location.pathname);
   const isMenuVisible = !shouldHideOnScroll || scrollDirection !== "down";
 
-  const handleCreateClick = () => {
+  const handleCreateClick = useCallback(() => {
     if (!user) {
       setAuthModalOpen(true);
       return;
     }
     navigate("/create");
-  };
+  }, [user, navigate]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
     }
-  };
+  }, [searchQuery, navigate]);
 
-  const handleAuthAction = () => {
+  const handleAuthAction = useCallback(() => {
     if (user) {
       signOut();
     } else {
       setAuthModalOpen(true);
     }
-  };
+  }, [user, signOut]);
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { id: "home", icon: Home, label: "Inicio", path: "/" },
     { id: "search", icon: Search, label: "Explorar", path: "/search" },
     { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
-  ];
+  ], []);
 
-  const handleNavigate = (path: string) => {
+  const handleNavigate = useCallback((path: string) => {
     navigate(path);
     setIsOpen(false);
-  };
+  }, [navigate]);
 
   const SidebarContent = () => (
     <>
