@@ -193,11 +193,11 @@ const CreateLearningPath = () => {
           .eq("path_id", pathId)
           .order("order_index");
 
-        // Validar que hay al menos una cápsula
-        if (!pathContent || pathContent.length === 0) {
+        // Validar que hay al menos 3 cápsulas
+        if (!pathContent || pathContent.length < 3) {
           toast({
             title: "No se puede publicar",
-            description: "Debes agregar al menos una cápsula antes de publicar la ruta",
+            description: "Debes agregar al menos 3 cápsulas antes de publicar la ruta",
             variant: "destructive",
           });
           return;

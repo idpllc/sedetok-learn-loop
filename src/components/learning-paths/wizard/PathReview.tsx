@@ -74,8 +74,8 @@ export const PathReview = ({ data, onChange, pathId, onCanPublishChange }: PathR
       required: true,
     },
     {
-      label: "Al menos una cápsula agregada",
-      checked: (contents?.length || 0) > 0,
+      label: "Al menos 3 cápsulas agregadas",
+      checked: (contents?.length || 0) >= 3,
       required: true,
     },
   ];

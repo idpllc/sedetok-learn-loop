@@ -329,8 +329,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       return;
     }
 
-    if (quizQuestions.length === 0) {
-      toast.error("Debes agregar al menos una pregunta antes de guardar el quiz");
+    if (quizQuestions.length < 5) {
+      toast.error("Debes agregar al menos 5 preguntas antes de guardar el quiz");
       return;
     }
 
