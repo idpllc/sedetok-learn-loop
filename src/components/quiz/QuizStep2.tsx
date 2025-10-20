@@ -95,8 +95,8 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
       return;
     }
 
-    // Deduct Educoins: 2000 if document, 1000 if no document
-    const educoinCost = quizContext.document_url ? 2000 : 1000;
+    // Deduct Educoins: 5 if document, 3 if no document
+    const educoinCost = quizContext.document_url ? 5 : 3;
     const success = await deductEducoins(educoinCost, `Generar preguntas con IA${quizContext.document_url ? ' (con documento)' : ''}`);
     if (!success) {
       return;
@@ -158,7 +158,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
               className="w-full"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              {isGenerating ? "Generando..." : `Generar con IA (${quizContext.document_url ? '2000' : '1000'} Educoins)`}
+              {isGenerating ? "Generando..." : `Generar con IA (${quizContext.document_url ? '5' : '3'} Educoins)`}
             </Button>
           )}
         </div>

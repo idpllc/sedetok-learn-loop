@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useXP } from "@/hooks/useXP";
+import { useEducoins } from "@/hooks/useEducoins";
 
 interface QuizViewerProps {
   quizId: string;
@@ -41,7 +41,7 @@ interface Question {
 export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: QuizViewerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { deductXP } = useXP();
+  const { deductEducoins } = useEducoins();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quizSubject, setQuizSubject] = useState<string | null>(null);
   const [quizTimeLimit, setQuizTimeLimit] = useState<number | null>(null);
@@ -54,7 +54,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const [loading, setLoading] = useState(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
-  const [previousAnswerWasWrong, setPreviousAnswerWasWrong] = useState(false);
   const [showCorrectAnswers, setShowCorrectAnswers] = useState<Record<number, boolean>>({});
   const [questionResults, setQuestionResults] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -190,10 +189,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
     if (correct) {
       setScore(score + currentQ.points);
       setIsAnswerCorrect(true);
-      setPreviousAnswerWasWrong(false);
     } else {
       setIsAnswerCorrect(false);
-      setPreviousAnswerWasWrong(true);
     }
   };
 
@@ -215,9 +212,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
     if (isCorrect) {
       setScore(score + currentQ.points);
-      setPreviousAnswerWasWrong(false);
-    } else {
-      setPreviousAnswerWasWrong(true);
     }
   };
 
@@ -236,9 +230,10 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
 
   const handlePrevious = async () => {
     if (currentQuestion > 0) {
-      // Deduct XP if previous answer was wrong
-      if (previousAnswerWasWrong) {
-        await deductXP(300, "Retroceder después de fallar", quizId);
+      // Deduct 1 Educoin to go back
+      const success = await deductEducoins(1, "Retroceder pregunta");
+      if (!success) {
+        return;
       }
       
       setCurrentQuestion(currentQuestion - 1);
@@ -251,14 +246,14 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   };
 
   const handleShowAnswers = async () => {
-    const success = await deductXP(500, "Ver respuestas correctas", quizId);
+    const success = await deductEducoins(1, "Ver respuestas correctas");
     if (success) {
       setShowCorrectAnswers({ ...showCorrectAnswers, [currentQuestion]: true });
     }
   };
 
   const handleExtendTime = async () => {
-    const success = await deductXP(200, "Extender tiempo +1 minuto", quizId);
+    const success = await deductEducoins(1, "Extender tiempo +1 minuto");
     if (success) {
       setTimeRemaining(prev => (prev || 0) + 60);
       toast.success("¡Tiempo extendido!");
@@ -437,7 +432,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                     onClick={handleExtendTime}
                     className="text-xs"
                   >
-                    +1 min (-200 XP)
+                    +1 min (1 Educoin)
                   </Button>
                 </div>
               )}
@@ -639,7 +634,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                     className="text-xs md:text-sm"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    Ver respuestas (-500 XP)
+                    Ver respuestas (1 Educoin)
                   </Button>
                 </div>
               )}
@@ -655,8 +650,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                 >
                   <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                   Anterior
-                  {previousAnswerWasWrong && currentQuestion > 0 && (
-                    <span className="ml-1 text-[10px] text-red-500">(-300 XP)</span>
+                  {currentQuestion > 0 && (
+                    <span className="ml-1 text-[10px] text-muted-foreground">(1 Educoin)</span>
                   )}
                 </Button>
 
