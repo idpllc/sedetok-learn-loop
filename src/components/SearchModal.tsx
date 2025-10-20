@@ -130,7 +130,7 @@ export const SearchModal = ({ isOpen, onClose, initialQuery = "" }: SearchModalP
       />
       
       {/* Modal Panel */}
-      <div className="relative ml-auto w-full max-w-md bg-card border-l border-border shadow-2xl animate-slide-in-right">
+      <div className="relative mr-auto w-full max-w-md bg-card border-r border-border shadow-2xl animate-slide-in-left">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center gap-3 p-4 border-b border-border">
