@@ -9,6 +9,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEducoins } from "@/hooks/useEducoins";
+import { useXP } from "@/hooks/useXP";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface QuizViewerProps {
   quizId: string;
@@ -42,6 +44,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { deductEducoins } = useEducoins();
+  const { deductXP } = useXP();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quizSubject, setQuizSubject] = useState<string | null>(null);
   const [quizTimeLimit, setQuizTimeLimit] = useState<number | null>(null);
@@ -55,6 +58,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
   const [showCorrectAnswers, setShowCorrectAnswers] = useState<Record<number, boolean>>({});
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: 'previous' | 'showAnswers' | 'extendTime', educoinCost: number, xpCost: number } | null>(null);
   const [questionResults, setQuestionResults] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
@@ -228,35 +233,86 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
     }
   };
 
-  const handlePrevious = async () => {
+  const executePreviousAction = () => {
     if (currentQuestion > 0) {
-      // Deduct 1 Educoin to go back
-      const success = await deductEducoins(1, "Retroceder pregunta");
-      if (!success) {
-        return;
-      }
-      
       setCurrentQuestion(currentQuestion - 1);
       setSelectedAnswer(null);
       setShortAnswerText("");
       setShowFeedback(false);
       setIsAnswerCorrect(false);
-      // Don't reset showCorrectAnswers - each question maintains its own state
     }
   };
 
-  const handleShowAnswers = async () => {
-    const success = await deductEducoins(1, "Ver respuestas correctas");
-    if (success) {
-      setShowCorrectAnswers({ ...showCorrectAnswers, [currentQuestion]: true });
+  const handlePrevious = () => {
+    if (currentQuestion > 0) {
+      setPendingAction({ type: 'previous', educoinCost: 1, xpCost: 300 });
+      setPaymentDialogOpen(true);
     }
   };
 
-  const handleExtendTime = async () => {
-    const success = await deductEducoins(1, "Extender tiempo +1 minuto");
+  const executeShowAnswers = () => {
+    setShowCorrectAnswers({ ...showCorrectAnswers, [currentQuestion]: true });
+  };
+
+  const handleShowAnswers = () => {
+    setPendingAction({ type: 'showAnswers', educoinCost: 1, xpCost: 500 });
+    setPaymentDialogOpen(true);
+  };
+
+  const executeExtendTime = () => {
+    setTimeRemaining(prev => (prev || 0) + 60);
+    toast.success("¡Tiempo extendido!");
+  };
+
+  const handleExtendTime = () => {
+    setPendingAction({ type: 'extendTime', educoinCost: 1, xpCost: 200 });
+    setPaymentDialogOpen(true);
+  };
+
+  const handlePayWithEducoins = async () => {
+    if (!pendingAction) return;
+    
+    const success = await deductEducoins(pendingAction.educoinCost, getActionDescription(pendingAction.type));
     if (success) {
-      setTimeRemaining(prev => (prev || 0) + 60);
-      toast.success("¡Tiempo extendido!");
+      executeAction(pendingAction.type);
+      setPaymentDialogOpen(false);
+      setPendingAction(null);
+    }
+  };
+
+  const handlePayWithXP = async () => {
+    if (!pendingAction) return;
+    
+    const success = await deductXP(pendingAction.xpCost, getActionDescription(pendingAction.type), quizId);
+    if (success) {
+      executeAction(pendingAction.type);
+      setPaymentDialogOpen(false);
+      setPendingAction(null);
+    }
+  };
+
+  const executeAction = (actionType: 'previous' | 'showAnswers' | 'extendTime') => {
+    switch (actionType) {
+      case 'previous':
+        executePreviousAction();
+        break;
+      case 'showAnswers':
+        executeShowAnswers();
+        break;
+      case 'extendTime':
+        executeExtendTime();
+        break;
+    }
+  };
+
+  const getActionDescription = (actionType: 'previous' | 'showAnswers' | 'extendTime') => {
+    switch (actionType) {
+      case 'previous':
+        return 'Retroceder pregunta';
+      case 'showAnswers':
+        return 'Ver respuestas correctas';
+      case 'extendTime':
+        return 'Extender tiempo +1 minuto';
     }
   };
 
@@ -432,7 +488,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                     onClick={handleExtendTime}
                     className="text-xs"
                   >
-                    +1 min (1 Educoin)
+                    +1 min
                   </Button>
                 </div>
               )}
@@ -634,7 +690,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                     className="text-xs md:text-sm"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    Ver respuestas (1 Educoin)
+                    Ver respuestas
                   </Button>
                 </div>
               )}
@@ -650,9 +706,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
                 >
                   <ChevronLeft className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                   Anterior
-                  {currentQuestion > 0 && (
-                    <span className="ml-1 text-[10px] text-muted-foreground">(1 Educoin)</span>
-                  )}
                 </Button>
 
                 <div className="text-xs md:text-sm font-semibold flex-shrink-0">
@@ -675,6 +728,43 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Payment Dialog */}
+      <AlertDialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Selecciona tu método de pago</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingAction && (
+                <span>
+                  Para {getActionDescription(pendingAction.type).toLowerCase()}, elige cómo pagar:
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-4">
+            <Button
+              variant="outline"
+              className="flex flex-col h-auto py-4"
+              onClick={handlePayWithEducoins}
+            >
+              <span className="text-2xl mb-2">💰</span>
+              <span className="font-semibold">{pendingAction?.educoinCost} Educoin{(pendingAction?.educoinCost || 0) > 1 ? 's' : ''}</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="flex flex-col h-auto py-4"
+              onClick={handlePayWithXP}
+            >
+              <span className="text-2xl mb-2">⭐</span>
+              <span className="font-semibold">{pendingAction?.xpCost} XP</span>
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingAction(null)}>Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

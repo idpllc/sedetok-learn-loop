@@ -6,6 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEducoins } from "@/hooks/useEducoins";
+import { useXP } from "@/hooks/useXP";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export interface QuizQuestion {
   id: string;
@@ -47,6 +49,8 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
   const [selectedQuestion, setSelectedQuestion] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const { deductEducoins } = useEducoins();
+  const { deductXP } = useXP();
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -95,9 +99,22 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
       return;
     }
 
-    // Deduct Educoins: 5 if document, 3 if no document
+    setPaymentDialogOpen(true);
+  };
+
+  const executeGeneration = async (useEducoins: boolean) => {
+    if (!quizContext) return;
+
     const educoinCost = quizContext.document_url ? 5 : 3;
-    const success = await deductEducoins(educoinCost, `Generar preguntas con IA${quizContext.document_url ? ' (con documento)' : ''}`);
+    const xpCost = quizContext.document_url ? 2000 : 1000;
+
+    let success = false;
+    if (useEducoins) {
+      success = await deductEducoins(educoinCost, `Generar preguntas con IA${quizContext.document_url ? ' (con documento)' : ''}`);
+    } else {
+      success = await deductXP(xpCost, `Generar preguntas con IA${quizContext.document_url ? ' (con documento)' : ''}`, undefined);
+    }
+
     if (!success) {
       return;
     }
@@ -138,7 +155,18 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
     }
   };
 
+  const handlePayWithEducoins = async () => {
+    setPaymentDialogOpen(false);
+    await executeGeneration(true);
+  };
+
+  const handlePayWithXP = async () => {
+    setPaymentDialogOpen(false);
+    await executeGeneration(false);
+  };
+
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-[calc(100vh-300px)]">
       {/* Lista de preguntas */}
       <div className="lg:col-span-1 border rounded-lg p-4 bg-card">
@@ -158,7 +186,7 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
               className="w-full"
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              {isGenerating ? "Generando..." : `Generar con IA (${quizContext.document_url ? '5' : '3'} Educoins)`}
+              {isGenerating ? "Generando..." : "Generar con IA"}
             </Button>
           )}
         </div>
@@ -238,5 +266,39 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
         )}
       </div>
     </div>
+
+    {/* Payment Dialog */}
+    <AlertDialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Selecciona tu método de pago</AlertDialogTitle>
+          <AlertDialogDescription>
+            Para generar preguntas con IA{quizContext?.document_url ? ' analizando el documento' : ''}, elige cómo pagar:
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="grid grid-cols-2 gap-3 py-4">
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4"
+            onClick={handlePayWithEducoins}
+          >
+            <span className="text-2xl mb-2">💰</span>
+            <span className="font-semibold">{quizContext?.document_url ? '5' : '3'} Educoins</span>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex flex-col h-auto py-4"
+            onClick={handlePayWithXP}
+          >
+            <span className="text-2xl mb-2">⭐</span>
+            <span className="font-semibold">{quizContext?.document_url ? '2000' : '1000'} XP</span>
+          </Button>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
   );
 };
