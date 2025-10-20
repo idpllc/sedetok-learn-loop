@@ -71,6 +71,7 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
     { value: "secundaria", label: "Secundaria" },
     { value: "preparatoria", label: "Preparatoria" },
     { value: "universidad", label: "Universidad" },
+    { value: "libre", label: "Libre" },
   ];
 
   const handleTogglePrerequisites = (checked: boolean) => {

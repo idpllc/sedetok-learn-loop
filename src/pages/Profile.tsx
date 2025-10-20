@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera } from "lucide-react";
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
@@ -26,7 +26,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserContent } from "@/hooks/useUserContent";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { useFollow } from "@/hooks/useFollow";
+import { useUserActivity } from "@/hooks/useUserActivity";
+import { useProfileUpdate } from "@/hooks/useProfileUpdate";
+import { useCloudinary } from "@/hooks/useCloudinary";
 import { useQuery } from "@tanstack/react-query";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 
@@ -46,6 +51,10 @@ const Profile = () => {
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; title: string } | null>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
+  const { likedContent, savedContent, sharedContent, isLoading: activityLoading } = useUserActivity();
+  const { updateProfile } = useProfileUpdate();
+  const { uploadFile, uploading } = useCloudinary();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profileData } = useQuery({
     queryKey: ["profile", userId],
@@ -112,6 +121,24 @@ const Profile = () => {
       contentId,
       updates: { is_public: !isPublic }
     });
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen debe ser menor a 5MB");
+      return;
+    }
+
+    try {
+      const imageUrl = await uploadFile(file);
+      await updateProfile({ avatar_url: imageUrl });
+      toast.success("Foto de perfil actualizada");
+    } catch (error) {
+      toast.error("Error al actualizar la foto de perfil");
+    }
   };
 
   const videoContent = userContent?.filter(c => c.content_type === "video") || [];
@@ -385,15 +412,15 @@ const Profile = () => {
                 </Button>
                 <Button variant="outline" size="sm" onClick={openOnboarding} className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
-                  <span className="hidden md:inline">Completar Perfil 360°</span>
+                  <span className="hidden md:inline">Perfil 360°</span>
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
                   <UserCog className="w-4 h-4" />
-                  <span className="hidden md:inline">Editar Perfil</span>
+                  <span className="hidden md:inline">Editar</span>
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleSignOut} className="flex items-center gap-2">
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden md:inline">Cerrar Sesión</span>
+                  <span className="hidden md:inline">Salir</span>
                 </Button>
               </>
             ) : (
@@ -427,7 +454,33 @@ const Profile = () => {
           <Card className="mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
             <CardContent className="p-6">
               <div className="flex items-center gap-6">
-                <div className="text-6xl">
+                <div className="relative group">
+                  <Avatar className="w-20 h-20 border-4 border-primary/20">
+                    <AvatarImage src={profileData.avatar_url || ""} alt={profileData.username} />
+                    <AvatarFallback className="text-2xl">
+                      {profileData.username?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isOwnProfile && (
+                    <>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        <Camera className="w-6 h-6 text-white" />
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                      />
+                    </>
+                  )}
+                </div>
+                <div className="text-5xl">
                   {getUserLevel(profileData.experience_points || 0).icon}
                 </div>
                 <div className="flex-1">
@@ -496,7 +549,7 @@ const Profile = () => {
 
         {/* Content tabs */}
         <Tabs defaultValue="videos" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="videos" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">Videos</span> ({videoContent.length})
@@ -517,6 +570,12 @@ const Profile = () => {
               <Map className="w-4 h-4" />
               <span className="hidden sm:inline">Rutas</span> ({learningPaths?.length || 0})
             </TabsTrigger>
+            {isOwnProfile && (
+              <TabsTrigger value="activity" className="flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                <span className="hidden sm:inline">Actividad</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="videos" className="mt-6">
@@ -596,6 +655,72 @@ const Profile = () => {
               )}
             </div>
           </TabsContent>
+
+          {isOwnProfile && (
+            <TabsContent value="activity" className="mt-6">
+              <Tabs defaultValue="liked" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="liked" className="flex items-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    Me gusta ({likedContent.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="saved" className="flex items-center gap-2">
+                    <Bookmark className="w-4 h-4" />
+                    Guardados ({savedContent.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="shared" className="flex items-center gap-2">
+                    <Share2 className="w-4 h-4" />
+                    Compartidos ({sharedContent.length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="liked" className="mt-6">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {activityLoading ? (
+                      [1, 2, 3].map((i) => <Skeleton key={i} className="h-64 w-full" />)
+                    ) : likedContent.length > 0 ? (
+                      likedContent.map((item) => <ContentItem key={item.id} item={item} />)
+                    ) : (
+                      <div className="col-span-full text-center py-12 text-muted-foreground">
+                        <Heart className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No has dado me gusta a ningún contenido aún</p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="saved" className="mt-6">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {activityLoading ? (
+                      [1, 2, 3].map((i) => <Skeleton key={i} className="h-64 w-full" />)
+                    ) : savedContent.length > 0 ? (
+                      savedContent.map((item) => <ContentItem key={item.id} item={item} />)
+                    ) : (
+                      <div className="col-span-full text-center py-12 text-muted-foreground">
+                        <Bookmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No has guardado ningún contenido aún</p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="shared" className="mt-6">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {activityLoading ? (
+                      [1, 2, 3].map((i) => <Skeleton key={i} className="h-64 w-full" />)
+                    ) : sharedContent.length > 0 ? (
+                      sharedContent.map((item) => <ContentItem key={item.id} item={item} />)
+                    ) : (
+                      <div className="col-span-full text-center py-12 text-muted-foreground">
+                        <Share2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No has compartido ningún contenido aún</p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 

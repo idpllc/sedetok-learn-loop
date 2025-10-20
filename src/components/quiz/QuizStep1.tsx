@@ -13,7 +13,7 @@ type CategoryType = Database["public"]["Enums"]["category_type"];
 type GradeLevel = Database["public"]["Enums"]["grade_level"];
 
 const CATEGORIES: CategoryType[] = ["matematicas", "ciencias", "lenguaje", "historia", "arte", "tecnologia", "otros"];
-const GRADES: GradeLevel[] = ["primaria", "secundaria", "preparatoria", "universidad"];
+const GRADES: GradeLevel[] = ["primaria", "secundaria", "preparatoria", "universidad", "libre"];
 
 interface QuizStep1Props {
   formData: {

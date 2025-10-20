@@ -53,7 +53,7 @@ const LearningPaths = () => {
                   <ArrowLeft className="w-5 h-5" />
                 </Link>
               </Button>
-              <h1 className="text-2xl font-bold">Mis Rutas de Aprendizaje</h1>
+              <h1 className="text-2xl font-bold">Rutas de Aprendizaje</h1>
             </div>
             <Button asChild>
               <Link to="/create?type=learning_path" aria-label="Crear Ruta">

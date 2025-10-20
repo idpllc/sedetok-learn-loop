@@ -1149,6 +1149,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
               <SelectItem value="secundaria">Secundaria</SelectItem>
               <SelectItem value="preparatoria">Preparatoria</SelectItem>
               <SelectItem value="universidad">Universidad</SelectItem>
+              <SelectItem value="libre">Libre</SelectItem>
             </SelectContent>
           </Select>
         </div>

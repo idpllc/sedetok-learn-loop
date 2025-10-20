@@ -18,6 +18,7 @@ export const PathFilters = ({ filters, onFiltersChange }: PathFiltersProps) => {
     { value: "secundaria", label: "Secundaria" },
     { value: "preparatoria", label: "Preparatoria" },
     { value: "universidad", label: "Universidad" },
+    { value: "libre", label: "Libre" },
   ];
 
   return (

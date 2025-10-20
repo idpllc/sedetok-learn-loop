@@ -1267,7 +1267,12 @@ export type Database = {
       content_type: "video" | "document" | "quiz" | "lectura"
       frecuencia_estudio: "Diaria" | "Semanal" | "Esporádica"
       genero: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir"
-      grade_level: "primaria" | "secundaria" | "preparatoria" | "universidad"
+      grade_level:
+        | "primaria"
+        | "secundaria"
+        | "preparatoria"
+        | "universidad"
+        | "libre"
       horario_estudio: "Mañana" | "Tarde" | "Noche"
       modo_consumo: "Videos" | "PDF" | "Quizzes" | "Textos" | "Mixto"
       motivacion_principal:
@@ -1445,7 +1450,13 @@ export const Constants = {
       content_type: ["video", "document", "quiz", "lectura"],
       frecuencia_estudio: ["Diaria", "Semanal", "Esporádica"],
       genero: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
-      grade_level: ["primaria", "secundaria", "preparatoria", "universidad"],
+      grade_level: [
+        "primaria",
+        "secundaria",
+        "preparatoria",
+        "universidad",
+        "libre",
+      ],
       horario_estudio: ["Mañana", "Tarde", "Noche"],
       modo_consumo: ["Videos", "PDF", "Quizzes", "Textos", "Mixto"],
       motivacion_principal: [

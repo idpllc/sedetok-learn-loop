@@ -101,6 +101,7 @@ export const subjects = [
   { value: "veterinaria", label: "Veterinaria" },
   { value: "agricultura", label: "Agricultura" },
   { value: "ganaderia", label: "Ganadería" },
+  { value: "gastronomia", label: "Gastronomía" },
   
   // Arquitectura y Diseño
   { value: "arquitectura", label: "Arquitectura" },
@@ -225,6 +226,7 @@ export const subjectToCategoryMap: Record<string, string> = {
   veterinaria: "otros",
   agricultura: "otros",
   ganaderia: "otros",
+  gastronomia: "otros",
   comunicacion: "otros",
   periodismo: "otros",
   publicidad: "otros",
