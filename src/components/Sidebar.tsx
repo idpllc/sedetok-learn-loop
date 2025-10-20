@@ -2,6 +2,7 @@ import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X } from "lu
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useCallback, useMemo } from "react";
 import { AuthModal } from "./AuthModal";
+import { SearchModal } from "./SearchModal";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -15,6 +16,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const scrollDirection = useScrollDirection();
 
@@ -60,46 +62,54 @@ export const Sidebar = () => {
     setIsOpen(false);
   }, [navigate]);
 
-  const SidebarContent = () => (
+  const handleSearchClick = useCallback(() => {
+    setSearchModalOpen(true);
+  }, []);
+
+  const SidebarContent = ({ isMinified = false }: { isMinified?: boolean }) => (
     <>
       {/* Logo */}
-      <div className="p-6 border-b border-border">
-        <img src={sedefyLogo} alt="Sedefy" className="h-8 w-auto" />
+      <div className={`p-6 border-b border-border transition-all ${isMinified ? 'px-3' : ''}`}>
+        {isMinified ? (
+          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">S</span>
+          </div>
+        ) : (
+          <img src={sedefyLogo} alt="Sedefy" className="h-8 w-auto" />
+        )}
       </div>
 
       {/* Search Bar */}
-      <div className="p-4 border-b border-border">
-        <form
-          onSubmit={handleSearch}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDownCapture={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
+      <div className={`p-4 border-b border-border transition-all ${isMinified ? 'px-3' : ''}`}>
+        <div 
+          className="relative cursor-pointer"
+          onClick={handleSearchClick}
         >
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Buscar contenido..."
-              value={searchQuery}
-              onChange={(e) => {
-                e.stopPropagation();
-                setSearchQuery(e.target.value);
-              }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onPointerDownCapture={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-              autoComplete="off"
-              className="pl-10"
-            />
-          </div>
-        </form>
+          {isMinified ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-10"
+            >
+              <Search className="w-5 h-5" />
+            </Button>
+          ) : (
+            <>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="Buscar contenido..."
+                value=""
+                readOnly
+                className="pl-10 cursor-pointer"
+              />
+            </>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className={`flex-1 p-4 space-y-2 transition-all ${isMinified ? 'px-3' : ''}`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -108,94 +118,103 @@ export const Sidebar = () => {
             <button
               key={item.id}
               onClick={() => handleNavigate(item.path)}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+              className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-3 rounded-lg transition-all ${
                 isActive 
                   ? 'bg-primary text-primary-foreground font-medium' 
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
+              title={isMinified ? item.label : undefined}
             >
               <Icon className="w-6 h-6" />
-              <span className="text-base">{item.label}</span>
+              {!isMinified && <span className="text-base">{item.label}</span>}
             </button>
           );
         })}
 
-        {/* Create Button - Secondary variant */}
+        {/* Create Button */}
         <Button
           onClick={handleCreateClick}
           variant="secondary"
-          className="w-full mt-4 font-medium py-6"
-          size="lg"
+          className={`w-full mt-4 font-medium ${isMinified ? 'px-0' : 'py-6'}`}
+          size={isMinified ? "icon" : "lg"}
+          title={isMinified ? "Crear" : undefined}
         >
-          <Plus className="w-6 h-6 mr-2" />
-          Crear
+          <Plus className={`w-6 h-6 ${isMinified ? '' : 'mr-2'}`} />
+          {!isMinified && "Crear"}
         </Button>
 
         {/* Auth Button */}
         <Button
           onClick={handleAuthAction}
           variant={user ? "ghost" : "outline"}
-          className="w-full mt-2 font-medium"
-          size="lg"
+          className={`w-full mt-2 font-medium ${isMinified ? 'px-0' : ''}`}
+          size={isMinified ? "icon" : "lg"}
+          title={isMinified ? (user ? "Cerrar Sesión" : "Iniciar Sesión") : undefined}
         >
           {user ? (
             <>
-              <LogOut className="w-5 h-5 mr-2" />
-              Cerrar Sesión
+              <LogOut className={`w-5 h-5 ${isMinified ? '' : 'mr-2'}`} />
+              {!isMinified && "Cerrar Sesión"}
             </>
           ) : (
             <>
-              <LogIn className="w-5 h-5 mr-2" />
-              Iniciar Sesión
+              <LogIn className={`w-5 h-5 ${isMinified ? '' : 'mr-2'}`} />
+              {!isMinified && "Iniciar Sesión"}
             </>
           )}
         </Button>
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border">
-        <nav className="space-y-2 text-xs text-muted-foreground">
-          <button
-            onClick={() => handleNavigate("/install")}
-            className="block hover:text-foreground transition-colors font-medium text-primary"
-          >
-            Instalar App
-          </button>
-          <button
-            onClick={() => handleNavigate("/about")}
-            className="block hover:text-foreground transition-colors"
-          >
-            Sobre Sedefy
-          </button>
-          <button
-            onClick={() => handleNavigate("/creator-program")}
-            className="block hover:text-foreground transition-colors"
-          >
-            Programa de creadores
-          </button>
-          <button
-            onClick={() => handleNavigate("/terms")}
-            className="block hover:text-foreground transition-colors"
-          >
-            Términos y condiciones
-          </button>
-          <button
-            onClick={() => handleNavigate("/privacy")}
-            className="block hover:text-foreground transition-colors"
-          >
-            Política de privacidad
-          </button>
-        </nav>
-        <p className="mt-4 text-xs text-muted-foreground">© 2025 Sedefy</p>
-      </div>
+      {!isMinified && (
+        <div className="p-4 border-t border-border">
+          <nav className="space-y-2 text-xs text-muted-foreground">
+            <button
+              onClick={() => handleNavigate("/install")}
+              className="block hover:text-foreground transition-colors font-medium text-primary"
+            >
+              Instalar App
+            </button>
+            <button
+              onClick={() => handleNavigate("/about")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Sobre Sedefy
+            </button>
+            <button
+              onClick={() => handleNavigate("/creator-program")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Programa de creadores
+            </button>
+            <button
+              onClick={() => handleNavigate("/terms")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Términos y condiciones
+            </button>
+            <button
+              onClick={() => handleNavigate("/privacy")}
+              className="block hover:text-foreground transition-colors"
+            >
+              Política de privacidad
+            </button>
+          </nav>
+          <p className="mt-4 text-xs text-muted-foreground">© 2025 Sedefy</p>
+        </div>
+      )}
     </>
   );
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex-col z-50">
-        <SidebarContent />
+      <aside 
+        className={`hidden md:flex fixed left-0 top-0 h-screen bg-card border-r border-border flex-col z-50 transition-all duration-300 ${
+          searchModalOpen ? 'w-16' : 'w-64'
+        }`}
+      >
+        <SidebarContent isMinified={searchModalOpen} />
       </aside>
 
       {/* Mobile/Tablet Hamburger Menu and Quick Links */}
@@ -242,6 +261,11 @@ export const Sidebar = () => {
         open={authModalOpen} 
         onOpenChange={setAuthModalOpen}
         onSuccess={() => navigate("/create")}
+      />
+
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
       />
     </>
   );
