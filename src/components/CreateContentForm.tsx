@@ -330,8 +330,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     }
 
     if (quizQuestions.length === 0) {
-      toast.error("Debes agregar al menos una pregunta");
+      toast.error("Debes agregar al menos una pregunta antes de guardar el quiz");
       return;
+    }
+
+    // Si está publicando, validar que todas las preguntas tengan al menos una opción correcta
+    if (status === "publicado") {
+      const invalidQuestions = quizQuestions.filter(q => 
+        !q.options || q.options.length === 0 || !q.options.some(o => o.is_correct)
+      );
+      if (invalidQuestions.length > 0) {
+        toast.error("Todas las preguntas deben tener al menos una opción correcta para publicar el quiz");
+        return;
+      }
     }
 
     try {

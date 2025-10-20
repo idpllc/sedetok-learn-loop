@@ -27,6 +27,7 @@ const CreateLearningPath = () => {
   const [isLoading, setIsLoading] = useState(!!id || !!cloneId);
   const [isCloning, setIsCloning] = useState(!!cloneId);
   const [originalPathTitle, setOriginalPathTitle] = useState<string>("");
+  const [canPublishPath, setCanPublishPath] = useState(false);
   const [pathData, setPathData] = useState<any>({
     title: "",
     description: "",
@@ -184,13 +185,23 @@ const CreateLearningPath = () => {
       setPathId(result.id);
       setIsCloning(false);
     } else if (pathId) {
-      // Si es el último paso, validar que no exista una ruta idéntica
+      // Si es el último paso, validar que hay contenido y que no exista una ruta idéntica
       if (currentStep === steps.length) {
         const { data: pathContent } = await supabase
           .from("learning_path_content")
           .select("content_id, quiz_id")
           .eq("path_id", pathId)
           .order("order_index");
+
+        // Validar que hay al menos una cápsula
+        if (!pathContent || pathContent.length === 0) {
+          toast({
+            title: "No se puede publicar",
+            description: "Debes agregar al menos una cápsula antes de publicar la ruta",
+            variant: "destructive",
+          });
+          return;
+        }
 
         if (pathContent && pathContent.length > 0) {
           // Buscar rutas con el mismo contenido
@@ -322,11 +333,20 @@ const CreateLearningPath = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        <CurrentStepComponent
-          data={pathData}
-          onChange={setPathData}
-          pathId={pathId}
-        />
+        {currentStep === 3 ? (
+          <PathReview
+            data={pathData}
+            onChange={setPathData}
+            pathId={pathId}
+            onCanPublishChange={setCanPublishPath}
+          />
+        ) : (
+          <CurrentStepComponent
+            data={pathData}
+            onChange={setPathData}
+            pathId={pathId}
+          />
+        )}
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4">
@@ -355,7 +375,10 @@ const CreateLearningPath = () => {
             ))}
           </div>
 
-          <Button onClick={handleNext}>
+          <Button 
+            onClick={handleNext}
+            disabled={currentStep === steps.length && !canPublishPath}
+          >
             {currentStep === steps.length ? "Publicar" : "Siguiente"}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>

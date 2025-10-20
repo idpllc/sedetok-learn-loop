@@ -12,9 +12,10 @@ interface PathReviewProps {
   data: any;
   onChange: (data: any) => void;
   pathId: string | null;
+  onCanPublishChange?: (canPublish: boolean) => void;
 }
 
-export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
+export const PathReview = ({ data, onChange, pathId, onCanPublishChange }: PathReviewProps) => {
   const { contents, isLoading } = usePathContent(pathId || undefined);
   const { paths: requiredPaths } = useLearningPaths();
 
@@ -80,6 +81,11 @@ export const PathReview = ({ data, onChange, pathId }: PathReviewProps) => {
   ];
 
   const canPublish = checklist.filter(item => item.required).every(item => item.checked);
+
+  // Notificar al padre cuando cambie canPublish
+  useEffect(() => {
+    onCanPublishChange?.(canPublish);
+  }, [canPublish, onCanPublishChange]);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
