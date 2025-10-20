@@ -374,7 +374,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       }
 
       // Create all questions
-      const pointsPerQuestion = Math.round((100 / quizQuestions.length) * 100) / 100;
+      const pointsPerQuestion = Math.round(100 / quizQuestions.length);
       
       for (let i = 0; i < quizQuestions.length; i++) {
         const question = quizQuestions[i];
