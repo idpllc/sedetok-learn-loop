@@ -205,6 +205,7 @@ export function ContentManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-20">Portada</TableHead>
                       <TableHead>Título</TableHead>
                       <TableHead>Tipo</TableHead>
                       <TableHead>Creador</TableHead>
@@ -216,6 +217,21 @@ export function ContentManagement() {
                   <TableBody>
                     {filteredContent?.map((item) => (
                       <TableRow key={item.id}>
+                        <TableCell>
+                          {item.thumbnail_url ? (
+                            <img 
+                              src={item.thumbnail_url} 
+                              alt={item.title}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
+                              {item.content_type === 'video' && <Video className="w-6 h-6 text-muted-foreground" />}
+                              {item.content_type === 'document' && <FileText className="w-6 h-6 text-muted-foreground" />}
+                              {item.content_type === 'lectura' && <BookOpen className="w-6 h-6 text-muted-foreground" />}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className="font-medium">{item.title}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{item.content_type}</Badge>
@@ -271,6 +287,7 @@ export function ContentManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-20">Portada</TableHead>
                       <TableHead>Título</TableHead>
                       <TableHead>Dificultad</TableHead>
                       <TableHead>Creador</TableHead>
@@ -282,6 +299,19 @@ export function ContentManagement() {
                   <TableBody>
                     {filteredQuizzes?.map((item) => (
                       <TableRow key={item.id}>
+                        <TableCell>
+                          {item.thumbnail_url ? (
+                            <img 
+                              src={item.thumbnail_url} 
+                              alt={item.title}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
+                              <HelpCircle className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className="font-medium">{item.title}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{item.difficulty}</Badge>
@@ -337,6 +367,7 @@ export function ContentManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-20">Portada</TableHead>
                       <TableHead>Título</TableHead>
                       <TableHead>Categoría</TableHead>
                       <TableHead>Creador</TableHead>
@@ -348,6 +379,19 @@ export function ContentManagement() {
                   <TableBody>
                     {filteredPaths?.map((item) => (
                       <TableRow key={item.id}>
+                        <TableCell>
+                          {(item.cover_url || item.thumbnail_url) ? (
+                            <img 
+                              src={item.cover_url || item.thumbnail_url} 
+                              alt={item.title}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
+                              <RouteIcon className="w-6 h-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className="font-medium">{item.title}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{item.subject || item.category}</Badge>
