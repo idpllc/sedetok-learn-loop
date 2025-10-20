@@ -122,7 +122,7 @@ export const SearchModal = ({ isOpen, onClose, initialQuery = "" }: SearchModalP
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-[60] flex">
       {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
