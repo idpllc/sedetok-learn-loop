@@ -228,7 +228,7 @@ const Profile = () => {
     </Card>
   );
 
-  const ContentItem = ({ item }: { item: any }) => {
+  const ContentItem = ({ item, hideActions = false }: { item: any; hideActions?: boolean }) => {
     const scientist = item.content_type === 'quiz' ? getQuizScientistIcon(item.category) : null;
     
     const handleContentClick = () => {
@@ -274,7 +274,7 @@ const Profile = () => {
           </div>
           
           {/* Action buttons overlay */}
-          {isOwnProfile && (
+          {isOwnProfile && !hideActions && (
             <div className="absolute top-2 right-2 flex gap-1">
               <Button
                 variant="secondary"
@@ -679,7 +679,7 @@ const Profile = () => {
                     {activityLoading ? (
                       [1, 2, 3].map((i) => <Skeleton key={i} className="h-64 w-full" />)
                     ) : likedContent.length > 0 ? (
-                      likedContent.map((item) => <ContentItem key={item.id} item={item} />)
+                      likedContent.map((item) => <ContentItem key={item.id} item={item} hideActions />)
                     ) : (
                       <div className="col-span-full text-center py-12 text-muted-foreground">
                         <Heart className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -694,7 +694,7 @@ const Profile = () => {
                     {activityLoading ? (
                       [1, 2, 3].map((i) => <Skeleton key={i} className="h-64 w-full" />)
                     ) : savedContent.length > 0 ? (
-                      savedContent.map((item) => <ContentItem key={item.id} item={item} />)
+                      savedContent.map((item) => <ContentItem key={item.id} item={item} hideActions />)
                     ) : (
                       <div className="col-span-full text-center py-12 text-muted-foreground">
                         <Bookmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -709,7 +709,7 @@ const Profile = () => {
                     {activityLoading ? (
                       [1, 2, 3].map((i) => <Skeleton key={i} className="h-64 w-full" />)
                     ) : sharedContent.length > 0 ? (
-                      sharedContent.map((item) => <ContentItem key={item.id} item={item} />)
+                      sharedContent.map((item) => <ContentItem key={item.id} item={item} hideActions />)
                     ) : (
                       <div className="col-span-full text-center py-12 text-muted-foreground">
                         <Share2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
