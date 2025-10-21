@@ -1434,6 +1434,10 @@ export type Database = {
         Args: { _institution_id: string; _user_id: string }
         Returns: boolean
       }
+      is_institution_member_of_student: {
+        Args: { _student_id: string; _viewer_id: string }
+        Returns: boolean
+      }
       register_institution: {
         Args: {
           p_address: string
