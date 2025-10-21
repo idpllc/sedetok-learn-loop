@@ -40,8 +40,8 @@ export default function RegisterInstitution() {
     setLoading(true);
 
     try {
-      // First, add institution role to user
-      const { error: roleError } = await supabase
+      const sb = supabase as any;
+      const { error: roleError } = await sb
         .from("user_roles")
         .insert({ user_id: user.id, role: "institution" });
 
@@ -49,8 +49,7 @@ export default function RegisterInstitution() {
         throw roleError;
       }
 
-      // Create institution
-      const { data: institution, error: institutionError } = await supabase
+      const { data: institution, error: institutionError } = await (supabase as any)
         .from("institutions")
         .insert({
           ...formData,

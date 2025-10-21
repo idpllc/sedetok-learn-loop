@@ -16,13 +16,14 @@ export default function TeacherDashboard() {
     queryFn: async () => {
       if (!user || !myMembership) return [];
 
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from("institution_members")
         .select(`
           *,
           profile:profiles(*)
         `)
-        .eq("institution_id", myMembership.institution_id)
+        .eq("institution_id", (myMembership as any).institution_id)
         .eq("member_role", "student")
         .eq("status", "active");
 
@@ -37,19 +38,17 @@ export default function TeacherDashboard() {
     queryFn: async () => {
       if (!user || !myMembership) return null;
 
-      // Get content created by teacher
-      const { count: contentCount } = await supabase
+      const { count: contentCount } = await (supabase as any)
         .from("content")
         .select("*", { count: "exact", head: true })
         .eq("creator_id", user.id)
-        .eq("institution_id", myMembership.institution_id);
+        .eq("institution_id", (myMembership as any).institution_id);
 
-      // Get quizzes created by teacher
-      const { count: quizzesCount } = await supabase
+      const { count: quizzesCount } = await (supabase as any)
         .from("quizzes")
         .select("*", { count: "exact", head: true })
         .eq("creator_id", user.id)
-        .eq("institution_id", myMembership.institution_id);
+        .eq("institution_id", (myMembership as any).institution_id);
 
       return {
         students: myStudents?.length || 0,

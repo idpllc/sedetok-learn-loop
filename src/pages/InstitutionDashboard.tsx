@@ -28,8 +28,7 @@ export default function InstitutionDashboard() {
       const teachers = members?.filter(m => m.member_role === "teacher").length || 0;
       const parents = members?.filter(m => m.member_role === "parent").length || 0;
 
-      // Get content created by institution members
-      const { count: contentCount } = await supabase
+      const { count: contentCount } = await (supabase as any)
         .from("content")
         .select("*", { count: "exact", head: true })
         .eq("institution_id", myInstitution.id);

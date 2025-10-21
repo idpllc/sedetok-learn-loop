@@ -14,7 +14,8 @@ export const useInstitution = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from("institutions")
         .select("*")
         .eq("admin_user_id", user.id)
@@ -32,7 +33,8 @@ export const useInstitution = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from("institution_members")
         .select(`
           *,
@@ -54,7 +56,8 @@ export const useInstitution = () => {
     queryFn: async () => {
       if (!myInstitution) return [];
 
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from("institution_members")
         .select(`
           *,
@@ -74,7 +77,8 @@ export const useInstitution = () => {
     mutationFn: async ({ userId, memberRole }: { userId: string; memberRole: string }) => {
       if (!myInstitution) throw new Error("No institution found");
 
-      const { data, error } = await supabase
+      const sb = supabase as any;
+      const { data, error } = await sb
         .from("institution_members")
         .insert({
           institution_id: myInstitution.id,
@@ -113,7 +117,8 @@ export const useInstitution = () => {
   // Remove member mutation
   const removeMember = useMutation({
     mutationFn: async (memberId: string) => {
-      const { error } = await supabase
+      const sb = supabase as any;
+      const { error } = await sb
         .from("institution_members")
         .delete()
         .eq("id", memberId);
@@ -137,9 +142,9 @@ export const useInstitution = () => {
   });
 
   return {
-    myInstitution,
-    myMembership,
-    members,
+    myInstitution: myInstitution as any,
+    myMembership: myMembership as any,
+    members: (members as any[]),
     isLoading: institutionLoading || membershipLoading || membersLoading,
     addMember,
     removeMember
