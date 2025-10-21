@@ -387,8 +387,7 @@ export default function InstitutionDashboard() {
           <TabsContent value="settings">
             <InstitutionSettings 
               institutionId={myInstitution.id}
-              currentLogoUrl={myInstitution.logo_url}
-              currentApiUrl={myInstitution.sede_academico_api_url}
+              institution={myInstitution}
             />
           </TabsContent>
         )}

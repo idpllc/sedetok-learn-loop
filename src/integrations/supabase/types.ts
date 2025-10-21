@@ -352,6 +352,7 @@ export type Database = {
           address: string | null
           admin_user_id: string
           city: string | null
+          codigo_dane: string | null
           contact_email: string | null
           contact_phone: string | null
           country: string | null
@@ -361,6 +362,7 @@ export type Database = {
           last_sync_at: string | null
           logo_url: string | null
           name: string
+          nit: string | null
           sede_academico_api_url: string | null
           updated_at: string | null
         }
@@ -368,6 +370,7 @@ export type Database = {
           address?: string | null
           admin_user_id: string
           city?: string | null
+          codigo_dane?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -377,6 +380,7 @@ export type Database = {
           last_sync_at?: string | null
           logo_url?: string | null
           name: string
+          nit?: string | null
           sede_academico_api_url?: string | null
           updated_at?: string | null
         }
@@ -384,6 +388,7 @@ export type Database = {
           address?: string | null
           admin_user_id?: string
           city?: string | null
+          codigo_dane?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -393,6 +398,7 @@ export type Database = {
           last_sync_at?: string | null
           logo_url?: string | null
           name?: string
+          nit?: string | null
           sede_academico_api_url?: string | null
           updated_at?: string | null
         }
