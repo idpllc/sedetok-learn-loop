@@ -27,6 +27,40 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
     queryFn: async () => {
       if (!institutionId) return null;
 
+      // Mapping from database area_academica values to our academic areas
+      const areaMapping: Record<string, string> = {
+        'Informática': 'Tecnología e Informática',
+        'Tecnología': 'Tecnología e Informática',
+        'Arte': 'Educación Artística',
+        'Artes': 'Educación Artística',
+        'Música': 'Educación Artística',
+        'Teatro': 'Educación Artística',
+        'Danza': 'Educación Artística',
+        'Deportes': 'Educación Física',
+        'Educación Física': 'Educación Física',
+        'Biología': 'Ciencias Naturales',
+        'Física': 'Ciencias Naturales',
+        'Química': 'Ciencias Naturales',
+        'Ciencias Naturales': 'Ciencias Naturales',
+        'Literatura': 'Lengua Castellana',
+        'Lengua Castellana': 'Lengua Castellana',
+        'Español': 'Lengua Castellana',
+        'Lectura': 'Lengua Castellana',
+        'Inglés': 'Lenguas Extranjeras',
+        'Francés': 'Lenguas Extranjeras',
+        'Portugués': 'Lenguas Extranjeras',
+        'Matemáticas': 'Matemáticas',
+        'Geometría': 'Matemáticas',
+        'Álgebra': 'Matemáticas',
+        'Estadística': 'Matemáticas',
+        'Historia': 'Ciencias Sociales',
+        'Geografía': 'Ciencias Sociales',
+        'Filosofía': 'Ciencias Sociales',
+        'Ética': 'Ciencias Sociales',
+        'Ciencias Sociales': 'Ciencias Sociales',
+        'Medicina': 'Ciencias Naturales',
+      };
+
       // Get all students from the institution
       const { data: students, error: studentsError } = await supabase
         .from("institution_members")
@@ -112,43 +146,31 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
       console.log("Processing quiz results...");
       
       quizResults?.forEach(result => {
-        const areaName = result.area_academica;
+        const dbAreaName = result.area_academica;
         
-        console.log(`Quiz area: "${areaName}"`);
+        console.log(`Quiz area from DB: "${dbAreaName}"`);
         
-        // Try to find matching area in academicAreas
-        let matchedArea = academicAreas.find(a => a.name === areaName);
+        // Map the database area to our standard academic area
+        const mappedAreaName = dbAreaName ? areaMapping[dbAreaName] || dbAreaName : "Otras";
         
-        // If not found by exact match, try to find by subject or partial match
-        if (!matchedArea) {
-          matchedArea = academicAreas.find(a => 
-            a.subjects.some(subject => 
-              areaName?.toLowerCase().includes(subject.toLowerCase()) ||
-              subject.toLowerCase().includes(areaName?.toLowerCase() || '')
-            )
-          );
-        }
+        console.log(`Mapped to: "${mappedAreaName}"`);
         
-        const finalAreaName = matchedArea?.name || areaName || "Otras";
-        
-        console.log(`Mapped to area: "${finalAreaName}"`);
-        
-        if (areaMetrics[finalAreaName]) {
-          areaMetrics[finalAreaName].quizzesCompleted++;
-          // Accumulate percentage scores for averaging later
+        if (areaMetrics[mappedAreaName]) {
+          areaMetrics[mappedAreaName].quizzesCompleted++;
           const percentage = (result.score / result.max_score) * 100;
-          areaMetrics[finalAreaName].averageScore += percentage;
+          areaMetrics[mappedAreaName].averageScore += percentage;
         } else {
-          console.warn(`Area not found in metrics: "${finalAreaName}"`);
+          console.warn(`Area "${mappedAreaName}" not found in metrics. Available areas:`, Object.keys(areaMetrics));
         }
 
         totalQuizzes++;
         totalScore += result.score;
         totalMaxScore += result.max_score;
 
-        // Map to intelligences using the matched area
-        if (matchedArea && matchedArea.relatedIntelligences) {
-          matchedArea.relatedIntelligences.forEach(intelName => {
+        // Map to intelligences
+        const area = academicAreas.find(a => a.name === mappedAreaName);
+        if (area && area.relatedIntelligences) {
+          area.relatedIntelligences.forEach(intelName => {
             if (intelligenceMetrics[intelName]) {
               intelligenceMetrics[intelName].quizzesCompleted++;
               const percentage = (result.score / result.max_score) * 100;
@@ -164,10 +186,7 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
       Object.keys(areaMetrics).forEach(key => {
         const metric = areaMetrics[key];
         if (metric.quizzesCompleted > 0) {
-          // Calculate the true average score
           metric.averageScore = Math.round(metric.averageScore / metric.quizzesCompleted);
-          // The radar score should be primarily the academic performance (average score)
-          // Add a small bonus for having completed more quizzes (up to 10 points)
           const activityBonus = Math.min(metric.quizzesCompleted * 2, 10);
           metric.score = Math.min(Math.round(metric.averageScore + activityBonus), 100);
           
