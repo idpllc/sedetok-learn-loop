@@ -1,6 +1,148 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const ITEMS_PER_PAGE = 10;
+
+export const useInfiniteContent = (contentType?: string) => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useInfiniteQuery({
+    queryKey: ["infinite-content", contentType],
+    queryFn: async ({ pageParam = 0 }) => {
+      const from = pageParam * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      // Fetch regular content
+      let contentQuery = supabase
+        .from("content")
+        .select(`
+          *,
+          profiles:creator_id (
+            username,
+            full_name,
+            avatar_url,
+            institution,
+            is_verified
+          )
+        `)
+        .eq("is_public", true)
+        .order("created_at", { ascending: false });
+
+      if (contentType && contentType !== "all" && contentType !== "quiz") {
+        contentQuery = contentQuery.eq("content_type", contentType as any);
+      }
+
+      const { data: contentData, error: contentError } = await contentQuery
+        .range(from, to);
+
+      if (contentError) throw contentError;
+
+      // Fetch quizzes only if not filtering by specific content type or if type is quiz
+      let quizData = [];
+      if (!contentType || contentType === "all" || contentType === "quiz") {
+        const { data: fetchedQuizData, error: quizError } = await supabase
+          .from("quizzes")
+          .select(`
+            *,
+            profiles:creator_id (
+              username,
+              full_name,
+              avatar_url,
+              institution,
+              is_verified
+            )
+          `)
+          .eq("is_public", true)
+          .eq("status", "publicado")
+          .order("created_at", { ascending: false })
+          .range(from, to);
+
+        if (quizError) throw quizError;
+        quizData = fetchedQuizData || [];
+      }
+
+      // Get question counts for each quiz
+      const quizIds = quizData.map(q => q.id);
+      const questionCounts: Record<string, number> = {};
+      const likeCounts: Record<string, number> = {};
+      const commentCounts: Record<string, number> = {};
+      
+      if (quizIds.length > 0) {
+        // Get question counts
+        const { data: questionsData } = await supabase
+          .from("quiz_questions")
+          .select("content_id")
+          .in("content_id", quizIds);
+        
+        if (questionsData) {
+          questionsData.forEach((q) => {
+            questionCounts[q.content_id] = (questionCounts[q.content_id] || 0) + 1;
+          });
+        }
+
+        // Get like counts for quizzes
+        const { data: likesData } = await supabase
+          .from("likes")
+          .select("quiz_id")
+          .in("quiz_id", quizIds)
+          .not("quiz_id", "is", null);
+        
+        if (likesData) {
+          likesData.forEach((like) => {
+            if (like.quiz_id) {
+              likeCounts[like.quiz_id] = (likeCounts[like.quiz_id] || 0) + 1;
+            }
+          });
+        }
+
+        // Get comment counts for quizzes
+        const { data: commentsData } = await supabase
+          .from("comments")
+          .select("quiz_id")
+          .in("quiz_id", quizIds)
+          .not("quiz_id", "is", null);
+        
+        if (commentsData) {
+          commentsData.forEach((comment) => {
+            if (comment.quiz_id) {
+              commentCounts[comment.quiz_id] = (commentCounts[comment.quiz_id] || 0) + 1;
+            }
+          });
+        }
+      }
+
+      // Combine and mark quizzes with content_type
+      const quizzes = quizData.map(quiz => ({
+        ...quiz,
+        content_type: 'quiz' as const,
+        likes_count: likeCounts[quiz.id] || 0,
+        views_count: 0,
+        saves_count: 0,
+        shares_count: 0,
+        comments_count: commentCounts[quiz.id] || 0,
+        video_url: null,
+        document_url: null,
+        rich_text: null,
+        tags: [],
+        questions_count: questionCounts[quiz.id] || 0,
+      }));
+
+      // Combine both arrays and sort by created_at
+      const allContent = [...(contentData || []), ...quizzes].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      return {
+        items: allContent,
+        nextPage: allContent.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
+      };
+    },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
+  });
+};
 
 export const useContent = () => {
   const queryClient = useQueryClient();
