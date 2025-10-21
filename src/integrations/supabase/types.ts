@@ -1274,6 +1274,19 @@ export type Database = {
         Args: { content_id: string }
         Returns: undefined
       }
+      register_institution: {
+        Args: {
+          p_address: string
+          p_city: string
+          p_contact_email: string
+          p_contact_phone: string
+          p_country: string
+          p_description: string
+          p_name: string
+          p_user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role:

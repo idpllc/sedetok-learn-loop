@@ -40,25 +40,19 @@ export default function RegisterInstitution() {
     setLoading(true);
 
     try {
-      const sb = supabase as any;
-      const { error: roleError } = await sb
-        .from("user_roles")
-        .insert({ user_id: user.id, role: "institution" });
+      // Use RPC function to register institution (handles role assignment securely)
+      const { data: institutionId, error } = await supabase.rpc('register_institution', {
+        p_user_id: user.id,
+        p_name: formData.name,
+        p_description: formData.description,
+        p_contact_email: formData.contact_email,
+        p_contact_phone: formData.contact_phone,
+        p_address: formData.address,
+        p_city: formData.city,
+        p_country: formData.country
+      });
 
-      if (roleError && !roleError.message.includes("duplicate")) {
-        throw roleError;
-      }
-
-      const { data: institution, error: institutionError } = await (supabase as any)
-        .from("institutions")
-        .insert({
-          ...formData,
-          admin_user_id: user.id
-        })
-        .select()
-        .single();
-
-      if (institutionError) throw institutionError;
+      if (error) throw error;
 
       toast({
         title: "¡Institución registrada!",
