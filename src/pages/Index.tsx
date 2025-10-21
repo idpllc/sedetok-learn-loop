@@ -8,6 +8,7 @@ import { OnboardingTeaser } from "@/components/OnboardingTeaser";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { useRelatedContent } from "@/hooks/useRelatedContent";
+import { useTargetItem } from "@/hooks/useTargetItem";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 
@@ -89,6 +90,7 @@ const Index = () => {
   const pathIdFromUrl = searchParams.get("path");
   const { user, loading: authLoading } = useAuth();
   const { content, isLoading } = useContent();
+  const { data: targetItem, isLoading: isLoadingTarget } = useTargetItem(contentIdFromUrl || undefined, quizIdFromUrl || undefined);
   const { data: relatedContent, isLoading: isLoadingRelated } = useRelatedContent(contentIdFromUrl || undefined, quizIdFromUrl || undefined);
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
@@ -161,7 +163,7 @@ const Index = () => {
   }, [pathIdFromUrl, navigate]);
 
   // Show loading for related content when coming from search
-  if ((contentIdFromUrl || quizIdFromUrl) && isLoadingRelated) {
+  if ((contentIdFromUrl || quizIdFromUrl) && isLoadingTarget) {
     return (
       <div className="relative h-screen">
         <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
@@ -190,18 +192,25 @@ const Index = () => {
   }
 
   // Use related content if available (from search), otherwise use regular content feed
-  const contentData = (contentIdFromUrl || quizIdFromUrl) && relatedContent 
-    ? relatedContent 
-    : content || mockContent.map(item => ({
-        ...item,
-        profiles: {
-          username: item.creator,
-          full_name: item.creator,
-          avatar_url: null,
-          institution: item.institution,
-          is_verified: false
-        }
-      }));
+  const baseFallback = content || mockContent.map(item => ({
+    ...item,
+    profiles: {
+      username: item.creator,
+      full_name: item.creator,
+      avatar_url: null,
+      institution: item.institution,
+      is_verified: false
+    }
+  }));
+
+  const contentData = (contentIdFromUrl || quizIdFromUrl)
+    ? (targetItem
+        ? [
+            targetItem as any,
+            ...(((relatedContent as any[]) || []).filter((i: any) => i.id !== (targetItem as any).id)),
+          ]
+        : baseFallback)
+    : baseFallback;
 
   return (
     <div className="relative">
