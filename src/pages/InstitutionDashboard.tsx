@@ -27,6 +27,7 @@ export default function InstitutionDashboard() {
       const students = members?.filter(m => m.member_role === "student").length || 0;
       const teachers = members?.filter(m => m.member_role === "teacher").length || 0;
       const parents = members?.filter(m => m.member_role === "parent").length || 0;
+      const admins = members?.filter(m => m.member_role === "admin").length || 0;
 
       const { count: contentCount } = await (supabase as any)
         .from("content")
@@ -37,6 +38,7 @@ export default function InstitutionDashboard() {
         students,
         teachers,
         parents,
+        admins,
         contentCount: contentCount || 0
       };
     },
@@ -109,10 +111,10 @@ export default function InstitutionDashboard() {
       <div className="grid md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Estudiantes</CardTitle>
+            <CardTitle className="text-sm font-medium">Administradores</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.students || 0}</div>
+            <div className="text-2xl font-bold">{stats?.admins || 0}</div>
           </CardContent>
         </Card>
 
@@ -127,10 +129,10 @@ export default function InstitutionDashboard() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Padres</CardTitle>
+            <CardTitle className="text-sm font-medium">Estudiantes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.parents || 0}</div>
+            <div className="text-2xl font-bold">{stats?.students || 0}</div>
           </CardContent>
         </Card>
 
@@ -184,8 +186,9 @@ export default function InstitutionDashboard() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="student">Estudiante</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
                       <SelectItem value="teacher">Profesor</SelectItem>
+                      <SelectItem value="student">Estudiante</SelectItem>
                       <SelectItem value="parent">Padre</SelectItem>
                     </SelectContent>
                   </Select>
