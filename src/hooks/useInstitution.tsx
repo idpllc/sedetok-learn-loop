@@ -123,13 +123,13 @@ export const useInstitution = () => {
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["institution-members"] });
-      toast({
-        title: "Miembro agregado",
-        description: "El usuario ha sido vinculado a la institución"
-      });
-    },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["institution-members", myInstitution?.id] });
+    toast({
+      title: "Miembro agregado",
+      description: "El usuario ha sido vinculado a la institución"
+    });
+  },
     onError: (error: any) => {
       toast({
         title: "Error",
@@ -150,13 +150,13 @@ export const useInstitution = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["institution-members"] });
-      toast({
-        title: "Miembro removido",
-        description: "El usuario ha sido desvinculado de la institución"
-      });
-    },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["institution-members", myInstitution?.id] });
+    toast({
+      title: "Miembro removido",
+      description: "El usuario ha sido desvinculado de la institución"
+    });
+  },
     onError: (error: any) => {
       toast({
         title: "Error",
