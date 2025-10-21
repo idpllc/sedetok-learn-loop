@@ -8,29 +8,46 @@ export const useInstitution = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get user's institution (if they're an admin)
+  // Get user's institution (admin) or by membership as fallback
   const { data: myInstitution, isLoading: institutionLoading } = useQuery({
     queryKey: ["my-institution", user?.id],
     queryFn: async () => {
       if (!user) return null;
 
       const sb = supabase as any;
-      const { data, error } = await sb
+
+      // First: institution where user is admin
+      const { data: instAdmin, error: errAdmin } = await sb
         .from("institutions")
         .select("*")
         .eq("admin_user_id", user.id)
         .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
-        console.error("Error fetching institution:", error);
-        throw error;
+      if (errAdmin && errAdmin.code !== "PGRST116") {
+        console.error("Error fetching institution (admin):", errAdmin);
+        throw errAdmin;
       }
-      
-      console.log("Institution data fetched:", data); // Debug log
-      return data;
+      if (instAdmin) return instAdmin;
+
+      // Fallback: institution where user is member
+      const { data: membership, error: errMember } = await sb
+        .from("institution_members")
+        .select(`
+          institution:institutions(*)
+        `)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle();
+
+      if (errMember && errMember.code !== "PGRST116") {
+        console.error("Error fetching institution (member):", errMember);
+        throw errMember;
+      }
+
+      return membership?.institution ?? null;
     },
     enabled: !!user,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true
   });
