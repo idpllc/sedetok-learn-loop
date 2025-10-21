@@ -88,18 +88,9 @@ export const useInstitution = () => {
 
       if (error) throw error;
 
-      // Add appropriate role to user
-      if (memberRole === "teacher") {
-        await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "teacher" })
-          .select();
-      } else if (memberRole === "parent") {
-        await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "parent" })
-          .select();
-      }
+      // Note: member_role (student, teacher, parent) is stored in institution_members table
+      // It does NOT create an entry in user_roles - all users keep their "user" role globally
+      // Only institution admins get "institution" role in user_roles
 
       return data;
     },
