@@ -4,7 +4,7 @@ import { useInstitution } from "@/hooks/useInstitution";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, BookOpen, TrendingUp, UserPlus } from "lucide-react";
+import { Building2, Users, BookOpen, TrendingUp, UserPlus, Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { InstitutionSettings } from "@/components/institution/InstitutionSettings";
+import { InstitutionAnalytics } from "@/components/institution/InstitutionAnalytics";
 
 export default function InstitutionDashboard() {
   const navigate = useNavigate();
@@ -174,6 +176,10 @@ export default function InstitutionDashboard() {
             <TrendingUp className="mr-2 h-4 w-4" />
             Analíticas
           </TabsTrigger>
+          <TabsTrigger value="settings">
+            <Settings className="mr-2 h-4 w-4" />
+            Configuración
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="members" className="space-y-4">
@@ -261,15 +267,15 @@ export default function InstitutionDashboard() {
         </TabsContent>
 
         <TabsContent value="analytics">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analíticas y Rendimiento</CardTitle>
-              <CardDescription>Métricas de desempeño de estudiantes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Próximamente...</p>
-            </CardContent>
-          </Card>
+          <InstitutionAnalytics institutionId={myInstitution.id} />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <InstitutionSettings 
+            institutionId={myInstitution.id}
+            currentLogoUrl={myInstitution.logo_url}
+            currentApiUrl={myInstitution.sede_academico_api_url}
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -258,6 +258,50 @@ export type Database = {
           },
         ]
       }
+      institution_achievements: {
+        Row: {
+          achievement_type: string
+          created_at: string | null
+          description: string | null
+          earned_at: string | null
+          icon: string | null
+          id: string
+          institution_id: string
+          name: string
+          threshold: number
+        }
+        Insert: {
+          achievement_type: string
+          created_at?: string | null
+          description?: string | null
+          earned_at?: string | null
+          icon?: string | null
+          id?: string
+          institution_id: string
+          name: string
+          threshold: number
+        }
+        Update: {
+          achievement_type?: string
+          created_at?: string | null
+          description?: string | null
+          earned_at?: string | null
+          icon?: string | null
+          id?: string
+          institution_id?: string
+          name?: string
+          threshold?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_achievements_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institution_members: {
         Row: {
           created_at: string | null
@@ -314,7 +358,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          last_sync_at: string | null
+          logo_url: string | null
           name: string
+          sede_academico_api_url: string | null
           updated_at: string | null
         }
         Insert: {
@@ -327,7 +374,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          last_sync_at?: string | null
+          logo_url?: string | null
           name: string
+          sede_academico_api_url?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -340,7 +390,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          last_sync_at?: string | null
+          logo_url?: string | null
           name?: string
+          sede_academico_api_url?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1317,6 +1370,10 @@ export type Database = {
       award_xp_for_upload: {
         Args: { p_content_id: string; p_user_id: string }
         Returns: boolean
+      }
+      calculate_institution_xp_per_capita: {
+        Args: { p_institution_id: string }
+        Returns: number
       }
       check_and_award_path_completion_xp: {
         Args: { p_path_id: string; p_user_id: string }
