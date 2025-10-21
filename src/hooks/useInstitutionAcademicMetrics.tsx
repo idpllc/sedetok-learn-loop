@@ -43,25 +43,40 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
       // Get all quiz results from students
       const { data: quizResults, error: quizError } = await supabase
         .from("user_quiz_results")
-        .select("score, max_score, area_academica, quiz_id")
+        .select("score, max_score, area_academica, quiz_id, user_id")
         .in("user_id", studentIds);
 
-      if (quizError) throw quizError;
+      if (quizError) {
+        console.error("Error fetching quiz results:", quizError);
+        throw quizError;
+      }
 
-      // Get all videos watched by students
-      const { data: viewedContent, error: viewError } = await supabase
-        .from("content")
+      console.log(`Found ${quizResults?.length || 0} quiz results for ${studentIds.length} students`);
+
+      // Get videos watched through user_path_progress
+      const { data: videoProgress, error: progressError } = await supabase
+        .from("user_path_progress")
         .select(`
-          id,
-          category,
-          subject,
-          views:user_path_progress!content_id(user_id, completed)
+          content_id,
+          user_id,
+          completed,
+          content:content(category, subject, content_type)
         `)
-        .eq("content_type", "video")
-        .in("views.user_id", studentIds)
-        .eq("views.completed", true);
+        .in("user_id", studentIds)
+        .eq("completed", true)
+        .not("content_id", "is", null);
 
-      if (viewError) throw viewError;
+      if (progressError) {
+        console.error("Error fetching video progress:", progressError);
+        throw progressError;
+      }
+
+      // Filter only videos
+      const viewedContent = videoProgress?.filter(
+        (p: any) => p.content?.content_type === "video"
+      ) || [];
+
+      console.log(`Found ${viewedContent.length} videos watched by students`);
 
       // Initialize metrics for academic areas
       const areaMetrics: Record<string, AreaMetrics> = {};
@@ -130,8 +145,10 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
 
       // Process videos watched
       let totalVideos = 0;
-      viewedContent?.forEach((content: any) => {
-        const categoryName = content.category;
+      viewedContent?.forEach((progress: any) => {
+        if (!progress.content) return;
+        
+        const categoryName = progress.content.category;
         const area = academicAreas.find(a => a.name === categoryName);
         
         if (area && areaMetrics[area.name]) {
@@ -141,7 +158,7 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
         totalVideos++;
 
         // Map to intelligences
-        if (area) {
+        if (area && area.relatedIntelligences) {
           area.relatedIntelligences.forEach(intelName => {
             if (intelligenceMetrics[intelName]) {
               intelligenceMetrics[intelName].videosWatched++;

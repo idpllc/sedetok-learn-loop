@@ -1375,6 +1375,10 @@ export type Database = {
         Args: { p_institution_id: string }
         Returns: number
       }
+      can_view_student_data: {
+        Args: { _student_id: string; _viewer_id: string }
+        Returns: boolean
+      }
       check_and_award_path_completion_xp: {
         Args: { p_path_id: string; p_user_id: string }
         Returns: boolean
