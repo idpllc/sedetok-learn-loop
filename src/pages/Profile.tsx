@@ -406,6 +406,12 @@ const Profile = () => {
           <div className="flex items-center gap-2">
             {isOwnProfile ? (
               <>
+                {profileData?.id_sede && (
+                  <Button variant="secondary" size="sm" onClick={() => navigate("/institution-dashboard")} className="flex items-center gap-2">
+                    <Map className="w-4 h-4" />
+                    <span className="hidden md:inline">Mi Institución</span>
+                  </Button>
+                )}
                 <Button variant="default" size="sm" onClick={() => navigate("/profile/professional")} className="flex items-center gap-2">
                   <Briefcase className="w-4 h-4" />
                   <span className="hidden md:inline">Perfil Profesional</span>
