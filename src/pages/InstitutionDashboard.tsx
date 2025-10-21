@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CreateContentForm } from "@/components/CreateContentForm";
 
 export default function InstitutionDashboard() {
   const navigate = useNavigate();
@@ -246,11 +245,17 @@ export default function InstitutionDashboard() {
         <TabsContent value="content">
           <Card>
             <CardHeader>
-              <CardTitle>Crear Contenido</CardTitle>
-              <CardDescription>Crea cápsulas educativas para tu institución</CardDescription>
+              <CardTitle>Contenido de la Institución</CardTitle>
+              <CardDescription>Crea y gestiona contenido educativo</CardDescription>
             </CardHeader>
-            <CardContent>
-              <CreateContentForm />
+            <CardContent className="space-y-4">
+              <Button onClick={() => navigate("/create-content")} className="w-full">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Crear Nuevo Contenido
+              </Button>
+              <p className="text-center text-muted-foreground text-sm">
+                Total de contenidos: {stats?.contentCount || 0}
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
