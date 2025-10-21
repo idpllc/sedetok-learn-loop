@@ -61,19 +61,14 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
         'Medicina': 'Ciencias Naturales',
       };
 
-      // Get all students from the institution
+      // Get all students from the institution using a SECURITY DEFINER RPC to bypass RLS listing limitations
       const { data: students, error: studentsError } = await supabase
-        .from("institution_members")
-        .select("user_id")
-        .eq("institution_id", institutionId)
-        .eq("member_role", "student")
-        .eq("status", "active");
+        .rpc('get_institution_student_ids', { p_institution_id: institutionId });
 
       if (studentsError) throw studentsError;
       if (!students || students.length === 0) return null;
 
-      const studentIds = students.map(s => s.user_id);
-
+      const studentIds = students.map((s: any) => s.user_id);
       // Get all quiz results from students
       const { data: quizResults, error: quizError } = await supabase
         .from("user_quiz_results")

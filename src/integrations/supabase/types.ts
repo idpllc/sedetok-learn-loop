@@ -1399,6 +1399,12 @@ export type Database = {
         Args: { search_text: string }
         Returns: string
       }
+      get_institution_student_ids: {
+        Args: { p_institution_id: string }
+        Returns: {
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
