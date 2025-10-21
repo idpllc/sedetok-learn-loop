@@ -22,6 +22,7 @@ export default function InstitutionDashboard() {
   const { myInstitution, members, isLoading, addMember } = useInstitution();
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: stats } = useQuery({
     queryKey: ["institution-stats", myInstitution?.id],
@@ -83,6 +84,39 @@ export default function InstitutionDashboard() {
       });
     }
   };
+
+  const handleRoleChange = async (memberId: string, newRole: string) => {
+    try {
+      const { error } = await supabase
+        .from("institution_members")
+        .update({ member_role: newRole })
+        .eq("id", memberId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Rol actualizado",
+        description: "El rol del usuario se actualizó correctamente"
+      });
+
+      // Refresh members list
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el rol",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredMembers = members?.filter(member => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    const username = member.profile?.username?.toLowerCase() || "";
+    const fullName = member.profile?.full_name?.toLowerCase() || "";
+    return username.includes(query) || fullName.includes(query);
+  });
 
   if (isLoading) {
     return (
@@ -226,21 +260,45 @@ export default function InstitutionDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Miembros Actuales ({members?.length || 0})</CardTitle>
+              <CardDescription>Busca y gestiona los miembros de tu institución</CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-4">
+                <Input
+                  placeholder="Buscar por nombre o username..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="max-w-md"
+                />
+              </div>
               <div className="space-y-2">
-                {members?.map((member) => (
+                {filteredMembers?.map((member) => (
                   <div key={member.id} className="flex items-center justify-between p-3 border rounded">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">{member.profile?.username || "Usuario"}</p>
                       <p className="text-sm text-muted-foreground">{member.profile?.full_name}</p>
                     </div>
-                    <Badge variant="outline">{member.member_role}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Select
+                        value={member.member_role}
+                        onValueChange={(value) => handleRoleChange(member.id, value)}
+                      >
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                          <SelectItem value="teacher">Profesor</SelectItem>
+                          <SelectItem value="student">Estudiante</SelectItem>
+                          <SelectItem value="parent">Padre</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 ))}
-                {(!members || members.length === 0) && (
+                {(!filteredMembers || filteredMembers.length === 0) && (
                   <p className="text-center text-muted-foreground py-8">
-                    No hay miembros vinculados aún
+                    {searchQuery ? "No se encontraron miembros" : "No hay miembros vinculados aún"}
                   </p>
                 )}
               </div>
