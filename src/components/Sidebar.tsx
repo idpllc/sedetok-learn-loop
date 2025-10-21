@@ -22,6 +22,9 @@ export const Sidebar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const scrollDirection = useScrollDirection();
 
+  // Debug log to verify institution data
+  console.log("Sidebar - myInstitution:", myInstitution);
+
   // Routes where the menu should NOT hide on scroll (capsule viewing routes)
   const capsuleViewRoutes = ["/"];
   const shouldHideOnScroll = !capsuleViewRoutes.includes(location.pathname);
@@ -163,26 +166,19 @@ export const Sidebar = () => {
           {!isMinified && "Crear"}
         </Button>
 
-        {/* Auth Button */}
-        <Button
-          onClick={handleAuthAction}
-          variant={user ? "ghost" : "outline"}
-          className={`w-full mt-2 font-medium ${isMinified ? 'px-0' : ''}`}
-          size={isMinified ? "icon" : "lg"}
-          title={isMinified ? (user ? "Cerrar Sesión" : "Iniciar Sesión") : undefined}
-        >
-          {user ? (
-            <>
-              <LogOut className={`w-5 h-5 ${isMinified ? '' : 'mr-2'}`} />
-              {!isMinified && "Cerrar Sesión"}
-            </>
-          ) : (
-            <>
-              <LogIn className={`w-5 h-5 ${isMinified ? '' : 'mr-2'}`} />
-              {!isMinified && "Iniciar Sesión"}
-            </>
-          )}
-        </Button>
+        {/* Auth Button - Only show Login when logged out */}
+        {!user && (
+          <Button
+            onClick={handleAuthAction}
+            variant="outline"
+            className={`w-full mt-2 font-medium ${isMinified ? 'px-0' : ''}`}
+            size={isMinified ? "icon" : "lg"}
+            title={isMinified ? "Iniciar Sesión" : undefined}
+          >
+            <LogIn className={`w-5 h-5 ${isMinified ? '' : 'mr-2'}`} />
+            {!isMinified && "Iniciar Sesión"}
+          </Button>
+        )}
       </nav>
 
       {/* Footer */}

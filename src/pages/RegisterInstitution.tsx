@@ -64,7 +64,10 @@ export default function RegisterInstitution() {
       // Invalidar las queries para que se recarguen en el dashboard
       await queryClient.invalidateQueries({ queryKey: ["my-institution"] });
       
-      navigate("/institution-dashboard");
+      // Small delay to ensure query refetches
+      setTimeout(() => {
+        navigate("/institution-dashboard");
+      }, 100);
     } catch (error: any) {
       console.error("Error registering institution:", error);
       toast({

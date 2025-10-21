@@ -21,10 +21,18 @@ export const useInstitution = () => {
         .eq("admin_user_id", user.id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== "PGRST116") {
+        console.error("Error fetching institution:", error);
+        throw error;
+      }
+      
+      console.log("Institution data fetched:", data); // Debug log
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // Get user's institution membership
