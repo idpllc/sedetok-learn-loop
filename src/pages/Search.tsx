@@ -271,6 +271,8 @@ const Search = () => {
                     onClick={() => {
                       if (isLearningPath) {
                         navigate(`/learning-paths/${item.id}`);
+                      } else if (isQuiz) {
+                        navigate(`/?quiz=${item.id}`);
                       } else {
                         navigate(`/?content=${item.id}`);
                       }

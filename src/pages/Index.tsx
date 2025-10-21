@@ -7,6 +7,7 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
+import { useRelatedContent } from "@/hooks/useRelatedContent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 
@@ -88,6 +89,7 @@ const Index = () => {
   const pathIdFromUrl = searchParams.get("path");
   const { user, loading: authLoading } = useAuth();
   const { content, isLoading } = useContent();
+  const { data: relatedContent, isLoading: isLoadingRelated } = useRelatedContent(contentIdFromUrl || undefined, quizIdFromUrl || undefined);
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
@@ -138,22 +140,18 @@ const Index = () => {
     return () => observer.disconnect();
   }, [pauseAllVideos, content]);
 
-  // Scroll to specific content when contentId is in URL
+  // Scroll to top when specific content is loaded from search
   useEffect(() => {
     const targetId = contentIdFromUrl || quizIdFromUrl;
-    if (targetId && content && containerRef.current) {
-      const contentIndex = content.findIndex((item) => item.id === targetId);
-      if (contentIndex !== -1) {
-        setTimeout(() => {
-          const container = containerRef.current;
-          const targetCard = container?.children[contentIndex];
-          if (targetCard) {
-            targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 300);
-      }
+    if (targetId && relatedContent && containerRef.current) {
+      setTimeout(() => {
+        const container = containerRef.current;
+        if (container) {
+          container.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 100);
     }
-  }, [contentIdFromUrl, quizIdFromUrl, content]);
+  }, [contentIdFromUrl, quizIdFromUrl, relatedContent]);
 
   // Redirect to learning path when pathId is in URL
   useEffect(() => {
@@ -161,6 +159,21 @@ const Index = () => {
       navigate(`/learning-paths/${pathIdFromUrl}`);
     }
   }, [pathIdFromUrl, navigate]);
+
+  // Show loading for related content when coming from search
+  if ((contentIdFromUrl || quizIdFromUrl) && isLoadingRelated) {
+    return (
+      <div className="relative h-screen">
+        <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-screen w-full snap-start snap-always flex items-center justify-center bg-muted/50">
+              <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -176,16 +189,19 @@ const Index = () => {
     );
   }
 
-  const contentData = content || mockContent.map(item => ({
-    ...item,
-    profiles: {
-      username: item.creator,
-      full_name: item.creator,
-      avatar_url: null,
-      institution: item.institution,
-      is_verified: false
-    }
-  }));
+  // Use related content if available (from search), otherwise use regular content feed
+  const contentData = (contentIdFromUrl || quizIdFromUrl) && relatedContent 
+    ? relatedContent 
+    : content || mockContent.map(item => ({
+        ...item,
+        profiles: {
+          username: item.creator,
+          full_name: item.creator,
+          avatar_url: null,
+          institution: item.institution,
+          is_verified: false
+        }
+      }));
 
   return (
     <div className="relative">
