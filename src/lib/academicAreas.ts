@@ -17,7 +17,7 @@ export const academicAreas = [
       'Comprensión de Lectura', 'Gramática y Ortografía', 
       'Literatura Colombiana y Universal'
     ],
-    relatedIntelligences: ['Lingüística-Verbal', 'Intrapersonal', 'Existencial']
+    relatedIntelligences: ['Lingüístico-Verbal', 'Intrapersonal', 'Existencial']
   },
   {
     id: 'ciencias_sociales',
@@ -45,7 +45,7 @@ export const academicAreas = [
       'Inglés', 'Francés', 'Portugués',
       'Conversación en Inglés', 'Lectura y Escritura en Inglés'
     ],
-    relatedIntelligences: ['Lingüística-Verbal', 'Musical-Auditiva', 'Interpersonal']
+    relatedIntelligences: ['Lingüístico-Verbal', 'Musical', 'Interpersonal']
   },
   {
     id: 'tecnologia',
@@ -55,7 +55,7 @@ export const academicAreas = [
       'Ofimática', 'Diseño Digital', 'Seguridad Informática',
       'Emprendimiento Digital', 'Tecnología e Informática'
     ],
-    relatedIntelligences: ['Lógico-Matemática', 'Visual-Espacial', 'Digital']
+    relatedIntelligences: ['Lógico-Matemática', 'Visual-Espacial', 'Digital-Tecnológica']
   },
   {
     id: 'educacion_artistica',
@@ -64,7 +64,7 @@ export const academicAreas = [
       'Artes Plásticas', 'Música', 'Teatro', 'Danza',
       'Expresión Corporal', 'Apreciación del Arte'
     ],
-    relatedIntelligences: ['Visual-Espacial', 'Musical-Auditiva', 'Corporal-Cinestésica', 'Espiritual']
+    relatedIntelligences: ['Visual-Espacial', 'Musical', 'Corporal-Kinestésica', 'Creativa-Innovadora']
   },
   {
     id: 'educacion_fisica',
@@ -73,7 +73,7 @@ export const academicAreas = [
       'Educación Física', 'Recreación', 'Deportes',
       'Hábitos de Vida Saludable', 'Entrenamiento Deportivo'
     ],
-    relatedIntelligences: ['Corporal-Cinestésica', 'Interpersonal', 'Intrapersonal']
+    relatedIntelligences: ['Corporal-Kinestésica', 'Interpersonal', 'Intrapersonal']
   }
 ] as const;
 
