@@ -12,9 +12,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InstitutionDashboard() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { myInstitution, members, isLoading, addMember } = useInstitution();
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
@@ -48,24 +50,36 @@ export default function InstitutionDashboard() {
   const handleAddMember = async () => {
     if (!newMemberEmail) return;
 
-    // Find user by email
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("username", newMemberEmail)
-      .single();
+    try {
+      // Use RPC to find user by email or username
+      const { data: userId, error } = await supabase.rpc('find_user_by_email_or_username', {
+        search_text: newMemberEmail
+      });
 
-    if (!profile) {
-      alert("Usuario no encontrado");
-      return;
+      if (error) throw error;
+
+      if (!userId) {
+        toast({
+          title: "Usuario no encontrado",
+          description: "No existe un usuario con ese email o username",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      addMember.mutate({
+        userId: userId,
+        memberRole: newMemberRole
+      });
+
+      setNewMemberEmail("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo buscar el usuario",
+        variant: "destructive"
+      });
     }
-
-    addMember.mutate({
-      userId: profile.id,
-      memberRole: newMemberRole
-    });
-
-    setNewMemberEmail("");
   };
 
   if (isLoading) {

@@ -1327,6 +1327,10 @@ export type Database = {
         Args: { content_id: string }
         Returns: undefined
       }
+      find_user_by_email_or_username: {
+        Args: { search_text: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
