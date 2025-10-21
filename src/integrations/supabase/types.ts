@@ -294,6 +294,13 @@ export type Database = {
             referencedRelation: "institutions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "institution_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       institutions: {
