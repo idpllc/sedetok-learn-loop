@@ -1,9 +1,10 @@
-import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useCallback, useMemo } from "react";
 import { AuthModal } from "./AuthModal";
 import { SearchModal } from "./SearchModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useInstitution } from "@/hooks/useInstitution";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
@@ -15,6 +16,7 @@ export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { myInstitution } = useInstitution();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -130,6 +132,24 @@ export const Sidebar = () => {
             </button>
           );
         })}
+
+        {/* Institution Link - Only shown if user has an institution */}
+        {user && myInstitution && (
+          <button
+            onClick={() => handleNavigate("/institution-dashboard")}
+            className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-3 rounded-lg transition-all ${
+              location.pathname === "/institution-dashboard"
+                ? 'bg-primary text-primary-foreground font-medium' 
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            } mt-4`}
+            title={isMinified ? myInstitution.name : undefined}
+          >
+            <Building2 className="w-6 h-6" />
+            {!isMinified && (
+              <span className="text-base truncate">{myInstitution.name}</span>
+            )}
+          </button>
+        )}
 
         {/* Create Button */}
         <Button
