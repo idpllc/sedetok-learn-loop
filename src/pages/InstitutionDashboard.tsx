@@ -24,6 +24,39 @@ export default function InstitutionDashboard() {
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Get current user's role in the institution
+  const { data: currentUserRole } = useQuery({
+    queryKey: ["current-user-role", myInstitution?.id],
+    queryFn: async () => {
+      if (!myInstitution) return null;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("institution_members")
+        .select("member_role")
+        .eq("institution_id", myInstitution.id)
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .single();
+
+      if (error) throw error;
+      return data?.member_role;
+    },
+    enabled: !!myInstitution
+  });
+
+  const isAdmin = currentUserRole === "admin";
+  const isTeacher = currentUserRole === "teacher";
+  const isStudent = currentUserRole === "student";
+  const isParent = currentUserRole === "parent";
+  
+  // Define permissions
+  const canViewMembers = isAdmin || isTeacher;
+  const canEditMembers = isAdmin;
+  const canViewSettings = isAdmin;
+
   const { data: stats } = useQuery({
     queryKey: ["institution-stats", myInstitution?.id],
     queryFn: async () => {
@@ -202,92 +235,51 @@ export default function InstitutionDashboard() {
             <TrendingUp className="mr-2 h-4 w-4" />
             Analíticas
           </TabsTrigger>
-          <TabsTrigger value="members">
-            <Users className="mr-2 h-4 w-4" />
-            Miembros
-          </TabsTrigger>
+          {canViewMembers && (
+            <TabsTrigger value="members">
+              <Users className="mr-2 h-4 w-4" />
+              Miembros
+            </TabsTrigger>
+          )}
           <TabsTrigger value="content">
             <BookOpen className="mr-2 h-4 w-4" />
             Contenido
           </TabsTrigger>
-          <TabsTrigger value="settings">
-            <Settings className="mr-2 h-4 w-4" />
-            Configuración
-          </TabsTrigger>
+          {canViewSettings && (
+            <TabsTrigger value="settings">
+              <Settings className="mr-2 h-4 w-4" />
+              Configuración
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="analytics">
           <InstitutionAnalytics institutionId={myInstitution.id} />
         </TabsContent>
 
-        <TabsContent value="members" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Agregar Miembro</CardTitle>
-              <CardDescription>Vincula estudiantes, profesores o padres a tu institución</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="email">Email o Username</Label>
-                  <Input
-                    id="email"
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder="usuario@ejemplo.com"
-                  />
-                </div>
-                <div className="w-48">
-                  <Label htmlFor="role">Rol</Label>
-                  <Select value={newMemberRole} onValueChange={setNewMemberRole}>
-                    <SelectTrigger id="role">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="teacher">Profesor</SelectItem>
-                      <SelectItem value="student">Estudiante</SelectItem>
-                      <SelectItem value="parent">Padre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-end">
-                  <Button onClick={handleAddMember} disabled={addMember.isPending}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Agregar
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Miembros Actuales ({members?.length || 0})</CardTitle>
-              <CardDescription>Busca y gestiona los miembros de tu institución</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <Input
-                  placeholder="Buscar por nombre o username..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="max-w-md"
-                />
-              </div>
-              <div className="space-y-2">
-                {filteredMembers?.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-3 border rounded">
+        {canViewMembers && (
+          <TabsContent value="members" className="space-y-4">
+            {canEditMembers && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Agregar Miembro</CardTitle>
+                  <CardDescription>Vincula estudiantes, profesores o padres a tu institución</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4">
                     <div className="flex-1">
-                      <p className="font-medium">{member.profile?.username || "Usuario"}</p>
-                      <p className="text-sm text-muted-foreground">{member.profile?.full_name}</p>
+                      <Label htmlFor="email">Email o Username</Label>
+                      <Input
+                        id="email"
+                        value={newMemberEmail}
+                        onChange={(e) => setNewMemberEmail(e.target.value)}
+                        placeholder="usuario@ejemplo.com"
+                      />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={member.member_role}
-                        onValueChange={(value) => handleRoleChange(member.id, value)}
-                      >
-                        <SelectTrigger className="w-40">
+                    <div className="w-48">
+                      <Label htmlFor="role">Rol</Label>
+                      <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                        <SelectTrigger id="role">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -298,17 +290,72 @@ export default function InstitutionDashboard() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="flex items-end">
+                      <Button onClick={handleAddMember} disabled={addMember.isPending}>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Agregar
+                      </Button>
+                    </div>
                   </div>
-                ))}
-                {(!filteredMembers || filteredMembers.length === 0) && (
-                  <p className="text-center text-muted-foreground py-8">
-                    {searchQuery ? "No se encontraron miembros" : "No hay miembros vinculados aún"}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Miembros Actuales ({members?.length || 0})</CardTitle>
+                <CardDescription>
+                  {canEditMembers ? "Busca y gestiona los miembros de tu institución" : "Lista de miembros de la institución"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <Input
+                    placeholder="Buscar por nombre o username..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="max-w-md"
+                  />
+                </div>
+                <div className="space-y-2">
+                  {filteredMembers?.map((member) => (
+                    <div key={member.id} className="flex items-center justify-between p-3 border rounded">
+                      <div className="flex-1">
+                        <p className="font-medium">{member.profile?.username || "Usuario"}</p>
+                        <p className="text-sm text-muted-foreground">{member.profile?.full_name}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {canEditMembers ? (
+                          <Select
+                            value={member.member_role}
+                            onValueChange={(value) => handleRoleChange(member.id, value)}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Administrador</SelectItem>
+                              <SelectItem value="teacher">Profesor</SelectItem>
+                              <SelectItem value="student">Estudiante</SelectItem>
+                              <SelectItem value="parent">Padre</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant="outline">{member.member_role}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {(!filteredMembers || filteredMembers.length === 0) && (
+                    <p className="text-center text-muted-foreground py-8">
+                      {searchQuery ? "No se encontraron miembros" : "No hay miembros vinculados aún"}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="content">
           <Card>
@@ -328,13 +375,15 @@ export default function InstitutionDashboard() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="settings">
-          <InstitutionSettings 
-            institutionId={myInstitution.id}
-            currentLogoUrl={myInstitution.logo_url}
-            currentApiUrl={myInstitution.sede_academico_api_url}
-          />
-        </TabsContent>
+        {canViewSettings && (
+          <TabsContent value="settings">
+            <InstitutionSettings 
+              institutionId={myInstitution.id}
+              currentLogoUrl={myInstitution.logo_url}
+              currentApiUrl={myInstitution.sede_academico_api_url}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
