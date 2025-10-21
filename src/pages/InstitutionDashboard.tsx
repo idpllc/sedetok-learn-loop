@@ -196,8 +196,12 @@ export default function InstitutionDashboard() {
         </Card>
       </div>
 
-      <Tabs defaultValue="members" className="space-y-4">
+      <Tabs defaultValue="analytics" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="analytics">
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Analíticas
+          </TabsTrigger>
           <TabsTrigger value="members">
             <Users className="mr-2 h-4 w-4" />
             Miembros
@@ -206,15 +210,15 @@ export default function InstitutionDashboard() {
             <BookOpen className="mr-2 h-4 w-4" />
             Contenido
           </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Analíticas
-          </TabsTrigger>
           <TabsTrigger value="settings">
             <Settings className="mr-2 h-4 w-4" />
             Configuración
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics">
+          <InstitutionAnalytics institutionId={myInstitution.id} />
+        </TabsContent>
 
         <TabsContent value="members" className="space-y-4">
           <Card>
@@ -322,10 +326,6 @@ export default function InstitutionDashboard() {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics">
-          <InstitutionAnalytics institutionId={myInstitution.id} />
         </TabsContent>
 
         <TabsContent value="settings">
