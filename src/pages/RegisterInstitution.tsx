@@ -110,17 +110,16 @@ export default function RegisterInstitution() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="contact_email">Correo de Contacto *</Label>
+                <Label htmlFor="contact_email">Correo de Contacto (opcional)</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="contact_email"
                     type="email"
-                    required
                     className="pl-10"
                     value={formData.contact_email}
                     onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                    placeholder="contacto@institucion.edu.co"
+                    placeholder="contacto@empresa.com"
                   />
                 </div>
               </div>
