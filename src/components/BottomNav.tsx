@@ -34,6 +34,10 @@ export const BottomNav = () => {
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ];
+  
+  const createMenuItems = [
+    { label: "Registrar Institución", path: "/register-institution" }
+  ];
 
   return (
     <>

@@ -28,6 +28,9 @@ import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import CreatorContent from "./pages/CreatorContent";
 import BuyEducoins from "./pages/BuyEducoins";
+import RegisterInstitution from "./pages/RegisterInstitution";
+import InstitutionDashboard from "./pages/InstitutionDashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +59,9 @@ const App = () => (
           <Route path="/learning-paths/view/:id" element={<ViewLearningPath />} />
           <Route path="/learning-paths/:id" element={<ViewLearningPath />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/register-institution" element={<RegisterInstitution />} />
+          <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
+          <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
           <Route path="/about" element={<AboutSedefy />} />
           <Route path="/creator-program" element={<CreatorProgram />} />
           <Route path="/terms" element={<TermsAndConditions />} />

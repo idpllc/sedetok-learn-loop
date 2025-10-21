@@ -176,6 +176,12 @@ export const Sidebar = () => {
               Instalar App
             </button>
             <button
+              onClick={() => handleNavigate("/register-institution")}
+              className="block hover:text-foreground transition-colors font-medium text-primary"
+            >
+              Registrar Institución
+            </button>
+            <button
               onClick={() => handleNavigate("/about")}
               className="block hover:text-foreground transition-colors"
             >
