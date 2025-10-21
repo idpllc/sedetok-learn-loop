@@ -4,12 +4,12 @@ import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 10;
 
-export const useInfiniteContent = (contentType?: string) => {
+export const useInfiniteContent = (contentType?: string, searchQuery?: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useInfiniteQuery({
-    queryKey: ["infinite-content", contentType],
+    queryKey: ["infinite-content", contentType, searchQuery],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -34,6 +34,11 @@ export const useInfiniteContent = (contentType?: string) => {
         contentQuery = contentQuery.eq("content_type", contentType as any);
       }
 
+      // Apply search filter
+      if (searchQuery && searchQuery.trim() !== "") {
+        contentQuery = contentQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+      }
+
       const { data: contentData, error: contentError } = await contentQuery
         .range(from, to);
 
@@ -42,7 +47,7 @@ export const useInfiniteContent = (contentType?: string) => {
       // Fetch quizzes only if not filtering by specific content type or if type is quiz
       let quizData = [];
       if (!contentType || contentType === "all" || contentType === "quiz") {
-        const { data: fetchedQuizData, error: quizError } = await supabase
+        let quizQuery = supabase
           .from("quizzes")
           .select(`
             *,
@@ -56,8 +61,14 @@ export const useInfiniteContent = (contentType?: string) => {
           `)
           .eq("is_public", true)
           .eq("status", "publicado")
-          .order("created_at", { ascending: false })
-          .range(from, to);
+          .order("created_at", { ascending: false });
+
+        // Apply search filter
+        if (searchQuery && searchQuery.trim() !== "") {
+          quizQuery = quizQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+        }
+
+        const { data: fetchedQuizData, error: quizError } = await quizQuery.range(from, to);
 
         if (quizError) throw quizError;
         quizData = fetchedQuizData || [];

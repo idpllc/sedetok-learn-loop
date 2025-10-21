@@ -26,7 +26,8 @@ const Search = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<SearchContentType>("all");
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: contentLoading } = useInfiniteContent(
-    selectedType === "all" ? undefined : selectedType === "learning_path" ? undefined : selectedType
+    selectedType === "all" ? undefined : selectedType === "learning_path" ? undefined : selectedType,
+    searchQuery
   );
   const { paths, isLoading: pathsLoading } = useLearningPaths();
   const { likes } = useUserLikes();
@@ -86,20 +87,25 @@ const Search = () => {
     { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
   ];
 
+  // Filter for learning paths (client-side since they come from a different hook)
   const filteredContent = combinedContent?.filter((item) => {
-    const matchesSearch = 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      item.subject?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (selectedType === "all") {
-      return matchesSearch;
-    } else if (selectedType === "learning_path") {
-      return matchesSearch && item.itemType === "learning_path";
-    } else {
-      return matchesSearch && item.itemType === "content" && item.content_type === selectedType;
+    // For learning paths, apply client-side search
+    if (item.itemType === "learning_path") {
+      const matchesSearch = !searchQuery || searchQuery.trim() === "" ||
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        item.subject?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return selectedType === "all" || selectedType === "learning_path" ? matchesSearch : false;
     }
+    
+    // For content and quizzes, server-side filtering is already applied
+    if (selectedType === "all" || selectedType === item.content_type || (selectedType === "quiz" && item.content_type === "quiz")) {
+      return true;
+    }
+    
+    return false;
   });
 
   const getContentIcon = (type: ContentType | "learning_path") => {
