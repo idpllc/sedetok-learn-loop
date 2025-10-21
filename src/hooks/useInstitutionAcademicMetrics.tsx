@@ -114,7 +114,9 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
         
         if (areaMetrics[areaName]) {
           areaMetrics[areaName].quizzesCompleted++;
-          areaMetrics[areaName].averageScore += (result.score / result.max_score) * 100;
+          // Accumulate percentage scores for averaging later
+          const percentage = (result.score / result.max_score) * 100;
+          areaMetrics[areaName].averageScore += percentage;
         }
 
         totalQuizzes++;
@@ -123,11 +125,12 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
 
         // Map to intelligences
         const area = academicAreas.find(a => a.name === areaName);
-        if (area) {
+        if (area && area.relatedIntelligences) {
           area.relatedIntelligences.forEach(intelName => {
             if (intelligenceMetrics[intelName]) {
               intelligenceMetrics[intelName].quizzesCompleted++;
-              intelligenceMetrics[intelName].averageScore += (result.score / result.max_score) * 100;
+              const percentage = (result.score / result.max_score) * 100;
+              intelligenceMetrics[intelName].averageScore += percentage;
             }
           });
         }
@@ -137,9 +140,12 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
       Object.keys(areaMetrics).forEach(key => {
         const metric = areaMetrics[key];
         if (metric.quizzesCompleted > 0) {
+          // Calculate the true average score
           metric.averageScore = Math.round(metric.averageScore / metric.quizzesCompleted);
-          // Score combines quiz performance with activity
-          metric.score = Math.round((metric.averageScore * 0.7) + (Math.min(metric.quizzesCompleted * 5, 30)));
+          // The radar score should be primarily the academic performance (average score)
+          // Add a small bonus for having completed more quizzes (up to 10 points)
+          const activityBonus = Math.min(metric.quizzesCompleted * 2, 10);
+          metric.score = Math.min(Math.round(metric.averageScore + activityBonus), 100);
         }
       });
 
@@ -171,14 +177,15 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
       Object.keys(intelligenceMetrics).forEach(key => {
         const metric = intelligenceMetrics[key];
         if (metric.quizzesCompleted > 0) {
+          // Calculate the true average score
           metric.averageScore = Math.round(metric.averageScore / metric.quizzesCompleted);
-          metric.score = Math.round(
-            (metric.averageScore * 0.6) + 
-            (Math.min(metric.quizzesCompleted * 3, 20)) + 
-            (Math.min(metric.videosWatched * 2, 20))
-          );
+          // Intelligence score based primarily on performance with small activity bonuses
+          const quizBonus = Math.min(metric.quizzesCompleted * 1.5, 10);
+          const videoBonus = Math.min(metric.videosWatched * 1, 5);
+          metric.score = Math.min(Math.round(metric.averageScore + quizBonus + videoBonus), 100);
         } else if (metric.videosWatched > 0) {
-          metric.score = Math.min(metric.videosWatched * 3, 30);
+          // If only videos watched, give minimal score
+          metric.score = Math.min(metric.videosWatched * 2, 20);
         }
       });
 
