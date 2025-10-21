@@ -9,11 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Mail, Phone, MapPin } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function RegisterInstitution() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -59,6 +61,9 @@ export default function RegisterInstitution() {
         description: "Tu institución ha sido creada exitosamente"
       });
 
+      // Invalidar las queries para que se recarguen en el dashboard
+      await queryClient.invalidateQueries({ queryKey: ["my-institution"] });
+      
       navigate("/institution-dashboard");
     } catch (error: any) {
       console.error("Error registering institution:", error);
