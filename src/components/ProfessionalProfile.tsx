@@ -2,9 +2,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAcademicMetrics } from "@/hooks/useAcademicMetrics";
+import { useInstitutionAcademicMetrics } from "@/hooks/useInstitutionAcademicMetrics";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BookOpen, Brain, Target, TrendingUp } from "lucide-react";
+import { BookOpen, Brain, Target, TrendingUp, Building2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProfessionalProfileProps {
   userId?: string;
@@ -12,6 +15,29 @@ interface ProfessionalProfileProps {
 
 export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
   const { data: metrics, isLoading } = useAcademicMetrics(userId);
+
+  // Get user's institution
+  const { data: institutionMember } = useQuery({
+    queryKey: ["user-institution", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from("institution_members")
+        .select("institution_id, institutions(name)")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .single();
+
+      if (error) return null;
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: institutionMetrics, isLoading: isLoadingInstitution } = useInstitutionAcademicMetrics(
+    institutionMember?.institution_id
+  );
 
   if (isLoading) {
     return (
@@ -116,12 +142,55 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         </Card>
       </div>
 
-      {/* Gráfica de Radar - Áreas Académicas */}
+      {/* Gráfica de Radar Institucional - Si pertenece a una institución */}
+      {institutionMember && institutionMetrics && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" />
+              <div>
+                <CardTitle>Perfil Académico Institucional</CardTitle>
+                <CardDescription>
+                  Promedio de desempeño de todos los estudiantes de {institutionMetrics && (institutionMember.institutions as any)?.name}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={institutionMetrics.radarData}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis 
+                    dataKey="area" 
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                  />
+                  <PolarRadiusAxis 
+                    angle={90} 
+                    domain={[0, 100]}
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Radar
+                    name="Promedio Institucional"
+                    dataKey="score"
+                    stroke="hsl(var(--secondary))"
+                    fill="hsl(var(--secondary))"
+                    fillOpacity={0.3}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gráfica de Radar - Áreas Académicas Personales */}
       <Card>
         <CardHeader>
-          <CardTitle>Perfil Académico por Áreas</CardTitle>
+          <CardTitle>Tu Perfil Académico por Áreas</CardTitle>
           <CardDescription>
-            Visualización de tu desempeño en las diferentes áreas del conocimiento
+            Visualización de tu desempeño personal en las diferentes áreas del conocimiento
           </CardDescription>
         </CardHeader>
         <CardContent>
