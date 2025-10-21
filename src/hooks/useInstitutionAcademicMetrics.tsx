@@ -109,24 +109,46 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
       let totalScore = 0;
       let totalMaxScore = 0;
 
+      console.log("Processing quiz results...");
+      
       quizResults?.forEach(result => {
-        const areaName = result.area_academica || "Otras";
+        const areaName = result.area_academica;
         
-        if (areaMetrics[areaName]) {
-          areaMetrics[areaName].quizzesCompleted++;
+        console.log(`Quiz area: "${areaName}"`);
+        
+        // Try to find matching area in academicAreas
+        let matchedArea = academicAreas.find(a => a.name === areaName);
+        
+        // If not found by exact match, try to find by subject or partial match
+        if (!matchedArea) {
+          matchedArea = academicAreas.find(a => 
+            a.subjects.some(subject => 
+              areaName?.toLowerCase().includes(subject.toLowerCase()) ||
+              subject.toLowerCase().includes(areaName?.toLowerCase() || '')
+            )
+          );
+        }
+        
+        const finalAreaName = matchedArea?.name || areaName || "Otras";
+        
+        console.log(`Mapped to area: "${finalAreaName}"`);
+        
+        if (areaMetrics[finalAreaName]) {
+          areaMetrics[finalAreaName].quizzesCompleted++;
           // Accumulate percentage scores for averaging later
           const percentage = (result.score / result.max_score) * 100;
-          areaMetrics[areaName].averageScore += percentage;
+          areaMetrics[finalAreaName].averageScore += percentage;
+        } else {
+          console.warn(`Area not found in metrics: "${finalAreaName}"`);
         }
 
         totalQuizzes++;
         totalScore += result.score;
         totalMaxScore += result.max_score;
 
-        // Map to intelligences
-        const area = academicAreas.find(a => a.name === areaName);
-        if (area && area.relatedIntelligences) {
-          area.relatedIntelligences.forEach(intelName => {
+        // Map to intelligences using the matched area
+        if (matchedArea && matchedArea.relatedIntelligences) {
+          matchedArea.relatedIntelligences.forEach(intelName => {
             if (intelligenceMetrics[intelName]) {
               intelligenceMetrics[intelName].quizzesCompleted++;
               const percentage = (result.score / result.max_score) * 100;
@@ -135,6 +157,8 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
           });
         }
       });
+
+      console.log("Quiz processing complete. Area metrics:", areaMetrics);
 
       // Calculate average scores and final scores for areas
       Object.keys(areaMetrics).forEach(key => {
@@ -146,6 +170,8 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
           // Add a small bonus for having completed more quizzes (up to 10 points)
           const activityBonus = Math.min(metric.quizzesCompleted * 2, 10);
           metric.score = Math.min(Math.round(metric.averageScore + activityBonus), 100);
+          
+          console.log(`${key}: ${metric.quizzesCompleted} quizzes, avg: ${metric.averageScore}%, score: ${metric.score}`);
         }
       });
 
