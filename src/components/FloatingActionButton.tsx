@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { AuthModal } from "./AuthModal";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export const FloatingActionButton = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
@@ -16,6 +17,11 @@ export const FloatingActionButton = () => {
       return;
     }
     navigate("/create");
+  };
+
+  const handleAuthSuccess = () => {
+    // Después del login, volver a la página donde estaba el usuario
+    navigate(location.pathname + location.search);
   };
 
   return (
@@ -31,7 +37,7 @@ export const FloatingActionButton = () => {
       <AuthModal 
         open={authModalOpen} 
         onOpenChange={setAuthModalOpen}
-        onSuccess={() => navigate("/create")}
+        onSuccess={handleAuthSuccess}
       />
     </>
   );
