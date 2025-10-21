@@ -1354,6 +1354,14 @@ export type Database = {
         Args: { content_id: string }
         Returns: undefined
       }
+      is_institution_admin: {
+        Args: { _institution_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_institution_member: {
+        Args: { _institution_id: string; _user_id: string }
+        Returns: boolean
+      }
       register_institution: {
         Args: {
           p_address: string
