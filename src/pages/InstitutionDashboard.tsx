@@ -4,7 +4,7 @@ import { useInstitution } from "@/hooks/useInstitution";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, BookOpen, TrendingUp, UserPlus, Settings } from "lucide-react";
+import { Building2, Users, BookOpen, TrendingUp, UserPlus, Settings, Home } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -189,6 +189,14 @@ export default function InstitutionDashboard() {
           </h1>
           <p className="text-muted-foreground mt-1">{myInstitution.description}</p>
         </div>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2"
+        >
+          <Home className="h-4 w-4" />
+          Volver al Inicio
+        </Button>
       </div>
 
       <div className="grid md:grid-cols-4 gap-4">
