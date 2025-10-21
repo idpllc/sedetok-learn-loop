@@ -175,7 +175,7 @@ const Index = () => {
     );
   }
 
-  if (isLoading) {
+  if (!contentIdFromUrl && !quizIdFromUrl && isLoading) {
     return (
       <div className="relative h-screen">
         <div className="h-screen overflow-y-scroll snap-y snap-mandatory">

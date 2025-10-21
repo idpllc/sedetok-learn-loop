@@ -46,7 +46,7 @@ export const useRelatedContent = (contentId?: string, quizId?: string) => {
           `)
           .eq("id", quizId)
           .eq("is_public", true)
-          .eq("status", "publicado")
+          // Relax status filter to ensure target quiz loads even if status naming varies
           .single();
 
         if (quizError) throw quizError;
