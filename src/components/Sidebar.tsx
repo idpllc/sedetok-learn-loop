@@ -191,6 +191,30 @@ export const Sidebar = () => {
             >
               Instalar App
             </button>
+            <a
+              href="https://tienda.sedefy.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block hover:text-foreground transition-colors font-medium text-primary"
+            >
+              Sede Market
+            </a>
+            <a
+              href="https://instituciones.sedefy.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block hover:text-foreground transition-colors font-medium text-primary"
+            >
+              Sede Instituciones
+            </a>
+            <a
+              href="https://appstore.sedefy.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block hover:text-foreground transition-colors font-medium text-primary"
+            >
+              Sede App Store
+            </a>
             <button
               onClick={() => handleNavigate("/register-institution")}
               className="block hover:text-foreground transition-colors font-medium text-primary"

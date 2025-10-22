@@ -183,40 +183,6 @@ const Install = () => {
               )}
             </>
           )}
-
-          {/* SEDE Platform Links */}
-          <div className="pt-6 mt-6 border-t space-y-4">
-            <h3 className="font-semibold text-lg text-center">Otras plataformas SEDE</h3>
-            <div className="grid gap-3">
-              <a
-                href="https://tienda.sedefy.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
-              >
-                <span className="font-medium">Sede Market</span>
-                <span className="text-xs text-muted-foreground">tienda.sedefy.com</span>
-              </a>
-              <a
-                href="https://instituciones.sedefy.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
-              >
-                <span className="font-medium">Sede Instituciones</span>
-                <span className="text-xs text-muted-foreground">instituciones.sedefy.com</span>
-              </a>
-              <a
-                href="https://appstore.sedefy.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent transition-colors"
-              >
-                <span className="font-medium">Sede App Store</span>
-                <span className="text-xs text-muted-foreground">appstore.sedefy.com</span>
-              </a>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
