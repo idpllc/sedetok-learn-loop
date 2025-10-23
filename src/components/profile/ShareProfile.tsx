@@ -15,6 +15,10 @@ export const ShareProfile = ({ profile }: ShareProfileProps) => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
+  if (!profile) {
+    return null;
+  }
+
   const profileUrl = profile.custom_url 
     ? `${window.location.origin}/u/${profile.custom_url}`
     : `${window.location.origin}/profile/${profile.id}`;

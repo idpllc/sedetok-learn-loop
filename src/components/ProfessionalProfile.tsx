@@ -163,7 +163,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       )}
 
       {/* Generador de CV y Compartir */}
-      {isOwnProfile && (
+      {isOwnProfile && profile && (
         <div className="grid md:grid-cols-2 gap-6">
           <CVGenerator profile={profile} metrics={metrics} />
           <ShareProfile profile={profile} />
