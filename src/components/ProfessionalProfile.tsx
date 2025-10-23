@@ -9,7 +9,6 @@ import { BookOpen, Brain, Target, TrendingUp, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
-import { SocialLinks } from "@/components/profile/SocialLinks";
 import { WorkExperience } from "@/components/profile/WorkExperience";
 import { ProjectsSection } from "@/components/profile/ProjectsSection";
 import { SkillsSection } from "@/components/profile/SkillsSection";
@@ -185,11 +184,6 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
           onUpdateCover={handleUpdateCover}
           onUpdateAvatar={handleUpdateAvatar}
         />
-      )}
-
-      {/* Enlaces Sociales */}
-      {profile?.social_links && (
-        <SocialLinks socialLinks={profile.social_links} />
       )}
 
       {/* Habilidades - Movidas arriba */}
