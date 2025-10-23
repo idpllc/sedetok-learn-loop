@@ -90,8 +90,13 @@ export const ImageUpload = ({ value, onChange, label = "Imagen de portada", comp
   };
 
   const handleRemove = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onChange("");
+    toast({
+      title: "Imagen eliminada",
+      description: "La imagen ha sido eliminada exitosamente",
+    });
   };
 
   return (
