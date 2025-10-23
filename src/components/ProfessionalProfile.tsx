@@ -8,13 +8,79 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { BookOpen, Brain, Target, TrendingUp, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { SocialLinks } from "@/components/profile/SocialLinks";
+import { WorkExperience } from "@/components/profile/WorkExperience";
+import { ProjectsSection } from "@/components/profile/ProjectsSection";
+import { SkillsSection } from "@/components/profile/SkillsSection";
+import { EducationSection } from "@/components/profile/EducationSection";
+import { CVGenerator } from "@/components/profile/CVGenerator";
+import { ShareProfile } from "@/components/profile/ShareProfile";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfessionalProfileProps {
   userId?: string;
 }
 
 export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { data: metrics, isLoading } = useAcademicMetrics(userId);
+  const isOwnProfile = user?.id === userId;
+
+  // Get user profile
+  const { data: profile, refetch: refetchProfile } = useQuery({
+    queryKey: ["profile-full", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+      
+      // Incrementar vistas si no es el propio perfil
+      if (!isOwnProfile) {
+        await supabase
+          .from("profiles")
+          .update({ profile_views: (data.profile_views || 0) + 1 })
+          .eq("id", userId);
+      }
+      
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  const handleUpdateCover = async (url: string) => {
+    if (!userId) return;
+    
+    const { error } = await supabase
+      .from("profiles")
+      .update({ cover_image_url: url })
+      .eq("id", userId);
+      
+    if (!error) {
+      refetchProfile();
+    }
+  };
+
+  const handleUpdateAvatar = async (url: string) => {
+    if (!userId) return;
+    
+    const { error } = await supabase
+      .from("profiles")
+      .update({ avatar_url: url })
+      .eq("id", userId);
+      
+    if (!error) {
+      refetchProfile();
+    }
+  };
 
   // Get user's institution
   const { data: institutionMember } = useQuery({
@@ -81,6 +147,50 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Header del Perfil */}
+      {profile && (
+        <ProfileHeader 
+          profile={profile} 
+          isOwnProfile={isOwnProfile}
+          onUpdateCover={handleUpdateCover}
+          onUpdateAvatar={handleUpdateAvatar}
+        />
+      )}
+
+      {/* Enlaces Sociales */}
+      {profile?.social_links && (
+        <SocialLinks socialLinks={profile.social_links} />
+      )}
+
+      {/* Generador de CV y Compartir */}
+      {isOwnProfile && (
+        <div className="grid md:grid-cols-2 gap-6">
+          <CVGenerator profile={profile} metrics={metrics} />
+          <ShareProfile profile={profile} />
+        </div>
+      )}
+
+      {/* Experiencia Laboral */}
+      {profile?.work_experience && Array.isArray(profile.work_experience) && (
+        <WorkExperience experiences={profile.work_experience as any[]} />
+      )}
+
+      {/* Proyectos */}
+      {profile?.projects && Array.isArray(profile.projects) && (
+        <ProjectsSection projects={profile.projects as any[]} />
+      )}
+
+      {/* Habilidades */}
+      {profile?.skills && Array.isArray(profile.skills) && (
+        <SkillsSection skills={profile.skills as any[]} />
+      )}
+
+      {/* Formación Complementaria */}
+      <EducationSection 
+        userId={userId}
+        complementaryEducation={profile?.complementary_education && Array.isArray(profile.complementary_education) ? profile.complementary_education as any[] : undefined}
+      />
+
       {/* Métricas Generales */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>

@@ -617,7 +617,10 @@ export type Database = {
           areas_interes: string[] | null
           avatar_url: string | null
           bio: string | null
+          complementary_education: Json | null
+          cover_image_url: string | null
           created_at: string | null
+          custom_url: string | null
           departamento: string | null
           desempenos_academicos: Json | null
           dificultades_aprendizaje: string | null
@@ -667,13 +670,18 @@ export type Database = {
           perfil_publico: boolean | null
           permitir_comentarios: boolean | null
           permitir_rankings: boolean | null
+          phone: string | null
           preferencia_duracion_contenido:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
           preferencia_recompensas: string | null
           profesiones_de_interes: string[] | null
+          profile_views: number | null
+          projects: Json | null
           recomendaciones_activas: Json | null
           rutas_aprobadas_por_docente: Json | null
+          skills: Json | null
+          social_links: Json | null
           temas_favoritos: string[] | null
           tipo_aprendizaje:
             | Database["public"]["Enums"]["tipo_aprendizaje"]
@@ -684,12 +692,16 @@ export type Database = {
           total_views: number | null
           updated_at: string | null
           username: string
+          work_experience: Json | null
         }
         Insert: {
           areas_interes?: string[] | null
           avatar_url?: string | null
           bio?: string | null
+          complementary_education?: Json | null
+          cover_image_url?: string | null
           created_at?: string | null
+          custom_url?: string | null
           departamento?: string | null
           desempenos_academicos?: Json | null
           dificultades_aprendizaje?: string | null
@@ -743,13 +755,18 @@ export type Database = {
           perfil_publico?: boolean | null
           permitir_comentarios?: boolean | null
           permitir_rankings?: boolean | null
+          phone?: string | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
           preferencia_recompensas?: string | null
           profesiones_de_interes?: string[] | null
+          profile_views?: number | null
+          projects?: Json | null
           recomendaciones_activas?: Json | null
           rutas_aprobadas_por_docente?: Json | null
+          skills?: Json | null
+          social_links?: Json | null
           temas_favoritos?: string[] | null
           tipo_aprendizaje?:
             | Database["public"]["Enums"]["tipo_aprendizaje"]
@@ -760,12 +777,16 @@ export type Database = {
           total_views?: number | null
           updated_at?: string | null
           username: string
+          work_experience?: Json | null
         }
         Update: {
           areas_interes?: string[] | null
           avatar_url?: string | null
           bio?: string | null
+          complementary_education?: Json | null
+          cover_image_url?: string | null
           created_at?: string | null
+          custom_url?: string | null
           departamento?: string | null
           desempenos_academicos?: Json | null
           dificultades_aprendizaje?: string | null
@@ -819,13 +840,18 @@ export type Database = {
           perfil_publico?: boolean | null
           permitir_comentarios?: boolean | null
           permitir_rankings?: boolean | null
+          phone?: string | null
           preferencia_duracion_contenido?:
             | Database["public"]["Enums"]["preferencia_duracion"]
             | null
           preferencia_recompensas?: string | null
           profesiones_de_interes?: string[] | null
+          profile_views?: number | null
+          projects?: Json | null
           recomendaciones_activas?: Json | null
           rutas_aprobadas_por_docente?: Json | null
+          skills?: Json | null
+          social_links?: Json | null
           temas_favoritos?: string[] | null
           tipo_aprendizaje?:
             | Database["public"]["Enums"]["tipo_aprendizaje"]
@@ -836,6 +862,7 @@ export type Database = {
           total_views?: number | null
           updated_at?: string | null
           username?: string
+          work_experience?: Json | null
         }
         Relationships: []
       }
@@ -1430,10 +1457,12 @@ export type Database = {
         Args: { content_id: string }
         Returns: undefined
       }
-      increment_shares_count: {
-        Args: { content_id: string } | { content_id?: string; quiz_id?: string }
-        Returns: undefined
-      }
+      increment_shares_count:
+        | { Args: { content_id: string }; Returns: undefined }
+        | {
+            Args: { content_id?: string; quiz_id?: string }
+            Returns: undefined
+          }
       increment_views_count: {
         Args: { content_id: string }
         Returns: undefined

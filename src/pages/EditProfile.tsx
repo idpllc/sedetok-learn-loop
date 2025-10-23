@@ -29,12 +29,14 @@ const EditProfile = () => {
     pais: "",
     departamento: "",
     municipio: "",
+    phone: "",
     idioma_preferido: "Español",
     tipo_usuario: "Estudiante",
     nivel_educativo: "",
     grado_actual: "",
     institution: "",
     bio: "",
+    custom_url: "",
     
     // Perfil cognitivo
     tipo_aprendizaje: "",
@@ -352,6 +354,29 @@ const EditProfile = () => {
                     value={formData.institution}
                     onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
                   />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Teléfono (Opcional)</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+57 300 123 4567"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="custom_url">URL Personalizada</Label>
+                  <Input
+                    id="custom_url"
+                    value={formData.custom_url}
+                    onChange={(e) => setFormData({ ...formData, custom_url: e.target.value })}
+                    placeholder="tu-nombre"
+                  />
+                  <p className="text-xs text-muted-foreground">sedetok.app/u/tu-nombre</p>
                 </div>
               </div>
 
