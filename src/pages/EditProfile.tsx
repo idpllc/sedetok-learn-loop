@@ -16,6 +16,7 @@ import { SkillsEditor } from "@/components/profile/SkillsEditor";
 import { EducationEditor } from "@/components/profile/EducationEditor";
 import { FormalEducationEditor } from "@/components/profile/FormalEducationEditor";
 import { SocialLinksEditor } from "@/components/profile/SocialLinksEditor";
+import { TagInput } from "@/components/profile/TagInput";
 import { Sidebar } from "@/components/Sidebar";
 
 const EditProfile = () => {
@@ -56,10 +57,10 @@ const EditProfile = () => {
     idioma_contenido_preferido: "Español",
     
     // Intereses
-    areas_interes: "",
-    temas_favoritos: "",
-    profesiones_de_interes: "",
-    habilidades_a_desarrollar: "",
+    areas_interes: [] as string[],
+    temas_favoritos: [] as string[],
+    profesiones_de_interes: [] as string[],
+    habilidades_a_desarrollar: [] as string[],
     motivaciones_principales: "",
     nivel_meta_aprendizaje: "",
   });
@@ -112,10 +113,10 @@ const EditProfile = () => {
         nivel_autonomia: profile.nivel_autonomia || "",
         dificultades_aprendizaje: profile.dificultades_aprendizaje || "",
         idioma_contenido_preferido: profile.idioma_contenido_preferido || "Español",
-        areas_interes: profile.areas_interes?.join(", ") || "",
-        temas_favoritos: profile.temas_favoritos?.join(", ") || "",
-        profesiones_de_interes: profile.profesiones_de_interes?.join(", ") || "",
-        habilidades_a_desarrollar: profile.habilidades_a_desarrollar?.join(", ") || "",
+        areas_interes: profile.areas_interes || [],
+        temas_favoritos: profile.temas_favoritos || [],
+        profesiones_de_interes: profile.profesiones_de_interes || [],
+        habilidades_a_desarrollar: profile.habilidades_a_desarrollar || [],
         motivaciones_principales: profile.motivaciones_principales || "",
         nivel_meta_aprendizaje: profile.nivel_meta_aprendizaje || "",
       });
@@ -162,10 +163,10 @@ const EditProfile = () => {
       nivel_autonomia: formData.nivel_autonomia || null,
       dificultades_aprendizaje: formData.dificultades_aprendizaje || null,
       idioma_contenido_preferido: formData.idioma_contenido_preferido || "Español",
-      areas_interes: formData.areas_interes ? formData.areas_interes.split(",").map(s => s.trim()) : null,
-      temas_favoritos: formData.temas_favoritos ? formData.temas_favoritos.split(",").map(s => s.trim()) : null,
-      profesiones_de_interes: formData.profesiones_de_interes ? formData.profesiones_de_interes.split(",").map(s => s.trim()) : null,
-      habilidades_a_desarrollar: formData.habilidades_a_desarrollar ? formData.habilidades_a_desarrollar.split(",").map(s => s.trim()) : null,
+      areas_interes: formData.areas_interes.length > 0 ? formData.areas_interes : null,
+      temas_favoritos: formData.temas_favoritos.length > 0 ? formData.temas_favoritos : null,
+      profesiones_de_interes: formData.profesiones_de_interes.length > 0 ? formData.profesiones_de_interes : null,
+      habilidades_a_desarrollar: formData.habilidades_a_desarrollar.length > 0 ? formData.habilidades_a_desarrollar : null,
       motivaciones_principales: formData.motivaciones_principales || null,
       nivel_meta_aprendizaje: formData.nivel_meta_aprendizaje || null,
       // Agregar datos complejos
@@ -607,41 +608,41 @@ const EditProfile = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="areas_interes">Áreas de Interés</Label>
-                <Input
-                  id="areas_interes"
+                <TagInput
                   value={formData.areas_interes}
-                  onChange={(e) => setFormData({ ...formData, areas_interes: e.target.value })}
-                  placeholder="Ej: Matemáticas, Ciencias, Historia (separadas por coma)"
+                  onChange={(tags) => setFormData({ ...formData, areas_interes: tags })}
+                  placeholder="Escribe y presiona Enter para agregar (Ej: Matemáticas, Ciencias, Historia)"
+                  fieldName="areas_interes"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="temas_favoritos">Temas Favoritos</Label>
-                <Input
-                  id="temas_favoritos"
+                <TagInput
                   value={formData.temas_favoritos}
-                  onChange={(e) => setFormData({ ...formData, temas_favoritos: e.target.value })}
-                  placeholder="Ej: Geometría, Física cuántica, Segunda Guerra Mundial"
+                  onChange={(tags) => setFormData({ ...formData, temas_favoritos: tags })}
+                  placeholder="Escribe y presiona Enter para agregar (Ej: Geometría, Física cuántica)"
+                  fieldName="temas_favoritos"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="profesiones_de_interes">Profesiones de Interés</Label>
-                <Input
-                  id="profesiones_de_interes"
+                <TagInput
                   value={formData.profesiones_de_interes}
-                  onChange={(e) => setFormData({ ...formData, profesiones_de_interes: e.target.value })}
-                  placeholder="Ej: Ingeniero, Médico, Profesor"
+                  onChange={(tags) => setFormData({ ...formData, profesiones_de_interes: tags })}
+                  placeholder="Escribe y presiona Enter para agregar (Ej: Ingeniero, Médico)"
+                  fieldName="profesiones_de_interes"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="habilidades_a_desarrollar">Habilidades a Desarrollar</Label>
-                <Input
-                  id="habilidades_a_desarrollar"
+                <TagInput
                   value={formData.habilidades_a_desarrollar}
-                  onChange={(e) => setFormData({ ...formData, habilidades_a_desarrollar: e.target.value })}
+                  onChange={(tags) => setFormData({ ...formData, habilidades_a_desarrollar: tags })}
                   placeholder="Ej: Pensamiento crítico, Trabajo en equipo, Programación"
+                  fieldName="habilidades_a_desarrollar"
                 />
               </div>
 

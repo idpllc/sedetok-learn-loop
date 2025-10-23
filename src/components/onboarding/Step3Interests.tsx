@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { Calculator, Palette, Microscope, Laptop, Globe, Music, Heart, BookOpen } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { TagInput } from "@/components/profile/TagInput";
 
 interface Step3Props {
   formData: any;
@@ -11,7 +9,8 @@ interface Step3Props {
 }
 
 export const Step3Interests = ({ formData, updateFormData }: Step3Props) => {
-  const [tagInput, setTagInput] = useState("");
+  const selectedAreas = formData.areas_interes || [];
+  const professionTags = formData.profesiones_de_interes || [];
 
   const areas = [
     { value: "Matemáticas", icon: Calculator },
@@ -32,11 +31,6 @@ export const Step3Interests = ({ formData, updateFormData }: Step3Props) => {
     { value: "Competir", label: "Competir con otros" },
   ];
 
-  const selectedAreas = formData.areas_interes || [];
-  const professionTags = formData.profesiones_de_interes
-    ? formData.profesiones_de_interes.split(",").map((t: string) => t.trim()).filter(Boolean)
-    : [];
-
   const toggleArea = (area: string) => {
     const current = [...selectedAreas];
     const index = current.indexOf(area);
@@ -46,20 +40,6 @@ export const Step3Interests = ({ formData, updateFormData }: Step3Props) => {
       current.push(area);
     }
     updateFormData({ areas_interes: current });
-  };
-
-  const addTag = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && tagInput.trim()) {
-      e.preventDefault();
-      const newTags = [...professionTags, tagInput.trim()];
-      updateFormData({ profesiones_de_interes: newTags.join(", ") });
-      setTagInput("");
-    }
-  };
-
-  const removeTag = (tag: string) => {
-    const newTags = professionTags.filter((t: string) => t !== tag);
-    updateFormData({ profesiones_de_interes: newTags.join(", ") });
   };
 
   return (
@@ -96,20 +76,12 @@ export const Step3Interests = ({ formData, updateFormData }: Step3Props) => {
 
       <div className="space-y-3">
         <Label htmlFor="professions" className="text-base">Profesiones o temas de interés</Label>
-        <Input
-          id="professions"
+        <TagInput
+          value={professionTags}
+          onChange={(tags) => updateFormData({ profesiones_de_interes: tags })}
           placeholder="Escribe y presiona Enter para agregar"
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={addTag}
+          fieldName="profesiones_de_interes"
         />
-        <div className="flex flex-wrap gap-2 min-h-[40px]">
-          {professionTags.map((tag: string) => (
-            <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => removeTag(tag)}>
-              {tag} ×
-            </Badge>
-          ))}
-        </div>
       </div>
 
       <div className="space-y-3">
