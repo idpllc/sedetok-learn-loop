@@ -27,13 +27,14 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
   };
 
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = fileUrl.split('/').pop() || 'documento.pdf';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // For Cloudinary URLs, add fl_attachment parameter to force download
+    let downloadUrl = fileUrl;
+    if (fileUrl.includes('cloudinary.com')) {
+      downloadUrl = fileUrl.replace('/upload/', '/upload/fl_attachment/');
+    }
+    
+    // Open in new tab to trigger download
+    window.open(downloadUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (

@@ -268,7 +268,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             {/* Dark overlay */}
             <div className="absolute inset-0 bg-black/40 z-0" />
             
-            {/* Central download button */}
+            {/* Central download/view button */}
             <div className="absolute inset-0 flex items-center justify-center z-[999]">
               <Button
                 size="lg"
@@ -277,13 +277,16 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   const resourceUrl = documentUrl || thumbnail;
                   if (!resourceUrl) return;
                   
-                  const link = document.createElement('a');
-                  link.href = resourceUrl;
-                  link.download = resourceUrl.split('/').pop() || 'recurso';
-                  link.target = '_blank';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+                  // For Cloudinary URLs, add fl_attachment parameter to force download
+                  let downloadUrl = resourceUrl;
+                  if (resourceUrl.includes('cloudinary.com')) {
+                    // Insert fl_attachment before the version number (v1234567)
+                    downloadUrl = resourceUrl.replace('/upload/', '/upload/fl_attachment/');
+                  }
+                  
+                  // Open in new tab with download parameter
+                  window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+                  
                   if (onDocumentDownload) {
                     onDocumentDownload();
                   }
