@@ -1,10 +1,11 @@
-import { Camera, MapPin, Calendar, Mail, Phone } from "lucide-react";
+import { Camera, MapPin, Calendar, Mail, Phone, Share2, Linkedin, Instagram, Facebook, Twitter, Github } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
 import { useRef } from "react";
+import { FaTiktok } from "react-icons/fa";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -68,6 +69,22 @@ const avatarInputRef = useRef<HTMLInputElement>(null);
     ? new Date().getFullYear() - new Date(profile.fecha_nacimiento).getFullYear()
     : null;
 
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: `Perfil de ${profile?.full_name || profile?.username}`,
+        url: url,
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Enlace copiado al portapapeles" });
+    }
+  };
+
+  const socialLinks = profile?.social_links || {};
+  const hasSocialLinks = Object.values(socialLinks).some(link => link);
+
   return (
     <div className="relative">
       {/* Portada */}
@@ -99,27 +116,83 @@ const avatarInputRef = useRef<HTMLInputElement>(null);
 
       {/* Información del perfil */}
       <div className="px-6 pb-6">
-        {/* Avatar */}
-        <div className="relative -mt-16 mb-4">
-          <Avatar className="w-32 h-32 border-4 border-background">
-            <AvatarImage src={profile?.avatar_url} />
-            <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
-          </Avatar>
-          {isOwnProfile && (
-            <div className="absolute bottom-0 right-0">
-              <Button size="icon" variant="secondary" className="rounded-full" disabled={uploading} onClick={() => avatarInputRef.current?.click()}>
-                <Camera className="w-4 h-4" />
-              </Button>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                disabled={uploading}
-              />
-            </div>
-          )}
+        {/* Avatar y acciones */}
+        <div className="flex items-start gap-4 -mt-16 mb-4">
+          <div className="relative">
+            <Avatar className="w-32 h-32 border-4 border-background">
+              <AvatarImage src={profile?.avatar_url} />
+              <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
+            </Avatar>
+            {isOwnProfile && (
+              <div className="absolute -top-2 -right-2">
+                <Button size="icon" variant="secondary" className="rounded-full shadow-lg" disabled={uploading} onClick={() => avatarInputRef.current?.click()}>
+                  <Camera className="w-4 h-4" />
+                </Button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  disabled={uploading}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Redes sociales y compartir */}
+          <div className="flex items-center gap-2 mt-auto">
+            {hasSocialLinks && (
+              <div className="flex items-center gap-1">
+                {socialLinks.linkedin && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                    <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer">
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.instagram && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                    <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer">
+                      <Instagram className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.facebook && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                    <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer">
+                      <Facebook className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.twitter && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                    <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer">
+                      <Twitter className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.tiktok && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                    <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer">
+                      <FaTiktok className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+                {socialLinks.github && (
+                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                    <a href={socialLinks.github} target="_blank" rel="noopener noreferrer">
+                      <Github className="w-4 h-4" />
+                    </a>
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleShare} title="Compartir perfil">
+              <Share2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Nombre y título */}
