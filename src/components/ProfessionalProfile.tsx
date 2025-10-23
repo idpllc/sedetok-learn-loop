@@ -5,7 +5,7 @@ import { useAcademicMetrics } from "@/hooks/useAcademicMetrics";
 import { useInstitutionAcademicMetrics } from "@/hooks/useInstitutionAcademicMetrics";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BookOpen, Brain, Target, TrendingUp, Building2 } from "lucide-react";
+import { BookOpen, Brain, Target, TrendingUp, Building2, GraduationCap, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -210,17 +210,33 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
           <CardContent>
             <div className="space-y-4">
               {profile.education.map((edu: any, index: number) => (
-                <div key={index} className="border-l-2 border-primary pl-4 py-2">
-                  <h4 className="font-semibold">{edu.degree} en {edu.field_of_study}</h4>
-                  <p className="text-sm text-muted-foreground">{edu.institution}</p>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                    <span>{edu.start_date}</span>
-                    <span>-</span>
-                    <span>{edu.currently_studying ? "Presente" : edu.end_date}</span>
+                <div key={index} className="flex items-start gap-4 p-4 border rounded-lg">
+                  <GraduationCap className="w-8 h-8 text-primary mt-1" />
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <h4 className="font-semibold">{edu.degree} en {edu.field_of_study}</h4>
+                      <p className="text-sm text-muted-foreground">{edu.institution}</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span>{edu.start_date}</span>
+                      <span>-</span>
+                      <span>{edu.currently_studying ? "Presente" : edu.end_date}</span>
+                    </div>
+                    {edu.description && (
+                      <p className="text-sm mt-2">{edu.description}</p>
+                    )}
+                    {edu.certificate_url && (
+                      <a 
+                        href={edu.certificate_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Ver certificado →
+                      </a>
+                    )}
                   </div>
-                  {edu.description && (
-                    <p className="text-sm mt-2">{edu.description}</p>
-                  )}
                 </div>
               ))}
             </div>
