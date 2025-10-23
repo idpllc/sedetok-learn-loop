@@ -13,12 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 
-declare global {
-  interface Window {
-    MercadoPago: any;
-  }
-}
-
 const PACKAGES = [
   {
     educoins: 100,
@@ -84,12 +78,6 @@ export default function BuyEducoins() {
         return;
       }
 
-      const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || "";
-      if (!publicKey) {
-        toast.error("Error de configuración. Contacta al administrador.");
-        return;
-      }
-
       const transactionRef = `EDU-${Date.now()}-${user.id.slice(0, 8)}`;
 
       // Crear la transacción en la base de datos
@@ -97,11 +85,6 @@ export default function BuyEducoins() {
         amount: price,
         educoins,
         transactionRef,
-      });
-
-      // Inicializar MercadoPago SDK
-      const mp = new window.MercadoPago(publicKey, {
-        locale: 'es-CO'
       });
 
       // Crear preferencia de pago
@@ -137,18 +120,16 @@ export default function BuyEducoins() {
         throw new Error(preferenceError.message);
       }
 
-      // Abrir el checkout de MercadoPago
-      mp.checkout({
-        preference: {
-          id: preferenceData.preference_id,
-        },
-        autoOpen: true,
-      });
+      // Redirigir al checkout de MercadoPago
+      if (preferenceData?.init_point) {
+        window.location.href = preferenceData.init_point;
+      } else {
+        throw new Error("No se recibió la URL de pago");
+      }
 
     } catch (error) {
       console.error("Error al iniciar checkout:", error);
       toast.error("Error al procesar la compra. Intenta de nuevo.");
-    } finally {
       setLoadingPackage(null);
     }
   };
@@ -211,9 +192,6 @@ export default function BuyEducoins() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Cargar SDK de MercadoPago */}
-      <script src="https://sdk.mercadopago.com/js/v2" />
-      
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Button
           variant="ghost"
