@@ -424,6 +424,7 @@ export type Database = {
           contact_email: string | null
           contact_phone: string | null
           country: string | null
+          cover_url: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -442,6 +443,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
+          cover_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -460,6 +462,7 @@ export type Database = {
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
+          cover_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string

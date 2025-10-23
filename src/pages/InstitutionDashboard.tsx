@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useInstitution } from "@/hooks/useInstitution";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, BookOpen, UserPlus, Settings, Home, Calendar } from "lucide-react";
+import { Building2, Users, BookOpen, UserPlus, Settings, Home, Calendar, Camera } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { InstitutionSettings } from "@/components/institution/InstitutionSetting
 import { InstitutionAnalytics } from "@/components/institution/InstitutionAnalytics";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useCloudinary } from "@/hooks/useCloudinary";
 
 export default function InstitutionDashboard() {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ export default function InstitutionDashboard() {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
   const [searchQuery, setSearchQuery] = useState("");
+  const { uploadFile, uploading } = useCloudinary();
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // Get current user's role in the institution
   const { data: currentUserRole } = useQuery({
@@ -145,6 +148,33 @@ export default function InstitutionDashboard() {
     }
   };
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const url = await uploadFile(file, "image");
+      if (url) {
+        const { error } = await supabase
+          .from("institutions")
+          .update({ cover_url: url })
+          .eq("id", myInstitution!.id);
+
+        if (error) throw error;
+
+        toast({ title: "Portada actualizada correctamente" });
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error uploading cover:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la portada",
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredMembers = members?.filter(member => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -188,6 +218,27 @@ export default function InstitutionDashboard() {
         <div className="absolute inset-0 bg-cover bg-center" 
           style={myInstitution.cover_url ? { backgroundImage: `url(${myInstitution.cover_url})` } : {}} 
         />
+        {isAdmin && (
+          <div className="absolute top-4 right-4">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              disabled={uploading} 
+              onClick={() => coverInputRef.current?.click()}
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              {uploading ? "Subiendo..." : "Cambiar portada"}
+            </Button>
+            <input
+              ref={coverInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleCoverUpload}
+              disabled={uploading}
+            />
+          </div>
+        )}
       </div>
 
       <div className="container -mt-16 md:-mt-20 space-y-6">
