@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useEducoins } from "@/hooks/useEducoins";
 import { useXP } from "@/hooks/useXP";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
 
 interface QuizViewerProps {
   quizId: string;
@@ -43,7 +44,7 @@ interface Question {
 export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: QuizViewerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { deductEducoins } = useEducoins();
+  const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
   const { deductXP } = useXP();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [quizSubject, setQuizSubject] = useState<string | null>(null);
@@ -765,6 +766,12 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <BuyEducoinsModal
+        open={showBuyModal}
+        onOpenChange={closeBuyModal}
+        requiredAmount={requiredAmount}
+      />
     </div>
   );
 };

@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import Search from "./pages/Search";
 import Achievements from "./pages/Achievements";
 import XPHistory from "./pages/XPHistory";
+import EducoinHistory from "./pages/EducoinHistory";
 import CreateContent from "./pages/CreateContent";
 import EditContent from "./pages/EditContent";
 import Profile from "./pages/Profile";
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/search" element={<Search />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/xp-history" element={<XPHistory />} />
+          <Route path="/educoin-history" element={<EducoinHistory />} />
           <Route path="/buy-educoins" element={<BuyEducoins />} />
           <Route path="/create" element={<CreateContent />} />
           <Route path="/edit/:id" element={<EditContent />} />

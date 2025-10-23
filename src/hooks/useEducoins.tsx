@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState, useCallback } from "react";
 
 export const useEducoins = () => {
   const queryClient = useQueryClient();
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [requiredAmount, setRequiredAmount] = useState<number | undefined>();
 
   const { data: balance, isLoading } = useQuery({
     queryKey: ["educoin-balance"],
@@ -72,7 +75,7 @@ export const useEducoins = () => {
     },
   });
 
-  const deductEducoins = async (amount: number, reason: string) => {
+  const deductEducoins = async (amount: number, reason: string, showModal: boolean = true) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
@@ -88,9 +91,14 @@ export const useEducoins = () => {
       const currentBalance = profile.educoins || 0;
       
       if (currentBalance < amount) {
-        toast.error("Educoins insuficientes", {
-          description: `Necesitas ${amount} Educoins. Tienes ${currentBalance}.`,
-        });
+        if (showModal) {
+          setRequiredAmount(amount);
+          setShowBuyModal(true);
+        } else {
+          toast.error("Educoins insuficientes", {
+            description: `Necesitas ${amount} Educoins. Tienes ${currentBalance}.`,
+          });
+        }
         return false;
       }
 
@@ -117,6 +125,16 @@ export const useEducoins = () => {
     }
   };
 
+  const openBuyModal = useCallback((amount?: number) => {
+    setRequiredAmount(amount);
+    setShowBuyModal(true);
+  }, []);
+
+  const closeBuyModal = useCallback(() => {
+    setShowBuyModal(false);
+    setRequiredAmount(undefined);
+  }, []);
+
   return {
     balance,
     isLoading,
@@ -124,5 +142,9 @@ export const useEducoins = () => {
     isLoadingTransactions,
     createTransaction,
     deductEducoins,
+    showBuyModal,
+    requiredAmount,
+    openBuyModal,
+    closeBuyModal,
   };
 };

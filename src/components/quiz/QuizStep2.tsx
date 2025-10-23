@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useEducoins } from "@/hooks/useEducoins";
 import { useXP } from "@/hooks/useXP";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
 
 export interface QuizQuestion {
   id: string;
@@ -48,7 +49,7 @@ interface QuizStep2Props {
 export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) => {
   const [selectedQuestion, setSelectedQuestion] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { deductEducoins } = useEducoins();
+  const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
   const { deductXP } = useXP();
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
 
@@ -299,6 +300,12 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <BuyEducoinsModal
+      open={showBuyModal}
+      onOpenChange={closeBuyModal}
+      requiredAmount={requiredAmount}
+    />
   </>
   );
 };
