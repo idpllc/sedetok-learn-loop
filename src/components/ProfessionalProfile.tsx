@@ -27,7 +27,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
   const { data: metrics, isLoading } = useAcademicMetrics(userId);
   const isOwnProfile = user?.id === userId;
 
-  const { data: profile, refetch: refetchProfile } = useQuery({
+  const { data: profile, refetch: refetchProfile, isLoading: profileLoading } = useQuery({
     queryKey: ["profile-full", userId],
     queryFn: async () => {
       if (!userId) return null;
@@ -38,10 +38,13 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         .eq("id", userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
       
       // Incrementar vistas si no es el propio perfil
-      if (!isOwnProfile) {
+      if (!isOwnProfile && user) {
         await supabase
           .from("profiles")
           .update({ profile_views: (data.profile_views || 0) + 1 })
@@ -134,9 +137,10 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     institutionMember?.institution_id
   );
 
-  if (isLoading) {
+  if (isLoading || profileLoading) {
     return (
       <div className="space-y-6">
+        <Skeleton className="h-64 w-full rounded-lg" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <Skeleton key={i} className="h-32" />

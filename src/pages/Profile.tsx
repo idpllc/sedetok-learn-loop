@@ -430,25 +430,36 @@ const Profile = () => {
                 </Button>
               </>
             ) : (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => toggleFollow(userId!)}
-                disabled={isProcessing}
-                className="flex items-center gap-2"
-              >
-                {isFollowing ? (
-                  <>
-                    <UserCheck className="w-4 h-4" />
-                    <span>Siguiendo</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-4 h-4" />
-                    <span>Seguir</span>
-                  </>
-                )}
-              </Button>
+              <>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => navigate(`/profile/professional/${userId}`)}
+                  className="flex items-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span className="hidden md:inline">Perfil Profesional</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => toggleFollow(userId!)}
+                  disabled={isProcessing}
+                  className="flex items-center gap-2"
+                >
+                  {isFollowing ? (
+                    <>
+                      <UserCheck className="w-4 h-4" />
+                      <span>Siguiendo</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      <span>Seguir</span>
+                    </>
+                  )}
+                </Button>
+              </>
             )}
           </div>
         </div>
