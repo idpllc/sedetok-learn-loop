@@ -20,6 +20,8 @@ export default function RegisterInstitution() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    nit: "",
+    codigo_dane: "",
     contact_email: "",
     contact_phone: "",
     address: "",
@@ -56,6 +58,19 @@ export default function RegisterInstitution() {
 
       if (error) throw error;
 
+      // Update NIT and codigo_dane separately if provided
+      if (formData.nit || formData.codigo_dane) {
+        const { error: updateError } = await supabase
+          .from('institutions')
+          .update({
+            nit: formData.nit || undefined,
+            codigo_dane: formData.codigo_dane || undefined
+          })
+          .eq('id', institutionId);
+
+        if (updateError) throw updateError;
+      }
+
       toast({
         title: "¡Institución registrada!",
         description: "Tu institución ha sido creada exitosamente"
@@ -70,9 +85,21 @@ export default function RegisterInstitution() {
       }, 100);
     } catch (error: any) {
       console.error("Error registering institution:", error);
+      
+      let errorMessage = error.message || "No se pudo registrar la institución";
+      
+      // Check for unique constraint violations
+      if (error.code === '23505') {
+        if (error.message?.includes('unique_institution_nit')) {
+          errorMessage = 'Este NIT ya está registrado por otra institución';
+        } else if (error.message?.includes('unique_institution_codigo_dane')) {
+          errorMessage = 'Este código DANE ya está registrado por otra institución';
+        }
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "No se pudo registrar la institución",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -114,6 +141,28 @@ export default function RegisterInstitution() {
                 placeholder="Describe tu institución..."
                 rows={4}
               />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nit">NIT</Label>
+                <Input
+                  id="nit"
+                  value={formData.nit}
+                  onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
+                  placeholder="Número de Identificación Tributaria"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="codigo_dane">Código DANE</Label>
+                <Input
+                  id="codigo_dane"
+                  value={formData.codigo_dane}
+                  onChange={(e) => setFormData({ ...formData, codigo_dane: e.target.value })}
+                  placeholder="Código del DANE"
+                />
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">

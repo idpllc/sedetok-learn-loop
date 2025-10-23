@@ -182,10 +182,17 @@ const EditProfile = () => {
         title: "Perfil actualizado",
         description: "Tus cambios se guardaron correctamente",
       });
-    } catch (error) {
+    } catch (error: any) {
+      let errorMessage = "No se pudo actualizar el perfil";
+      
+      // Check for unique constraint violations
+      if (error.code === '23505' || error.message?.includes('unique_user_document')) {
+        errorMessage = 'Este tipo y número de documento ya están registrados por otro usuario';
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo actualizar el perfil",
+        description: errorMessage,
         variant: "destructive",
       });
     }

@@ -70,9 +70,20 @@ export function InstitutionSettings({
       });
     },
     onError: (error: any) => {
+      let errorMessage = error.message;
+      
+      // Check for unique constraint violations
+      if (error.code === '23505') {
+        if (error.message.includes('unique_institution_nit')) {
+          errorMessage = 'Este NIT ya está registrado por otra institución';
+        } else if (error.message.includes('unique_institution_codigo_dane')) {
+          errorMessage = 'Este código DANE ya está registrado por otra institución';
+        }
+      }
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     }
