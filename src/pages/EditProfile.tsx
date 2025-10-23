@@ -182,7 +182,6 @@ const EditProfile = () => {
         title: "Perfil actualizado",
         description: "Tus cambios se guardaron correctamente",
       });
-      navigate("/profile");
     } catch (error) {
       toast({
         title: "Error",
@@ -442,18 +441,6 @@ const EditProfile = () => {
             onChange={setSocialLinks}
           />
 
-          {/* Experiencia Laboral */}
-          <ExperienceEditor 
-            experiences={workExperience}
-            onChange={setWorkExperience}
-          />
-
-          {/* Habilidades */}
-          <SkillsEditor 
-            skills={skills}
-            onChange={setSkills}
-          />
-
           {/* Educación Formal */}
           <FormalEducationEditor 
             education={formalEducation}
@@ -464,6 +451,18 @@ const EditProfile = () => {
           <EducationEditor 
             education={complementaryEducation}
             onChange={setComplementaryEducation}
+          />
+
+          {/* Experiencia Laboral */}
+          <ExperienceEditor 
+            experiences={workExperience}
+            onChange={setWorkExperience}
+          />
+
+          {/* Habilidades */}
+          <SkillsEditor 
+            skills={skills}
+            onChange={setSkills}
           />
 
           {/* Perfil Cognitivo */}

@@ -185,7 +185,7 @@ export const SkillsEditor = ({ skills, onChange }: SkillsEditorProps) => {
                         </div>
                         <div className="h-2 bg-secondary rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-secondary-foreground transition-all"
+                            className="h-full bg-accent transition-all"
                             style={{ width: `${skill.level}%` }}
                           />
                         </div>
