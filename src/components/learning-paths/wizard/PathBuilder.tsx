@@ -412,7 +412,14 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
 
       {/* Panel central - Constructor visual */}
       <div className="lg:col-span-2">
-        <h3 className="font-semibold text-lg mb-3">🎨 Constructor Visual</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-lg">🎨 Constructor Visual</h3>
+          {pathId && (
+            <Badge variant={contents && contents.length >= 3 ? "default" : "destructive"}>
+              {contents?.length || 0} / 3 cápsulas mínimas
+            </Badge>
+          )}
+        </div>
         
         {!pathId ? (
           <Card className="p-12 text-center">
@@ -422,7 +429,15 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
             </p>
           </Card>
         ) : contents && contents.length > 0 ? (
-          <ScrollArea className="h-[600px]">
+          <div className="space-y-4">
+            {contents.length < 3 && (
+              <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
+                <p className="text-sm font-medium text-destructive">
+                  ⚠️ Agrega al menos {3 - contents.length} cápsula(s) más para poder publicar la ruta
+                </p>
+              </div>
+            )}
+            <ScrollArea className="h-[600px]">
             <div
               className={`space-y-3 rounded-lg ${isDraggingOver ? "border-2 border-dashed border-primary/50 bg-primary/5" : ""}`}
               onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
@@ -537,18 +552,29 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
               })}
             </div>
           </ScrollArea>
+          </div>
         ) : (
-          <Card
-            className={`p-12 text-center rounded-lg ${isDraggingOver ? "border-2 border-dashed border-primary/50 bg-primary/5" : ""}`}
-            onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
-            onDragLeave={() => setIsDraggingOver(false)}
-            onDrop={handleDrop}
-          >
-            <div className="text-4xl mb-4">👈</div>
-            <p className="text-muted-foreground">
-              Agrega cápsulas desde la biblioteca o arrastra y suelta aquí
-            </p>
-          </Card>
+          <div className="space-y-4">
+            <div className="p-4 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-sm font-medium text-destructive">
+                ⚠️ Debes agregar al menos 3 cápsulas para poder publicar la ruta
+              </p>
+            </div>
+            <Card
+              className={`p-12 text-center rounded-lg ${isDraggingOver ? "border-2 border-dashed border-primary/50 bg-primary/5" : "border-2 border-dashed"}`}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true); }}
+              onDragLeave={() => setIsDraggingOver(false)}
+              onDrop={handleDrop}
+            >
+              <div className="text-4xl mb-4">👈</div>
+              <p className="text-muted-foreground mb-2">
+                Agrega cápsulas desde la biblioteca o arrastra y suelta aquí
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Mínimo 3 cápsulas requeridas
+              </p>
+            </Card>
+          </div>
         )}
       </div>
     </div>
