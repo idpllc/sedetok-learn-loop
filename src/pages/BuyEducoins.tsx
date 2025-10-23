@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import { z } from "zod";
 
 declare global {
   interface Window {
-    ePayco: any;
+    MercadoPago: any;
   }
 }
 
@@ -52,28 +52,6 @@ export default function BuyEducoins() {
   const [pendingPurchase, setPendingPurchase] = useState<{ educoins: number; price: number } | null>(null);
   const [savingDoc, setSavingDoc] = useState(false);
 
-  // Preload ePayco checkout script once to avoid modal hang on first open
-  useEffect(() => {
-    if (!(window as any).ePayco) {
-      const script = document.createElement("script");
-      script.src = "https://checkout.epayco.co/checkout.js";
-      script.async = true;
-      document.body.appendChild(script);
-      script.onload = () => console.debug("ePayco script loaded");
-      script.onerror = () => console.error("Error cargando ePayco checkout.js");
-    }
-  }, []);
-
-  const mapDocTypeToEpayco = (t: string): string => {
-    const normalized = (t || "").toUpperCase();
-    if (["CC", "CEDULA", "CÉDULA", "CEDULA DE CIUDADANIA", "CÉDULA DE CIUDADANÍA"].includes(normalized)) return "CC";
-    if (["CE", "CEDULA DE EXTRANJERIA", "CÉDULA DE EXTRANJERÍA"].includes(normalized)) return "CE";
-    if (["TI", "TARJETA DE IDENTIDAD"].includes(normalized)) return "TI";
-    if (["NIT"].includes(normalized)) return "NIT";
-    if (["PP", "PASAPORTE", "PASSPORT"].includes(normalized)) return "PP";
-    return "CC";
-  };
-
   const docSchema = z.object({
     docType: z.enum(["CC", "CE", "TI", "NIT", "PP"], { required_error: "Selecciona el tipo de documento" }),
     docNumber: z
@@ -106,7 +84,7 @@ export default function BuyEducoins() {
         return;
       }
 
-      const publicKey = import.meta.env.VITE_EPAYCO_PUBLIC_KEY || "";
+      const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || "";
       if (!publicKey) {
         toast.error("Error de configuración. Contacta al administrador.");
         return;
@@ -114,57 +92,59 @@ export default function BuyEducoins() {
 
       const transactionRef = `EDU-${Date.now()}-${user.id.slice(0, 8)}`;
 
+      // Crear la transacción en la base de datos
       await createTransaction.mutateAsync({
         amount: price,
         educoins,
         transactionRef,
       });
 
-      if (!(window as any).ePayco) {
-        const script = document.createElement("script");
-        script.src = "https://checkout.epayco.co/checkout.js";
-        script.async = true;
-        document.body.appendChild(script);
-        await new Promise((resolve) => {
-          script.onload = resolve as any;
-        });
-      }
-
-      const handler = (window as any).ePayco.checkout.configure({
-        key: publicKey,
-        test: true, // Cambiar a false en producción
+      // Inicializar MercadoPago SDK
+      const mp = new window.MercadoPago(publicKey, {
+        locale: 'es-CO'
       });
 
-      // Si estamos dentro de un iframe (como el preview), usar modo externo para evitar bloqueos del modal
-      const isInIframe = window.self !== window.top;
-      const externalMode = isInIframe ? "true" : "false";
+      // Crear preferencia de pago
+      const { data: preferenceData, error: preferenceError } = await supabase.functions.invoke(
+        'create-mercadopago-preference',
+        {
+          body: {
+            title: `${educoins} Educoins`,
+            description: `Paquete de ${educoins} Educoins para Sedefy`,
+            unit_price: price,
+            quantity: 1,
+            external_reference: transactionRef,
+            payer: {
+              name: user.user_metadata?.full_name || "Usuario",
+              email: user.email || "",
+              identification: {
+                type: userDocType,
+                number: userDocNumber,
+              },
+            },
+            notification_url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-mercadopago-payment`,
+            back_urls: {
+              success: `${window.location.origin}/achievements?status=success`,
+              failure: `${window.location.origin}/buy-educoins?status=failure`,
+              pending: `${window.location.origin}/achievements?status=pending`,
+            },
+            auto_return: "approved",
+          },
+        }
+      );
 
-      const data = {
-        name: `${educoins} Educoins`,
-        description: `Paquete de ${educoins} Educoins para Sedefy`,
-        invoice: transactionRef,
-        currency: "COP",
-        amount: price.toString(),
-        tax_base: "0",
-        tax: "0",
-        country: "co",
-        lang: "es",
-        external: externalMode,
-        extra1: user.id,
-        extra2: educoins.toString(),
-        extra3: transactionRef,
-        confirmation: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-epayco-payment`,
-        method_confirmation: "POST",
-        response: `${window.location.origin}/achievements`,
-        name_billing: user.user_metadata?.full_name || "Usuario",
-        email_billing: user.email || "",
-        type_person: "0",
-        doc_type: mapDocTypeToEpayco(userDocType),
-        doc_number: userDocNumber,
-      } as any;
+      if (preferenceError) {
+        throw new Error(preferenceError.message);
+      }
 
-      console.debug("ePayco checkout payload", { ...data, key_test: true, in_iframe: isInIframe });
-      handler.open(data);
+      // Abrir el checkout de MercadoPago
+      mp.checkout({
+        preference: {
+          id: preferenceData.preference_id,
+        },
+        autoOpen: true,
+      });
+
     } catch (error) {
       console.error("Error al iniciar checkout:", error);
       toast.error("Error al procesar la compra. Intenta de nuevo.");
@@ -172,7 +152,6 @@ export default function BuyEducoins() {
       setLoadingPackage(null);
     }
   };
-
 
   const handleBuy = async (educoins: number, price: number) => {
     setLoadingPackage(educoins);
@@ -191,7 +170,7 @@ export default function BuyEducoins() {
       if (!profileDocType || !profileDocNumber) {
         // Abrir modal para capturar datos faltantes
         setPendingPurchase({ educoins, price });
-        setDocType(profileDocType ? mapDocTypeToEpayco(profileDocType) : "");
+        setDocType(profileDocType || "");
         setDocNumber(profileDocNumber || "");
         setDocModalOpen(true);
         setLoadingPackage(null);
@@ -230,9 +209,11 @@ export default function BuyEducoins() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-background">
+      {/* Cargar SDK de MercadoPago */}
+      <script src="https://sdk.mercadopago.com/js/v2" />
+      
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <Button
           variant="ghost"
@@ -308,7 +289,7 @@ export default function BuyEducoins() {
         </div>
 
         <div className="mt-12 text-center text-sm text-muted-foreground">
-          <p>Pago seguro procesado por ePayco</p>
+          <p>Pago seguro procesado por MercadoPago</p>
           <p className="mt-2">
             Los Educoins se agregarán automáticamente a tu cuenta una vez confirmado el pago
           </p>
