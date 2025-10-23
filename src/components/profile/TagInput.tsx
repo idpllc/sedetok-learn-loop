@@ -76,38 +76,39 @@ export const TagInput = ({ value, onChange, placeholder, fieldName }: TagInputPr
 
   return (
     <div className="space-y-2">
-      <Popover open={open && suggestions.length > 0} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Input
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value);
-              setOpen(true);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            onFocus={() => setOpen(true)}
-          />
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-full bg-popover z-50" align="start">
-          <Command>
-            <CommandList>
-              <CommandEmpty>No se encontraron sugerencias</CommandEmpty>
-              <CommandGroup>
-                {suggestions.map((suggestion) => (
-                  <CommandItem
-                    key={suggestion}
-                    onSelect={() => addTag(suggestion)}
-                    className="cursor-pointer"
-                  >
-                    {suggestion}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <div className="relative">
+        <Input
+          value={inputValue}
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            setOpen(true);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+        />
+        {open && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md z-50 max-h-60 overflow-auto">
+            <Command>
+              <CommandList>
+                <CommandEmpty>No se encontraron sugerencias</CommandEmpty>
+                <CommandGroup>
+                  {suggestions.map((suggestion) => (
+                    <CommandItem
+                      key={suggestion}
+                      onSelect={() => addTag(suggestion)}
+                      className="cursor-pointer"
+                    >
+                      {suggestion}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-wrap gap-2 min-h-[40px]">
         {value.map((tag) => (
