@@ -6,15 +6,25 @@ import { ProfessionalProfile as ProfessionalProfileComponent } from "@/component
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthModal } from "@/components/AuthModal";
+import { useState, useEffect } from "react";
 
 const ProfessionalProfile = () => {
   const navigate = useNavigate();
   const { userId: urlUserId } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
   // Determine the target user ID - either from URL or current user
   const targetUserId = urlUserId || user?.id;
   const isOwnProfile = !urlUserId || urlUserId === user?.id;
+
+  // Check if user needs to authenticate to view this profile
+  useEffect(() => {
+    if (!authLoading && urlUserId && !user) {
+      setShowAuthModal(true);
+    }
+  }, [authLoading, urlUserId, user]);
 
   // Fetch profile data
   const { data: profileData, isLoading } = useQuery({
@@ -33,6 +43,35 @@ const ProfessionalProfile = () => {
     },
     enabled: !!targetUserId,
   });
+
+  // Show auth modal for anonymous users trying to access public profiles
+  if (!authLoading && urlUserId && !user) {
+    return (
+      <>
+        <Sidebar />
+        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-20 md:pt-0">
+          <div className="text-center space-y-6 px-4 max-w-md">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold">Perfil Profesional</h2>
+            <p className="text-muted-foreground">
+              Inicia sesión o crea una cuenta gratuita para ver el perfil profesional de este usuario
+            </p>
+            <Button 
+              size="lg" 
+              onClick={() => setShowAuthModal(true)}
+              className="w-full"
+            >
+              Iniciar Sesión / Registrarse
+            </Button>
+          </div>
+        </div>
+        <AuthModal 
+          open={showAuthModal} 
+          onOpenChange={setShowAuthModal}
+        />
+      </>
+    );
+  }
 
   if (isLoading || !targetUserId) {
     return (
