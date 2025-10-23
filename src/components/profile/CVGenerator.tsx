@@ -20,7 +20,9 @@ export const CVGenerator = ({ profile, metrics, isOwnProfile = true }: CVGenerat
     setGenerating(true);
     
     try {
-      // Crear contenido HTML del CV
+      const location = [profile?.municipio, profile?.departamento, profile?.pais].filter(Boolean).join(', ');
+      const socialLinks = profile?.social_links || {};
+      
       const cvContent = `
         <!DOCTYPE html>
         <html>
@@ -28,88 +30,231 @@ export const CVGenerator = ({ profile, metrics, isOwnProfile = true }: CVGenerat
           <meta charset="UTF-8">
           <title>CV - ${profile.full_name}</title>
           <style>
-            body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-            h1 { color: #7C3AED; margin-bottom: 5px; }
-            h2 { color: #7C3AED; border-bottom: 2px solid #7C3AED; padding-bottom: 5px; margin-top: 30px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .contact { margin-bottom: 20px; }
-            .section { margin-bottom: 25px; }
-            .item { margin-bottom: 15px; }
-            .item-title { font-weight: bold; }
-            .item-subtitle { color: #666; font-style: italic; }
-            .skills { display: flex; flex-wrap: wrap; gap: 10px; }
-            .skill { background: #f0f0f0; padding: 5px 10px; border-radius: 5px; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: 'Arial', sans-serif; 
+              margin: 0; 
+              padding: 40px 60px;
+              color: #000;
+              line-height: 1.5;
+              font-size: 11pt;
+            }
+            .container { max-width: 800px; margin: 0 auto; }
+            .header-section {
+              display: flex;
+              align-items: center;
+              gap: 30px;
+              margin-bottom: 20px;
+            }
+            .profile-photo {
+              width: 120px;
+              height: 120px;
+              border-radius: 50%;
+              object-fit: cover;
+              border: 3px solid #000;
+            }
+            .header-info { flex: 1; }
+            h1 { 
+              font-size: 32pt;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 2px;
+              margin-bottom: 8px;
+            }
+            .contact-info { 
+              font-size: 10pt; 
+              margin-bottom: 15px;
+              line-height: 1.4;
+            }
+            h2 { 
+              text-align: center;
+              font-size: 14pt;
+              font-weight: bold;
+              text-transform: uppercase;
+              border-top: 2px solid #000;
+              border-bottom: 2px solid #000;
+              padding: 8px 0;
+              margin: 25px 0 15px 0;
+              letter-spacing: 1px;
+            }
+            .section { margin-bottom: 20px; }
+            .job-item {
+              margin-bottom: 15px;
+              page-break-inside: avoid;
+            }
+            .job-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: baseline;
+              margin-bottom: 5px;
+            }
+            .job-title { 
+              font-weight: bold;
+              font-size: 11pt;
+            }
+            .job-dates {
+              font-weight: bold;
+              font-size: 10pt;
+              white-space: nowrap;
+            }
+            .company-name {
+              font-style: italic;
+              font-size: 10pt;
+              margin-bottom: 5px;
+            }
+            .job-description {
+              text-align: justify;
+              margin-left: 0;
+              font-size: 10pt;
+            }
+            .education-item {
+              margin-bottom: 12px;
+            }
+            .education-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: baseline;
+            }
+            .institution { 
+              font-weight: bold;
+              font-size: 11pt;
+            }
+            .degree {
+              font-size: 10pt;
+            }
+            .skills-list {
+              list-style: none;
+              padding: 0;
+            }
+            .skills-list li {
+              margin-bottom: 5px;
+              font-size: 9pt;
+              line-height: 1.3;
+            }
+            .info-list {
+              list-style: disc;
+              margin-left: 20px;
+            }
+            .info-list li {
+              margin-bottom: 5px;
+              font-size: 10pt;
+            }
+            @media print {
+              body { padding: 20px 30px; }
+            }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>${profile.full_name || profile.username}</h1>
-            ${profile.bio ? `<p>${profile.bio}</p>` : ''}
-            <div class="contact">
-              ${profile.email ? `<p>✉️ ${profile.email}</p>` : ''}
-              ${profile.phone ? `<p>📱 ${profile.phone}</p>` : ''}
-              ${profile.pais ? `<p>📍 ${[profile.municipio, profile.departamento, profile.pais].filter(Boolean).join(", ")}</p>` : ''}
-            </div>
-          </div>
-
-          ${format === "full" && metrics ? `
-            <h2>Perfil Académico</h2>
-            <div class="section">
-              <p><strong>Desempeño General:</strong> ${metrics.overallAverage}%</p>
-              <p><strong>Videos Completados:</strong> ${metrics.totalVideos}</p>
-              <p><strong>Evaluaciones Completadas:</strong> ${metrics.totalQuizzes}</p>
-              <p><strong>Puntos de Experiencia:</strong> ${profile.experience_points || 0} XP</p>
-            </div>
-          ` : ''}
-
-          ${profile.work_experience && profile.work_experience.length > 0 ? `
-            <h2>Experiencia Laboral</h2>
-            <div class="section">
-              ${profile.work_experience.map((exp: any) => `
-                <div class="item">
-                  <div class="item-title">${exp.position}</div>
-                  <div class="item-subtitle">${exp.company} | ${exp.start_date} - ${exp.current ? 'Presente' : exp.end_date}</div>
-                  ${exp.description ? `<p>${exp.description}</p>` : ''}
+          <div class="container">
+            <div class="header-section">
+              ${profile?.avatar_url ? `
+                <img src="${profile.avatar_url}" alt="Foto de perfil" class="profile-photo" />
+              ` : ''}
+              <div class="header-info">
+                <h1>${(profile?.full_name || profile?.username || '').toUpperCase()}</h1>
+                <div class="contact-info">
+                  ${location ? `${location} | ` : ''}${socialLinks.linkedin ? `<a href="${socialLinks.linkedin}" style="color: #000; text-decoration: none;">${socialLinks.linkedin}</a> | ` : ''}${profile?.email || 'email@example.com'}
                 </div>
-              `).join('')}
-            </div>
-          ` : ''}
-
-          ${profile.complementary_education && profile.complementary_education.length > 0 ? `
-            <h2>Formación Complementaria</h2>
-            <div class="section">
-              ${profile.complementary_education.map((edu: any) => `
-                <div class="item">
-                  <div class="item-title">${edu.title}</div>
-                  <div class="item-subtitle">${edu.institution} | ${edu.date}</div>
-                </div>
-              `).join('')}
-            </div>
-          ` : ''}
-
-          ${profile.skills && profile.skills.length > 0 ? `
-            <h2>Habilidades</h2>
-            <div class="section">
-              <div class="skills">
-                ${profile.skills.map((skill: any) => `
-                  <div class="skill">${skill.name} (${skill.level}%)</div>
-                `).join('')}
               </div>
             </div>
-          ` : ''}
 
-          ${profile.projects && profile.projects.length > 0 ? `
-            <h2>Proyectos</h2>
-            <div class="section">
-              ${profile.projects.map((project: any) => `
-                <div class="item">
-                  <div class="item-title">${project.name}</div>
-                  <p>${project.description}</p>
-                  ${project.role ? `<p><strong>Rol:</strong> ${project.role}</p>` : ''}
-                </div>
-              `).join('')}
-            </div>
-          ` : ''}
+            ${profile.bio || format === "full" && metrics ? `
+              <h2>PERFIL</h2>
+              <div class="section">
+                ${profile.bio ? `<p style="text-align: justify; font-size: 10pt;">${profile.bio}</p>` : ''}
+                ${format === "full" && metrics ? `
+                  <p style="text-align: justify; font-size: 10pt; margin-top: 10px;">
+                    <strong>Desempeño académico:</strong> ${metrics.overallAverage}% de rendimiento general, 
+                    ${metrics.totalVideos} videos completados, ${metrics.totalQuizzes} evaluaciones realizadas.
+                    Nivel de experiencia: ${profile.experience_points || 0} XP.
+                  </p>
+                ` : ''}
+              </div>
+            ` : ''}
+
+            ${profile?.work_experience && profile.work_experience.length > 0 ? `
+              <h2>EXPERIENCIA LABORAL</h2>
+              <div class="section">
+                ${profile.work_experience.map((exp: any) => `
+                  <div class="job-item">
+                    <div class="job-header">
+                      <div class="job-title">${exp.position || ''}</div>
+                      <div class="job-dates">${exp.start_date || ''} - ${exp.current ? 'Presente' : exp.end_date || ''}</div>
+                    </div>
+                    <div class="company-name">${exp.company || ''}</div>
+                    ${exp.description ? `
+                      <div class="job-description">
+                        ${exp.description.split('\n').map((line: string) => `- ${line.trim()}`).filter((line: string) => line.length > 2).map((line: string) => `<div>${line}</div>`).join('')}
+                      </div>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${profile?.education && profile.education.length > 0 ? `
+              <h2>EDUCACIÓN</h2>
+              <div class="section">
+                ${profile.education.map((edu: any) => `
+                  <div class="education-item">
+                    <div class="education-header">
+                      <div class="institution">${edu.institution || ''}</div>
+                      <div class="job-dates">${edu.start_year || ''} - ${edu.end_year || ''}</div>
+                    </div>
+                    <div class="degree">${edu.degree || ''}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${profile?.complementary_education && profile.complementary_education.length > 0 ? `
+              <h2>FORMACIÓN COMPLEMENTARIA</h2>
+              <div class="section">
+                ${profile.complementary_education.map((edu: any) => `
+                  <div class="education-item">
+                    <div class="education-header">
+                      <div class="institution">${edu.institution || ''}</div>
+                      <div class="job-dates">${edu.date || ''}</div>
+                    </div>
+                    <div class="degree">${edu.title || ''}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${profile?.skills && profile.skills.length > 0 ? `
+              <h2>CERTIFICACIONES Y COMPETENCIAS</h2>
+              <div class="section">
+                <ul class="skills-list">
+                  ${profile.skills.map((skill: any) => `<li>${skill.name || skill}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+
+            ${profile?.projects && profile.projects.length > 0 ? `
+              <h2>PROYECTOS</h2>
+              <div class="section">
+                ${profile.projects.map((project: any) => `
+                  <div class="job-item">
+                    <div class="job-title">${project.name || ''}</div>
+                    <p style="font-size: 10pt; margin-top: 5px;">${project.description || ''}</p>
+                    ${project.role ? `<p style="font-size: 10pt; margin-top: 3px;"><strong>Rol:</strong> ${project.role}</p>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${profile?.areas_interes && profile.areas_interes.length > 0 ? `
+              <h2>INFORMACIÓN ADICIONAL</h2>
+              <div class="section">
+                <ul class="info-list">
+                  <li><strong>Idiomas:</strong> ${profile.idioma_preferido || 'Español'}</li>
+                  ${profile.areas_interes ? `<li><strong>Áreas de interés:</strong> ${profile.areas_interes.join(', ')}</li>` : ''}
+                  ${profile.habilidades_a_desarrollar && profile.habilidades_a_desarrollar.length > 0 ? `<li><strong>Habilidades en desarrollo:</strong> ${profile.habilidades_a_desarrollar.join(', ')}</li>` : ''}
+                </ul>
+              </div>
+            ` : ''}
+          </div>
         </body>
         </html>
       `;

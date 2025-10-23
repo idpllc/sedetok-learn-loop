@@ -14,6 +14,9 @@ interface ViewCVVariationProps {
 export const ViewCVVariation = ({ variation, profile, onBack, onEdit, onToggleFavorite }: ViewCVVariationProps) => {
   
   const handleDownload = () => {
+    const location = [profile?.municipio, profile?.departamento, profile?.pais].filter(Boolean).join(', ');
+    const socialLinks = profile?.social_links || {};
+    
     const cvContent = `
       <!DOCTYPE html>
       <html>
@@ -21,67 +24,208 @@ export const ViewCVVariation = ({ variation, profile, onBack, onEdit, onToggleFa
         <meta charset="UTF-8">
         <title>${variation.title}</title>
         <style>
-          body { font-family: Arial, sans-serif; margin: 40px; color: #333; line-height: 1.6; }
-          h1 { color: #7C3AED; margin-bottom: 5px; font-size: 28px; }
-          h2 { color: #7C3AED; border-bottom: 2px solid #7C3AED; padding-bottom: 5px; margin-top: 30px; font-size: 20px; }
-          .header { margin-bottom: 30px; }
-          .position { font-size: 18px; color: #555; font-weight: bold; margin: 10px 0; }
-          .company { color: #666; font-style: italic; }
-          .bio { background: #f5f5f5; padding: 15px; border-left: 4px solid #7C3AED; margin: 20px 0; }
-          .section { margin-bottom: 25px; }
-          ul { margin: 10px 0; }
-          li { margin-bottom: 8px; }
-          .badge { background: #7C3AED; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; }
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Arial', sans-serif; 
+            margin: 0; 
+            padding: 40px 60px;
+            color: #000;
+            line-height: 1.5;
+            font-size: 11pt;
+          }
+          .container { max-width: 800px; margin: 0 auto; }
+          .header-section {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 20px;
+          }
+          .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #000;
+          }
+          .header-info { flex: 1; }
+          h1 { 
+            font-size: 32pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+          }
+          .contact-info { 
+            font-size: 10pt; 
+            margin-bottom: 15px;
+            line-height: 1.4;
+          }
+          h2 { 
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 8px 0;
+            margin: 25px 0 15px 0;
+            letter-spacing: 1px;
+          }
+          .section { margin-bottom: 20px; }
+          .job-item {
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+          }
+          .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+          }
+          .job-title { 
+            font-weight: bold;
+            font-size: 11pt;
+          }
+          .job-dates {
+            font-weight: bold;
+            font-size: 10pt;
+            white-space: nowrap;
+          }
+          .company-name {
+            font-style: italic;
+            font-size: 10pt;
+            margin-bottom: 5px;
+          }
+          .job-description {
+            text-align: justify;
+            margin-left: 0;
+            font-size: 10pt;
+          }
+          .job-description li {
+            margin-left: 20px;
+            margin-bottom: 3px;
+          }
+          .education-item {
+            margin-bottom: 12px;
+          }
+          .education-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+          }
+          .institution { 
+            font-weight: bold;
+            font-size: 11pt;
+          }
+          .degree {
+            font-size: 10pt;
+          }
+          .skills-list {
+            list-style: none;
+            padding: 0;
+          }
+          .skills-list li {
+            margin-bottom: 5px;
+            font-size: 9pt;
+            line-height: 1.3;
+          }
+          .info-list {
+            list-style: disc;
+            margin-left: 20px;
+          }
+          .info-list li {
+            margin-bottom: 5px;
+            font-size: 10pt;
+          }
+          @media print {
+            body { padding: 20px 30px; }
+            .no-print { display: none; }
+          }
         </style>
       </head>
       <body>
-        <div class="header">
-          <h1>${profile?.full_name || profile?.username}</h1>
-          <div class="position">${variation.target_position}</div>
-          ${variation.company_name ? `<div class="company">${variation.company_name}</div>` : ''}
-          ${profile?.email ? `<p>✉️ ${profile.email}</p>` : ''}
-          ${profile?.phone ? `<p>📱 ${profile.phone}</p>` : ''}
+        <div class="container">
+          <div class="header-section">
+            ${profile?.avatar_url ? `
+              <img src="${profile.avatar_url}" alt="Foto de perfil" class="profile-photo" />
+            ` : ''}
+            <div class="header-info">
+              <h1>${(profile?.full_name || profile?.username || '').toUpperCase()}</h1>
+              <div class="contact-info">
+                ${location ? `${location} | ` : ''}${socialLinks.linkedin ? `<a href="${socialLinks.linkedin}" style="color: #000; text-decoration: none;">${socialLinks.linkedin}</a> | ` : ''}${profile?.email || 'email@example.com'}
+              </div>
+            </div>
+          </div>
+
+          ${variation.custom_bio ? `
+            <h2>PERFIL</h2>
+            <div class="section">
+              <p style="text-align: justify; font-size: 10pt;">${variation.custom_bio}</p>
+            </div>
+          ` : ''}
+
+          ${profile?.work_experience && profile.work_experience.length > 0 ? `
+            <h2>EXPERIENCIA LABORAL</h2>
+            <div class="section">
+              ${profile.work_experience.map((exp: any) => `
+                <div class="job-item">
+                  <div class="job-header">
+                    <div class="job-title">${exp.position || ''}</div>
+                    <div class="job-dates">${exp.start_date || ''} - ${exp.current ? 'Presente' : exp.end_date || ''}</div>
+                  </div>
+                  <div class="company-name">${exp.company || ''}</div>
+                  ${exp.description ? `
+                    <div class="job-description">
+                      ${exp.description.split('\n').map((line: string) => `- ${line.trim()}`).filter((line: string) => line.length > 2).map((line: string) => `<div>${line}</div>`).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${profile?.education && profile.education.length > 0 ? `
+            <h2>EDUCACIÓN</h2>
+            <div class="section">
+              ${profile.education.map((edu: any) => `
+                <div class="education-item">
+                  <div class="education-header">
+                    <div class="institution">${edu.institution || ''}</div>
+                    <div class="job-dates">${edu.start_year || ''} - ${edu.end_year || ''}</div>
+                  </div>
+                  <div class="degree">${edu.degree || ''}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${variation.highlighted_skills && variation.highlighted_skills.length > 0 ? `
+            <h2>CERTIFICACIONES Y COMPETENCIAS</h2>
+            <div class="section">
+              <ul class="skills-list">
+                ${variation.highlighted_skills.map((skill: string) => `<li>${skill}</li>`).join('')}
+              </ul>
+            </div>
+          ` : profile?.skills && profile.skills.length > 0 ? `
+            <h2>CERTIFICACIONES Y COMPETENCIAS</h2>
+            <div class="section">
+              <ul class="skills-list">
+                ${profile.skills.map((skill: any) => `<li>${skill.name || skill}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${profile?.areas_interes && profile.areas_interes.length > 0 ? `
+            <h2>INFORMACIÓN ADICIONAL</h2>
+            <div class="section">
+              <ul class="info-list">
+                <li><strong>Idiomas:</strong> ${profile.idioma_preferido || 'Español'}</li>
+                ${profile.areas_interes ? `<li><strong>Áreas de interés:</strong> ${profile.areas_interes.join(', ')}</li>` : ''}
+                ${profile.habilidades_a_desarrollar && profile.habilidades_a_desarrollar.length > 0 ? `<li><strong>Habilidades en desarrollo:</strong> ${profile.habilidades_a_desarrollar.join(', ')}</li>` : ''}
+              </ul>
+            </div>
+          ` : ''}
         </div>
-
-        ${variation.custom_bio ? `
-          <div class="bio">
-            <strong>Perfil Profesional:</strong><br>
-            ${variation.custom_bio}
-          </div>
-        ` : ''}
-
-        ${variation.highlighted_skills && variation.highlighted_skills.length > 0 ? `
-          <h2>Habilidades Destacadas</h2>
-          <div class="section">
-            <ul>
-              ${variation.highlighted_skills.map((skill: string) => `<li>${skill}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-
-        ${variation.highlighted_experience && variation.highlighted_experience.length > 0 ? `
-          <h2>Experiencia Relevante</h2>
-          <div class="section">
-            <ul>
-              ${variation.highlighted_experience.map((exp: string) => `<li>${exp}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-
-        ${variation.highlighted_projects && variation.highlighted_projects.length > 0 ? `
-          <h2>Proyectos Destacados</h2>
-          <div class="section">
-            <ul>
-              ${variation.highlighted_projects.map((proj: string) => `<li>${proj}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
-
-        ${variation.created_with_ai ? `
-          <p style="font-size: 12px; color: #888; margin-top: 40px;">
-            ✨ CV optimizado con asistencia de IA
-          </p>
-        ` : ''}
       </body>
       </html>
     `;
