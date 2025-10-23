@@ -192,8 +192,8 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       )}
 
       {/* Generador de CV - Ancho completo */}
-      {isOwnProfile && profile && (
-        <CVGenerator profile={profile} metrics={metrics} />
+      {profile && (
+        <CVGenerator profile={profile} metrics={metrics} isOwnProfile={isOwnProfile} />
       )}
 
       {/* Educación Formal */}
@@ -347,9 +347,12 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       {/* Gráfica de Radar - Áreas Académicas Personales */}
       <Card>
         <CardHeader>
-          <CardTitle>Tu Perfil Académico por Áreas</CardTitle>
+          <CardTitle>{isOwnProfile ? "Tu Perfil Académico por Áreas" : "Perfil Académico por Áreas"}</CardTitle>
           <CardDescription>
-            Visualización de tu desempeño personal en las diferentes áreas del conocimiento
+            {isOwnProfile 
+              ? "Visualización de tu desempeño personal en las diferentes áreas del conocimiento"
+              : "Visualización del desempeño en las diferentes áreas del conocimiento"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -385,7 +388,10 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         <CardHeader>
           <CardTitle>Perfil de Inteligencias Múltiples</CardTitle>
           <CardDescription>
-            Identificación de tus 12 tipos de inteligencia basada en tu actividad académica
+            {isOwnProfile 
+              ? "Identificación de tus 12 tipos de inteligencia basada en tu actividad académica"
+              : "Identificación de los 12 tipos de inteligencia basada en la actividad académica"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -419,9 +425,12 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       {/* Detalles por Inteligencia */}
       <Card>
         <CardHeader>
-          <CardTitle>Tus Inteligencias Dominantes</CardTitle>
+          <CardTitle>{isOwnProfile ? "Tus Inteligencias Dominantes" : "Inteligencias Dominantes"}</CardTitle>
           <CardDescription>
-            Análisis detallado de tus fortalezas según las inteligencias múltiples
+            {isOwnProfile 
+              ? "Análisis detallado de tus fortalezas según las inteligencias múltiples"
+              : "Análisis detallado de las fortalezas según las inteligencias múltiples"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>

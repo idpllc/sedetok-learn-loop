@@ -8,9 +8,10 @@ import { useNavigate } from "react-router-dom";
 interface CVGeneratorProps {
   profile: any;
   metrics?: any;
+  isOwnProfile?: boolean;
 }
 
-export const CVGenerator = ({ profile, metrics }: CVGeneratorProps) => {
+export const CVGenerator = ({ profile, metrics, isOwnProfile = true }: CVGeneratorProps) => {
   const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -149,26 +150,33 @@ export const CVGenerator = ({ profile, metrics }: CVGeneratorProps) => {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Genera tu currículum profesional con toda tu información académica y laboral
+          {isOwnProfile 
+            ? "Genera tu currículum profesional con toda tu información académica y laboral"
+            : "Descarga el currículum profesional en formato HTML"
+          }
         </p>
         
-        <Button 
-          onClick={() => navigate("/cv-variations")}
-          variant="default"
-          className="w-full"
-        >
-          <Layers className="w-4 h-4 mr-2" />
-          Crear Variaciones de CV
-        </Button>
-        
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">O descarga CV básico</span>
-          </div>
-        </div>
+        {isOwnProfile && (
+          <>
+            <Button 
+              onClick={() => navigate("/cv-variations")}
+              variant="default"
+              className="w-full"
+            >
+              <Layers className="w-4 h-4 mr-2" />
+              Crear Variaciones de CV
+            </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">O descarga CV básico</span>
+              </div>
+            </div>
+          </>
+        )}
         
         <div className="flex gap-3">
           <Button 
