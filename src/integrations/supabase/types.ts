@@ -183,6 +183,74 @@ export type Database = {
           },
         ]
       }
+      cv_variations: {
+        Row: {
+          additional_sections: Json | null
+          ai_prompt: string | null
+          company_name: string | null
+          created_at: string | null
+          created_with_ai: boolean | null
+          custom_bio: string | null
+          highlighted_education: Json | null
+          highlighted_experience: Json | null
+          highlighted_projects: Json | null
+          highlighted_skills: Json | null
+          id: string
+          is_favorite: boolean | null
+          job_description: string | null
+          last_updated: string | null
+          target_position: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          additional_sections?: Json | null
+          ai_prompt?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          created_with_ai?: boolean | null
+          custom_bio?: string | null
+          highlighted_education?: Json | null
+          highlighted_experience?: Json | null
+          highlighted_projects?: Json | null
+          highlighted_skills?: Json | null
+          id?: string
+          is_favorite?: boolean | null
+          job_description?: string | null
+          last_updated?: string | null
+          target_position: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          additional_sections?: Json | null
+          ai_prompt?: string | null
+          company_name?: string | null
+          created_at?: string | null
+          created_with_ai?: boolean | null
+          custom_bio?: string | null
+          highlighted_education?: Json | null
+          highlighted_experience?: Json | null
+          highlighted_projects?: Json | null
+          highlighted_skills?: Json | null
+          id?: string
+          is_favorite?: boolean | null
+          job_description?: string | null
+          last_updated?: string | null
+          target_position?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cv_variations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       educoin_transactions: {
         Row: {
           amount: number

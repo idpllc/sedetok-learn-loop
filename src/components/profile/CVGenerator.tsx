@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Download, Loader2 } from "lucide-react";
+import { FileText, Download, Loader2, Layers } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface CVGeneratorProps {
   profile: any;
@@ -12,6 +13,7 @@ interface CVGeneratorProps {
 export const CVGenerator = ({ profile, metrics }: CVGeneratorProps) => {
   const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const generateCV = async (format: "full" | "summary") => {
     setGenerating(true);
@@ -149,10 +151,30 @@ export const CVGenerator = ({ profile, metrics }: CVGeneratorProps) => {
         <p className="text-sm text-muted-foreground">
           Genera tu currículum profesional con toda tu información académica y laboral
         </p>
+        
+        <Button 
+          onClick={() => navigate("/cv-variations")}
+          variant="default"
+          className="w-full"
+        >
+          <Layers className="w-4 h-4 mr-2" />
+          Crear Variaciones de CV
+        </Button>
+        
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">O descarga CV básico</span>
+          </div>
+        </div>
+        
         <div className="flex gap-3">
           <Button 
             onClick={() => generateCV("full")}
             disabled={generating}
+            variant="outline"
             className="flex-1"
           >
             {generating ? (
