@@ -1,11 +1,21 @@
-import { Camera, MapPin, Calendar, Mail, Phone, Share2, Linkedin, Instagram, Facebook, Twitter, Github } from "lucide-react";
+import { Camera, MapPin, Calendar, Mail, Phone, Share2, Linkedin, Instagram, Facebook, Twitter, Github, Copy, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { FaTiktok } from "react-icons/fa";
+import { SiWhatsapp } from "react-icons/si";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -15,10 +25,11 @@ interface ProfileHeaderProps {
 }
 
 export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAvatar }: ProfileHeaderProps) => {
-const { uploadFile, uploading } = useCloudinary();
-const { toast } = useToast();
-const coverInputRef = useRef<HTMLInputElement>(null);
-const avatarInputRef = useRef<HTMLInputElement>(null);
+  const { uploadFile, uploading } = useCloudinary();
+  const { toast } = useToast();
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,21 +80,53 @@ const avatarInputRef = useRef<HTMLInputElement>(null);
     ? new Date().getFullYear() - new Date(profile.fecha_nacimiento).getFullYear()
     : null;
 
-  const handleShare = () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({
-        title: `Perfil de ${profile?.full_name || profile?.username}`,
-        url: url,
-      }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "Enlace copiado al portapapeles" });
+  const socialLinks = profile?.social_links || {};
+  const hasSocialLinks = Object.values(socialLinks).some(link => link);
+
+  // Generar URL del perfil
+  const appDomain = window.location.origin;
+  const profileUrl = profile?.custom_url 
+    ? `${appDomain}/u/${profile.custom_url}`
+    : `${appDomain}/profile/${profile?.id}`;
+  
+  const shareText = `¡Mira mi perfil profesional en SEDETOK! ${profile?.full_name || profile?.username}`;
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      setCopied(true);
+      toast({ title: "¡Enlace copiado!" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast({ 
+        title: "Error al copiar", 
+        variant: "destructive" 
+      });
     }
   };
 
-  const socialLinks = profile?.social_links || {};
-  const hasSocialLinks = Object.values(socialLinks).some(link => link);
+  const shareToNetwork = (network: string) => {
+    let shareUrl = "";
+    
+    switch (network) {
+      case "linkedin":
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(profileUrl)}`;
+        break;
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(profileUrl)}`;
+        break;
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(profileUrl)}`;
+        break;
+      case "whatsapp":
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + profileUrl)}`;
+        break;
+    }
+    
+    if (shareUrl) {
+      window.open(shareUrl, "_blank", "width=600,height=400");
+    }
+  };
 
   return (
     <div className="relative">
@@ -189,9 +232,97 @@ const avatarInputRef = useRef<HTMLInputElement>(null);
               </div>
             )}
             
-            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={handleShare} title="Compartir perfil">
-              <Share2 className="w-4 h-4" />
-            </Button>
+            {/* Modal de compartir */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9" title="Compartir perfil">
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Share2 className="w-5 h-5" />
+                    Compartir Perfil
+                  </DialogTitle>
+                  <DialogDescription>
+                    Comparte tu perfil profesional en redes sociales
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  {/* URL con botón de copiar */}
+                  <div className="flex gap-2">
+                    <Input 
+                      value={profileUrl} 
+                      readOnly 
+                      className="flex-1"
+                    />
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={copyToClipboard}
+                    >
+                      {copied ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Compartir en redes sociales */}
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Compartir en:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => shareToNetwork("linkedin")}
+                        className="justify-start"
+                      >
+                        <Linkedin className="w-4 h-4 mr-2 text-blue-600" />
+                        LinkedIn
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => shareToNetwork("facebook")}
+                        className="justify-start"
+                      >
+                        <Facebook className="w-4 h-4 mr-2 text-blue-500" />
+                        Facebook
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => shareToNetwork("twitter")}
+                        className="justify-start"
+                      >
+                        <Twitter className="w-4 h-4 mr-2 text-sky-500" />
+                        Twitter
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => shareToNetwork("whatsapp")}
+                        className="justify-start"
+                      >
+                        <SiWhatsapp className="w-4 h-4 mr-2 text-green-600" />
+                        WhatsApp
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Estadísticas de visitas */}
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      🔍 <strong>{profile?.profile_views || 0}</strong> personas han visitado tu perfil
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
