@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -90,22 +88,20 @@ export const TagInput = ({ value, onChange, placeholder, fieldName }: TagInputPr
         />
         {open && suggestions.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-md z-50 max-h-60 overflow-auto">
-            <Command>
-              <CommandList>
-                <CommandEmpty>No se encontraron sugerencias</CommandEmpty>
-                <CommandGroup>
-                  {suggestions.map((suggestion) => (
-                    <CommandItem
-                      key={suggestion}
-                      onSelect={() => addTag(suggestion)}
-                      className="cursor-pointer"
-                    >
-                      {suggestion}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+            <ul className="py-1">
+              {suggestions.map((suggestion) => (
+                <li
+                  key={suggestion}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    addTag(suggestion);
+                  }}
+                  className="px-3 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground text-sm"
+                >
+                  {suggestion}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </div>
