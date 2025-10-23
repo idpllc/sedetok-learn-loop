@@ -2,6 +2,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAcademicMetrics } from "@/hooks/useAcademicMetrics";
+import { useInstitutionAcademicMetrics } from "@/hooks/useInstitutionAcademicMetrics";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BookOpen, Brain, Target, TrendingUp, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
@@ -108,14 +112,38 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     }
   };
 
+  // Get user's institution
+  const { data: institutionMember } = useQuery({
+    queryKey: ["user-institution", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      const { data, error } = await supabase
+        .from("institution_members")
+        .select("institution_id, institutions(name)")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .single();
+
+      if (error) return null;
+      return data;
+    },
+    enabled: !!userId,
+  });
+
+  const { data: institutionMetrics, isLoading: isLoadingInstitution } = useInstitutionAcademicMetrics(
+    institutionMember?.institution_id
+  );
+
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-64 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
+        <Skeleton className="h-96" />
       </div>
     );
   }
@@ -124,11 +152,28 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-muted-foreground">Cargando perfil profesional...</p>
+          <Brain className="w-16 h-16 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">No hay datos académicos disponibles</p>
         </CardContent>
       </Card>
     );
   }
+
+  const chartConfig = {
+    score: {
+      label: "Desempeño",
+      color: "hsl(var(--primary))",
+    },
+  };
+
+  const getPerformanceLevel = (score: number) => {
+    if (score >= 80) return { label: "Excelente", variant: "default" as const, color: "bg-green-500" };
+    if (score >= 60) return { label: "Bueno", variant: "secondary" as const, color: "bg-blue-500" };
+    if (score >= 40) return { label: "Regular", variant: "outline" as const, color: "bg-yellow-500" };
+    return { label: "Por mejorar", variant: "destructive" as const, color: "bg-orange-500" };
+  };
+
+  const performance = getPerformanceLevel(metrics.overallAverage);
 
   return (
     <div className="space-y-6">
@@ -200,6 +245,293 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         userId={userId}
         complementaryEducation={profile?.complementary_education && Array.isArray(profile.complementary_education) ? profile.complementary_education as any[] : undefined}
       />
+
+      {/* Métricas Generales */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>Desempeño General</CardDescription>
+              <Target className="w-5 h-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <CardTitle className="text-3xl font-bold">{metrics.overallAverage}%</CardTitle>
+              <Badge variant={performance.variant} className="mb-1">
+                {performance.label}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>Videos Completados</CardDescription>
+              <BookOpen className="w-5 h-5 text-secondary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardTitle className="text-3xl font-bold">{metrics.totalVideos}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">Contenidos visualizados</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>Quizzes Completados</CardDescription>
+              <Brain className="w-5 h-5 text-accent" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardTitle className="text-3xl font-bold">{metrics.totalQuizzes}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">Evaluaciones realizadas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardDescription>Áreas Evaluadas</CardDescription>
+              <TrendingUp className="w-5 h-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CardTitle className="text-3xl font-bold">
+              {metrics.radarData.filter(d => d.score > 0).length}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">De 8 áreas académicas</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráfica de Radar Institucional - Si pertenece a una institución */}
+      {institutionMember && institutionMetrics && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-primary" />
+              <div>
+                <CardTitle>Perfil Académico Institucional</CardTitle>
+                <CardDescription>
+                  Promedio de desempeño de todos los estudiantes de {institutionMetrics && (institutionMember.institutions as any)?.name}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={institutionMetrics.radarData}>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis 
+                    dataKey="area" 
+                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                  />
+                  <PolarRadiusAxis 
+                    angle={90} 
+                    domain={[0, 100]}
+                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                  />
+                  <Radar
+                    name="Promedio Institucional"
+                    dataKey="score"
+                    stroke="hsl(var(--secondary))"
+                    fill="hsl(var(--secondary))"
+                    fillOpacity={0.3}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gráfica de Radar - Áreas Académicas Personales */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tu Perfil Académico por Áreas</CardTitle>
+          <CardDescription>
+            Visualización de tu desempeño personal en las diferentes áreas del conocimiento
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={metrics.radarData}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis 
+                  dataKey="area" 
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]}
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Radar
+                  name="Desempeño"
+                  dataKey="score"
+                  stroke="hsl(var(--primary))"
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.3}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Gráfica de Radar - Inteligencias Múltiples */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Perfil de Inteligencias Múltiples</CardTitle>
+          <CardDescription>
+            Identificación de tus 12 tipos de inteligencia basada en tu actividad académica
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={chartConfig} className="h-[500px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={metrics.intelligenceRadarData}>
+                <PolarGrid stroke="hsl(var(--border))" />
+                <PolarAngleAxis 
+                  dataKey="intelligence" 
+                  tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]}
+                  tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                />
+                <Radar
+                  name="Nivel"
+                  dataKey="score"
+                  stroke="hsl(var(--secondary))"
+                  fill="hsl(var(--secondary))"
+                  fillOpacity={0.3}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Detalles por Inteligencia */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tus Inteligencias Dominantes</CardTitle>
+          <CardDescription>
+            Análisis detallado de tus fortalezas según las inteligencias múltiples
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {metrics.intelligenceRadarData
+              .filter(intel => intel.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .map((intel, index) => {
+                const intelPerformance = getPerformanceLevel(intel.score);
+                return (
+                  <div key={index} className="flex items-start gap-4 p-4 rounded-lg border bg-card">
+                    <div className="text-4xl">{intel.icon}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-semibold">{intel.intelligence}</h4>
+                        <Badge variant={intelPerformance.variant} className="text-xs">
+                          {intel.score}%
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">{intel.description}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>📹 {intel.videosWatched}</span>
+                        <span>📝 {intel.quizzesCompleted}</span>
+                        {intel.quizzesCompleted > 0 && (
+                          <span>📊 {intel.averageScore}%</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+          
+          {metrics.intelligenceRadarData.filter(intel => intel.score === 0).length > 0 && (
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="font-semibold mb-3 text-muted-foreground">Inteligencias por desarrollar</h4>
+              <div className="flex flex-wrap gap-2">
+                {metrics.intelligenceRadarData
+                  .filter(intel => intel.score === 0)
+                  .map((intel, index) => (
+                    <Badge key={index} variant="outline" className="text-sm">
+                      {intel.icon} {intel.intelligence}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Detalles por Área */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Desempeño Detallado por Área</CardTitle>
+          <CardDescription>
+            Estadísticas específicas de cada área académica
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {metrics.radarData
+              .filter(area => area.score > 0)
+              .sort((a, b) => b.score - a.score)
+              .map((area, index) => {
+                const areaPerformance = getPerformanceLevel(area.score);
+                return (
+                  <div key={index} className="flex items-center gap-4 p-4 rounded-lg border bg-card">
+                    <div className={`w-12 h-12 rounded-full ${areaPerformance.color} flex items-center justify-center text-white font-bold`}>
+                      {area.score}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{area.area}</h4>
+                      <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                        <span>📹 {area.videosWatched} videos</span>
+                        <span>📝 {area.quizzesCompleted} quizzes</span>
+                        {area.quizzesCompleted > 0 && (
+                          <span>📊 {area.averageScore}% promedio</span>
+                        )}
+                      </div>
+                    </div>
+                    <Badge variant={areaPerformance.variant}>
+                      {areaPerformance.label}
+                    </Badge>
+                  </div>
+                );
+              })}
+          </div>
+          
+          {metrics.radarData.filter(area => area.score === 0).length > 0 && (
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="font-semibold mb-3 text-muted-foreground">Áreas sin actividad</h4>
+              <div className="flex flex-wrap gap-2">
+                {metrics.radarData
+                  .filter(area => area.score === 0)
+                  .map((area, index) => (
+                    <Badge key={index} variant="outline">
+                      {area.area}
+                    </Badge>
+                  ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
     </div>
   );
