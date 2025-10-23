@@ -22,10 +22,17 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
 
     try {
       const url = await uploadFile(file, "raw");
-      onUpdateCover?.(url);
-      toast({ title: "Portada actualizada" });
+      if (url && onUpdateCover) {
+        await onUpdateCover(url);
+        toast({ title: "Portada actualizada correctamente" });
+      }
     } catch (error) {
-      toast({ title: "Error al subir portada", variant: "destructive" });
+      console.error("Error uploading cover:", error);
+      toast({ 
+        title: "Error al subir portada", 
+        description: error instanceof Error ? error.message : "Intenta de nuevo",
+        variant: "destructive" 
+      });
     }
   };
 
@@ -35,10 +42,17 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
 
     try {
       const url = await uploadFile(file, "raw");
-      onUpdateAvatar?.(url);
-      toast({ title: "Foto de perfil actualizada" });
+      if (url && onUpdateAvatar) {
+        await onUpdateAvatar(url);
+        toast({ title: "Foto de perfil actualizada correctamente" });
+      }
     } catch (error) {
-      toast({ title: "Error al subir foto", variant: "destructive" });
+      console.error("Error uploading avatar:", error);
+      toast({ 
+        title: "Error al subir foto", 
+        description: error instanceof Error ? error.message : "Intenta de nuevo",
+        variant: "destructive" 
+      });
     }
   };
 

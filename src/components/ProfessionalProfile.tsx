@@ -57,28 +57,60 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
   });
 
   const handleUpdateCover = async (url: string) => {
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el usuario",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    const { error } = await supabase
-      .from("profiles")
-      .update({ cover_image_url: url })
-      .eq("id", userId);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ cover_image_url: url })
+        .eq("id", userId);
+        
+      if (error) throw error;
       
-    if (!error) {
-      refetchProfile();
+      await refetchProfile();
+    } catch (error) {
+      console.error("Error updating cover:", error);
+      toast({
+        title: "Error al actualizar portada",
+        description: "No se pudo guardar la imagen en el perfil",
+        variant: "destructive"
+      });
     }
   };
 
   const handleUpdateAvatar = async (url: string) => {
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar el usuario",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    const { error } = await supabase
-      .from("profiles")
-      .update({ avatar_url: url })
-      .eq("id", userId);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("id", userId);
+        
+      if (error) throw error;
       
-    if (!error) {
-      refetchProfile();
+      await refetchProfile();
+    } catch (error) {
+      console.error("Error updating avatar:", error);
+      toast({
+        title: "Error al actualizar foto",
+        description: "No se pudo guardar la imagen en el perfil",
+        variant: "destructive"
+      });
     }
   };
 

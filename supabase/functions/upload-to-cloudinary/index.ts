@@ -1,75 +1,62 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const cloudName = Deno.env.get('CLOUDINARY_CLOUD_NAME');
     const uploadPreset = Deno.env.get('CLOUDINARY_UPLOAD_PRESET');
-    
-    console.log('Cloud Name:', cloudName);
-    console.log('Upload Preset:', uploadPreset);
-    
-    if (!cloudName) {
-      throw new Error('CLOUDINARY_CLOUD_NAME no está configurado');
-    }
 
-    if (!uploadPreset) {
-      throw new Error('CLOUDINARY_UPLOAD_PRESET no está configurado');
+    if (!cloudName || !uploadPreset) {
+      throw new Error('Cloudinary credentials not configured');
     }
 
     const formData = await req.formData();
-    const file = formData.get('file');
-    const resourceType = formData.get('resourceType') || 'raw';
-
-    console.log('Resource Type:', resourceType);
-    console.log('File received:', !!file);
+    const file = formData.get('file') as File;
+    const resourceType = formData.get('resourceType') as string || 'raw';
 
     if (!file) {
-      throw new Error('No se proporcionó ningún archivo');
+      return new Response(
+        JSON.stringify({ error: 'No file provided' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
-    // Crear FormData para Cloudinary
+    // Create form data for Cloudinary
     const cloudinaryFormData = new FormData();
     cloudinaryFormData.append('file', file);
     cloudinaryFormData.append('upload_preset', uploadPreset);
 
+    // Upload to Cloudinary
     const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
-    
-    const response = await fetch(cloudinaryUrl, {
+    const cloudinaryResponse = await fetch(cloudinaryUrl, {
       method: 'POST',
       body: cloudinaryFormData,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Error al subir a Cloudinary');
+    if (!cloudinaryResponse.ok) {
+      const errorData = await cloudinaryResponse.json();
+      throw new Error(errorData.error?.message || 'Cloudinary upload failed');
     }
 
-    const data = await response.json();
+    const data = await cloudinaryResponse.json();
 
     return new Response(
       JSON.stringify({ url: data.secure_url }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('Error in upload-to-cloudinary:', error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
