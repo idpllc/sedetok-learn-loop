@@ -11,6 +11,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfileUpdate } from "@/hooks/useProfileUpdate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { ExperienceEditor } from "@/components/profile/ExperienceEditor";
+import { SkillsEditor } from "@/components/profile/SkillsEditor";
+import { EducationEditor } from "@/components/profile/EducationEditor";
+import { SocialLinksEditor } from "@/components/profile/SocialLinksEditor";
+import { Sidebar } from "@/components/Sidebar";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -58,6 +63,19 @@ const EditProfile = () => {
     nivel_meta_aprendizaje: "",
   });
 
+  // Estados para datos complejos
+  const [workExperience, setWorkExperience] = useState<any[]>([]);
+  const [skills, setSkills] = useState<any[]>([]);
+  const [complementaryEducation, setComplementaryEducation] = useState<any[]>([]);
+  const [socialLinks, setSocialLinks] = useState<any>({
+    linkedin: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
+    tiktok: "",
+    github: "",
+  });
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth", { state: { from: location.pathname } });
@@ -99,6 +117,16 @@ const EditProfile = () => {
         motivaciones_principales: profile.motivaciones_principales || "",
         nivel_meta_aprendizaje: profile.nivel_meta_aprendizaje || "",
       });
+      
+      // Cargar datos complejos
+      setWorkExperience(Array.isArray(profile.work_experience) ? profile.work_experience : []);
+      setSkills(Array.isArray(profile.skills) ? profile.skills : []);
+      setComplementaryEducation(Array.isArray(profile.complementary_education) ? profile.complementary_education : []);
+      setSocialLinks(
+        typeof profile.social_links === 'object' && profile.social_links !== null
+          ? profile.social_links
+          : { linkedin: "", instagram: "", facebook: "", twitter: "", tiktok: "", github: "" }
+      );
     }
   }, [profile]);
 
@@ -137,6 +165,11 @@ const EditProfile = () => {
       habilidades_a_desarrollar: formData.habilidades_a_desarrollar ? formData.habilidades_a_desarrollar.split(",").map(s => s.trim()) : null,
       motivaciones_principales: formData.motivaciones_principales || null,
       nivel_meta_aprendizaje: formData.nivel_meta_aprendizaje || null,
+      // Agregar datos complejos
+      work_experience: workExperience,
+      skills: skills,
+      complementary_education: complementaryEducation,
+      social_links: socialLinks,
     };
 
     try {
@@ -187,18 +220,20 @@ const EditProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-20 md:pt-0">
-      <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
-        <div className="flex items-center gap-3 max-w-4xl mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-xl font-bold">Editar Perfil 360°</h1>
-        </div>
-      </header>
+    <>
+      <Sidebar />
+      <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
+        <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
+          <div className="flex items-center gap-3 max-w-4xl mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-bold">Editar Perfil 360°</h1>
+          </div>
+        </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <main className="max-w-4xl mx-auto px-4 py-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Datos Generales */}
           <Card>
             <CardHeader>
@@ -396,6 +431,30 @@ const EditProfile = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Redes Sociales */}
+          <SocialLinksEditor 
+            socialLinks={socialLinks}
+            onChange={setSocialLinks}
+          />
+
+          {/* Experiencia Laboral */}
+          <ExperienceEditor 
+            experiences={workExperience}
+            onChange={setWorkExperience}
+          />
+
+          {/* Habilidades */}
+          <SkillsEditor 
+            skills={skills}
+            onChange={setSkills}
+          />
+
+          {/* Formación Complementaria */}
+          <EducationEditor 
+            education={complementaryEducation}
+            onChange={setComplementaryEducation}
+          />
 
           {/* Perfil Cognitivo */}
           <Card>
@@ -615,6 +674,7 @@ const EditProfile = () => {
         </form>
       </main>
     </div>
+    </>
   );
 };
 
