@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { GraduationCap, Plus, Trash2, Upload, X, FileText } from "lucide-react";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
@@ -17,33 +16,42 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface Education {
-  title: string;
+interface FormalEducation {
+  degree: string;
+  field_of_study: string;
   institution: string;
-  date: string;
-  credential_url?: string;
-  verified: boolean;
+  start_date: string;
+  end_date?: string;
+  currently_studying: boolean;
   description?: string;
   certificate_url?: string;
 }
 
-interface EducationEditorProps {
-  education: Education[];
-  onChange: (education: Education[]) => void;
+interface FormalEducationEditorProps {
+  education: FormalEducation[];
+  onChange: (education: FormalEducation[]) => void;
 }
 
-export const EducationEditor = ({ education, onChange }: EducationEditorProps) => {
+export const FormalEducationEditor = ({ education, onChange }: FormalEducationEditorProps) => {
   const [open, setOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const { uploadFile, uploading } = useCloudinary();
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Education>({
-    title: "",
+  const [formData, setFormData] = useState<FormalEducation>({
+    degree: "",
+    field_of_study: "",
     institution: "",
-    date: "",
-    credential_url: "",
-    verified: false,
+    start_date: "",
+    end_date: "",
+    currently_studying: false,
     description: "",
     certificate_url: "",
   });
@@ -51,15 +59,37 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
   const handleAdd = () => {
     setEditingIndex(null);
     setFormData({
-      title: "",
+      degree: "",
+      field_of_study: "",
       institution: "",
-      date: "",
-      credential_url: "",
-      verified: false,
+      start_date: "",
+      end_date: "",
+      currently_studying: false,
       description: "",
       certificate_url: "",
     });
     setOpen(true);
+  };
+
+  const handleEdit = (index: number) => {
+    setEditingIndex(index);
+    setFormData(education[index]);
+    setOpen(true);
+  };
+
+  const handleSave = () => {
+    if (editingIndex !== null) {
+      const updated = [...education];
+      updated[editingIndex] = formData;
+      onChange(updated);
+    } else {
+      onChange([...education, formData]);
+    }
+    setOpen(false);
+  };
+
+  const handleDelete = (index: number) => {
+    onChange(education.filter((_, i) => i !== index));
   };
 
   const handleCertificateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,26 +127,16 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
     setFormData({ ...formData, certificate_url: "" });
   };
 
-  const handleEdit = (index: number) => {
-    setEditingIndex(index);
-    setFormData(education[index]);
-    setOpen(true);
-  };
-
-  const handleSave = () => {
-    if (editingIndex !== null) {
-      const updated = [...education];
-      updated[editingIndex] = formData;
-      onChange(updated);
-    } else {
-      onChange([...education, formData]);
-    }
-    setOpen(false);
-  };
-
-  const handleDelete = (index: number) => {
-    onChange(education.filter((_, i) => i !== index));
-  };
+  const degrees = [
+    { value: "bachiller", label: "Bachiller" },
+    { value: "tecnico", label: "Técnico" },
+    { value: "tecnologo", label: "Tecnólogo" },
+    { value: "profesional", label: "Profesional Universitario" },
+    { value: "especializacion", label: "Especialización" },
+    { value: "maestria", label: "Maestría" },
+    { value: "doctorado", label: "Doctorado" },
+    { value: "otro", label: "Otro" },
+  ];
 
   return (
     <Card>
@@ -124,7 +144,7 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5" />
-            Formación Complementaria
+            Educación Formal
           </CardTitle>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -133,24 +153,43 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
                 Agregar
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
-                  {editingIndex !== null ? "Editar" : "Agregar"} Certificación/Curso
+                  {editingIndex !== null ? "Editar" : "Agregar"} Educación Formal
                 </DialogTitle>
                 <DialogDescription>
-                  Agrega certificaciones, cursos y formación complementaria
+                  Agrega tus estudios formales (bachillerato, universidad, posgrados, etc.)
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Título/Certificación *</Label>
+                  <Label htmlFor="degree">Nivel de Estudios *</Label>
+                  <Select
+                    value={formData.degree}
+                    onValueChange={(value) => setFormData({ ...formData, degree: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona el nivel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {degrees.map((degree) => (
+                        <SelectItem key={degree.value} value={degree.value}>
+                          {degree.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="field_of_study">Campo de Estudio / Carrera *</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Ej: Certificación en AWS Cloud Practitioner"
+                    id="field_of_study"
+                    value={formData.field_of_study}
+                    onChange={(e) => setFormData({ ...formData, field_of_study: e.target.value })}
+                    placeholder="Ej: Ingeniería de Sistemas, Medicina, etc."
                   />
                 </div>
 
@@ -160,31 +199,48 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
                     id="institution"
                     value={formData.institution}
                     onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
-                    placeholder="Ej: Amazon Web Services"
+                    placeholder="Ej: Universidad Nacional"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="date">Fecha de Obtención *</Label>
-                  <Input
-                    id="date"
-                    type="month"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="start_date">Fecha de Inicio *</Label>
+                    <Input
+                      id="start_date"
+                      type="month"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="end_date">Fecha de Finalización</Label>
+                    <Input
+                      id="end_date"
+                      type="month"
+                      value={formData.end_date}
+                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                      disabled={formData.currently_studying}
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="credential_url">URL de Credencial (Opcional)</Label>
-                  <Input
-                    id="credential_url"
-                    value={formData.credential_url}
-                    onChange={(e) => setFormData({ ...formData, credential_url: e.target.value })}
-                    placeholder="https://..."
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="currently_studying"
+                    checked={formData.currently_studying}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      currently_studying: e.target.checked,
+                      end_date: e.target.checked ? "" : formData.end_date
+                    })}
+                    className="w-4 h-4"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Enlace para verificar la credencial (ej: Coursera, LinkedIn Learning)
-                  </p>
+                  <Label htmlFor="currently_studying" className="cursor-pointer">
+                    Actualmente estudiando
+                  </Label>
                 </div>
 
                 <div className="space-y-2">
@@ -193,24 +249,13 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Describe lo que aprendiste..."
+                    placeholder="Describe actividades, logros o enfoque de tus estudios..."
                     rows={3}
                   />
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="verified"
-                    checked={formData.verified}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, verified: checked as boolean })
-                    }
-                  />
-                  <Label htmlFor="verified">Certificación verificada</Label>
-                </div>
-
                 <div className="space-y-2">
-                  <Label>Certificado (Opcional)</Label>
+                  <Label>Certificado / Diploma (Opcional)</Label>
                   {formData.certificate_url ? (
                     <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted">
                       <FileText className="w-5 h-5 text-primary" />
@@ -259,7 +304,7 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
                 </Button>
                 <Button 
                   onClick={handleSave}
-                  disabled={!formData.title || !formData.institution || !formData.date}
+                  disabled={!formData.degree || !formData.field_of_study || !formData.institution || !formData.start_date}
                 >
                   Guardar
                 </Button>
@@ -271,7 +316,7 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
       <CardContent>
         {education.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            No has agregado certificaciones o cursos aún
+            No has agregado educación formal aún
           </p>
         ) : (
           <div className="space-y-3">
@@ -279,26 +324,14 @@ export const EducationEditor = ({ education, onChange }: EducationEditorProps) =
               <div key={index} className="p-4 border rounded-lg space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <h4 className="font-semibold flex items-center gap-2">
-                      {edu.title}
-                      {edu.verified && (
-                        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
-                          ✓ Verificada
-                        </span>
-                      )}
+                    <h4 className="font-semibold">
+                      {degrees.find(d => d.value === edu.degree)?.label || edu.degree}
                     </h4>
+                    <p className="text-sm font-medium">{edu.field_of_study}</p>
                     <p className="text-sm text-muted-foreground">{edu.institution}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{edu.date}</p>
-                    {edu.credential_url && (
-                      <a
-                        href={edu.credential_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline mt-1 inline-block"
-                      >
-                        Ver credencial →
-                      </a>
-                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {edu.start_date} - {edu.currently_studying ? "Presente" : (edu.end_date || "N/A")}
+                    </p>
                     {edu.certificate_url && (
                       <a
                         href={edu.certificate_url}

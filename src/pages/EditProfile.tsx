@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ExperienceEditor } from "@/components/profile/ExperienceEditor";
 import { SkillsEditor } from "@/components/profile/SkillsEditor";
 import { EducationEditor } from "@/components/profile/EducationEditor";
+import { FormalEducationEditor } from "@/components/profile/FormalEducationEditor";
 import { SocialLinksEditor } from "@/components/profile/SocialLinksEditor";
 import { Sidebar } from "@/components/Sidebar";
 
@@ -66,6 +67,7 @@ const EditProfile = () => {
   // Estados para datos complejos
   const [workExperience, setWorkExperience] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
+  const [formalEducation, setFormalEducation] = useState<any[]>([]);
   const [complementaryEducation, setComplementaryEducation] = useState<any[]>([]);
   const [socialLinks, setSocialLinks] = useState<any>({
     linkedin: "",
@@ -121,6 +123,7 @@ const EditProfile = () => {
       // Cargar datos complejos
       setWorkExperience(Array.isArray(profile.work_experience) ? profile.work_experience : []);
       setSkills(Array.isArray(profile.skills) ? profile.skills : []);
+      setFormalEducation(Array.isArray((profile as any).education) ? (profile as any).education : []);
       setComplementaryEducation(Array.isArray(profile.complementary_education) ? profile.complementary_education : []);
       setSocialLinks(
         typeof profile.social_links === 'object' && profile.social_links !== null
@@ -168,6 +171,7 @@ const EditProfile = () => {
       // Agregar datos complejos
       work_experience: workExperience,
       skills: skills,
+      education: formalEducation,
       complementary_education: complementaryEducation,
       social_links: socialLinks,
     };
@@ -448,6 +452,12 @@ const EditProfile = () => {
           <SkillsEditor 
             skills={skills}
             onChange={setSkills}
+          />
+
+          {/* Educación Formal */}
+          <FormalEducationEditor 
+            education={formalEducation}
+            onChange={setFormalEducation}
           />
 
           {/* Formación Complementaria */}

@@ -692,6 +692,7 @@ export type Database = {
           departamento: string | null
           desempenos_academicos: Json | null
           dificultades_aprendizaje: string | null
+          education: Json | null
           educoins: number
           experience_points: number | null
           fecha_nacimiento: string | null
@@ -773,6 +774,7 @@ export type Database = {
           departamento?: string | null
           desempenos_academicos?: Json | null
           dificultades_aprendizaje?: string | null
+          education?: Json | null
           educoins?: number
           experience_points?: number | null
           fecha_nacimiento?: string | null
@@ -858,6 +860,7 @@ export type Database = {
           departamento?: string | null
           desempenos_academicos?: Json | null
           dificultades_aprendizaje?: string | null
+          education?: Json | null
           educoins?: number
           experience_points?: number | null
           fecha_nacimiento?: string | null
