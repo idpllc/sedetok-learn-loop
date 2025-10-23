@@ -4,7 +4,7 @@ import { useInstitution } from "@/hooks/useInstitution";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, BookOpen, TrendingUp, UserPlus, Settings, Home } from "lucide-react";
+import { Building2, Users, BookOpen, UserPlus, Settings, Home, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { InstitutionSettings } from "@/components/institution/InstitutionSettings";
 import { InstitutionAnalytics } from "@/components/institution/InstitutionAnalytics";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export default function InstitutionDashboard() {
   const navigate = useNavigate();
@@ -180,24 +182,69 @@ export default function InstitutionDashboard() {
   }
 
   return (
-    <div className="container py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Building2 className="h-8 w-8" />
-            {myInstitution.name}
-          </h1>
-          <p className="text-muted-foreground mt-1">{myInstitution.description}</p>
-        </div>
-        <Button 
-          variant="outline" 
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2"
-        >
-          <Home className="h-4 w-4" />
-          Volver al Inicio
-        </Button>
+    <div className="min-h-screen pb-8">
+      {/* Cover Image */}
+      <div className="relative h-48 md:h-64 bg-gradient-to-br from-primary/20 to-secondary/20">
+        <div className="absolute inset-0 bg-cover bg-center" 
+          style={myInstitution.cover_url ? { backgroundImage: `url(${myInstitution.cover_url})` } : {}} 
+        />
       </div>
+
+      <div className="container -mt-16 md:-mt-20 space-y-6">
+        {/* Institution Header */}
+        <div className="relative bg-card rounded-lg border shadow-sm p-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <div className="w-32 h-32 rounded-lg border-4 border-background bg-muted overflow-hidden">
+                {myInstitution.logo_url ? (
+                  <img 
+                    src={myInstitution.logo_url} 
+                    alt={myInstitution.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Building2 className="w-16 h-16 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Institution Info */}
+            <div className="flex-1 space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold">{myInstitution.name}</h1>
+                  <p className="text-muted-foreground mt-1">{myInstitution.description}</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/")}
+                  className="flex items-center gap-2"
+                >
+                  <Home className="h-4 w-4" />
+                  Inicio
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-4 text-sm">
+                {myInstitution.created_at && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>Fundada el {format(new Date(myInstitution.created_at), "d 'de' MMMM 'de' yyyy", { locale: es })}</span>
+                  </div>
+                )}
+                {myInstitution.city && myInstitution.country && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building2 className="w-4 h-4" />
+                    <span>{myInstitution.city}, {myInstitution.country}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
       <div className="grid md:grid-cols-4 gap-4">
         <Card>
@@ -237,11 +284,11 @@ export default function InstitutionDashboard() {
         </Card>
       </div>
 
-      <Tabs defaultValue="analytics" className="space-y-4">
+      <Tabs defaultValue="perfil" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="analytics">
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Analíticas
+          <TabsTrigger value="perfil">
+            <Building2 className="mr-2 h-4 w-4" />
+            Perfil
           </TabsTrigger>
           {canViewMembers && (
             <TabsTrigger value="members">
@@ -261,7 +308,7 @@ export default function InstitutionDashboard() {
           )}
         </TabsList>
 
-        <TabsContent value="analytics">
+        <TabsContent value="perfil">
           <InstitutionAnalytics institutionId={myInstitution.id} />
         </TabsContent>
 
@@ -392,6 +439,7 @@ export default function InstitutionDashboard() {
           </TabsContent>
         )}
       </Tabs>
+      </div>
     </div>
   );
 }
