@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
+import { useRef } from "react";
 
 interface ProfileHeaderProps {
   profile: any;
@@ -13,15 +14,17 @@ interface ProfileHeaderProps {
 }
 
 export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAvatar }: ProfileHeaderProps) => {
-  const { uploadFile, uploading } = useCloudinary();
-  const { toast } = useToast();
+const { uploadFile, uploading } = useCloudinary();
+const { toast } = useToast();
+const coverInputRef = useRef<HTMLInputElement>(null);
+const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      const url = await uploadFile(file, "raw");
+      const url = await uploadFile(file, "image");
       if (url && onUpdateCover) {
         await onUpdateCover(url);
         toast({ title: "Portada actualizada correctamente" });
@@ -41,7 +44,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
     if (!file) return;
 
     try {
-      const url = await uploadFile(file, "raw");
+      const url = await uploadFile(file, "image");
       if (url && onUpdateAvatar) {
         await onUpdateAvatar(url);
         toast({ title: "Foto de perfil actualizada correctamente" });
@@ -77,19 +80,20 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
           />
         )}
         {isOwnProfile && (
-          <label className="absolute top-4 right-4 cursor-pointer">
-            <Button variant="secondary" size="sm" disabled={uploading}>
+          <div className="absolute top-4 right-4">
+            <Button variant="secondary" size="sm" disabled={uploading} onClick={() => coverInputRef.current?.click()}>
               <Camera className="w-4 h-4 mr-2" />
               {uploading ? "Subiendo..." : "Cambiar portada"}
             </Button>
             <input
+              ref={coverInputRef}
               type="file"
               className="hidden"
               accept="image/*"
               onChange={handleCoverUpload}
               disabled={uploading}
             />
-          </label>
+          </div>
         )}
       </div>
 
@@ -102,18 +106,19 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
             <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
           </Avatar>
           {isOwnProfile && (
-            <label className="absolute bottom-0 right-0 cursor-pointer">
-              <Button size="icon" variant="secondary" className="rounded-full" disabled={uploading}>
+            <div className="absolute bottom-0 right-0">
+              <Button size="icon" variant="secondary" className="rounded-full" disabled={uploading} onClick={() => avatarInputRef.current?.click()}>
                 <Camera className="w-4 h-4" />
               </Button>
               <input
+                ref={avatarInputRef}
                 type="file"
                 className="hidden"
                 accept="image/*"
                 onChange={handleAvatarUpload}
                 disabled={uploading}
               />
-            </label>
+            </div>
           )}
         </div>
 

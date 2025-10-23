@@ -6,7 +6,7 @@ export const useCloudinary = () => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadFile = async (file: File, resourceType: "video" | "raw" = "raw") => {
+  const uploadFile = async (file: File, resourceType: "image" | "video" | "raw" = "raw") => {
     setUploading(true);
     try {
       const formData = new FormData();
