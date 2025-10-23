@@ -52,7 +52,9 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/profile/professional" element={<ProfessionalProfile />} />
+          <Route path="/profile/professional/:userId" element={<ProfessionalProfile />} />
           <Route path="/profile/:userId" element={<Profile />} />
+          <Route path="/u/:userId" element={<ProfessionalProfile />} />
           <Route path="/cv-variations" element={<CVVariations />} />
           <Route path="/creator/:userId/content" element={<CreatorContent />} />
           <Route path="/learning-paths" element={<LearningPaths />} />
