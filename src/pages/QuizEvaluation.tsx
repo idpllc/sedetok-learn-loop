@@ -4,9 +4,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, AlertCircle } from "lucide-react";
+import { Calendar, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { useAuth } from "@/hooks/useAuth";
+import { useEventAttempts } from "@/hooks/useEventAttempts";
 import { QuizViewer } from "@/components/QuizViewer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -22,6 +23,7 @@ const QuizEvaluation = () => {
   const [error, setError] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState("");
   const [startQuiz, setStartQuiz] = useState(false);
+  const { hasAttempted, attemptCount, lastAttempt, isLoading: attemptsLoading } = useEventAttempts(event?.id);
 
   useEffect(() => {
     if (accessCode && !authLoading) {
@@ -130,6 +132,51 @@ const QuizEvaluation = () => {
   }
 
   if (!startQuiz && event) {
+    // Verificar si el usuario ya completó este evento
+    if (user && !attemptsLoading && hasAttempted && !event.allow_multiple_attempts) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl p-6 space-y-6">
+            <div className="text-center space-y-2">
+              <div className="mx-auto w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <h1 className="text-2xl font-bold">{event.title}</h1>
+              <p className="text-muted-foreground">Ya has completado esta evaluación</p>
+            </div>
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Completaste este evento el {format(new Date(lastAttempt.completed_at), "dd MMMM yyyy 'a las' HH:mm", { locale: es })}.
+                {!event.allow_multiple_attempts && " Este evento no permite múltiples intentos."}
+              </AlertDescription>
+            </Alert>
+
+            {lastAttempt && (
+              <div className="border rounded-lg p-4 bg-muted/50">
+                <h3 className="font-semibold mb-2">Tu resultado:</h3>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Puntuación:</span>
+                  <span className="text-2xl font-bold">{lastAttempt.score} / {lastAttempt.max_score}</span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-muted-foreground">Estado:</span>
+                  <span className={lastAttempt.passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                    {lastAttempt.passed ? "Aprobado" : "No aprobado"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <Button onClick={() => navigate("/quiz-evaluation")} className="w-full">
+              Volver
+            </Button>
+          </Card>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-2xl p-6 space-y-6">
@@ -161,6 +208,16 @@ const QuizEvaluation = () => {
               <p className="text-sm text-muted-foreground">{event.quizzes.description}</p>
             )}
           </div>
+
+          {user && hasAttempted && event.allow_multiple_attempts && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Ya has realizado este quiz {attemptCount} {attemptCount === 1 ? 'vez' : 'veces'}. 
+                Puedes tomarlo nuevamente.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Alert>
             <AlertCircle className="h-4 w-4" />
