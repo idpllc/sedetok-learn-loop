@@ -66,7 +66,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const [questionResults, setQuestionResults] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState<number | null>(null);
   
   useEffect(() => {
     fetchQuizData();
@@ -119,6 +119,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
       if (error) throw error;
 
       setQuestions(data as Question[]);
+      // Initialize start time when quiz is loaded and ready
+      setStartTime(Date.now());
     } catch (error) {
       console.error("Error loading questions:", error);
       toast.error("Error al cargar el quiz");
@@ -354,7 +356,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
       });
 
       // Calculate time taken in seconds
-      const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+      const timeTaken = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
 
       const payload: any = {
         user_id: user.id,
