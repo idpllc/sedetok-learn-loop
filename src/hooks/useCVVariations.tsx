@@ -2,11 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useEducoins } from "@/hooks/useEducoins";
+import { useXP } from "@/hooks/useXP";
 
 export const useCVVariations = (userId?: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
+  const { awardProfileXP } = useXP();
 
   // Obtener todas las variaciones
   const { data: variations, isLoading } = useQuery({
@@ -43,6 +45,7 @@ export const useCVVariations = (userId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cv-variations", userId] });
+      awardProfileXP('cv_variation_created', 500);
       toast({ title: "Variación creada exitosamente" });
     },
     onError: (error) => {

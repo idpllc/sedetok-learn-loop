@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfileUpdate } from "@/hooks/useProfileUpdate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useXP } from "@/hooks/useXP";
 import { ExperienceEditor } from "@/components/profile/ExperienceEditor";
 import { SkillsEditor } from "@/components/profile/SkillsEditor";
 import { EducationEditor } from "@/components/profile/EducationEditor";
@@ -25,6 +26,7 @@ const EditProfile = () => {
   const { user, loading: authLoading } = useAuth();
   const { profile, isLoading, updateProfile } = useProfileUpdate();
   const { toast } = useToast();
+  const { awardProfileXP } = useXP();
 
   const [formData, setFormData] = useState({
     // Datos generales
@@ -178,7 +180,66 @@ const EditProfile = () => {
     };
 
     try {
+      // Track previous state for XP awards
+      const previousSocialLinks = profile?.social_links || {};
+      const previousEducation = profile?.education || [];
+      const previousComplementaryEducation = profile?.complementary_education || [];
+      const previousWorkExperience = profile?.work_experience || [];
+      const previousSkills = profile?.skills || [];
+
       await updateProfile(updates);
+
+      // Award XP for new additions
+      // Social links
+      Object.keys(socialLinks).forEach(key => {
+        if (socialLinks[key] && !previousSocialLinks[key]) {
+          awardProfileXP('social_link_added', 200);
+        }
+      });
+
+      // Education
+      if (formalEducation.length > (Array.isArray(previousEducation) ? previousEducation.length : 0)) {
+        awardProfileXP('formal_education_added', 200);
+      }
+
+      // Complementary education
+      if (complementaryEducation.length > (Array.isArray(previousComplementaryEducation) ? previousComplementaryEducation.length : 0)) {
+        awardProfileXP('complementary_education_added', 200);
+      }
+
+      // Work experience
+      if (workExperience.length > (Array.isArray(previousWorkExperience) ? previousWorkExperience.length : 0)) {
+        awardProfileXP('work_experience_added', 200);
+      }
+
+      // Skills
+      const prevTechnicalSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'technical') : [];
+      const prevSoftSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'soft') : [];
+      const newTechnicalSkills = skills.filter(s => s.type === 'technical');
+      const newSoftSkills = skills.filter(s => s.type === 'soft');
+
+      if (newTechnicalSkills.length > prevTechnicalSkills.length) {
+        awardProfileXP('technical_skill_added', 200);
+      }
+      if (newSoftSkills.length > prevSoftSkills.length) {
+        awardProfileXP('soft_skill_added', 200);
+      }
+
+      // Check if profile 360 is complete
+      const isProfile360Complete = 
+        formData.full_name &&
+        formData.bio &&
+        Object.values(socialLinks).some(link => link) &&
+        formalEducation.length > 0 &&
+        complementaryEducation.length > 0 &&
+        workExperience.length > 0 &&
+        skills.length > 0;
+
+      if (isProfile360Complete && !profile?.perfil_completo_360) {
+        await updateProfile({ perfil_completo_360: true });
+        awardProfileXP('profile_360_complete', 1000);
+      }
+
       toast({
         title: "Perfil actualizado",
         description: "Tus cambios se guardaron correctamente",

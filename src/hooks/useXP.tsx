@@ -116,7 +116,67 @@ export const useXP = () => {
     }
   };
 
-  return { awardXP, awardPathCompletionXP, deductXP };
+  const awardProfileXP = async (actionType: string, xpAmount: number) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return false;
+
+    try {
+      // Check if XP has already been awarded for this action
+      const { data: existing } = await supabase
+        .from('user_xp_log')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('action_type', actionType)
+        .single();
+
+      if (existing) {
+        return false; // Already awarded
+      }
+
+      // Log the XP award
+      const { error: logError } = await supabase
+        .from('user_xp_log')
+        .insert({
+          user_id: user.id,
+          action_type: actionType,
+          xp_amount: xpAmount
+        });
+
+      if (logError) throw logError;
+
+      // Get current XP
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('experience_points')
+        .eq('id', user.id)
+        .single();
+
+      if (!currentProfile) throw new Error('Profile not found');
+
+      const newXP = (currentProfile.experience_points || 0) + xpAmount;
+
+      // Update user's total XP
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ experience_points: newXP })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast.success(`¡+${xpAmount} XP!`, {
+        description: getProfileActionMessage(actionType),
+        duration: 2000
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error awarding profile XP:', error);
+      return false;
+    }
+  };
+
+  return { awardXP, awardPathCompletionXP, deductXP, awardProfileXP };
 };
 
 const getActionMessage = (actionType: ActionType): string => {
@@ -128,4 +188,18 @@ const getActionMessage = (actionType: ActionType): string => {
     'path_complete': 'Ruta de aprendizaje completada'
   };
   return messages[actionType];
+};
+
+const getProfileActionMessage = (actionType: string): string => {
+  const messages: Record<string, string> = {
+    'profile_360_complete': 'Perfil 360 completado',
+    'social_link_added': 'Red social agregada',
+    'formal_education_added': 'Educación formal agregada',
+    'complementary_education_added': 'Formación complementaria agregada',
+    'work_experience_added': 'Experiencia laboral agregada',
+    'technical_skill_added': 'Habilidad técnica agregada',
+    'soft_skill_added': 'Habilidad blanda agregada',
+    'cv_variation_created': 'Hoja de vida creada'
+  };
+  return messages[actionType] || 'Acción completada';
 };
