@@ -45,7 +45,7 @@ const QuizEvaluation = () => {
       if (now < start) {
         setError("Este evento aún no ha comenzado");
       } else if (now > end) {
-        setError("Este evento ha finalizado");
+        setError("El evento de evaluación ya se ha cerrado");
       } else if (eventData.require_authentication && !user) {
         // Redirigir al login con la URL actual para volver después
         navigate("/auth", { 
