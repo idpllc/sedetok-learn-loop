@@ -1,17 +1,21 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
 import { CreateEvaluationEvent } from "@/components/quiz/CreateEvaluationEvent";
 import { EvaluationEventsList } from "@/components/quiz/EvaluationEventsList";
+import { EventResults } from "@/components/quiz/EventResults";
 import { useAuth } from "@/hooks/useAuth";
+import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const QuizEvaluations = () => {
-  const { quizId } = useParams<{ quizId: string }>();
+  const { quizId, eventId } = useParams<{ quizId?: string; eventId?: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { eventResults, resultsLoading } = useEvaluationEvents(undefined, eventId);
 
   if (!user) {
     return (
@@ -19,6 +23,33 @@ const QuizEvaluations = () => {
         <Card className="p-6">
           <p className="text-muted-foreground">Debes iniciar sesión para gestionar evaluaciones</p>
         </Card>
+      </div>
+    );
+  }
+
+  // Mostrar resultados si hay eventId
+  if (eventId) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold">Resultados del Evento</h1>
+              <p className="text-muted-foreground">
+                Visualiza las calificaciones de todos los participantes
+              </p>
+            </div>
+          </div>
+
+          <EventResults
+            results={eventResults || []}
+            eventTitle="Evento de Evaluación"
+            loading={resultsLoading}
+          />
+        </div>
       </div>
     );
   }

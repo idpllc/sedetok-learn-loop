@@ -30,7 +30,7 @@ interface CreateEvaluationEventInput {
   show_results_immediately?: boolean;
 }
 
-export const useEvaluationEvents = (quizId?: string) => {
+export const useEvaluationEvents = (quizId?: string, eventId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -56,6 +56,32 @@ export const useEvaluationEvents = (quizId?: string) => {
       return data;
     },
     enabled: !!user,
+  });
+
+  // Get results for a specific event
+  const { data: eventResults, isLoading: resultsLoading } = useQuery({
+    queryKey: ["evaluation-event-results", eventId],
+    queryFn: async () => {
+      if (!eventId) return [];
+      
+      const { data, error } = await supabase
+        .from("user_quiz_results")
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            full_name,
+            avatar_url,
+            numero_documento
+          )
+        `)
+        .eq("evaluation_event_id", eventId)
+        .order("completed_at", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!eventId,
   });
 
   // Create evaluation event
@@ -165,27 +191,6 @@ export const useEvaluationEvents = (quizId?: string) => {
     return data;
   };
 
-  // Get event results
-  const { data: eventResults } = useQuery({
-    queryKey: ["event-results", quizId],
-    queryFn: async () => {
-      if (!quizId || !user) return [];
-
-      const { data, error } = await supabase
-        .from("user_quiz_results")
-        .select(`
-          *,
-          profiles(username, full_name, avatar_url)
-        `)
-        .not("evaluation_event_id", "is", null)
-        .order("completed_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!quizId && !!user,
-  });
-
   return {
     events,
     isLoading,
@@ -194,6 +199,7 @@ export const useEvaluationEvents = (quizId?: string) => {
     deleteEvent: deleteEvent.mutate,
     getEventByAccessCode,
     eventResults,
+    resultsLoading,
     isCreating: createEvent.isPending,
   };
 };

@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Copy, ExternalLink, Trash2, Users, Clock } from "lucide-react";
+import { Calendar, Copy, ExternalLink, Trash2, Users, Clock, BarChart3 } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ interface EvaluationEventsListProps {
 export const EvaluationEventsList = ({ quizId }: EvaluationEventsListProps) => {
   const { events, isLoading, deleteEvent } = useEvaluationEvents(quizId);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const copyEventLink = (accessCode: string) => {
     const link = `${window.location.origin}/quiz-evaluation/${accessCode}`;
@@ -109,6 +111,13 @@ export const EvaluationEventsList = ({ quizId }: EvaluationEventsListProps) => {
                   <Badge variant="outline" className="font-mono">
                     {event.access_code}
                   </Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => navigate(`/quiz-evaluations/results/${event.id}`)}
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
