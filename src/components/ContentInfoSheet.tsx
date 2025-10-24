@@ -24,6 +24,8 @@ interface ContentInfoSheetProps {
   creatorAvatar?: string;
   commentsCount: number;
   isQuiz?: boolean;
+  questionsCount?: number;
+  difficulty?: string;
 }
 
 export function ContentInfoSheet({ 
@@ -37,7 +39,9 @@ export function ContentInfoSheet({
   tags,
   creatorAvatar,
   commentsCount,
-  isQuiz = false
+  isQuiz = false,
+  questionsCount,
+  difficulty
 }: ContentInfoSheetProps) {
   const [newComment, setNewComment] = useState("");
   const { user } = useAuth();
@@ -84,6 +88,24 @@ export function ContentInfoSheet({
               <div>
                 <h3 className="text-lg font-semibold mb-2">{title}</h3>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">{description}</p>
+                
+                {/* Quiz metadata badges */}
+                {isQuiz && (questionsCount || difficulty) && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {questionsCount && (
+                      <Badge variant="secondary" className="text-xs">
+                        📝 {questionsCount} {questionsCount === 1 ? 'Pregunta' : 'Preguntas'}
+                      </Badge>
+                    )}
+                    {difficulty && (
+                      <Badge variant="secondary" className="text-xs">
+                        {difficulty === 'basico' ? '⭐ Básico' : 
+                         difficulty === 'intermedio' ? '⭐⭐ Intermedio' : 
+                         '⭐⭐⭐ Avanzado'}
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </div>
               
               {/* Tags */}

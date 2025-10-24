@@ -9,6 +9,9 @@ interface DescriptionSheetProps {
   institution?: string;
   tags: string[];
   creatorAvatar?: string;
+  questionsCount?: number;
+  difficulty?: string;
+  contentType?: string;
 }
 
 export function DescriptionSheet({ 
@@ -17,7 +20,10 @@ export function DescriptionSheet({
   creator, 
   institution, 
   tags,
-  creatorAvatar 
+  creatorAvatar,
+  questionsCount,
+  difficulty,
+  contentType
 }: DescriptionSheetProps) {
   const truncatedDescription = description.length > 80 
     ? `${description.slice(0, 80)}...` 
@@ -53,6 +59,24 @@ export function DescriptionSheet({
           <div>
             <SheetTitle className="text-lg mb-2">{title}</SheetTitle>
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{description}</p>
+            
+            {/* Quiz metadata badges */}
+            {contentType === 'quiz' && (questionsCount || difficulty) && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {questionsCount && (
+                  <Badge variant="secondary" className="text-xs">
+                    📝 {questionsCount} {questionsCount === 1 ? 'Pregunta' : 'Preguntas'}
+                  </Badge>
+                )}
+                {difficulty && (
+                  <Badge variant="secondary" className="text-xs">
+                    {difficulty === 'basico' ? '⭐ Básico' : 
+                     difficulty === 'intermedio' ? '⭐⭐ Intermedio' : 
+                     '⭐⭐⭐ Avanzado'}
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
           
           {tags && tags.length > 0 && (

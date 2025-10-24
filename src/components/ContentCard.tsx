@@ -338,31 +338,17 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   <h3 className="text-xl md:text-2xl font-bold text-white mb-4">{title}</h3>
                   
                   {hasAttempted && lastAttempt && (
-                    <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-4 border border-white/30">
-                      <p className="text-white/90 text-sm font-semibold mb-2">Tu último resultado:</p>
-                      <div className="flex items-center justify-center gap-4 text-white">
-                        <span className="text-2xl font-bold">{lastAttempt.score} / {lastAttempt.max_score}</span>
-                        <span className="text-lg">
+                    <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/30">
+                      <p className="text-white/90 text-xs font-semibold mb-1.5">Tu último resultado:</p>
+                      <div className="flex items-center justify-center gap-3 text-white">
+                        <span className="text-xl font-bold">{lastAttempt.score} / {lastAttempt.max_score}</span>
+                        <span className="text-base">
                           {lastAttempt.passed ? '✅ Aprobado' : '❌ No aprobado'}
                         </span>
                       </div>
                     </div>
                   )}
                   
-                  <div className="mt-6 flex items-center justify-center gap-4">
-                    {questionsCount && (
-                      <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
-                        📝 {questionsCount} {questionsCount === 1 ? 'Pregunta' : 'Preguntas'}
-                      </Badge>
-                    )}
-                    {difficulty && (
-                      <Badge className="bg-white/20 text-white border-white/40 text-sm px-4 py-1.5">
-                        {difficulty === 'basico' ? '⭐ Básico' : 
-                         difficulty === 'intermedio' ? '⭐⭐ Intermedio' : 
-                         '⭐⭐⭐ Avanzado'}
-                      </Badge>
-                    )}
-                  </div>
                   <div className="mt-8 flex flex-col items-center gap-3">
                     <Button
                       size="lg"
@@ -476,6 +462,18 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 <Badge variant="secondary" className="font-semibold text-xs bg-white/20 text-white border-white/30">
                   {grade}
                 </Badge>
+                {contentType === 'quiz' && questionsCount && (
+                  <Badge className="bg-white/20 text-white border-white/40 text-xs">
+                    📝 {questionsCount}
+                  </Badge>
+                )}
+                {contentType === 'quiz' && difficulty && (
+                  <Badge className="bg-white/20 text-white border-white/40 text-xs">
+                    {difficulty === 'basico' ? '⭐' : 
+                     difficulty === 'intermedio' ? '⭐⭐' : 
+                     '⭐⭐⭐'}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -618,6 +616,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         creatorAvatar={creatorAvatar}
         commentsCount={initialComments}
         isQuiz={contentType === 'quiz'}
+        questionsCount={questionsCount}
+        difficulty={difficulty}
       />
 
       {/* Quiz Viewer Dialog */}
