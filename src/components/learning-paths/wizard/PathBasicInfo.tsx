@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, HelpCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,15 @@ import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { Badge } from "@/components/ui/badge";
 import { intelligenceTypes } from "@/lib/intelligenceTypes";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Usar los 12 tipos de inteligencias múltiples
 const learningTypes = intelligenceTypes.map(intel => ({
@@ -30,6 +39,7 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const [showRouteSearch, setShowRouteSearch] = useState(false);
   const [requiresPrerequisites, setRequiresPrerequisites] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [showIntelligenceHelp, setShowIntelligenceHelp] = useState(false);
   // Coerce tags to array for rendering/logic
   const tagsArray: string[] = Array.isArray(data.tags)
     ? data.tags
@@ -209,7 +219,63 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
         </div>
 
         <div>
-          <Label htmlFor="learning_type">Tipo de Aprendizaje Principal</Label>
+          <div className="flex items-center gap-2 mb-1.5">
+            <Label htmlFor="learning_type">Tipo de Aprendizaje Principal</Label>
+            <Dialog open={showIntelligenceHelp} onOpenChange={setShowIntelligenceHelp}>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 rounded-full"
+                  type="button"
+                >
+                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[80vh]">
+                <DialogHeader>
+                  <DialogTitle>Guía de Inteligencias Múltiples</DialogTitle>
+                  <DialogDescription>
+                    Selecciona el tipo de inteligencia que mejor se adapte al contenido de tu ruta de aprendizaje
+                  </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="h-[60vh] pr-4">
+                  <div className="space-y-6">
+                    {intelligenceTypes.map((intel) => (
+                      <div key={intel.id} className="border rounded-lg p-4 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{intel.icon}</span>
+                          <h3 className="font-semibold text-lg">{intel.name}</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{intel.description}</p>
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Materias relacionadas:</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {intel.subjects.slice(0, 5).map((subject, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {subject}
+                              </Badge>
+                            ))}
+                            {intel.subjects.length > 5 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{intel.subjects.length - 5} más
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xs text-muted-foreground pt-2 border-t">
+                          <strong>¿Cuándo usar esta inteligencia?</strong>
+                          <p className="mt-1">
+                            Elige esta opción si tu ruta desarrolla principalmente habilidades de {intel.description.toLowerCase()}.
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </DialogContent>
+            </Dialog>
+          </div>
           <Select
             value={data.tipo_aprendizaje}
             onValueChange={(value) => onChange({ ...data, tipo_aprendizaje: value })}
