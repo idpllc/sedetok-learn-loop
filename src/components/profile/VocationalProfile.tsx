@@ -6,7 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVocationalProfile, CareerRecommendation } from '@/hooks/useVocationalProfile';
-import { GraduationCap, Briefcase, Sparkles, Globe, MapPin, Brain, Loader2, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { useEducoins } from '@/hooks/useEducoins';
+import { BuyEducoinsModal } from '@/components/BuyEducoinsModal';
+import { GraduationCap, Briefcase, Sparkles, Globe, MapPin, Brain, Loader2, AlertTriangle, CheckCircle2, Info, Coins } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface VocationalProfileProps {
   areaMetrics: any;
@@ -20,10 +23,18 @@ export const VocationalProfile = ({
   userProfile 
 }: VocationalProfileProps) => {
   const { generateVocationalProfile, isGenerating, vocationalProfile } = useVocationalProfile();
+  const { balance, deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
   const [selectedType, setSelectedType] = useState<string>('todas');
 
+  const VOCATIONAL_PROFILE_COST = 20;
+
   const handleGenerate = async () => {
-    await generateVocationalProfile(areaMetrics, intelligenceMetrics, userProfile);
+    // Check if user has enough educoins
+    const hasEnough = await deductEducoins(VOCATIONAL_PROFILE_COST, 'Perfil Vocacional');
+    
+    if (hasEnough) {
+      await generateVocationalProfile(areaMetrics, intelligenceMetrics, userProfile);
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -164,42 +175,59 @@ export const VocationalProfile = ({
 
   if (!vocationalProfile) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5" />
-            Perfil Vocacional
-          </CardTitle>
-          <CardDescription>
-            Genera recomendaciones personalizadas de carreras basadas en tu perfil académico e inteligencias múltiples
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button 
-            onClick={handleGenerate} 
-            disabled={isGenerating}
-            className="w-full"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generando perfil vocacional...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generar Perfil Vocacional con IA
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+      <>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="w-5 h-5" />
+              Perfil Vocacional
+            </CardTitle>
+            <CardDescription>
+              Genera recomendaciones personalizadas de carreras basadas en tu perfil académico e inteligencias múltiples
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <Coins className="h-4 w-4" />
+              <AlertDescription>
+                Generar tu perfil vocacional con IA cuesta <strong>{VOCATIONAL_PROFILE_COST} educoins</strong>. 
+                Tu saldo actual: <strong>{balance} educoins</strong>
+              </AlertDescription>
+            </Alert>
+            
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isGenerating}
+              className="w-full"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generando perfil vocacional...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generar Perfil Vocacional con IA ({VOCATIONAL_PROFILE_COST} educoins)
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <BuyEducoinsModal
+          open={showBuyModal}
+          onOpenChange={(open) => !open && closeBuyModal()}
+          requiredAmount={requiredAmount}
+        />
+      </>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <>
+      <div className="space-y-6">
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5" />
@@ -281,6 +309,13 @@ export const VocationalProfile = ({
           )}
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+
+      <BuyEducoinsModal
+        open={showBuyModal}
+        onOpenChange={(open) => !open && closeBuyModal()}
+        requiredAmount={requiredAmount}
+      />
+    </>
   );
 };

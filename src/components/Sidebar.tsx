@@ -1,8 +1,9 @@
-import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2 } from "lucide-react";
+import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2, MoreHorizontal } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useCallback, useMemo } from "react";
 import { AuthModal } from "./AuthModal";
 import { SearchModal } from "./SearchModal";
+import { MoreModal } from "./MoreModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useInstitution } from "@/hooks/useInstitution";
 import { Button } from "./ui/button";
@@ -19,6 +20,7 @@ export const Sidebar = () => {
   const { myInstitution } = useInstitution();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [moreModalOpen, setMoreModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const scrollDirection = useScrollDirection();
 
@@ -114,7 +116,7 @@ export const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 p-4 space-y-2 transition-all ${isMinified ? 'px-3' : ''}`}>
+      <nav className={`flex-1 p-4 space-y-1 transition-all ${isMinified ? 'px-3' : ''}`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -123,7 +125,7 @@ export const Sidebar = () => {
             <button
               key={item.id}
               onClick={() => handleNavigate(item.path)}
-              className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-3 rounded-lg transition-all ${
+              className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-2 rounded-lg transition-all ${
                 isActive 
                   ? 'bg-primary text-primary-foreground font-medium' 
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -136,15 +138,25 @@ export const Sidebar = () => {
           );
         })}
 
+        {/* More Button */}
+        <button
+          onClick={() => setMoreModalOpen(true)}
+          className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-2 rounded-lg transition-all text-muted-foreground hover:bg-muted hover:text-foreground`}
+          title={isMinified ? "Más" : undefined}
+        >
+          <MoreHorizontal className="w-6 h-6" />
+          {!isMinified && <span className="text-base">Más</span>}
+        </button>
+
         {/* Institution Link - Only shown if user has an institution */}
         {user && myInstitution && (
           <button
             onClick={() => handleNavigate("/institution-dashboard")}
-            className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-3 rounded-lg transition-all ${
+            className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-2 rounded-lg transition-all ${
               location.pathname === "/institution-dashboard"
                 ? 'bg-primary text-primary-foreground font-medium' 
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            } mt-4`}
+            } mt-2`}
             title={isMinified ? myInstitution.name : undefined}
           >
             <Building2 className="w-6 h-6" />
@@ -312,6 +324,11 @@ export const Sidebar = () => {
       <SearchModal
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
+      />
+
+      <MoreModal
+        open={moreModalOpen}
+        onOpenChange={setMoreModalOpen}
       />
     </>
   );
