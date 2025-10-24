@@ -27,7 +27,7 @@ const VocationalProfile = () => {
     }
   }, [authLoading, isOwnProfile, user]);
 
-  // Fetch profile data
+  // Fetch profile data and metrics in parallel
   const { data: profileData, isLoading: profileLoading } = useQuery({
     queryKey: ["profile", targetUserId],
     queryFn: async () => {
@@ -43,10 +43,11 @@ const VocationalProfile = () => {
       return data;
     },
     enabled: !!targetUserId,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch academic and intelligence metrics using the hook
-  const { data: metrics } = useAcademicMetrics(targetUserId);
+  // Fetch academic and intelligence metrics - solo si el perfil existe
+  const { data: metrics, isLoading: metricsLoading } = useAcademicMetrics(targetUserId);
 
   // Show auth modal for anonymous users
   if (!authLoading && !isOwnProfile && !user) {
@@ -77,7 +78,7 @@ const VocationalProfile = () => {
     );
   }
 
-  if (profileLoading || !targetUserId) {
+  if (profileLoading || metricsLoading || !targetUserId) {
     return (
       <>
         <Sidebar />

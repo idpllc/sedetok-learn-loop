@@ -47,66 +47,74 @@ export const useAcademicMetrics = (userId?: string) => {
         };
       });
 
-      // 1. Obtener videos vistos (basado en user_path_progress con completed = true)
-      const { data: watchedVideos } = await supabase
-        .from("user_path_progress")
-        .select(`
-          content_id,
-          content:content_id (
-            subject,
-            category,
-            content_type
-          )
-        `)
-        .eq("user_id", userId)
-        .eq("completed", true)
-        .not("content_id", "is", null);
+      // Ejecutar todas las queries en paralelo para mejor rendimiento
+      const [watchedVideosResult, quizResultsResult, likedContentResult, completedPathsResult] = await Promise.all([
+        // 1. Videos vistos
+        supabase
+          .from("user_path_progress")
+          .select(`
+            content_id,
+            content:content_id (
+              subject,
+              category,
+              content_type
+            )
+          `)
+          .eq("user_id", userId)
+          .eq("completed", true)
+          .not("content_id", "is", null),
+        
+        // 2. Quizzes completados
+        supabase
+          .from("user_quiz_results")
+          .select(`
+            score,
+            max_score,
+            quiz_id,
+            quiz:quiz_id (
+              subject,
+              category
+            )
+          `)
+          .eq("user_id", userId),
+        
+        // 3. Likes en contenido
+        supabase
+          .from("likes")
+          .select(`
+            content_id,
+            quiz_id,
+            content:content_id (
+              subject,
+              category
+            ),
+            quiz:quiz_id (
+              subject,
+              category
+            )
+          `)
+          .eq("user_id", userId),
+        
+        // 4. Rutas completadas
+        supabase
+          .from("user_path_progress")
+          .select(`
+            path_id,
+            path:path_id (
+              tipo_aprendizaje,
+              subject,
+              category
+            )
+          `)
+          .eq("user_id", userId)
+          .eq("completed", true)
+          .not("path_id", "is", null)
+      ]);
 
-      // 2. Obtener quizzes completados
-      const { data: quizResults } = await supabase
-        .from("user_quiz_results")
-        .select(`
-          score,
-          max_score,
-          quiz_id,
-          quiz:quiz_id (
-            subject,
-            category
-          )
-        `)
-        .eq("user_id", userId);
-
-      // 3. Obtener likes en contenido
-      const { data: likedContent } = await supabase
-        .from("likes")
-        .select(`
-          content_id,
-          quiz_id,
-          content:content_id (
-            subject,
-            category
-          ),
-          quiz:quiz_id (
-            subject,
-            category
-          )
-        `)
-        .eq("user_id", userId);
-
-      // 4. Obtener rutas completadas
-      const { data: completedPaths } = await supabase
-        .from("user_path_progress")
-        .select(`
-          path_id,
-          path:path_id (
-            tipo_aprendizaje,
-            subject,
-            category
-          )
-        `)
-        .eq("user_id", userId)
-        .eq("completed", true)
-        .not("path_id", "is", null);
+      const watchedVideos = watchedVideosResult.data;
+      const quizResults = quizResultsResult.data;
+      const likedContent = likedContentResult.data;
+      const completedPaths = completedPathsResult.data;
 
       // Procesar videos vistos
       if (watchedVideos) {
@@ -309,6 +317,8 @@ export const useAcademicMetrics = (userId?: string) => {
         intelligenceMetrics
       };
     },
-    enabled: !!userId
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // Cache por 5 minutos
+    gcTime: 10 * 60 * 1000, // Mantener en cache por 10 minutos
   });
 };

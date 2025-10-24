@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,9 +92,13 @@ export const VocationalProfile = ({
     }
   };
 
-  const filteredRecommendations = vocationalProfile?.recommendations.filter(rec => 
-    selectedType === 'todas' || rec.careerType === selectedType
-  ) || [];
+  // Memoizar recomendaciones filtradas
+  const filteredRecommendations = useMemo(() => 
+    vocationalProfile?.recommendations.filter(rec => 
+      selectedType === 'todas' || rec.careerType === selectedType
+    ) || [],
+    [vocationalProfile?.recommendations, selectedType]
+  );
 
   const CareerCard = ({ career }: { career: CareerRecommendation }) => (
     <Card className="hover:shadow-lg transition-shadow">

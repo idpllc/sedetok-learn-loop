@@ -26,7 +26,7 @@ const ProfessionalProfile = () => {
     }
   }, [authLoading, urlUserId, user]);
 
-  // Fetch profile data
+  // Fetch profile data with caching
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["profile", targetUserId],
     queryFn: async () => {
@@ -42,6 +42,7 @@ const ProfessionalProfile = () => {
       return data;
     },
     enabled: !!targetUserId,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Show auth modal for anonymous users trying to access public profiles

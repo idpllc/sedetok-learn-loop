@@ -44,9 +44,9 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         throw error;
       }
       
-      // Incrementar vistas si no es el propio perfil
+      // Incrementar vistas en background sin bloquear la carga
       if (!isOwnProfile && user) {
-        await supabase
+        void supabase
           .from("profiles")
           .update({ profile_views: (data.profile_views || 0) + 1 })
           .eq("id", userId);
@@ -55,6 +55,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       return data;
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleUpdateCover = async (url: string) => {
@@ -115,7 +116,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     }
   };
 
-  // Get user's institution
+  // Get user's institution con caching mejorado
   const { data: institutionMember } = useQuery({
     queryKey: ["user-institution", userId],
     queryFn: async () => {
@@ -132,6 +133,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       return data;
     },
     enabled: !!userId,
+    staleTime: 10 * 60 * 1000, // 10 minutos - esto cambia raramente
   });
 
   const { data: institutionMetrics, isLoading: isLoadingInstitution } = useInstitutionAcademicMetrics(
