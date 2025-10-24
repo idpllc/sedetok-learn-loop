@@ -1,20 +1,28 @@
-import { Eye, Ear, Hand, Brain, Video, FileText, CheckCircle2, BookOpen } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+import { MessageSquare, Calculator, Palette, Music, Activity, Users, User, Leaf, Lightbulb, Sparkles, Laptop, Heart, Video, FileText, CheckCircle2, BookOpen, Brain } from "lucide-react";
 
 interface Step2Props {
   formData: any;
   updateFormData: (data: any) => void;
 }
 
-export const Step2LearningStyle = ({ formData, updateFormData }: Step2Props) => {
-  const learningTypes = [
-    { value: "Visual", icon: Eye, label: "Visual", desc: "Aprendes mejor con imágenes y diagramas" },
-    { value: "Auditivo", icon: Ear, label: "Auditivo", desc: "Prefieres escuchar explicaciones" },
-    { value: "Kinestésico", icon: Hand, label: "Kinestésico", desc: "Aprendes haciendo y practicando" },
-    { value: "Lógico", icon: Brain, label: "Lógico", desc: "Te gustan los patrones y la lógica" },
-  ];
+const learningTypes = [
+  { value: "Lingüística", icon: MessageSquare, label: "Lingüística", description: "Aprendo con palabras" },
+  { value: "Lógico-Matemática", icon: Calculator, label: "Lógico-Matemática", description: "Aprendo razonando" },
+  { value: "Espacial", icon: Palette, label: "Espacial", description: "Aprendo viendo" },
+  { value: "Musical", icon: Music, label: "Musical", description: "Aprendo con ritmos" },
+  { value: "Cinético-Corporal", icon: Activity, label: "Cinético-Corporal", description: "Aprendo haciendo" },
+  { value: "Interpersonal", icon: Users, label: "Interpersonal", description: "Aprendo con otros" },
+  { value: "Intrapersonal", icon: User, label: "Intrapersonal", description: "Aprendo solo" },
+  { value: "Naturalista", icon: Leaf, label: "Naturalista", description: "Aprendo con la naturaleza" },
+  { value: "Existencial", icon: Lightbulb, label: "Existencial", description: "Aprendo reflexionando" },
+  { value: "Creativa", icon: Sparkles, label: "Creativa", description: "Aprendo creando" },
+  { value: "Digital", icon: Laptop, label: "Digital", description: "Aprendo con tecnología" },
+  { value: "Emocional", icon: Heart, label: "Emocional", description: "Aprendo sintiendo" },
+];
 
+export const Step2LearningStyle = ({ formData, updateFormData }: Step2Props) => {
   const consumptionModes = [
     { value: "Videos", icon: Video, label: "Videos" },
     { value: "PDF", icon: FileText, label: "PDFs" },
@@ -32,7 +40,7 @@ export const Step2LearningStyle = ({ formData, updateFormData }: Step2Props) => 
 
       <div className="space-y-4">
         <Label className="text-base">Tipo de aprendizaje</Label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {learningTypes.map((type) => {
             const Icon = type.icon;
             const isSelected = formData.tipo_aprendizaje === type.value;
@@ -49,7 +57,7 @@ export const Step2LearningStyle = ({ formData, updateFormData }: Step2Props) => 
                   <Icon className={`w-8 h-8 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                   <div>
                     <p className="font-semibold">{type.label}</p>
-                    <p className="text-xs text-muted-foreground">{type.desc}</p>
+                    <p className="text-xs text-muted-foreground">{type.description}</p>
                   </div>
                 </div>
               </Card>

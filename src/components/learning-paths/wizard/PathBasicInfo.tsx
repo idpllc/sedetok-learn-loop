@@ -213,20 +213,24 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
             value={data.tipo_aprendizaje}
             onValueChange={(value) => onChange({ ...data, tipo_aprendizaje: value })}
           >
-            <SelectTrigger id="learning_type" className="mt-1.5">
-              <SelectValue placeholder="Seleccionar tipo" />
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona el tipo de aprendizaje principal" />
             </SelectTrigger>
             <SelectContent>
-              {learningTypes.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
+              <SelectItem value="Lingüística">🗣️ Lingüística</SelectItem>
+              <SelectItem value="Lógico-Matemática">🔢 Lógico-Matemática</SelectItem>
+              <SelectItem value="Espacial">🎨 Espacial</SelectItem>
+              <SelectItem value="Musical">🎵 Musical</SelectItem>
+              <SelectItem value="Cinético-Corporal">🤸 Cinético-Corporal</SelectItem>
+              <SelectItem value="Interpersonal">👥 Interpersonal</SelectItem>
+              <SelectItem value="Intrapersonal">🧘 Intrapersonal</SelectItem>
+              <SelectItem value="Naturalista">🌿 Naturalista</SelectItem>
+              <SelectItem value="Existencial">🤔 Existencial</SelectItem>
+              <SelectItem value="Creativa">💡 Creativa</SelectItem>
+              <SelectItem value="Digital">💻 Digital</SelectItem>
+              <SelectItem value="Emocional">❤️ Emocional</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-sm text-muted-foreground mt-1">
-            Indica el estilo de aprendizaje predominante de esta ruta
-          </p>
         </div>
 
         <div>

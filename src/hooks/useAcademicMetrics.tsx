@@ -76,6 +76,38 @@ export const useAcademicMetrics = (userId?: string) => {
         `)
         .eq("user_id", userId);
 
+      // 3. Obtener likes en contenido
+      const { data: likedContent } = await supabase
+        .from("likes")
+        .select(`
+          content_id,
+          quiz_id,
+          content:content_id (
+            subject,
+            category
+          ),
+          quiz:quiz_id (
+            subject,
+            category
+          )
+        `)
+        .eq("user_id", userId);
+
+      // 4. Obtener rutas completadas
+      const { data: completedPaths } = await supabase
+        .from("user_path_progress")
+        .select(`
+          path_id,
+          path:path_id (
+            tipo_aprendizaje,
+            subject,
+            category
+          )
+        `)
+        .eq("user_id", userId)
+        .eq("completed", true)
+        .not("path_id", "is", null);
+
       // Procesar videos vistos
       if (watchedVideos) {
         watchedVideos.forEach((item: any) => {
@@ -123,6 +155,69 @@ export const useAcademicMetrics = (userId?: string) => {
                 intelligenceMetrics[intId].quizCount++;
               }
             });
+          }
+        });
+      }
+
+      // Procesar likes en contenido
+      if (likedContent) {
+        likedContent.forEach((like: any) => {
+          const subjectToUse = like.content?.subject || like.content?.category || 
+                                like.quiz?.subject || like.quiz?.category;
+          if (subjectToUse) {
+            // Para áreas académicas - dar peso a los likes
+            const areaId = getAreaForSubject(subjectToUse);
+            if (areaId && areaMetrics[areaId]) {
+              areaMetrics[areaId].videosWatched += 0.5; // Medio punto por like
+            }
+            
+            // Para inteligencias
+            const intelligenceIds = getIntelligencesForSubject(subjectToUse);
+            intelligenceIds.forEach(intId => {
+              if (intelligenceMetrics[intId]) {
+                intelligenceMetrics[intId].videosWatched += 0.5; // Medio punto por like
+              }
+            });
+          }
+        });
+      }
+
+      // Procesar rutas completadas - mapear tipo_aprendizaje a inteligencias
+      const tipoAprendizajeToIntelligence: Record<string, IntelligenceTypeId> = {
+        'Lingüística': 'linguistico_verbal',
+        'Lógico-Matemática': 'logico_matematica',
+        'Espacial': 'visual_espacial',
+        'Musical': 'musical',
+        'Cinético-Corporal': 'corporal_kinestesica',
+        'Interpersonal': 'interpersonal',
+        'Intrapersonal': 'intrapersonal',
+        'Naturalista': 'naturalista',
+        'Existencial': 'existencial',
+        'Creativa': 'creativa_innovadora',
+        'Digital': 'digital_tecnologica',
+        'Emocional': 'emocional'
+      };
+
+      if (completedPaths) {
+        completedPaths.forEach((pathProgress: any) => {
+          const path = pathProgress.path;
+          if (path) {
+            // Procesar tipo de aprendizaje de la ruta
+            if (path.tipo_aprendizaje) {
+              const intelligenceId = tipoAprendizajeToIntelligence[path.tipo_aprendizaje];
+              if (intelligenceId && intelligenceMetrics[intelligenceId]) {
+                intelligenceMetrics[intelligenceId].videosWatched += 2; // 2 puntos por ruta completada
+              }
+            }
+
+            // También procesar área académica de la ruta
+            const subjectToUse = path.subject || path.category;
+            if (subjectToUse) {
+              const areaId = getAreaForSubject(subjectToUse);
+              if (areaId && areaMetrics[areaId]) {
+                areaMetrics[areaId].videosWatched += 2; // 2 puntos por ruta completada
+              }
+            }
           }
         });
       }

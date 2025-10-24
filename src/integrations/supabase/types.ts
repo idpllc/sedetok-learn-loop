@@ -1648,7 +1648,19 @@ export type Database = {
         | "ordering"
       quiz_difficulty: "basico" | "intermedio" | "avanzado"
       quiz_status: "borrador" | "publicado"
-      tipo_aprendizaje: "Visual" | "Auditivo" | "Kinestésico" | "Lógico"
+      tipo_aprendizaje:
+        | "Lingüística"
+        | "Lógico-Matemática"
+        | "Espacial"
+        | "Musical"
+        | "Cinético-Corporal"
+        | "Interpersonal"
+        | "Intrapersonal"
+        | "Naturalista"
+        | "Existencial"
+        | "Creativa"
+        | "Digital"
+        | "Emocional"
       tipo_documento:
         | "RC"
         | "NES"
@@ -1843,7 +1855,20 @@ export const Constants = {
       ],
       quiz_difficulty: ["basico", "intermedio", "avanzado"],
       quiz_status: ["borrador", "publicado"],
-      tipo_aprendizaje: ["Visual", "Auditivo", "Kinestésico", "Lógico"],
+      tipo_aprendizaje: [
+        "Lingüística",
+        "Lógico-Matemática",
+        "Espacial",
+        "Musical",
+        "Cinético-Corporal",
+        "Interpersonal",
+        "Intrapersonal",
+        "Naturalista",
+        "Existencial",
+        "Creativa",
+        "Digital",
+        "Emocional",
+      ],
       tipo_documento: [
         "RC",
         "NES",
