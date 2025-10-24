@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Calendar, Search } from "lucide-react";
+import { Calendar, Search, ExternalLink } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { useQuizzes } from "@/hooks/useQuizzes";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -82,8 +82,20 @@ export const EditEvaluationEvent = ({ event, open, onOpenChange }: EditEvaluatio
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Quiz a Evaluar *</Label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Quiz a Evaluar *</Label>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={() => window.open('/create-content?type=quiz', '_blank')}
+                className="h-auto p-0"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Crear nuevo quiz
+              </Button>
+            </div>
             <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
               <PopoverTrigger asChild>
                 <Button

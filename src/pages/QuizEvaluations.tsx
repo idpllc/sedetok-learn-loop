@@ -95,13 +95,11 @@ const QuizEvaluations = () => {
           </TabsContent>
         </Tabs>
 
-        {quizId && (
-          <CreateEvaluationEvent
-            quizId={quizId}
-            open={showCreateModal}
-            onOpenChange={setShowCreateModal}
-          />
-        )}
+        <CreateEvaluationEvent
+          quizId={quizId}
+          open={showCreateModal}
+          onOpenChange={setShowCreateModal}
+        />
       </div>
     </div>
   );
