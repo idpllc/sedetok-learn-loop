@@ -18,6 +18,8 @@ interface QuizViewerProps {
   lastAttempt?: any;
   onComplete?: () => void;
   onQuizComplete?: (passed: boolean) => void;
+  evaluationEventId?: string;
+  showResultsImmediately?: boolean;
 }
 
 interface Question {
@@ -41,7 +43,7 @@ interface Question {
   }>;
 }
 
-export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: QuizViewerProps) => {
+export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, evaluationEventId, showResultsImmediately = true }: QuizViewerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
@@ -349,13 +351,18 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
         passed
       });
 
-      const payload = {
+      const payload: any = {
         user_id: user.id,
         quiz_id: quizId,
         score: normalizedScore,
         max_score: 100,
         passed,
       };
+
+      // Add evaluation event ID if present
+      if (evaluationEventId) {
+        payload.evaluation_event_id = evaluationEventId;
+      }
 
       // Try insert including optional columns; if columns don't exist yet, retry without them
       let insertError: any = null;
@@ -432,6 +439,24 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete }: 
   const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
 
   if (isCompleted) {
+    if (!showResultsImmediately) {
+      return (
+        <div className="h-full flex items-center justify-center p-6">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 md:p-8 text-center space-y-6">
+              <div className="text-6xl">✅</div>
+              <div>
+                <h3 className="text-2xl font-bold mb-2">Quiz Enviado</h3>
+                <p className="text-muted-foreground">
+                  Tu evaluación ha sido enviada correctamente. Los resultados serán compartidos por tu profesor.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+    
     return (
       <div className="h-full flex items-center justify-center p-6">
         <Card className="w-full max-w-md">

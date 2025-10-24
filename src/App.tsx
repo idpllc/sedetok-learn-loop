@@ -34,6 +34,8 @@ import InstitutionDashboard from "./pages/InstitutionDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CVVariations from "./pages/CVVariations";
 import VocationalProfile from "./pages/VocationalProfile";
+import QuizEvaluation from "./pages/QuizEvaluation";
+import QuizEvaluations from "./pages/QuizEvaluations";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +78,10 @@ const App = () => (
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/quiz-evaluation" element={<QuizEvaluation />} />
+          <Route path="/quiz-evaluation/:accessCode" element={<QuizEvaluation />} />
+          <Route path="/quiz-evaluations/:quizId" element={<QuizEvaluations />} />
+          <Route path="/quiz-evaluations" element={<QuizEvaluations />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

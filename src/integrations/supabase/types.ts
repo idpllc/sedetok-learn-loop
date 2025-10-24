@@ -982,6 +982,62 @@ export type Database = {
           },
         ]
       }
+      quiz_evaluation_events: {
+        Row: {
+          access_code: string
+          allow_multiple_attempts: boolean | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          end_date: string
+          id: string
+          quiz_id: string
+          require_authentication: boolean | null
+          show_results_immediately: boolean | null
+          start_date: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_code: string
+          allow_multiple_attempts?: boolean | null
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          end_date: string
+          id?: string
+          quiz_id: string
+          require_authentication?: boolean | null
+          show_results_immediately?: boolean | null
+          start_date: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_code?: string
+          allow_multiple_attempts?: boolean | null
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          quiz_id?: string
+          require_authentication?: boolean | null
+          show_results_immediately?: boolean | null
+          start_date?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_evaluation_events_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quiz_options: {
         Row: {
           created_at: string | null
@@ -1321,6 +1377,7 @@ export type Database = {
         Row: {
           area_academica: string | null
           completed_at: string | null
+          evaluation_event_id: string | null
           id: string
           max_score: number
           no_documento: string | null
@@ -1333,6 +1390,7 @@ export type Database = {
         Insert: {
           area_academica?: string | null
           completed_at?: string | null
+          evaluation_event_id?: string | null
           id?: string
           max_score: number
           no_documento?: string | null
@@ -1345,6 +1403,7 @@ export type Database = {
         Update: {
           area_academica?: string | null
           completed_at?: string | null
+          evaluation_event_id?: string | null
           id?: string
           max_score?: number
           no_documento?: string | null
@@ -1355,6 +1414,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_quiz_results_evaluation_event_id_fkey"
+            columns: ["evaluation_event_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_evaluation_events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_quiz_results_quiz_id_fkey"
             columns: ["quiz_id"]
@@ -1536,6 +1602,7 @@ export type Database = {
         Args: { search_text: string }
         Returns: string
       }
+      generate_access_code: { Args: never; Returns: string }
       get_institution_student_ids: {
         Args: { p_institution_id: string }
         Returns: {
