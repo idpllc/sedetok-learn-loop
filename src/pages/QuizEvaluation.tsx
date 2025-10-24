@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const QuizEvaluation = () => {
   const { accessCode } = useParams<{ accessCode: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { getEventByAccessCode } = useEvaluationEvents();
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -24,12 +24,12 @@ const QuizEvaluation = () => {
   const [startQuiz, setStartQuiz] = useState(false);
 
   useEffect(() => {
-    if (accessCode) {
+    if (accessCode && !authLoading) {
       loadEvent(accessCode);
-    } else {
+    } else if (!accessCode) {
       setLoading(false);
     }
-  }, [accessCode]);
+  }, [accessCode, authLoading, user]);
 
   const loadEvent = async (code: string) => {
     try {
@@ -65,7 +65,7 @@ const QuizEvaluation = () => {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
