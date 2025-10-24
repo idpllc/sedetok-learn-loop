@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Share, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import sedefyLogo from "@/assets/sedefy-logo.png";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export const PWAInstallPrompt = () => {
+  const { user } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -32,26 +34,31 @@ export const PWAInstallPrompt = () => {
     const iOS = /iphone|ipad|ipod/.test(userAgent);
     setIsIOS(iOS);
 
-    // Check if user dismissed before
-    const dismissed = localStorage.getItem('pwa-install-dismissed');
-    if (dismissed) return;
+    // Check if prompt was already shown this session
+    const sessionKey = user ? `pwa-prompt-shown-${user.id}` : 'pwa-prompt-shown-guest';
+    const shownThisSession = sessionStorage.getItem(sessionKey);
+    if (shownThisSession) return;
+
+    // Check if user permanently dismissed
+    const permanentlyDismissed = localStorage.getItem('pwa-install-dismissed');
+    if (permanentlyDismissed) return;
 
     // For Android/Chrome: Capture the beforeinstallprompt event
     const handler = (e: Event) => {
       e.preventDefault();
       const bip = e as BeforeInstallPromptEvent;
       setDeferredPrompt(bip);
-      setTimeout(() => setShowPrompt(true), 2000);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // For iOS or fallback: show prompt after 10s
+    // Show prompt after 5 seconds only once per session
     const timer = setTimeout(() => {
-      if (!isInstalled && !dismissed) {
+      if (!isInstalled && !shownThisSession && !permanentlyDismissed) {
+        sessionStorage.setItem(sessionKey, 'true');
         setShowPrompt(true);
       }
-    }, 10000);
+    }, 5000);
 
     // Hide prompt once app is installed
     const installedHandler = () => {
@@ -66,7 +73,7 @@ export const PWAInstallPrompt = () => {
       window.removeEventListener('appinstalled', installedHandler);
       clearTimeout(timer);
     };
-  }, []);
+  }, [user]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
