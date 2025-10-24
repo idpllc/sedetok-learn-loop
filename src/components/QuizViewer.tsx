@@ -66,6 +66,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const [questionResults, setQuestionResults] = useState<Record<number, boolean>>({});
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
+  const [startTime] = useState(Date.now());
+  
   useEffect(() => {
     fetchQuizData();
   }, [quizId]);
@@ -351,12 +353,16 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
         passed
       });
 
+      // Calculate time taken in seconds
+      const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+
       const payload: any = {
         user_id: user.id,
         quiz_id: quizId,
         score: normalizedScore,
         max_score: 100,
         passed,
+        time_taken: timeTaken,
       };
 
       // Add evaluation event ID if present
