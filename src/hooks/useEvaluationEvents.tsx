@@ -179,16 +179,17 @@ export const useEvaluationEvents = (quizId?: string, eventId?: string) => {
     },
   });
 
-  // Get event by access code
+  // Get event by access code (works for active and finished via RPC)
   const getEventByAccessCode = async (accessCode: string) => {
     const { data, error } = await supabase
-      .from("quiz_evaluation_events")
-      .select("*, quizzes(*)")
-      .eq("access_code", accessCode.toUpperCase())
-      .single();
+      .rpc('get_evaluation_event_by_code', { p_access_code: accessCode.toUpperCase() });
 
     if (error) throw error;
-    return data;
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      throw new Error('Evento no encontrado');
+    }
+    // RPC returns an array of rows when using RETURNS TABLE
+    return Array.isArray(data) ? data[0] : data;
   };
 
   return {

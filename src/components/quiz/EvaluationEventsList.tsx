@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Copy, ExternalLink, Trash2, Users, Clock, BarChart3 } from "lucide-react";
+import { Calendar, Copy, ExternalLink, Trash2, Users, Clock, BarChart3, Pencil } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import { EditEvaluationEvent } from "./EditEvaluationEvent";
 interface EvaluationEventsListProps {
   quizId?: string;
   status?: "all" | "active" | "finished";
@@ -27,6 +27,7 @@ interface EvaluationEventsListProps {
 export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEventsListProps) => {
   const { events, isLoading, deleteEvent } = useEvaluationEvents(quizId);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
+  const [editEvent, setEditEvent] = useState<any | null>(null);
   const navigate = useNavigate();
 
   const copyEventLink = (accessCode: string) => {
@@ -171,15 +172,23 @@ export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEvent
                   )}
                 </div>
               </div>
-
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setDeleteEventId(event.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setEditEvent(event)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setDeleteEventId(event.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </Card>
         );
@@ -208,6 +217,16 @@ export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEvent
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {editEvent && (
+        <EditEvaluationEvent
+          event={editEvent}
+          open={!!editEvent}
+          onOpenChange={(o) => {
+            if (!o) setEditEvent(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1603,6 +1603,25 @@ export type Database = {
         Returns: string
       }
       generate_access_code: { Args: never; Returns: string }
+      get_evaluation_event_by_code: {
+        Args: { p_access_code: string }
+        Returns: {
+          access_code: string
+          allow_multiple_attempts: boolean
+          created_at: string
+          creator_id: string
+          description: string
+          end_date: string
+          id: string
+          quiz_id: string
+          quizzes: Json
+          require_authentication: boolean
+          show_results_immediately: boolean
+          start_date: string
+          title: string
+          updated_at: string
+        }[]
+      }
       get_institution_student_ids: {
         Args: { p_institution_id: string }
         Returns: {
