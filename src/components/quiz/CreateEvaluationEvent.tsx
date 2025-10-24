@@ -109,7 +109,7 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
                   type="button"
                   variant="link"
                   size="sm"
-                  onClick={() => window.open('/create-content?type=quiz', '_blank')}
+                  onClick={() => window.open('/create?type=quiz', '_blank')}
                   className="h-auto p-0"
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
