@@ -1,12 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Calendar } from "lucide-react";
+import { Calendar, Search } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
+import { useQuizzes } from "@/hooks/useQuizzes";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EditEvaluationEventProps {
   event: any;
@@ -22,6 +27,8 @@ const toLocalInputValue = (dateStr: string) => {
 
 export const EditEvaluationEvent = ({ event, open, onOpenChange }: EditEvaluationEventProps) => {
   const { updateEvent } = useEvaluationEvents();
+  const { quizzes, isLoading: loadingQuizzes } = useQuizzes();
+  const [openCombobox, setOpenCombobox] = useState(false);
 
   const initialState = useMemo(() => ({
     title: event?.title ?? "",
@@ -31,19 +38,25 @@ export const EditEvaluationEvent = ({ event, open, onOpenChange }: EditEvaluatio
     require_authentication: !!event?.require_authentication,
     allow_multiple_attempts: !!event?.allow_multiple_attempts,
     show_results_immediately: !!event?.show_results_immediately,
+    quiz_id: event?.quiz_id ?? "",
   }), [event]);
 
   const [formData, setFormData] = useState(initialState);
 
+  useEffect(() => {
+    setFormData(initialState);
+  }, [initialState]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!event?.id) return;
+    if (!event?.id || !formData.quiz_id) return;
 
     const startDate = formData.start_date ? new Date(formData.start_date).toISOString() : undefined;
     const endDate = formData.end_date ? new Date(formData.end_date).toISOString() : undefined;
 
     updateEvent({
       id: event.id,
+      quiz_id: formData.quiz_id,
       title: formData.title,
       description: formData.description,
       start_date: startDate as any,
@@ -56,6 +69,8 @@ export const EditEvaluationEvent = ({ event, open, onOpenChange }: EditEvaluatio
     onOpenChange(false);
   };
 
+  const selectedQuiz = quizzes?.find(q => q.id === formData.quiz_id);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -67,6 +82,50 @@ export const EditEvaluationEvent = ({ event, open, onOpenChange }: EditEvaluatio
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label>Quiz a Evaluar *</Label>
+            <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={openCombobox}
+                  className="w-full justify-between"
+                >
+                  {selectedQuiz ? selectedQuiz.title : "Selecciona un quiz..."}
+                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0">
+                <Command>
+                  <CommandInput placeholder="Buscar quiz..." />
+                  <CommandEmpty>
+                    {loadingQuizzes ? "Cargando..." : "No se encontró ningún quiz"}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {quizzes?.map((quiz) => (
+                      <CommandItem
+                        key={quiz.id}
+                        onSelect={() => {
+                          setFormData({ ...formData, quiz_id: quiz.id });
+                          setOpenCombobox(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.quiz_id === quiz.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {quiz.title}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <div>
             <Label htmlFor="title">Título del Evento *</Label>
             <Input

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Check, X, Clock, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, X, Clock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ import { useEducoins } from "@/hooks/useEducoins";
 import { useXP } from "@/hooks/useXP";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuizViewerProps {
   quizId: string;
@@ -67,28 +68,84 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [isTabVisible, setIsTabVisible] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Detect tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsTabVisible(false);
+        setTabSwitchCount(prev => prev + 1);
+        if (tabSwitchCount >= 2) {
+          toast.warning("Cambios de pestaña detectados", {
+            description: "Se ha registrado actividad sospechosa durante el quiz."
+          });
+        }
+      } else {
+        setIsTabVisible(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [tabSwitchCount]);
+
+  // Prevent copy/paste
+  useEffect(() => {
+    const preventCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast.error("Copiar no está permitido durante el quiz");
+    };
+
+    const preventPaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast.error("Pegar no está permitido durante el quiz");
+    };
+
+    document.addEventListener("copy", preventCopy);
+    document.addEventListener("paste", preventPaste);
+    document.addEventListener("cut", preventCopy);
+
+    return () => {
+      document.removeEventListener("copy", preventCopy);
+      document.removeEventListener("paste", preventPaste);
+      document.removeEventListener("cut", preventCopy);
+    };
+  }, []);
   
   useEffect(() => {
     fetchQuizData();
   }, [quizId]);
 
+  // Timer - only counts when tab is visible
   useEffect(() => {
     if (timeRemaining !== null && timeRemaining > 0 && timerActive && !isCompleted) {
-      const interval = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev === null || prev <= 1) {
-            setTimerActive(false);
-            toast.error("¡Tiempo agotado!");
-            completeQuiz();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      if (isTabVisible) {
+        timerRef.current = setInterval(() => {
+          setTimeRemaining(prev => {
+            if (prev === null || prev <= 1) {
+              setTimerActive(false);
+              toast.error("¡Tiempo agotado!");
+              completeQuiz();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      }
 
-      return () => clearInterval(interval);
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
     }
-  }, [timeRemaining, timerActive, isCompleted]);
+  }, [timeRemaining, timerActive, isCompleted, isTabVisible]);
 
   const fetchQuizData = async () => {
     try {
@@ -507,6 +564,25 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
             className="min-h-full flex items-center justify-center px-3 py-4 md:p-6"
           >
             <div className="w-full max-w-2xl space-y-4 md:space-y-6">
+              {/* Alerts for tab visibility and suspicious activity */}
+              {!isTabVisible && (
+                <Alert className="border-warning">
+                  <EyeOff className="h-4 w-4" />
+                  <AlertDescription>
+                    El temporizador está pausado. Vuelve a esta pestaña para continuar el quiz.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {tabSwitchCount >= 3 && (
+                <Alert className="border-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Se han detectado múltiples cambios de pestaña. Esta actividad ha sido registrada.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Timer and controls */}
               {timeRemaining !== null && (
                 <div className="flex justify-between items-center gap-2">

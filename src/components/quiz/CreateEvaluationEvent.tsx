@@ -1,21 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Calendar } from "lucide-react";
+import { Calendar, Search } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
+import { useQuizzes } from "@/hooks/useQuizzes";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CreateEvaluationEventProps {
-  quizId: string;
+  quizId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEvaluationEventProps) => {
   const { createEvent, isCreating } = useEvaluationEvents();
+  const { quizzes, isLoading: loadingQuizzes } = useQuizzes();
+  const [selectedQuizId, setSelectedQuizId] = useState(quizId || "");
+  const [openCombobox, setOpenCombobox] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -26,10 +34,14 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
     show_results_immediately: true,
   });
 
+  useEffect(() => {
+    if (quizId) setSelectedQuizId(quizId);
+  }, [quizId]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.start_date || !formData.end_date) {
+    if (!formData.title || !formData.start_date || !formData.end_date || !selectedQuizId) {
       return;
     }
 
@@ -38,13 +50,14 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
     const endDate = new Date(formData.end_date).toISOString();
 
     createEvent({
-      quiz_id: quizId,
+      quiz_id: selectedQuizId,
       ...formData,
       start_date: startDate,
       end_date: endDate,
     });
 
     onOpenChange(false);
+    setSelectedQuizId(quizId || "");
     setFormData({
       title: "",
       description: "",
@@ -55,6 +68,8 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
       show_results_immediately: true,
     });
   };
+
+  const selectedQuiz = quizzes?.find(q => q.id === selectedQuizId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -67,6 +82,52 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!quizId && (
+            <div>
+              <Label>Quiz a Evaluar *</Label>
+              <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openCombobox}
+                    className="w-full justify-between"
+                  >
+                    {selectedQuiz ? selectedQuiz.title : "Selecciona un quiz..."}
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar quiz..." />
+                    <CommandEmpty>
+                      {loadingQuizzes ? "Cargando..." : "No se encontró ningún quiz"}
+                    </CommandEmpty>
+                    <CommandGroup>
+                      {quizzes?.map((quiz) => (
+                        <CommandItem
+                          key={quiz.id}
+                          onSelect={() => {
+                            setSelectedQuizId(quiz.id);
+                            setOpenCombobox(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedQuizId === quiz.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {quiz.title}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+
           <div>
             <Label htmlFor="title">Título del Evento *</Label>
             <Input
