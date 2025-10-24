@@ -363,7 +363,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       </Badge>
                     )}
                   </div>
-                  <div className="mt-8">
+                  <div className="mt-8 flex flex-col items-center gap-3">
                     <Button
                       size="lg"
                       onClick={(e) => {
@@ -374,6 +374,18 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                     >
                       {hasAttempted ? '🔄 Responder nuevamente' : '🎯 Responder Quiz'}
                     </Button>
+                    
+                    {user?.id === creatorId && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/quiz-evaluations/${id}`);
+                        }}
+                        className="text-white/80 hover:text-white text-sm underline underline-offset-2 pointer-events-auto transition-colors"
+                      >
+                        📊 Evaluar este quiz
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
