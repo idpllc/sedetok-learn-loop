@@ -13,9 +13,17 @@ export interface CareerRecommendation {
   jobOpportunities: string[];
 }
 
+export interface ConfidenceLevel {
+  level: 'alto' | 'medio-alto' | 'medio' | 'medio-bajo' | 'bajo';
+  percentage: number;
+  margin: number;
+  dataPoints: number;
+}
+
 export interface VocationalProfile {
   recommendations: CareerRecommendation[];
   summary: string;
+  confidence: ConfidenceLevel;
 }
 
 export const useVocationalProfile = () => {

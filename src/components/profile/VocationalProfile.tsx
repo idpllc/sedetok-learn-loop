@@ -3,8 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVocationalProfile, CareerRecommendation } from '@/hooks/useVocationalProfile';
-import { GraduationCap, Briefcase, Sparkles, Globe, MapPin, Brain, Loader2 } from 'lucide-react';
+import { GraduationCap, Briefcase, Sparkles, Globe, MapPin, Brain, Loader2, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 
 interface VocationalProfileProps {
   areaMetrics: any;
@@ -46,6 +48,32 @@ export const VocationalProfile = ({
     return match === 'alto' 
       ? 'bg-green-500/10 text-green-500 border-green-500/20'
       : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+  };
+
+  const getConfidenceColor = (level: string) => {
+    switch (level) {
+      case 'alto': return 'text-green-500';
+      case 'medio-alto': return 'text-blue-500';
+      case 'medio': return 'text-yellow-500';
+      case 'medio-bajo': return 'text-orange-500';
+      case 'bajo': return 'text-red-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  const getConfidenceIcon = (level: string) => {
+    switch (level) {
+      case 'alto':
+      case 'medio-alto':
+        return <CheckCircle2 className="w-4 h-4" />;
+      case 'medio':
+        return <Info className="w-4 h-4" />;
+      case 'medio-bajo':
+      case 'bajo':
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return <Info className="w-4 h-4" />;
+    }
   };
 
   const filteredRecommendations = vocationalProfile?.recommendations.filter(rec => 
@@ -179,7 +207,35 @@ export const VocationalProfile = ({
           </CardTitle>
           <CardDescription>{vocationalProfile.summary}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`font-semibold ${getConfidenceColor(vocationalProfile.confidence.level)}`}>
+                  {getConfidenceIcon(vocationalProfile.confidence.level)}
+                </span>
+                <span className="text-sm font-medium">
+                  Nivel de Confianza: <span className={`capitalize ${getConfidenceColor(vocationalProfile.confidence.level)}`}>
+                    {vocationalProfile.confidence.level}
+                  </span>
+                </span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {vocationalProfile.confidence.percentage}% ± {vocationalProfile.confidence.margin}%
+              </span>
+            </div>
+            
+            <Progress value={vocationalProfile.confidence.percentage} className="h-2" />
+            
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-xs">
+                Este análisis se basa en {vocationalProfile.confidence.dataPoints} puntos de datos 
+                (quizzes y videos completados). Completa más contenido para obtener recomendaciones más precisas.
+              </AlertDescription>
+            </Alert>
+          </div>
+
           <Button 
             onClick={handleGenerate} 
             disabled={isGenerating}
