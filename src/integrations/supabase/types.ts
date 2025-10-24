@@ -1452,6 +1452,36 @@ export type Database = {
           },
         ]
       }
+      vocational_profiles: {
+        Row: {
+          confidence: Json
+          created_at: string
+          id: string
+          recommendations: Json
+          summary: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence: Json
+          created_at?: string
+          id?: string
+          recommendations: Json
+          summary: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence?: Json
+          created_at?: string
+          id?: string
+          recommendations?: Json
+          summary?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

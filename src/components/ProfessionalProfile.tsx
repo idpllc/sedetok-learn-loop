@@ -322,48 +322,6 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         </Card>
       </div>
 
-      {/* Gráfica de Radar Institucional - Si pertenece a una institución */}
-      {institutionMember && institutionMetrics && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-primary" />
-              <div>
-                <CardTitle>Perfil Académico Institucional</CardTitle>
-                <CardDescription>
-                  Promedio de desempeño de todos los estudiantes de {institutionMetrics && (institutionMember.institutions as any)?.name}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={institutionMetrics.radarData}>
-                  <PolarGrid stroke="hsl(var(--border))" />
-                  <PolarAngleAxis 
-                    dataKey="area" 
-                    tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                  />
-                  <PolarRadiusAxis 
-                    angle={90} 
-                    domain={[0, 100]}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <Radar
-                    name="Promedio Institucional"
-                    dataKey="score"
-                    stroke="hsl(var(--secondary))"
-                    fill="hsl(var(--secondary))"
-                    fillOpacity={0.3}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Gráfica de Radar - Áreas Académicas Personales */}
       <Card>

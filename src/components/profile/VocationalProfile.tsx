@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,11 +22,16 @@ export const VocationalProfile = ({
   intelligenceMetrics, 
   userProfile 
 }: VocationalProfileProps) => {
-  const { generateVocationalProfile, isGenerating, vocationalProfile } = useVocationalProfile();
+  const { generateVocationalProfile, loadVocationalProfile, isGenerating, isLoading, vocationalProfile } = useVocationalProfile(userProfile?.id);
   const { balance, deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
   const [selectedType, setSelectedType] = useState<string>('todas');
 
   const VOCATIONAL_PROFILE_COST = 20;
+
+  // Load existing profile on mount
+  useEffect(() => {
+    loadVocationalProfile();
+  }, [userProfile?.id]);
 
   const handleGenerate = async () => {
     // Check if user has enough educoins
@@ -172,6 +177,23 @@ export const VocationalProfile = ({
       </CardContent>
     </Card>
   );
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="w-5 h-5" />
+            Perfil Vocacional
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Cargando perfil vocacional...</span>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!vocationalProfile) {
     return (

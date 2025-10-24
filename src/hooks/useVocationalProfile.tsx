@@ -26,9 +26,43 @@ export interface VocationalProfile {
   confidence: ConfidenceLevel;
 }
 
-export const useVocationalProfile = () => {
+export const useVocationalProfile = (userId?: string) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [vocationalProfile, setVocationalProfile] = useState<VocationalProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load existing vocational profile
+  const loadVocationalProfile = async () => {
+    if (!userId) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('vocational_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        if (error.code !== 'PGRST116') { // Not found error
+          console.error('Error loading vocational profile:', error);
+        }
+        return;
+      }
+
+      if (data) {
+        setVocationalProfile({
+          recommendations: data.recommendations as unknown as CareerRecommendation[],
+          summary: data.summary,
+          confidence: data.confidence as unknown as ConfidenceLevel
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const generateVocationalProfile = async (
     areaMetrics: any,
@@ -52,6 +86,22 @@ export const useVocationalProfile = () => {
         return null;
       }
 
+      // Save to database
+      const { error: saveError } = await supabase
+        .from('vocational_profiles')
+        .upsert({
+          user_id: userProfile.id,
+          recommendations: data.recommendations,
+          summary: data.summary,
+          confidence: data.confidence
+        });
+
+      if (saveError) {
+        console.error('Error saving vocational profile:', saveError);
+        toast.error('Error al guardar el perfil vocacional');
+        return null;
+      }
+
       setVocationalProfile(data);
       toast.success('Perfil vocacional generado exitosamente');
       return data;
@@ -67,7 +117,9 @@ export const useVocationalProfile = () => {
 
   return {
     generateVocationalProfile,
+    loadVocationalProfile,
     isGenerating,
+    isLoading,
     vocationalProfile,
     setVocationalProfile
   };
