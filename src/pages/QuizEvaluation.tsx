@@ -47,7 +47,11 @@ const QuizEvaluation = () => {
       } else if (now > end) {
         setError("Este evento ha finalizado");
       } else if (eventData.require_authentication && !user) {
-        setError("Debes iniciar sesión para realizar esta evaluación");
+        // Redirigir al login con la URL actual para volver después
+        navigate("/auth", { 
+          state: { from: `/quiz-evaluation/${code}` },
+          replace: true 
+        });
       } else {
         setEvent(eventData);
       }
@@ -120,12 +124,6 @@ const QuizEvaluation = () => {
           <Button onClick={() => navigate("/quiz-evaluation")} className="w-full">
             Intentar con otro código
           </Button>
-
-          {error === "Debes iniciar sesión para realizar esta evaluación" && (
-            <Button onClick={() => navigate("/auth")} variant="outline" className="w-full">
-              Iniciar Sesión
-            </Button>
-          )}
         </Card>
       </div>
     );
