@@ -83,7 +83,25 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!quizId && (
+          {quizId ? (
+            <Alert className="bg-primary/5 border-primary/20">
+              <AlertDescription className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">Quiz seleccionado:</p>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={() => setSelectedQuizId("")}
+                    className="h-auto p-0"
+                  >
+                    Cambiar quiz
+                  </Button>
+                </div>
+                <p className="text-sm">{selectedQuiz?.title || "Cargando..."}</p>
+              </AlertDescription>
+            </Alert>
+          ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Quiz a Evaluar *</Label>
