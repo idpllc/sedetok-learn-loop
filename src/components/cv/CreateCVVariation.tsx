@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, FileEdit, Loader2, ArrowLeft } from "lucide-react";
 import { useCVVariations } from "@/hooks/useCVVariations";
+import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
 
 interface CreateCVVariationProps {
   profile: any;
@@ -16,7 +17,7 @@ interface CreateCVVariationProps {
 }
 
 export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: CreateCVVariationProps) => {
-  const { createVariation, updateVariation, generateWithAI } = useCVVariations(profile?.id);
+  const { createVariation, updateVariation, generateWithAI, showBuyModal, requiredAmount, closeBuyModal } = useCVVariations(profile?.id);
   const [mode, setMode] = useState<"manual" | "ai">(variation?.created_with_ai ? "ai" : "manual");
   const [generating, setGenerating] = useState(false);
   const isEditing = !!variation;
@@ -84,18 +85,25 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h2 className="text-2xl font-bold">{isEditing ? 'Editar Variación de CV' : 'Nueva Variación de CV'}</h2>
-          <p className="text-sm text-muted-foreground">
-            Personaliza tu hoja de vida para una posición específica
-          </p>
+    <>
+      <BuyEducoinsModal
+        open={showBuyModal}
+        onOpenChange={(open) => !open && closeBuyModal()}
+        requiredAmount={requiredAmount}
+      />
+      
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold">{isEditing ? 'Editar Variación de CV' : 'Nueva Variación de CV'}</h2>
+            <p className="text-sm text-muted-foreground">
+              Personaliza tu hoja de vida para una posición específica
+            </p>
+          </div>
         </div>
-      </div>
 
       <Tabs value={mode} onValueChange={(v) => setMode(v as "manual" | "ai")}>
         <TabsList className="grid w-full grid-cols-2">
@@ -166,7 +174,7 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Generar Variación con IA
+                    Generar Variación con IA (20 educoins)
                   </>
                 )}
               </Button>
@@ -289,5 +297,6 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 };

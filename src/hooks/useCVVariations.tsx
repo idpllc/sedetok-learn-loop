@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useEducoins } from "@/hooks/useEducoins";
 
 export const useCVVariations = (userId?: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
 
   // Obtener todas las variaciones
   const { data: variations, isLoading } = useQuery({
@@ -55,6 +57,12 @@ export const useCVVariations = (userId?: string) => {
   // Generar variación con IA
   const generateWithAI = useMutation({
     mutationFn: async ({ profile, targetPosition, companyName, jobDescription }: any) => {
+      // Deduct 20 educoins before generating
+      const deductionSuccess = await deductEducoins(20, "Generación de CV con IA");
+      if (!deductionSuccess) {
+        throw new Error("No tienes suficientes educoins");
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-cv-variation", {
         body: { profile, targetPosition, companyName, jobDescription },
       });
@@ -149,5 +157,8 @@ export const useCVVariations = (userId?: string) => {
     updateVariation,
     deleteVariation,
     toggleFavorite,
+    showBuyModal,
+    requiredAmount,
+    closeBuyModal,
   };
 };
