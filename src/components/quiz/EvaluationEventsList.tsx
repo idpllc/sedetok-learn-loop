@@ -21,9 +21,10 @@ import {
 
 interface EvaluationEventsListProps {
   quizId?: string;
+  status?: "all" | "active" | "finished";
 }
 
-export const EvaluationEventsList = ({ quizId }: EvaluationEventsListProps) => {
+export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEventsListProps) => {
   const { events, isLoading, deleteEvent } = useEvaluationEvents(quizId);
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -59,6 +60,23 @@ export const EvaluationEventsList = ({ quizId }: EvaluationEventsListProps) => {
     return <div className="text-center py-8">Cargando eventos...</div>;
   }
 
+  // Filter events by status
+  const filteredEvents = events?.filter((event: any) => {
+    if (status === "all") return true;
+    
+    const now = new Date();
+    const start = new Date(event.start_date);
+    const end = new Date(event.end_date);
+    
+    if (status === "active") {
+      return now >= start && now <= end;
+    } else if (status === "finished") {
+      return now > end;
+    }
+    
+    return true;
+  }) || [];
+
   if (!events || events.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -67,9 +85,17 @@ export const EvaluationEventsList = ({ quizId }: EvaluationEventsListProps) => {
     );
   }
 
+  if (filteredEvents.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No hay eventos {status === "active" ? "activos" : status === "finished" ? "finalizados" : ""} en este momento
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {events.map((event: any) => {
+      {filteredEvents.map((event: any) => {
         const { status, variant } = getEventStatus(event.start_date, event.end_date);
         
         return (

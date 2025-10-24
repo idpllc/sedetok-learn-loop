@@ -57,17 +57,22 @@ const QuizEvaluations = () => {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Eventos de Evaluación</h1>
-            <p className="text-muted-foreground">
-              Gestiona los eventos de evaluación con tus quizzes
-            </p>
-          </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Crear Evento
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
           </Button>
+          <div className="flex-1 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Eventos de Evaluación</h1>
+              <p className="text-muted-foreground">
+                Gestiona los eventos de evaluación con tus quizzes
+              </p>
+            </div>
+            <Button onClick={() => setShowCreateModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Crear Evento
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
@@ -78,15 +83,15 @@ const QuizEvaluations = () => {
           </TabsList>
           
           <TabsContent value="all" className="mt-6">
-            <EvaluationEventsList quizId={quizId} />
+            <EvaluationEventsList quizId={quizId} status="all" />
           </TabsContent>
           
           <TabsContent value="active" className="mt-6">
-            <EvaluationEventsList quizId={quizId} />
+            <EvaluationEventsList quizId={quizId} status="active" />
           </TabsContent>
           
           <TabsContent value="finished" className="mt-6">
-            <EvaluationEventsList quizId={quizId} />
+            <EvaluationEventsList quizId={quizId} status="finished" />
           </TabsContent>
         </Tabs>
 
