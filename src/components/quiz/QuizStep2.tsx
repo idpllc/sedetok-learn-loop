@@ -36,6 +36,7 @@ export interface QuizQuestion {
 interface QuizStep2Props {
   questions: QuizQuestion[];
   onChange: (questions: QuizQuestion[]) => void;
+  onTimeLimitChange?: (timeLimit: number) => void;
   quizContext?: {
     title: string;
     description?: string;
@@ -46,7 +47,7 @@ interface QuizStep2Props {
   };
 }
 
-export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) => {
+export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext }: QuizStep2Props) => {
   const [selectedQuestion, setSelectedQuestion] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
@@ -145,6 +146,12 @@ export const QuizStep2 = ({ questions, onChange, quizContext }: QuizStep2Props) 
         onChange([...questions, ...data.questions]);
         toast.success(`${data.questions.length} preguntas generadas con IA`);
         setSelectedQuestion(questions.length);
+        
+        // Update time limit if provided by AI
+        if (data.estimated_time_minutes && onTimeLimitChange) {
+          onTimeLimitChange(data.estimated_time_minutes);
+          toast.success(`Tiempo estimado: ${data.estimated_time_minutes} minutos`);
+        }
       } else {
         toast.error("No se generaron preguntas");
       }

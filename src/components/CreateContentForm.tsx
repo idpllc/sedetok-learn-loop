@@ -703,6 +703,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <QuizStep2 
               questions={quizQuestions} 
               onChange={setQuizQuestions}
+              onTimeLimitChange={(timeLimit) => setQuizConfig({ ...quizConfig, time_limit: timeLimit })}
               quizContext={{
                 title: formData.title,
                 description: formData.description,

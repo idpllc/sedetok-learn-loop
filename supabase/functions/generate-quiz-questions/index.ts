@@ -98,6 +98,10 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
               parameters: {
                 type: 'object',
                 properties: {
+                  estimated_time_minutes: {
+                    type: 'number',
+                    description: 'Tiempo estimado en minutos para completar el quiz (considera 1-2 min por pregunta múltiple, 30 seg por verdadero/falso, 2-3 min por respuesta corta)'
+                  },
                   questions: {
                     type: 'array',
                     items: {
@@ -156,7 +160,7 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
                     }
                   }
                 },
-                required: ['questions']
+                required: ['questions', 'estimated_time_minutes']
               }
             }
           }
@@ -242,7 +246,10 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
     });
 
     return new Response(
-      JSON.stringify({ questions: formattedQuestions }),
+      JSON.stringify({ 
+        questions: formattedQuestions,
+        estimated_time_minutes: generatedQuestions.estimated_time_minutes || Math.ceil(numQuestions * 1.5)
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
