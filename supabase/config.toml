@@ -5,6 +5,7 @@ verify_jwt = true
 
 [functions.upload-to-cloudinary]
 verify_jwt = true
+timeout = 300
 
 [functions.sedetok-search]
 verify_jwt = false
