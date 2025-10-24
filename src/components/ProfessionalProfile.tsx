@@ -14,6 +14,7 @@ import { ProjectsSection } from "@/components/profile/ProjectsSection";
 import { SkillsSection } from "@/components/profile/SkillsSection";
 import { EducationSection } from "@/components/profile/EducationSection";
 import { CVGenerator } from "@/components/profile/CVGenerator";
+import { VocationalProfile } from "@/components/profile/VocationalProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -555,6 +556,15 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Vocational Profile Section */}
+      {isOwnProfile && metrics && (
+        <VocationalProfile 
+          areaMetrics={metrics.areaMetrics}
+          intelligenceMetrics={metrics.intelligenceMetrics}
+          userProfile={profile}
+        />
+      )}
 
     </div>
   );
