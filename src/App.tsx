@@ -33,6 +33,7 @@ import RegisterInstitution from "./pages/RegisterInstitution";
 import InstitutionDashboard from "./pages/InstitutionDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CVVariations from "./pages/CVVariations";
+import VocationalProfile from "./pages/VocationalProfile";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,8 @@ const App = () => (
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/profile/professional" element={<ProfessionalProfile />} />
           <Route path="/profile/professional/:userId" element={<ProfessionalProfile />} />
+          <Route path="/profile/vocational" element={<VocationalProfile />} />
+          <Route path="/profile/vocational/:userId" element={<VocationalProfile />} />
           <Route path="/profile/:userId" element={<Profile />} />
           <Route path="/u/:userId" element={<ProfessionalProfile />} />
           <Route path="/cv-variations" element={<CVVariations />} />

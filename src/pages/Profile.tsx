@@ -521,7 +521,7 @@ const Profile = () => {
                     <Button 
                       variant="secondary" 
                       size="sm" 
-                      onClick={() => navigate("/profile/professional#vocational")} 
+                      onClick={() => navigate("/profile/vocational")} 
                       className="flex items-center gap-2"
                     >
                       <GraduationCap className="w-4 h-4" />

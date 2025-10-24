@@ -19,13 +19,13 @@ export const MoreModal = ({ open, onOpenChange }: MoreModalProps) => {
     {
       icon: User,
       label: "Perfil profesional",
-      path: "/professional-profile",
+      path: "/profile/professional",
     },
     {
       icon: GraduationCap,
       label: "Perfil vocacional",
-      path: "/profile",
-      description: "Ve tu perfil para generar recomendaciones vocacionales",
+      path: "/profile/vocational",
+      description: "Recomendaciones de carreras basadas en tu desempeño",
     },
   ];
 
