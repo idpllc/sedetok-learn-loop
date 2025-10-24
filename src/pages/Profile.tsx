@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList } from "lucide-react";
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
@@ -412,14 +412,6 @@ const Profile = () => {
                     <span className="hidden md:inline">Mi Institución</span>
                   </Button>
                 )}
-                <Button variant="default" size="sm" onClick={() => navigate("/profile/professional")} className="flex items-center gap-2">
-                  <Briefcase className="w-4 h-4" />
-                  <span className="hidden md:inline">Perfil Profesional</span>
-                </Button>
-                <Button variant="outline" size="sm" onClick={openOnboarding} className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  <span className="hidden md:inline">Perfil 360°</span>
-                </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate("/profile/edit")} className="flex items-center gap-2">
                   <UserCog className="w-4 h-4" />
                   <span className="hidden md:inline">Editar</span>
@@ -515,6 +507,37 @@ const Profile = () => {
                     ))}
                   </div>
                 </div>
+                {isOwnProfile && (
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      onClick={() => navigate("/profile/professional")} 
+                      className="flex items-center gap-2"
+                    >
+                      <Briefcase className="w-4 h-4" />
+                      <span>Mi Perfil Profesional</span>
+                    </Button>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => navigate("/profile/professional#vocational")} 
+                      className="flex items-center gap-2"
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      <span>Mi Perfil Vocacional</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate("/cv-variations")} 
+                      className="flex items-center gap-2"
+                    >
+                      <ClipboardList className="w-4 h-4" />
+                      <span>Mis Hojas de Vida</span>
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
