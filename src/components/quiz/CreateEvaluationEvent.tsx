@@ -33,9 +33,15 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
       return;
     }
 
+    // Convert local datetime to ISO string with timezone
+    const startDate = new Date(formData.start_date).toISOString();
+    const endDate = new Date(formData.end_date).toISOString();
+
     createEvent({
       quiz_id: quizId,
       ...formData,
+      start_date: startDate,
+      end_date: endDate,
     });
 
     onOpenChange(false);

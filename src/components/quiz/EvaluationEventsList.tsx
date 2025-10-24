@@ -121,15 +121,14 @@ export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEvent
                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>
-                      {format(new Date(event.start_date), "dd MMM yyyy, HH:mm", { locale: es })}
-                    </span>
+                    <span>Inicio: {format(new Date(event.start_date), "dd MMM yyyy, HH:mm", { locale: es })}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    <span>
-                      hasta {format(new Date(event.end_date), "dd MMM yyyy, HH:mm", { locale: es })}
-                    </span>
+                    <span>Fin: {format(new Date(event.end_date), "dd MMM yyyy, HH:mm", { locale: es })}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs">
+                    <span>Creado: {format(new Date(event.created_at), "dd MMM yyyy", { locale: es })}</span>
                   </div>
                 </div>
 
