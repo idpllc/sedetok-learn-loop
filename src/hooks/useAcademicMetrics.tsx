@@ -192,17 +192,17 @@ export const useAcademicMetrics = (userId?: string) => {
 
       // Procesar rutas completadas - mapear tipo_aprendizaje a inteligencias
       const tipoAprendizajeToIntelligence: Record<string, IntelligenceTypeId> = {
-        'Lingüística': 'linguistico_verbal',
+        'Lingüístico-Verbal': 'linguistico_verbal',
         'Lógico-Matemática': 'logico_matematica',
-        'Espacial': 'visual_espacial',
+        'Visual-Espacial': 'visual_espacial',
         'Musical': 'musical',
-        'Cinético-Corporal': 'corporal_kinestesica',
+        'Corporal-Kinestésica': 'corporal_kinestesica',
         'Interpersonal': 'interpersonal',
         'Intrapersonal': 'intrapersonal',
         'Naturalista': 'naturalista',
         'Existencial': 'existencial',
-        'Creativa': 'creativa_innovadora',
-        'Digital': 'digital_tecnologica',
+        'Creativa-Innovadora': 'creativa_innovadora',
+        'Digital-Tecnológica': 'digital_tecnologica',
         'Emocional': 'emocional'
       };
 

@@ -488,17 +488,17 @@ const EditProfile = () => {
                       <SelectValue placeholder="Selecciona tu tipo de aprendizaje" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Lingüística">🗣️ Lingüística</SelectItem>
+                      <SelectItem value="Lingüístico-Verbal">🗣️ Lingüístico-Verbal</SelectItem>
                       <SelectItem value="Lógico-Matemática">🔢 Lógico-Matemática</SelectItem>
-                      <SelectItem value="Espacial">🎨 Espacial</SelectItem>
+                      <SelectItem value="Visual-Espacial">🎨 Visual-Espacial</SelectItem>
                       <SelectItem value="Musical">🎵 Musical</SelectItem>
-                      <SelectItem value="Cinético-Corporal">🤸 Cinético-Corporal</SelectItem>
+                      <SelectItem value="Corporal-Kinestésica">🤸 Corporal-Kinestésica</SelectItem>
                       <SelectItem value="Interpersonal">👥 Interpersonal</SelectItem>
                       <SelectItem value="Intrapersonal">🧘 Intrapersonal</SelectItem>
                       <SelectItem value="Naturalista">🌿 Naturalista</SelectItem>
                       <SelectItem value="Existencial">🤔 Existencial</SelectItem>
-                      <SelectItem value="Creativa">💡 Creativa</SelectItem>
-                      <SelectItem value="Digital">💻 Digital</SelectItem>
+                      <SelectItem value="Creativa-Innovadora">💡 Creativa-Innovadora</SelectItem>
+                      <SelectItem value="Digital-Tecnológica">💻 Digital-Tecnológica</SelectItem>
                       <SelectItem value="Emocional">❤️ Emocional</SelectItem>
                     </SelectContent>
                   </Select>

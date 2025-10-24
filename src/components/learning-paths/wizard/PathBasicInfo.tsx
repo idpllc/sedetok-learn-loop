@@ -11,13 +11,14 @@ import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { Badge } from "@/components/ui/badge";
+import { intelligenceTypes } from "@/lib/intelligenceTypes";
 
-const learningTypes = [
-  { value: "Visual", label: "Visual" },
-  { value: "Auditivo", label: "Auditivo" },
-  { value: "Kinestésico", label: "Kinestésico" },
-  { value: "Lógico", label: "Lógico" },
-];
+// Usar los 12 tipos de inteligencias múltiples
+const learningTypes = intelligenceTypes.map(intel => ({
+  value: intel.name,
+  label: intel.name,
+  icon: intel.icon,
+}));
 
 interface PathBasicInfoProps {
   data: any;
@@ -217,18 +218,11 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
               <SelectValue placeholder="Selecciona el tipo de aprendizaje principal" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Lingüística">🗣️ Lingüística</SelectItem>
-              <SelectItem value="Lógico-Matemática">🔢 Lógico-Matemática</SelectItem>
-              <SelectItem value="Espacial">🎨 Espacial</SelectItem>
-              <SelectItem value="Musical">🎵 Musical</SelectItem>
-              <SelectItem value="Cinético-Corporal">🤸 Cinético-Corporal</SelectItem>
-              <SelectItem value="Interpersonal">👥 Interpersonal</SelectItem>
-              <SelectItem value="Intrapersonal">🧘 Intrapersonal</SelectItem>
-              <SelectItem value="Naturalista">🌿 Naturalista</SelectItem>
-              <SelectItem value="Existencial">🤔 Existencial</SelectItem>
-              <SelectItem value="Creativa">💡 Creativa</SelectItem>
-              <SelectItem value="Digital">💻 Digital</SelectItem>
-              <SelectItem value="Emocional">❤️ Emocional</SelectItem>
+              {learningTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.icon} {type.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

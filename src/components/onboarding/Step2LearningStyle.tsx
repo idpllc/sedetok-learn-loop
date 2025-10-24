@@ -8,17 +8,17 @@ interface Step2Props {
 }
 
 const learningTypes = [
-  { value: "Lingüística", icon: MessageSquare, label: "Lingüística", description: "Aprendo con palabras" },
+  { value: "Lingüístico-Verbal", icon: MessageSquare, label: "Lingüístico-Verbal", description: "Aprendo con palabras" },
   { value: "Lógico-Matemática", icon: Calculator, label: "Lógico-Matemática", description: "Aprendo razonando" },
-  { value: "Espacial", icon: Palette, label: "Espacial", description: "Aprendo viendo" },
+  { value: "Visual-Espacial", icon: Palette, label: "Visual-Espacial", description: "Aprendo viendo" },
   { value: "Musical", icon: Music, label: "Musical", description: "Aprendo con ritmos" },
-  { value: "Cinético-Corporal", icon: Activity, label: "Cinético-Corporal", description: "Aprendo haciendo" },
+  { value: "Corporal-Kinestésica", icon: Activity, label: "Corporal-Kinestésica", description: "Aprendo haciendo" },
   { value: "Interpersonal", icon: Users, label: "Interpersonal", description: "Aprendo con otros" },
   { value: "Intrapersonal", icon: User, label: "Intrapersonal", description: "Aprendo solo" },
   { value: "Naturalista", icon: Leaf, label: "Naturalista", description: "Aprendo con la naturaleza" },
   { value: "Existencial", icon: Lightbulb, label: "Existencial", description: "Aprendo reflexionando" },
-  { value: "Creativa", icon: Sparkles, label: "Creativa", description: "Aprendo creando" },
-  { value: "Digital", icon: Laptop, label: "Digital", description: "Aprendo con tecnología" },
+  { value: "Creativa-Innovadora", icon: Sparkles, label: "Creativa-Innovadora", description: "Aprendo creando" },
+  { value: "Digital-Tecnológica", icon: Laptop, label: "Digital-Tecnológica", description: "Aprendo con tecnología" },
   { value: "Emocional", icon: Heart, label: "Emocional", description: "Aprendo sintiendo" },
 ];
 
