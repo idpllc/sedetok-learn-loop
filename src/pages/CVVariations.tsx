@@ -93,6 +93,7 @@ const CVVariations = () => {
           {viewMode === "edit" && selectedVariation && profile && (
             <CreateCVVariation
               profile={profile}
+              variation={selectedVariation}
               onBack={handleBack}
               onSuccess={handleBack}
             />

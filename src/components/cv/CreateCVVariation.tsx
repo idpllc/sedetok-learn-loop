@@ -10,24 +10,26 @@ import { useCVVariations } from "@/hooks/useCVVariations";
 
 interface CreateCVVariationProps {
   profile: any;
+  variation?: any;
   onBack: () => void;
   onSuccess: () => void;
 }
 
-export const CreateCVVariation = ({ profile, onBack, onSuccess }: CreateCVVariationProps) => {
-  const { createVariation, generateWithAI } = useCVVariations(profile?.id);
-  const [mode, setMode] = useState<"manual" | "ai">("ai");
+export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: CreateCVVariationProps) => {
+  const { createVariation, updateVariation, generateWithAI } = useCVVariations(profile?.id);
+  const [mode, setMode] = useState<"manual" | "ai">(variation?.created_with_ai ? "ai" : "manual");
   const [generating, setGenerating] = useState(false);
+  const isEditing = !!variation;
 
   const [formData, setFormData] = useState({
-    title: "",
-    target_position: "",
-    company_name: "",
-    job_description: "",
-    custom_bio: "",
-    highlighted_skills: [] as string[],
-    highlighted_experience: [] as string[],
-    highlighted_projects: [] as string[],
+    title: variation?.title || "",
+    target_position: variation?.target_position || "",
+    company_name: variation?.company_name || "",
+    job_description: variation?.job_description || "",
+    custom_bio: variation?.custom_bio || "",
+    highlighted_skills: variation?.highlighted_skills || [] as string[],
+    highlighted_experience: variation?.highlighted_experience || [] as string[],
+    highlighted_projects: variation?.highlighted_projects || [] as string[],
   });
 
   const [aiData, setAiData] = useState<any>(null);
@@ -60,7 +62,7 @@ export const CreateCVVariation = ({ profile, onBack, onSuccess }: CreateCVVariat
   };
 
   const handleSave = async () => {
-    await createVariation.mutateAsync({
+    const data = {
       title: formData.title || `CV para ${formData.target_position}`,
       target_position: formData.target_position,
       company_name: formData.company_name,
@@ -71,7 +73,13 @@ export const CreateCVVariation = ({ profile, onBack, onSuccess }: CreateCVVariat
       highlighted_projects: formData.highlighted_projects,
       created_with_ai: mode === "ai",
       ai_prompt: mode === "ai" ? formData.job_description : null,
-    });
+    };
+
+    if (isEditing) {
+      await updateVariation.mutateAsync({ id: variation.id, updates: data });
+    } else {
+      await createVariation.mutateAsync(data);
+    }
     onSuccess();
   };
 
@@ -82,7 +90,7 @@ export const CreateCVVariation = ({ profile, onBack, onSuccess }: CreateCVVariat
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h2 className="text-2xl font-bold">Nueva Variación de CV</h2>
+          <h2 className="text-2xl font-bold">{isEditing ? 'Editar Variación de CV' : 'Nueva Variación de CV'}</h2>
           <p className="text-sm text-muted-foreground">
             Personaliza tu hoja de vida para una posición específica
           </p>
@@ -209,8 +217,8 @@ export const CreateCVVariation = ({ profile, onBack, onSuccess }: CreateCVVariat
                   </div>
                 )}
 
-                <Button onClick={handleSave} className="w-full" disabled={createVariation.isPending}>
-                  {createVariation.isPending ? "Guardando..." : "Guardar Variación"}
+                <Button onClick={handleSave} className="w-full" disabled={createVariation.isPending || updateVariation.isPending}>
+                  {(createVariation.isPending || updateVariation.isPending) ? "Guardando..." : isEditing ? "Actualizar Variación" : "Guardar Variación"}
                 </Button>
               </CardContent>
             </Card>
@@ -272,9 +280,9 @@ export const CreateCVVariation = ({ profile, onBack, onSuccess }: CreateCVVariat
               <Button
                 onClick={handleSave}
                 className="w-full"
-                disabled={!formData.title || !formData.target_position || createVariation.isPending}
+                disabled={!formData.title || !formData.target_position || createVariation.isPending || updateVariation.isPending}
               >
-                {createVariation.isPending ? "Guardando..." : "Crear Variación"}
+                {(createVariation.isPending || updateVariation.isPending) ? "Guardando..." : isEditing ? "Actualizar Variación" : "Crear Variación"}
               </Button>
             </CardContent>
           </Card>
