@@ -52,7 +52,9 @@ serve(async (req) => {
       numero_documento, 
       email, 
       full_name,
-      username 
+      username,
+      nit_institucion,
+      member_role
     } = requestData;
 
     // Validar datos requeridos
@@ -138,6 +140,46 @@ serve(async (req) => {
     if (profileError) {
       console.error('Error updating profile:', profileError);
       // No retornamos error aquí porque el usuario ya fue creado
+    }
+
+    // Si se proporciona NIT, agregar usuario a la institución
+    if (nit_institucion && nit_institucion.trim() !== '') {
+      console.log(`Adding user to institution with NIT: ${nit_institucion}`);
+      
+      // Buscar la institución por NIT
+      const { data: institutionData, error: institutionError } = await supabase
+        .from('institutions')
+        .select('id, admin_user_id')
+        .eq('nit', nit_institucion)
+        .single();
+
+      if (institutionError) {
+        console.error('Error finding institution:', institutionError);
+        // No retornamos error, el usuario ya fue creado
+      } else if (institutionData) {
+        // Determinar el rol del miembro (por defecto 'student')
+        const finalMemberRole = member_role && ['student', 'teacher', 'parent', 'admin'].includes(member_role) 
+          ? member_role 
+          : 'student';
+
+        // Agregar el usuario como miembro de la institución
+        const { error: memberError } = await supabase
+          .from('institution_members')
+          .insert({
+            institution_id: institutionData.id,
+            user_id: authData.user.id,
+            member_role: finalMemberRole,
+            invited_by: institutionData.admin_user_id,
+            status: 'active'
+          });
+
+        if (memberError) {
+          console.error('Error adding user to institution:', memberError);
+          // No retornamos error, el usuario ya fue creado
+        } else {
+          console.log(`User added to institution as ${finalMemberRole}`);
+        }
+      }
     }
 
     console.log(`User created successfully: ${authData.user.id}`);

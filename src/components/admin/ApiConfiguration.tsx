@@ -462,8 +462,28 @@ export function ApiConfiguration() {
                 <span className="text-muted-foreground">Nombre completo (opcional)</span>
               </div>
               <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">nit_institucion</code>
+                <span className="text-muted-foreground">NIT de la institución educativa (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">nombre_sede</code>
+                <span className="text-muted-foreground">Nombre de la sede educativa (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">grado</code>
+                <span className="text-muted-foreground">Grado del estudiante (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">grupo</code>
+                <span className="text-muted-foreground">Grupo del estudiante (opcional)</span>
+              </div>
+              <div className="flex gap-2">
                 <code className="px-2 py-1 bg-muted rounded text-xs">username</code>
                 <span className="text-muted-foreground">Nombre de usuario (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">member_role</code>
+                <span className="text-muted-foreground">Rol institucional: student, teacher, parent, admin (opcional, default: student)</span>
               </div>
             </div>
           </div>
@@ -1285,6 +1305,34 @@ export function ApiConfiguration() {
                   </div>
 
                   <div>
+                    <code className="text-xs">nit_institucion</code>
+                    <Badge variant="outline" className="ml-2 text-xs">Opcional</Badge>
+                    <Badge variant="secondary" className="ml-1 text-xs">String</Badge>
+                    <p className="text-muted-foreground mt-1">NIT de la institución educativa</p>
+                  </div>
+
+                  <div>
+                    <code className="text-xs">nombre_sede</code>
+                    <Badge variant="outline" className="ml-2 text-xs">Opcional</Badge>
+                    <Badge variant="secondary" className="ml-1 text-xs">String</Badge>
+                    <p className="text-muted-foreground mt-1">Nombre de la sede educativa</p>
+                  </div>
+
+                  <div>
+                    <code className="text-xs">grado</code>
+                    <Badge variant="outline" className="ml-2 text-xs">Opcional</Badge>
+                    <Badge variant="secondary" className="ml-1 text-xs">String</Badge>
+                    <p className="text-muted-foreground mt-1">Grado del estudiante (ej: "10", "11")</p>
+                  </div>
+
+                  <div>
+                    <code className="text-xs">grupo</code>
+                    <Badge variant="outline" className="ml-2 text-xs">Opcional</Badge>
+                    <Badge variant="secondary" className="ml-1 text-xs">String</Badge>
+                    <p className="text-muted-foreground mt-1">Grupo del estudiante (ej: "A", "B", "01")</p>
+                  </div>
+
+                  <div>
                     <code className="text-xs">docente_nombre</code>
                     <Badge variant="outline" className="ml-2 text-xs">Opcional</Badge>
                     <Badge variant="secondary" className="ml-1 text-xs">String</Badge>
@@ -1474,7 +1522,12 @@ export function ApiConfiguration() {
         "periodo_academico": "2024-1",
         "score": 4.5,
         "max_score": 5.0,
-        "passed": true
+        "passed": true,
+        "nit_institucion": "900123456",
+        "nombre_sede": "Sede Principal",
+        "grado": "11",
+        "grupo": "A",
+        "docente_nombre": "Prof. María García"
       }
     ]
   }'`}

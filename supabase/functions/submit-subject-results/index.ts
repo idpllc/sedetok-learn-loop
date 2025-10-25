@@ -15,6 +15,10 @@ interface SubjectResult {
   score: number;
   max_score: number;
   passed?: boolean;
+  nit_institucion?: string;
+  nombre_sede?: string;
+  grado?: string;
+  grupo?: string;
   docente_nombre?: string;
   observaciones?: string;
   completed_at?: string;
@@ -176,6 +180,10 @@ serve(async (req) => {
             score: result.score,
             max_score: result.max_score,
             passed: result.passed ?? (result.score >= (result.max_score * 0.6)),
+            nit_institucion: result.nit_institucion || null,
+            nombre_sede: result.nombre_sede || null,
+            grado: result.grado || null,
+            grupo: result.grupo || null,
             docente_nombre: result.docente_nombre || null,
             observaciones: result.observaciones || null,
             completed_at: result.completed_at || new Date().toISOString(),

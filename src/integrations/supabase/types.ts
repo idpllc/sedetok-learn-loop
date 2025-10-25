@@ -1775,9 +1775,13 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           docente_nombre: string | null
+          grado: string | null
+          grupo: string | null
           id: string
           institution_id: string
           max_score: number
+          nit_institucion: string | null
+          nombre_sede: string | null
           observaciones: string | null
           passed: boolean | null
           periodo_academico: string
@@ -1791,9 +1795,13 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           docente_nombre?: string | null
+          grado?: string | null
+          grupo?: string | null
           id?: string
           institution_id: string
           max_score: number
+          nit_institucion?: string | null
+          nombre_sede?: string | null
           observaciones?: string | null
           passed?: boolean | null
           periodo_academico: string
@@ -1807,9 +1815,13 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           docente_nombre?: string | null
+          grado?: string | null
+          grupo?: string | null
           id?: string
           institution_id?: string
           max_score?: number
+          nit_institucion?: string | null
+          nombre_sede?: string | null
           observaciones?: string | null
           passed?: boolean | null
           periodo_academico?: string
