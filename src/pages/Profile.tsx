@@ -12,6 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CreatorProfileTab } from "@/components/profile/CreatorProfileTab";
+import { ProfessionalProfileTab } from "@/components/profile/ProfessionalProfileTab";
+import { VocationalProfileTab } from "@/components/profile/VocationalProfileTab";
+import { useAcademicMetrics } from "@/hooks/useAcademicMetrics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +59,10 @@ const Profile = () => {
   const { updateProfile } = useProfileUpdate();
   const { uploadFile, uploading } = useCloudinary();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [profileTab, setProfileTab] = useState<"creator" | "professional" | "vocational">("creator");
+
+  // Fetch academic metrics for intelligences
+  const { data: metrics } = useAcademicMetrics(userId || user?.id);
 
   const { data: profileData } = useQuery({
     queryKey: ["profile", userId],
@@ -458,7 +466,65 @@ const Profile = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6">
-        {/* Profile Summary Card with Level */}
+        {/* Profile Type Tabs */}
+        <div className="mb-4 md:mb-6">
+          <Tabs value={profileTab} onValueChange={(v) => setProfileTab(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="creator" className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">Perfil de </span>Creador
+              </TabsTrigger>
+              <TabsTrigger value="professional" className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                <span className="hidden sm:inline">Perfil </span>Profesional
+              </TabsTrigger>
+              <TabsTrigger value="vocational" className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" />
+                <span className="hidden sm:inline">Perfil </span>Vocacional
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="creator" className="mt-0">
+              <CreatorProfileTab
+                stats={{
+                  contentCount: userContent?.length || 0,
+                  pathCount: learningPaths?.length || 0,
+                  totalLikes: userContent?.reduce((sum, c) => sum + (c.likes_count || 0), 0) || 0,
+                  totalViews: userContent?.reduce((sum, c) => sum + (c.views_count || 0), 0) || 0,
+                  followers: profileData?.followers_count || 0,
+                }}
+                avatar={profileData?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData?.username}`}
+                username={profileData?.username || "Usuario"}
+                xp={profileData?.experience_points || 0}
+                levelIcon={getUserLevel(profileData?.experience_points || 0).icon}
+                levelName={getUserLevel(profileData?.experience_points || 0).level}
+              />
+            </TabsContent>
+
+            <TabsContent value="professional" className="mt-0">
+              <ProfessionalProfileTab
+                userId={userId}
+                profile={profileData}
+                hasEducation={!!(profileData?.education && Array.isArray(profileData.education) && profileData.education.length > 0)}
+                hasExperience={!!(profileData?.work_experience && Array.isArray(profileData.work_experience) && profileData.work_experience.length > 0)}
+                hasSkills={!!(profileData?.skills && Array.isArray(profileData.skills) && profileData.skills.length > 0)}
+              />
+            </TabsContent>
+
+            <TabsContent value="vocational" className="mt-0">
+              <VocationalProfileTab
+                userId={userId}
+                topIntelligences={metrics?.intelligenceRadarData
+                  ?.filter((i: any) => i.score > 0)
+                  .sort((a: any, b: any) => b.score - a.score) || []
+                }
+                hasVocationalProfile={!!profileData}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Nivel y Logros - Movido más abajo */}
         {profileData && (
           <Card className="mb-4 md:mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
             <CardContent className="p-3 md:p-6">
