@@ -168,26 +168,28 @@ export const GameColumnMatchEditor = ({
           category: gameContext.category,
           grade_level: gameContext.grade_level,
           gameType: 'column_match',
-          numQuestions: 5
+          numQuestions: 8
         }
       });
 
       if (error) throw error;
 
       if (data?.left_items && data?.right_items) {
+        const baseTime = Date.now();
         const newLeftItems = data.left_items.map((text: string, index: number) => ({
-          id: `left-${Date.now()}-${index}`,
+          id: `left-${baseTime}-${index}`,
           text,
-          match_id: `match-${Date.now()}-${index}`
+          match_id: `match-${baseTime}-${index}`
         }));
 
         const newRightItems = data.right_items.map((text: string, index: number) => ({
-          id: `right-${Date.now()}-${index}`,
+          id: `right-${baseTime}-${index}`,
           text,
-          match_id: `match-${Date.now()}-${index}`
+          match_id: `match-${baseTime}-${index}`
         }));
 
-        onChange(newLeftItems, newRightItems);
+        // Agregar los nuevos items a los existentes en lugar de reemplazarlos
+        onChange([...leftItems, ...newLeftItems], [...rightItems, ...newRightItems]);
         toast.success("Pares generados exitosamente");
       }
     } catch (error: any) {
