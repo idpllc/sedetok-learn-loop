@@ -1716,6 +1716,10 @@ export type Database = {
         Args: { p_institution_id: string }
         Returns: number
       }
+      can_view_course: {
+        Args: { _course_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_student_data: {
         Args: { _student_id: string; _viewer_id: string }
         Returns: boolean

@@ -365,17 +365,32 @@ export default function CreateCourse() {
                   {selectedPathsData.map((path, index) => (
                     <div
                       key={path.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-medium">{path.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {path.description?.substring(0, 60)}...
-                          </p>
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0 mt-1">
+                        {index + 1}
+                      </div>
+                      {(path.thumbnail_url || path.cover_url) && (
+                        <img
+                          src={path.thumbnail_url || path.cover_url}
+                          alt={path.title}
+                          className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">{path.title}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                          {path.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          {path.subject && (
+                            <Badge variant="secondary" className="text-xs">
+                              {path.subject}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            ⚡ {path.total_xp || 0} XP
+                          </span>
                         </div>
                       </div>
                       <Button
@@ -383,6 +398,7 @@ export default function CreateCourse() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveRoute(path.id)}
+                        className="flex-shrink-0"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -392,6 +408,93 @@ export default function CreateCourse() {
               )}
             </CardContent>
           </Card>
+
+          {/* Course Preview */}
+          {(formData.title || formData.cover_url || selectedPathsData && selectedPathsData.length > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Vista Previa del Curso</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.cover_url && (
+                  <div className="w-full aspect-video rounded-lg overflow-hidden">
+                    <img
+                      src={formData.cover_url}
+                      alt={formData.title || "Portada del curso"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
+                {formData.title && (
+                  <div>
+                    <h3 className="text-2xl font-bold">{formData.title}</h3>
+                    {formData.description && (
+                      <p className="text-muted-foreground mt-2">{formData.description}</p>
+                    )}
+                  </div>
+                )}
+
+                {formData.category && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="secondary">
+                      {categories.find(c => c.value === formData.category)?.label}
+                    </Badge>
+                    {formData.grade_level && (
+                      <Badge variant="outline">
+                        {gradeLevels.find(g => g.value === formData.grade_level)?.label}
+                      </Badge>
+                    )}
+                    {formData.learning_types.length > 0 && (
+                      formData.learning_types.map(type => (
+                        <Badge key={type} variant="secondary" className="text-xs">
+                          {learningTypes.find(l => l.value === type)?.label}
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {selectedPathsData && selectedPathsData.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-3">
+                      Contenido del curso ({selectedPathsData.length} rutas)
+                    </h4>
+                    <div className="space-y-2">
+                      {selectedPathsData.map((path, index) => (
+                        <div
+                          key={path.id}
+                          className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30"
+                        >
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                            {index + 1}
+                          </div>
+                          {(path.thumbnail_url || path.cover_url) && (
+                            <img
+                              src={path.thumbnail_url || path.cover_url}
+                              alt={path.title}
+                              className="w-12 h-12 rounded object-cover"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{path.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              ⚡ {path.total_xp || 0} XP
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 p-3 bg-primary/5 rounded-lg">
+                      <p className="text-sm font-medium">
+                        Total XP: ⚡ {selectedPathsData.reduce((sum, path) => sum + (path.total_xp || 0), 0)} XP
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Submit */}
           <div className="flex gap-3">

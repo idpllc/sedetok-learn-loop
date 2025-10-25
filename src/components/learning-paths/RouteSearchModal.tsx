@@ -95,19 +95,26 @@ export const RouteSearchModal = ({
           return (
             <div
               key={route.id}
-              className={`p-4 rounded-lg border cursor-pointer transition-all ${
+              className={`p-3 rounded-lg border cursor-pointer transition-all ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               }`}
               onClick={() => handleToggleRoute(route.id)}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
+              <div className="flex items-start gap-3">
+                {(route.thumbnail_url || route.cover_url) && (
+                  <img
+                    src={route.thumbnail_url || route.cover_url}
+                    alt={route.title}
+                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold">{route.title}</h4>
+                    <h4 className="font-semibold truncate">{route.title}</h4>
                     {isSelected && (
-                      <Check className="w-4 h-4 text-primary" />
+                      <Check className="w-4 h-4 text-primary flex-shrink-0" />
                     )}
                   </div>
                   {route.description && (
