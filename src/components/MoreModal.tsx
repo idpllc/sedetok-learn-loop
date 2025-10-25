@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X, User, GraduationCap, Calendar } from "lucide-react";
+import { X, User, GraduationCap, Calendar, BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface MoreModalProps {
@@ -32,6 +32,12 @@ export const MoreModal = ({ open, onOpenChange }: MoreModalProps) => {
       label: "Eventos de evaluación",
       path: "/quiz-evaluations",
       description: "Gestiona tus eventos de evaluación con quizzes",
+    },
+    {
+      icon: BookOpen,
+      label: "Crear curso",
+      path: "/courses/create",
+      description: "Agrupa múltiples rutas de aprendizaje en un curso",
     },
   ];
 
