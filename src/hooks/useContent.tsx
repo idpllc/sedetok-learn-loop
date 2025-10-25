@@ -16,9 +16,9 @@ export const useInfiniteContent = (
   return useInfiniteQuery({
     queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
-
+      // Fetch a larger batch to combine and paginate
+      const batchSize = 50;
+      
       // Fetch regular content
       let contentQuery = supabase
         .from("content")
@@ -33,7 +33,8 @@ export const useInfiniteContent = (
           )
         `)
         .eq("is_public", true)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(batchSize);
 
       if (contentType && contentType !== "all" && contentType !== "quiz") {
         contentQuery = contentQuery.eq("content_type", contentType as any);
@@ -54,8 +55,7 @@ export const useInfiniteContent = (
         contentQuery = contentQuery.eq("grade_level", gradeLevel as any);
       }
 
-      const { data: contentData, error: contentError } = await contentQuery
-        .range(from, to);
+      const { data: contentData, error: contentError } = await contentQuery;
 
       if (contentError) throw contentError;
 
@@ -76,7 +76,8 @@ export const useInfiniteContent = (
           `)
           .eq("is_public", true)
           .eq("status", "publicado")
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(batchSize);
 
         // Apply search filter
         if (searchQuery && searchQuery.trim() !== "") {
@@ -93,7 +94,7 @@ export const useInfiniteContent = (
           quizQuery = quizQuery.eq("grade_level", gradeLevel as any);
         }
 
-        const { data: fetchedQuizData, error: quizError } = await quizQuery.range(from, to);
+        const { data: fetchedQuizData, error: quizError } = await quizQuery;
 
         if (quizError) throw quizError;
         quizData = fetchedQuizData || [];
@@ -170,9 +171,15 @@ export const useInfiniteContent = (
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
+      // Paginate the combined results
+      const startIndex = pageParam * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      const paginatedItems = allContent.slice(startIndex, endIndex);
+
       return {
-        items: allContent,
-        nextPage: allContent.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
+        items: paginatedItems,
+        nextPage: endIndex < allContent.length ? pageParam + 1 : undefined,
+        totalCount: allContent.length,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
