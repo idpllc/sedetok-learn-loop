@@ -16,10 +16,8 @@ export const useInfiniteContent = (
   return useInfiniteQuery({
     queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
-      // Fetch a larger dynamic batch to merge two sources and paginate reliably
-      const hasTextFilters = (subject && subject !== 'all') || (searchQuery && searchQuery.trim() !== '');
-      const multiplier = hasTextFilters ? 10 : 2;
-      const batchSize = (pageParam + 1) * ITEMS_PER_PAGE * multiplier;
+      // Fetch sufficient items to allow filtering + pagination without over-fetching
+      const batchSize = Math.max((pageParam + 1) * ITEMS_PER_PAGE, 30);
       
       // Fetch regular content
       let contentQuery = supabase
