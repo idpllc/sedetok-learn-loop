@@ -261,6 +261,7 @@ const Index = () => {
               isSaved={saves.has(item.id)}
               questionsCount={item.questions_count}
               difficulty={item.difficulty}
+              gameType={item.game_type}
               onPrevious={() => {
                 pauseAllVideos();
                 const container = document.querySelector('.snap-y');

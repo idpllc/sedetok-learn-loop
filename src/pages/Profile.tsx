@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList, Eye, Users, Gamepad2 } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList, Eye, Users, Gamepad2, Columns3, ArrowRightLeft } from "lucide-react";
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
@@ -374,9 +374,29 @@ const Profile = () => {
                 />
               </div>
             ) : item.content_type === "game" ? (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500/30 via-cyan-500/30 to-teal-500/30 flex items-center justify-center">
-                <div className="text-6xl">🎮</div>
-              </div>
+              (() => {
+                const isWordOrder = item.game_type === "word_order" || !item.game_type;
+                const isColumnMatch = item.game_type === "column_match";
+                
+                return (
+                  <div className={`w-full h-full flex items-center justify-center ${
+                    isColumnMatch 
+                      ? "bg-gradient-to-br from-emerald-500/30 via-teal-500/30 to-cyan-500/30"
+                      : "bg-gradient-to-br from-blue-500/30 via-indigo-500/30 to-purple-500/30"
+                  }`}>
+                    <div className="flex flex-col items-center gap-2">
+                      {isColumnMatch ? (
+                        <Columns3 className="w-16 h-16 text-white" />
+                      ) : (
+                        <ArrowRightLeft className="w-16 h-16 text-white" />
+                      )}
+                      <span className="text-white text-xs font-medium">
+                        {isColumnMatch ? "Conectar Columnas" : "Ordenar Palabras"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()
             ) : item.thumbnail_url ? (
               <img 
                 src={item.thumbnail_url} 
@@ -389,7 +409,11 @@ const Profile = () => {
                 {item.content_type === "document" && <FileText className="w-12 h-12" />}
                 {item.content_type === "lectura" && <BookOpen className="w-12 h-12" />}
                 {item.content_type === "quiz" && <HelpCircle className="w-12 h-12" />}
-                {item.content_type === "game" && <span className="text-5xl">🎮</span>}
+                {item.content_type === "game" && (
+                  item.game_type === "column_match" 
+                    ? <Columns3 className="w-12 h-12" />
+                    : <ArrowRightLeft className="w-12 h-12" />
+                )}
               </div>
             )}
           </div>
