@@ -24,3 +24,6 @@ verify_jwt = true
 
 [functions.generate-vocational-profile]
 verify_jwt = false
+
+[functions.create-user-by-document]
+verify_jwt = false
