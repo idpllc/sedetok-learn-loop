@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X, User, GraduationCap, Calendar, BookOpen } from "lucide-react";
+import { X, User, GraduationCap, Calendar, BookOpen, Store, Building2, Smartphone, FileEdit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface MoreModalProps {
@@ -38,6 +38,30 @@ export const MoreModal = ({ open, onOpenChange }: MoreModalProps) => {
       label: "Crear curso",
       path: "/courses/create",
       description: "Agrupa múltiples rutas de aprendizaje en un curso",
+    },
+    {
+      icon: Store,
+      label: "Rutas Sede Market",
+      path: "/learning-paths",
+      description: "Explora y descubre rutas de aprendizaje",
+    },
+    {
+      icon: Building2,
+      label: "Sede Instituciones",
+      path: "/institution-dashboard",
+      description: "Panel de gestión institucional",
+    },
+    {
+      icon: Smartphone,
+      label: "Sede App Store",
+      path: "/install",
+      description: "Instala la aplicación en tu dispositivo",
+    },
+    {
+      icon: FileEdit,
+      label: "Registrar institución",
+      path: "/register-institution",
+      description: "Registra tu institución educativa",
     },
   ];
 
