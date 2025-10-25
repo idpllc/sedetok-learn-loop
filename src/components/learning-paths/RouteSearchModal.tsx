@@ -119,7 +119,9 @@ export const RouteSearchModal = ({
                   </div>
                   {route.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words">
-                      {route.description}
+                      {route.description.length > 80 
+                        ? `${route.description.substring(0, 80)}...` 
+                        : route.description}
                     </p>
                   )}
                   {route.profiles && (
