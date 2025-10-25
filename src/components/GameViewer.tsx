@@ -114,15 +114,6 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
     }
   };
 
-  // If it's a column match game, delegate to ColumnMatchViewer
-  if (!loading && gameData?.game_type === "column_match") {
-    return <ColumnMatchViewer gameId={gameId} onComplete={onComplete} />;
-  }
-
-  useEffect(() => {
-    fetchGameData();
-  }, [gameId]);
-
   useEffect(() => {
     if (timeRemaining !== null && timeRemaining > 0 && !isCompleted) {
       const timer = setInterval(() => {
@@ -140,7 +131,6 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
     }
   }, [timeRemaining, isCompleted]);
 
-
   const shuffleArray = (array: string[]) => {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -149,6 +139,11 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
     }
     return newArray;
   };
+
+  // If it's a column match game, delegate to ColumnMatchViewer
+  if (!loading && gameData?.game_type === "column_match") {
+    return <ColumnMatchViewer gameId={gameId} onComplete={onComplete} />;
+  }
 
   const handleWordClick = (word: string, fromAvailable: boolean) => {
     if (showFeedback) return;
