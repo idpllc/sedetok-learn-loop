@@ -65,7 +65,7 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
 
     if (!user) {
       toast.error("Debes iniciar sesión para guardar tus resultados");
-      onComplete?.();
+      // Don't call onComplete here - let user close manually
       return;
     }
 
@@ -83,7 +83,7 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
       toast.error("Error al guardar el resultado");
     }
 
-    onComplete?.();
+    // Don't call onComplete here - let user close manually via button
   };
 
   const fetchGameData = async () => {
@@ -271,6 +271,9 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
                 {normalizedScore >= 60 ? '¡Aprobado!' : 'Sigue practicando'}
               </p>
             </div>
+            <Button onClick={onComplete} size="lg" className="w-full max-w-xs">
+              Cerrar
+            </Button>
           </CardContent>
         </Card>
       </div>

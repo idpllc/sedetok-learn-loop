@@ -392,7 +392,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     if (!user) {
       console.error("No user logged in");
       toast.error("Debes iniciar sesión para guardar tus resultados");
-      onComplete?.();
+      // Don't call onComplete here - let user close manually
       return;
     }
 
@@ -480,7 +480,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
       toast.error("Error al guardar el resultado del quiz");
     }
 
-    onComplete?.();
+    // Don't call onComplete here - let user close manually via button
   };
 
   if (loading) {
@@ -516,6 +516,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                   Tu evaluación ha sido enviada correctamente. Los resultados serán compartidos por tu profesor.
                 </p>
               </div>
+              <Button onClick={onComplete} size="lg" className="w-full">
+                Cerrar
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -536,6 +539,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                 {normalizedScore >= 60 ? "¡Excelente trabajo!" : "Sigue practicando"}
               </p>
             </div>
+            <Button onClick={onComplete} size="lg" className="w-full">
+              Cerrar
+            </Button>
           </CardContent>
         </Card>
       </div>

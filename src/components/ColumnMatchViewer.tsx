@@ -249,9 +249,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
       toast.error(`Juego terminado. Puntuación: ${normalizedScore}/100`);
     }
 
-    if (onComplete) {
-      onComplete();
-    }
+    // Don't call onComplete here - let user close manually via button
   };
 
   const formatTime = (seconds: number) => {
@@ -299,13 +297,12 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
             <p className="text-5xl font-bold text-primary mb-4">
               {normalizedScore}/100
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-6">
               Conexiones correctas: {connections.length}/{leftItems.length}
             </p>
           </div>
-          <Button onClick={() => navigate(-1)} size="lg">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
+          <Button onClick={onComplete} size="lg">
+            Cerrar
           </Button>
         </div>
       </motion.div>
