@@ -2,10 +2,23 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Trash2, Upload, X } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Upload, X, Sparkles, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useEducoins } from "@/hooks/useEducoins";
+import { useXP } from "@/hooks/useXP";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
 
 interface ColumnItem {
   id: string;
@@ -14,10 +27,19 @@ interface ColumnItem {
   match_id: string;
 }
 
+interface GameContext {
+  title: string;
+  description?: string;
+  category: string;
+  grade_level: string;
+  gameType: string;
+}
+
 interface GameColumnMatchEditorProps {
   leftItems: ColumnItem[];
   rightItems: ColumnItem[];
   onChange: (leftItems: ColumnItem[], rightItems: ColumnItem[]) => void;
+  gameContext?: GameContext;
 }
 
 const MAX_TEXT_LENGTH = 50;
@@ -26,9 +48,34 @@ export const GameColumnMatchEditor = ({
   leftItems,
   rightItems,
   onChange,
+  gameContext,
 }: GameColumnMatchEditorProps) => {
   const { uploadFile, uploading } = useCloudinary();
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [userXP, setUserXP] = useState(0);
+  const { balance, deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
+  const { deductXP } = useXP();
+
+  useEffect(() => {
+    const fetchUserXP = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('experience_points')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setUserXP(profile.experience_points || 0);
+        }
+      }
+    };
+    
+    fetchUserXP();
+  }, []);
 
   const addLeftItem = () => {
     const newId = `left-${Date.now()}`;
@@ -101,14 +148,110 @@ export const GameColumnMatchEditor = ({
     }
   };
 
+  const generateWithAI = () => {
+    if (!gameContext) {
+      toast.error("Faltan datos del juego para generar con IA");
+      return;
+    }
+    setShowPaymentDialog(true);
+  };
+
+  const executeGeneration = async () => {
+    if (!gameContext) return;
+    
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-game-questions', {
+        body: {
+          title: gameContext.title,
+          description: gameContext.description,
+          category: gameContext.category,
+          grade_level: gameContext.grade_level,
+          gameType: 'column_match',
+          numQuestions: 5
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.left_items && data?.right_items) {
+        const newLeftItems = data.left_items.map((text: string, index: number) => ({
+          id: `left-${Date.now()}-${index}`,
+          text,
+          match_id: `match-${Date.now()}-${index}`
+        }));
+
+        const newRightItems = data.right_items.map((text: string, index: number) => ({
+          id: `right-${Date.now()}-${index}`,
+          text,
+          match_id: `match-${Date.now()}-${index}`
+        }));
+
+        onChange(newLeftItems, newRightItems);
+        toast.success("Pares generados exitosamente");
+      }
+    } catch (error: any) {
+      console.error('Error generando pares:', error);
+      if (error.message?.includes('429')) {
+        toast.error("Límite de peticiones excedido. Por favor intenta más tarde.");
+      } else if (error.message?.includes('402')) {
+        toast.error("Créditos insuficientes. Por favor agrega créditos en Settings.");
+      } else {
+        toast.error("Error al generar pares con IA");
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handlePayWithEducoins = async () => {
+    const success = await deductEducoins(2, "Generación de juego con IA");
+    if (success) {
+      setShowPaymentDialog(false);
+      await executeGeneration();
+    }
+  };
+
+  const handlePayWithXP = async () => {
+    const success = await deductXP(10000, "Generación de juego con IA");
+    if (success) {
+      setShowPaymentDialog(false);
+      await executeGeneration();
+    } else {
+      toast.error("No tienes suficientes puntos de experiencia");
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="bg-accent/50 p-4 rounded-lg">
-        <p className="text-sm text-muted-foreground">
-          Crea pares de items para conectar. Máximo {MAX_TEXT_LENGTH} caracteres por texto.
-          Puedes agregar imágenes opcionales a cada item.
-        </p>
-      </div>
+    <>
+      <div className="space-y-6">
+        {gameContext && (
+          <Button
+            onClick={generateWithAI}
+            disabled={isGenerating}
+            variant="outline"
+            className="w-full"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generar pares con IA
+              </>
+            )}
+          </Button>
+        )}
+
+        <div className="bg-accent/50 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            Crea pares de items para conectar. Máximo {MAX_TEXT_LENGTH} caracteres por texto.
+            Puedes agregar imágenes opcionales a cada item.
+          </p>
+        </div>
 
       <div className="grid grid-cols-2 gap-6">
         {/* Left Column */}
@@ -302,5 +445,54 @@ export const GameColumnMatchEditor = ({
         </div>
       </div>
     </div>
+
+      <AlertDialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generar juego con IA</AlertDialogTitle>
+            <AlertDialogDescription>
+              Elige cómo deseas pagar por la generación con IA:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3">
+            <Button
+              onClick={handlePayWithEducoins}
+              disabled={isGenerating}
+              variant="outline"
+              className="w-full justify-start"
+            >
+              <span className="flex-1 text-left">
+                Pagar con Educoins (2 educoins)
+              </span>
+              <span className="text-muted-foreground text-sm">
+                Balance: {balance}
+              </span>
+            </Button>
+            <Button
+              onClick={handlePayWithXP}
+              disabled={isGenerating}
+              variant="outline"
+              className="w-full justify-start"
+            >
+              <span className="flex-1 text-left">
+                Pagar con XP (10,000 XP)
+              </span>
+              <span className="text-muted-foreground text-sm">
+                Balance: {userXP.toLocaleString()}
+              </span>
+            </Button>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <BuyEducoinsModal
+        open={showBuyModal}
+        onOpenChange={(open) => !open && closeBuyModal()}
+        requiredAmount={requiredAmount}
+      />
+    </>
   );
 };

@@ -2,12 +2,21 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 
+interface GameContext {
+  title: string;
+  description?: string;
+  category: string;
+  grade_level: string;
+  gameType: string;
+}
+
 interface GameStep3Props {
   config: {
     time_limit?: number;
     random_order: boolean;
   };
   onChange: (config: any) => void;
+  gameContext?: GameContext;
 }
 
 export const GameStep3 = ({ config, onChange }: GameStep3Props) => {

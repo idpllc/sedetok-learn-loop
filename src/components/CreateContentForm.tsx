@@ -1014,6 +1014,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <WordWheelQuestionsEditor
                   questions={gameQuestions as any}
                   onChange={setGameQuestions as any}
+                  gameContext={{
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.category,
+                    grade_level: formData.grade_level,
+                    gameType,
+                  }}
                 />
               ) : (
                 <GameColumnMatchEditor
@@ -1022,6 +1029,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   onChange={(left, right) => {
                     setLeftColumnItems(left);
                     setRightColumnItems(right);
+                  }}
+                  gameContext={{
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.category,
+                    grade_level: formData.grade_level,
+                    gameType,
                   }}
                 />
               )}
