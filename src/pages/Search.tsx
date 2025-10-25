@@ -32,9 +32,12 @@ const Search = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">("all");
   const subjectsScrollRef = useRef<HTMLDivElement>(null);
+  
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: contentLoading } = useInfiniteContent(
     selectedType === "all" ? undefined : selectedType === "learning_path" ? undefined : selectedType,
-    searchQuery
+    searchQuery,
+    selectedSubject !== "all" ? selectedSubject : undefined,
+    selectedGrade !== "all" ? selectedGrade : undefined
   );
   const { paths, isLoading: pathsLoading } = useLearningPaths();
   const { likes } = useUserLikes();
@@ -96,7 +99,7 @@ const Search = () => {
 
   // Filter for learning paths (client-side since they come from a different hook)
   const filteredContent = combinedContent?.filter((item) => {
-    // For learning paths, apply client-side search
+    // For learning paths, apply client-side filters
     if (item.itemType === "learning_path") {
       const matchesSearch = !searchQuery || searchQuery.trim() === "" ||
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,12 +114,10 @@ const Search = () => {
       return matchesSearch && matchesType && matchesSubject && matchesGrade;
     }
     
-    // For content and quizzes, apply all filters
+    // For content and quizzes, only apply type filter (other filters are already applied server-side)
     const matchesType = selectedType === "all" || selectedType === item.content_type || (selectedType === "quiz" && item.content_type === "quiz");
-    const matchesSubject = selectedSubject === "all" || item.subject?.toLowerCase() === selectedSubject.toLowerCase();
-    const matchesGrade = selectedGrade === "all" || item.grade_level === selectedGrade;
     
-    return matchesType && matchesSubject && matchesGrade;
+    return matchesType;
   });
 
   const getContentIcon = (type: ContentType | "learning_path") => {

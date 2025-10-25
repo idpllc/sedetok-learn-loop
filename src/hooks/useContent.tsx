@@ -4,12 +4,17 @@ import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 10;
 
-export const useInfiniteContent = (contentType?: string, searchQuery?: string) => {
+export const useInfiniteContent = (
+  contentType?: string, 
+  searchQuery?: string,
+  subject?: string,
+  gradeLevel?: string
+) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useInfiniteQuery({
-    queryKey: ["infinite-content", contentType, searchQuery],
+    queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -39,6 +44,16 @@ export const useInfiniteContent = (contentType?: string, searchQuery?: string) =
         contentQuery = contentQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
       }
 
+      // Apply subject filter
+      if (subject && subject !== "all") {
+        contentQuery = contentQuery.ilike("subject", subject);
+      }
+
+      // Apply grade level filter
+      if (gradeLevel && gradeLevel !== "all") {
+        contentQuery = contentQuery.eq("grade_level", gradeLevel as any);
+      }
+
       const { data: contentData, error: contentError } = await contentQuery
         .range(from, to);
 
@@ -66,6 +81,16 @@ export const useInfiniteContent = (contentType?: string, searchQuery?: string) =
         // Apply search filter
         if (searchQuery && searchQuery.trim() !== "") {
           quizQuery = quizQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+        }
+
+        // Apply subject filter
+        if (subject && subject !== "all") {
+          quizQuery = quizQuery.ilike("subject", subject);
+        }
+
+        // Apply grade level filter
+        if (gradeLevel && gradeLevel !== "all") {
+          quizQuery = quizQuery.eq("grade_level", gradeLevel as any);
         }
 
         const { data: fetchedQuizData, error: quizError } = await quizQuery.range(from, to);
