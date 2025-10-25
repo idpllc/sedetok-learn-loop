@@ -198,8 +198,8 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
         <SkillsSection skills={profile.skills as any[]} />
       )}
 
-      {/* Generador de CV - Ancho completo */}
-      {profile && (
+      {/* Generador de CV - Ancho completo - Solo visible para el dueño */}
+      {profile && isOwnProfile && (
         <CVGenerator profile={profile} metrics={metrics} isOwnProfile={isOwnProfile} />
       )}
 
