@@ -24,7 +24,7 @@ interface EditGameFormProps {
 export const EditGameForm = ({ gameData }: EditGameFormProps) => {
   const navigate = useNavigate();
   const { updateGame } = useGames();
-  const { questions, isLoading: questionsLoading, createQuestion, deleteQuestion } = useGameQuestions(gameData.id);
+  const { questions, isLoading: questionsLoading, createQuestion, updateQuestion, deleteQuestion } = useGameQuestions(gameData.id);
   
   const [title, setTitle] = useState(gameData.title || "");
   const [description, setDescription] = useState(gameData.description || "");
@@ -49,8 +49,9 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
   const [leftColumnItems, setLeftColumnItems] = useState(gameData.left_column_items || []);
   const [rightColumnItems, setRightColumnItems] = useState(gameData.right_column_items || []);
   
-  // New question being added
+  // New question being added or question being edited
   const [newQuestion, setNewQuestion] = useState<GameQuestion | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -247,50 +248,133 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
             {/* List of existing questions */}
             {questions && questions.length > 0 && (
               <div className="space-y-3">
-                {questions.map((q: any, index: number) => (
-                  <Card key={q.id} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <h4 className="font-medium">Pregunta {index + 1}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{q.question_text}</p>
-                          <p className="text-sm font-medium mt-2">Respuesta: {q.correct_sentence}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Palabras: {Array.isArray(q.words) ? q.words.join(", ") : ""}
-                          </p>
-                        </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteQuestion.mutate(q.id)}
-                          disabled={deleteQuestion.isPending}
-                        >
-                          {deleteQuestion.isPending ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {questions.map((q: any, index: number) => {
+                  const isEditing = editingQuestionId === q.id;
+                  
+                  return (
+                    <Card key={q.id} className={isEditing ? "border-2 border-primary" : "border-2"}>
+                      {isEditing ? (
+                        <CardContent className="p-4 space-y-4">
+                          <div className="flex justify-between items-center mb-2">
+                            <h4 className="font-medium">Editando Pregunta {index + 1}</h4>
+                          </div>
+                          <WordOrderEditor
+                            question={newQuestion!}
+                            onChange={setNewQuestion}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={async () => {
+                                if (!newQuestion?.question_text || !newQuestion?.correct_sentence || newQuestion.words.length === 0) {
+                                  toast.error("Completa todos los campos de la pregunta");
+                                  return;
+                                }
+                                
+                                try {
+                                  await updateQuestion.mutateAsync({
+                                    id: q.id,
+                                    updates: {
+                                      question_text: newQuestion.question_text,
+                                      correct_sentence: newQuestion.correct_sentence,
+                                      words: newQuestion.words,
+                                      points: newQuestion.points,
+                                      image_url: newQuestion.image_url,
+                                      video_url: newQuestion.video_url,
+                                    }
+                                  });
+                                  setEditingQuestionId(null);
+                                  setNewQuestion(null);
+                                  toast.success("Pregunta actualizada");
+                                } catch (error) {
+                                  toast.error("Error al actualizar pregunta");
+                                }
+                              }}
+                              disabled={updateQuestion.isPending}
+                            >
+                              {updateQuestion.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                              Guardar Cambios
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setEditingQuestionId(null);
+                                setNewQuestion(null);
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </CardContent>
+                      ) : (
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1">
+                              <h4 className="font-medium">Pregunta {index + 1}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">{q.question_text}</p>
+                              <p className="text-sm font-medium mt-2">Respuesta: {q.correct_sentence}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Palabras: {Array.isArray(q.words) ? q.words.join(", ") : ""}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingQuestionId(q.id);
+                                  setNewQuestion({
+                                    question_text: q.question_text,
+                                    correct_sentence: q.correct_sentence,
+                                    words: Array.isArray(q.words) ? q.words : [],
+                                    points: q.points,
+                                    order_index: q.order_index,
+                                    image_url: q.image_url,
+                                    video_url: q.video_url,
+                                  });
+                                }}
+                                disabled={editingQuestionId !== null}
+                              >
+                                Editar
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteQuestion.mutate(q.id)}
+                                disabled={deleteQuestion.isPending}
+                              >
+                                {deleteQuestion.isPending ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  );
+                })}
               </div>
             )}
 
             {/* Add new question form */}
             {!newQuestion ? (
-              <Button onClick={() => setNewQuestion({
-                question_text: "",
-                correct_sentence: "",
-                words: [],
-                points: 10,
-                order_index: questions?.length || 0,
-              })} className="w-full">
+              <Button 
+                onClick={() => setNewQuestion({
+                  question_text: "",
+                  correct_sentence: "",
+                  words: [],
+                  points: 10,
+                  order_index: questions?.length || 0,
+                })} 
+                className="w-full"
+                disabled={editingQuestionId !== null}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Nueva Pregunta
               </Button>
-            ) : (
+            ) : editingQuestionId === null && (
               <Card className="border-2 border-primary">
                 <CardHeader>
                   <CardTitle className="text-base">Nueva Pregunta</CardTitle>

@@ -125,6 +125,30 @@ export const useGameQuestions = (gameId?: string) => {
     },
   });
 
+  const updateQuestion = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<GameQuestion> }) => {
+      const { data, error } = await supabase
+        .from("game_questions")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["game_questions", gameId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteQuestion = useMutation({
     mutationFn: async (questionId: string) => {
       const { error } = await supabase
@@ -146,5 +170,5 @@ export const useGameQuestions = (gameId?: string) => {
     },
   });
 
-  return { questions, isLoading, createQuestion, deleteQuestion };
+  return { questions, isLoading, createQuestion, updateQuestion, deleteQuestion };
 };
