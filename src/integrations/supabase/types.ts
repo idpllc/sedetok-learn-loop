@@ -183,6 +183,108 @@ export type Database = {
           },
         ]
       }
+      course_routes: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          id: string
+          is_required: boolean | null
+          order_index: number
+          path_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          order_index: number
+          path_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          order_index?: number
+          path_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_routes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_routes_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          category: Database["public"]["Enums"]["category_type"]
+          cover_url: string | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          estimated_duration: number | null
+          grade_level: Database["public"]["Enums"]["grade_level"]
+          id: string
+          is_public: boolean | null
+          learning_types:
+            | Database["public"]["Enums"]["tipo_aprendizaje"][]
+            | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          total_xp: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["category_type"]
+          cover_url?: string | null
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          estimated_duration?: number | null
+          grade_level: Database["public"]["Enums"]["grade_level"]
+          id?: string
+          is_public?: boolean | null
+          learning_types?:
+            | Database["public"]["Enums"]["tipo_aprendizaje"][]
+            | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          total_xp?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["category_type"]
+          cover_url?: string | null
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          estimated_duration?: number | null
+          grade_level?: Database["public"]["Enums"]["grade_level"]
+          id?: string
+          is_public?: boolean | null
+          learning_types?:
+            | Database["public"]["Enums"]["tipo_aprendizaje"][]
+            | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          total_xp?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       cv_variations: {
         Row: {
           additional_sections: Json | null

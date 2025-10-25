@@ -36,6 +36,7 @@ import CVVariations from "./pages/CVVariations";
 import VocationalProfile from "./pages/VocationalProfile";
 import QuizEvaluation from "./pages/QuizEvaluation";
 import QuizEvaluations from "./pages/QuizEvaluations";
+import CreateCourse from "./pages/CreateCourse";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
           <Route path="/learning-paths/edit/:id" element={<CreateLearningPath />} />
           <Route path="/learning-paths/view/:id" element={<ViewLearningPath />} />
           <Route path="/learning-paths/:id" element={<ViewLearningPath />} />
+          <Route path="/courses/create" element={<CreateCourse />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/register-institution" element={<RegisterInstitution />} />
           <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
