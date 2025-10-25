@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -31,6 +31,13 @@ interface Connection {
   rightId: string;
 }
 
+interface DragLine {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
+
 export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps) => {
   const navigate = useNavigate();
   const [gameData, setGameData] = useState<GameData | null>(null);
@@ -38,12 +45,19 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
   const [rightItems, setRightItems] = useState<ColumnItem[]>([]);
   const [shuffledRightItems, setShuffledRightItems] = useState<ColumnItem[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
-  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  
+  // Drag state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [currentMousePos, setCurrentMousePos] = useState<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const leftItemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const rightItemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     fetchGameData();
@@ -113,52 +127,92 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
     return newArray;
   };
 
-  const handleLeftClick = (leftId: string) => {
-    if (completed) return;
-    setSelectedLeft(leftId);
+  const getItemCenter = (ref: HTMLDivElement | null): { x: number; y: number } | null => {
+    if (!ref || !containerRef.current) return null;
+    const rect = ref.getBoundingClientRect();
+    const containerRect = containerRef.current.getBoundingClientRect();
+    return {
+      x: rect.left + rect.width / 2 - containerRect.left,
+      y: rect.top + rect.height / 2 - containerRect.top,
+    };
   };
 
-  const handleRightClick = (rightId: string) => {
-    if (!selectedLeft || completed) return;
+  const handleLeftMouseDown = (itemId: string, e: React.MouseEvent) => {
+    if (completed) return;
+    const isConnected = connections.some((conn) => conn.leftId === itemId);
+    if (isConnected) return;
 
-    const leftItem = leftItems.find((item) => item.id === selectedLeft);
-    const rightItem = rightItems.find((item) => item.id === rightId);
+    const center = getItemCenter(leftItemRefs.current[itemId]);
+    if (center) {
+      setIsDragging(true);
+      setDragStart({ id: itemId, x: center.x, y: center.y });
+      setCurrentMousePos({ x: center.x, y: center.y });
+    }
+  };
 
-    if (!leftItem || !rightItem) return;
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    setCurrentMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
 
-    // Check if already connected
-    const existingConnection = connections.find(
-      (conn) => conn.leftId === selectedLeft || conn.rightId === rightId
-    );
-
-    if (existingConnection) {
-      toast.error("Estos items ya están conectados");
-      setSelectedLeft(null);
+  const handleMouseUp = (rightId?: string) => {
+    if (!isDragging || !dragStart) {
+      setIsDragging(false);
+      setDragStart(null);
+      setCurrentMousePos(null);
       return;
     }
 
-    // Check if match is correct
-    if (leftItem.match_id === rightItem.match_id) {
-      // Correct match
-      setConnections([...connections, { leftId: selectedLeft, rightId }]);
-      setScore(score + 10);
-      toast.success("¡Correcto! +10 puntos");
+    if (rightId) {
+      const leftItem = leftItems.find((item) => item.id === dragStart.id);
+      const rightItem = rightItems.find((item) => item.id === rightId);
 
-      // Check if all matched
-      if (connections.length + 1 === leftItems.length) {
-        completeGame(true);
+      if (!leftItem || !rightItem) {
+        setIsDragging(false);
+        setDragStart(null);
+        setCurrentMousePos(null);
+        return;
       }
-    } else {
-      // Incorrect match
-      setLives(lives - 1);
-      toast.error("Incorrecto. -1 vida");
 
-      if (lives - 1 <= 0) {
-        completeGame(false);
+      // Check if already connected
+      const existingLeftConn = connections.find((conn) => conn.leftId === dragStart.id);
+      const existingRightConn = connections.find((conn) => conn.rightId === rightId);
+
+      if (existingLeftConn || existingRightConn) {
+        toast.error("Estos items ya están conectados");
+        setIsDragging(false);
+        setDragStart(null);
+        setCurrentMousePos(null);
+        return;
+      }
+
+      // Check if match is correct
+      if (leftItem.match_id === rightItem.match_id) {
+        setConnections([...connections, { leftId: dragStart.id, rightId }]);
+        setScore(score + 10);
+        toast.success("¡Correcto! +10 puntos");
+
+        if (connections.length + 1 === leftItems.length) {
+          completeGame(true);
+        }
+      } else {
+        setLives(lives - 1);
+        toast.error("Incorrecto. -1 vida");
+
+        if (lives - 1 <= 0) {
+          completeGame(false);
+        }
       }
     }
 
-    setSelectedLeft(null);
+    setIsDragging(false);
+    setDragStart(null);
+    setCurrentMousePos(null);
   };
 
   const completeGame = async (success: boolean) => {
@@ -171,7 +225,6 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
         origin: { y: 0.6 },
       });
 
-      // Award XP
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
@@ -291,79 +344,151 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
         </div>
       </div>
 
-      {/* Game Board */}
-      <div className="grid grid-cols-2 gap-8">
-        {/* Left Column */}
-        <div className="space-y-3">
-          {leftItems.map((item) => {
-            const isConnected = connections.some((conn) => conn.leftId === item.id);
-            const isSelected = selectedLeft === item.id;
+      {/* Game Board with SVG overlay */}
+      <div 
+        ref={containerRef}
+        className="relative"
+        onMouseMove={handleMouseMove}
+        onMouseUp={() => handleMouseUp()}
+        onMouseLeave={() => handleMouseUp()}
+      >
+        {/* SVG for drawing lines */}
+        <svg 
+          className="absolute inset-0 w-full h-full pointer-events-none z-10"
+          style={{ overflow: 'visible' }}
+        >
+          {/* Draw completed connections */}
+          {connections.map((conn) => {
+            const leftCenter = getItemCenter(leftItemRefs.current[conn.leftId]);
+            const rightCenter = getItemCenter(rightItemRefs.current[conn.rightId]);
+            
+            if (!leftCenter || !rightCenter) return null;
 
+            const midX = (leftCenter.x + rightCenter.x) / 2;
+            const curveOffset = 50;
+            
             return (
-              <motion.div
-                key={item.id}
-                whileHover={{ scale: isConnected ? 1 : 1.02 }}
-                whileTap={{ scale: isConnected ? 1 : 0.98 }}
-              >
-                <Button
-                  onClick={() => handleLeftClick(item.id)}
-                  disabled={isConnected}
-                  variant={isSelected ? "default" : "outline"}
-                  className={`w-full h-auto min-h-[80px] p-4 flex flex-col gap-2 ${
-                    isConnected ? "opacity-50" : ""
-                  }`}
-                >
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.text}
-                      className="w-full h-24 object-cover rounded"
-                    />
-                  )}
-                  <span className="text-base">{item.text}</span>
-                </Button>
-              </motion.div>
+              <g key={`${conn.leftId}-${conn.rightId}`}>
+                <path
+                  d={`M ${leftCenter.x} ${leftCenter.y} Q ${midX} ${leftCenter.y - curveOffset}, ${rightCenter.x} ${rightCenter.y}`}
+                  stroke="hsl(var(--primary))"
+                  strokeWidth="3"
+                  fill="none"
+                  strokeLinecap="round"
+                  className="animate-fade-in"
+                />
+                <circle cx={leftCenter.x} cy={leftCenter.y} r="8" fill="hsl(var(--primary))" />
+                <circle cx={rightCenter.x} cy={rightCenter.y} r="8" fill="hsl(var(--primary))" />
+              </g>
             );
           })}
-        </div>
 
-        {/* Right Column */}
-        <div className="space-y-3">
-          {shuffledRightItems.map((item) => {
-            const isConnected = connections.some((conn) => conn.rightId === item.id);
+          {/* Draw dragging line */}
+          {isDragging && dragStart && currentMousePos && (
+            <g>
+              <path
+                d={`M ${dragStart.x} ${dragStart.y} Q ${(dragStart.x + currentMousePos.x) / 2} ${dragStart.y - 50}, ${currentMousePos.x} ${currentMousePos.y}`}
+                stroke="hsl(var(--primary))"
+                strokeWidth="3"
+                fill="none"
+                strokeLinecap="round"
+                opacity="0.5"
+                strokeDasharray="5,5"
+              />
+              <circle cx={dragStart.x} cy={dragStart.y} r="8" fill="hsl(var(--primary))" />
+              <circle cx={currentMousePos.x} cy={currentMousePos.y} r="6" fill="hsl(var(--primary))" opacity="0.5" />
+            </g>
+          )}
+        </svg>
 
-            return (
-              <motion.div
-                key={item.id}
-                whileHover={{ scale: isConnected ? 1 : 1.02 }}
-                whileTap={{ scale: isConnected ? 1 : 0.98 }}
-              >
-                <Button
-                  onClick={() => handleRightClick(item.id)}
-                  disabled={isConnected || !selectedLeft}
-                  variant="outline"
-                  className={`w-full h-auto min-h-[80px] p-4 flex flex-col gap-2 ${
-                    isConnected ? "opacity-50 bg-primary/20" : ""
-                  }`}
+        <div className="grid grid-cols-2 gap-8 relative">
+          {/* Left Column */}
+          <div className="space-y-3">
+            {leftItems.map((item) => {
+              const isConnected = connections.some((conn) => conn.leftId === item.id);
+
+              return (
+                <motion.div
+                  key={item.id}
+                  ref={(el) => (leftItemRefs.current[item.id] = el)}
+                  whileHover={{ scale: isConnected ? 1 : 1.02 }}
+                  whileTap={{ scale: isConnected ? 1 : 0.98 }}
                 >
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.text}
-                      className="w-full h-24 object-cover rounded"
-                    />
-                  )}
-                  <span className="text-base">{item.text}</span>
-                </Button>
-              </motion.div>
-            );
-          })}
+                  <Button
+                    onMouseDown={(e) => handleLeftMouseDown(item.id, e)}
+                    disabled={isConnected}
+                    variant="outline"
+                    className={`w-full h-auto min-h-[80px] p-4 flex flex-col gap-2 cursor-pointer relative ${
+                      isConnected ? "opacity-50 bg-primary/20" : ""
+                    }`}
+                  >
+                    {/* Connection point circle */}
+                    <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 ${
+                      isConnected 
+                        ? "bg-primary border-primary" 
+                        : "bg-background border-primary"
+                    }`} />
+                    
+                    {item.image_url && (
+                      <img
+                        src={item.image_url}
+                        alt={item.text}
+                        className="w-full h-24 object-cover rounded"
+                      />
+                    )}
+                    <span className="text-base">{item.text}</span>
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-3">
+            {shuffledRightItems.map((item) => {
+              const isConnected = connections.some((conn) => conn.rightId === item.id);
+
+              return (
+                <motion.div
+                  key={item.id}
+                  ref={(el) => (rightItemRefs.current[item.id] = el)}
+                  whileHover={{ scale: isConnected ? 1 : 1.02 }}
+                  whileTap={{ scale: isConnected ? 1 : 0.98 }}
+                  onMouseUp={() => handleMouseUp(item.id)}
+                >
+                  <Button
+                    disabled={isConnected}
+                    variant="outline"
+                    className={`w-full h-auto min-h-[80px] p-4 flex flex-col gap-2 relative ${
+                      isConnected ? "opacity-50 bg-primary/20" : ""
+                    }`}
+                  >
+                    {/* Connection point circle */}
+                    <div className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 ${
+                      isConnected 
+                        ? "bg-primary border-primary" 
+                        : "bg-background border-primary"
+                    }`} />
+                    
+                    {item.image_url && (
+                      <img
+                        src={item.image_url}
+                        alt={item.text}
+                        className="w-full h-24 object-cover rounded"
+                      />
+                    )}
+                    <span className="text-base">{item.text}</span>
+                  </Button>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Instructions */}
       <div className="bg-accent/50 p-4 rounded-lg text-center text-sm text-muted-foreground">
-        Selecciona un item de la izquierda, luego su par correcto de la derecha
+        Arrastra desde un item de la izquierda hasta su par correcto de la derecha
       </div>
     </div>
   );
