@@ -71,12 +71,13 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
 
     try {
       const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-      const percentage = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+      // Normalize score to 100 points
+      const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
 
       // Award XP for game completion
       awardXP(gameId, 'view_complete', false);
 
-      toast.success(`¡Juego completado! Puntuación: ${percentage}%`);
+      toast.success(`¡Juego completado! Puntuación: ${normalizedScore}/100`);
     } catch (error) {
       console.error("Error saving game result:", error);
       toast.error("Error al guardar el resultado");
@@ -255,7 +256,8 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
 
   if (isCompleted) {
     const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-    const percentage = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+    // Normalize score to 100 points
+    const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
 
     return (
       <div className="h-full flex items-center justify-center p-6">
@@ -264,9 +266,9 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
             <Trophy className="w-20 h-20 mx-auto text-yellow-500" />
             <h2 className="text-3xl font-bold">¡Juego Completado!</h2>
             <div className="space-y-4">
-              <div className="text-5xl font-bold text-primary">{percentage}%</div>
+              <div className="text-5xl font-bold text-primary">{normalizedScore}/100</div>
               <p className="text-xl text-muted-foreground">
-                Puntuación: {score} de {totalPoints} puntos
+                {normalizedScore >= 60 ? '¡Aprobado!' : 'Sigue practicando'}
               </p>
             </div>
           </CardContent>

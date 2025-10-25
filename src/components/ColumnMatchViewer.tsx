@@ -218,6 +218,9 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
   const completeGame = async (success: boolean) => {
     setCompleted(true);
 
+    const maxScore = leftItems.length * 10;
+    const normalizedScore = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+
     if (success) {
       confetti({
         particleCount: 100,
@@ -236,14 +239,14 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
         if (profile) {
           await supabase
             .from("profiles")
-            .update({ experience_points: (profile.experience_points || 0) + score })
+            .update({ experience_points: (profile.experience_points || 0) + normalizedScore })
             .eq("id", user.id);
         }
       }
 
-      toast.success(`¡Felicitaciones! Ganaste ${score} puntos`);
+      toast.success(`¡Felicitaciones! Puntuación: ${normalizedScore}/100`);
     } else {
-      toast.error("Juego terminado");
+      toast.error(`Juego terminado. Puntuación: ${normalizedScore}/100`);
     }
 
     if (onComplete) {
@@ -278,6 +281,9 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
 
   if (completed) {
     const success = connections.length === leftItems.length;
+    const maxScore = leftItems.length * 10;
+    const normalizedScore = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+    
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -290,8 +296,8 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
             <h2 className="text-3xl font-bold mb-2">
               {success ? "¡Felicitaciones!" : "Juego Terminado"}
             </h2>
-            <p className="text-xl text-muted-foreground mb-4">
-              Puntuación final: {score}
+            <p className="text-5xl font-bold text-primary mb-4">
+              {normalizedScore}/100
             </p>
             <p className="text-sm text-muted-foreground">
               Conexiones correctas: {connections.length}/{leftItems.length}
