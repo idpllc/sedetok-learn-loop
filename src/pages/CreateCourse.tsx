@@ -65,7 +65,7 @@ const learningTypes: { value: TipoAprendizaje; label: string }[] = [
 export default function CreateCourse() {
   const navigate = useNavigate();
   const { createCourse } = useCourses();
-  const { paths } = useLearningPaths("all");
+  const { paths } = useLearningPaths(undefined, "all");
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({

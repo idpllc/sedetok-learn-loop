@@ -95,7 +95,7 @@ export const RouteSearchModal = ({
           return (
             <div
               key={route.id}
-              className={`p-3 rounded-lg border cursor-pointer transition-all ${
+              className={`w-full min-w-0 overflow-hidden p-3 rounded-lg border cursor-pointer transition-all ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
@@ -184,19 +184,19 @@ export const RouteSearchModal = ({
               placeholder="Buscar rutas..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden px-6 py-4">
+        <div className="flex-1 min-h-0 overflow-hidden px-6 py-4">
           <Tabs defaultValue="my" className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 min-w-0">
               <TabsTrigger value="my">Mis rutas</TabsTrigger>
               <TabsTrigger value="public">Rutas públicas</TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-hidden mt-4">
+            <div className="flex-1 min-h-0 overflow-hidden mt-4">
               <TabsContent value="my" className="h-full mt-0">
                 <div className="h-full overflow-y-auto pr-2 -mr-2">
                   <RouteList routes={myPaths} loading={loadingMyPaths} />
