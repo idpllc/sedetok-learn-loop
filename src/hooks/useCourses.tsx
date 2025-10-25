@@ -17,6 +17,7 @@ interface CourseData {
   tags?: string[];
   is_public?: boolean;
   status?: string;
+  institutions?: string[];
 }
 
 interface CourseRouteData {
@@ -65,11 +66,14 @@ export const useCourses = (filter?: "created" | "all") => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
+      // Extract institutions from courseData
+      const { institutions, ...courseDataWithoutInstitutions } = courseData;
+
       // Create course
       const { data: course, error: courseError } = await supabase
         .from("courses")
         .insert([{
-          ...courseData,
+          ...courseDataWithoutInstitutions,
           creator_id: user.id,
         }])
         .select()
@@ -89,6 +93,20 @@ export const useCourses = (filter?: "created" | "all") => {
           .insert(routeInserts);
 
         if (routesError) throw routesError;
+      }
+
+      // Add institutions if course is private
+      if (!courseData.is_public && institutions && institutions.length > 0) {
+        const institutionInserts = institutions.map(institutionId => ({
+          course_id: course.id,
+          institution_id: institutionId
+        }));
+
+        const { error: institutionsError } = await supabase
+          .from("course_institutions")
+          .insert(institutionInserts);
+
+        if (institutionsError) throw institutionsError;
       }
 
       return course;

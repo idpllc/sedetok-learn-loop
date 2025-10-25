@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectContent,
@@ -17,9 +18,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 import { RouteSearchModal } from "@/components/learning-paths/RouteSearchModal";
+import { InstitutionSelector } from "@/components/courses/InstitutionSelector";
 import { useCourses } from "@/hooks/useCourses";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { Database } from "@/integrations/supabase/types";
+import { Switch } from "@/components/ui/switch";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type GradeLevel = Database["public"]["Enums"]["grade_level"];
@@ -63,6 +66,7 @@ export default function CreateCourse() {
   const navigate = useNavigate();
   const { createCourse } = useCourses();
   const { paths } = useLearningPaths("all");
+  const { toast } = useToast();
   
   const [formData, setFormData] = useState({
     title: "",
@@ -72,6 +76,8 @@ export default function CreateCourse() {
     grade_level: "" as GradeLevel,
     learning_types: [] as TipoAprendizaje[],
     tags: [] as string[],
+    is_public: true,
+    institutions: [] as string[],
   });
 
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
@@ -82,6 +88,16 @@ export default function CreateCourse() {
     e.preventDefault();
     
     if (!formData.title || !formData.category || !formData.grade_level) {
+      return;
+    }
+
+    // Validate that private courses have at least one institution
+    if (!formData.is_public && formData.institutions.length === 0) {
+      toast({
+        title: "Error",
+        description: "Los cursos privados deben tener al menos una institución seleccionada",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -188,6 +204,43 @@ export default function CreateCourse() {
                   label="Imagen de portada"
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Visibility */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Visibilidad</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="is_public">Curso Público</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Los cursos públicos son visibles para todos los usuarios
+                  </p>
+                </div>
+                <Switch
+                  id="is_public"
+                  checked={formData.is_public}
+                  onCheckedChange={(checked) =>
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      is_public: checked,
+                      institutions: checked ? [] : prev.institutions 
+                    }))
+                  }
+                />
+              </div>
+
+              {!formData.is_public && (
+                <InstitutionSelector
+                  selectedInstitutions={formData.institutions}
+                  onChange={(institutions) =>
+                    setFormData(prev => ({ ...prev, institutions }))
+                  }
+                />
+              )}
             </CardContent>
           </Card>
 
