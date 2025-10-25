@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList, Eye, Users } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList, Eye, Users, Gamepad2 } from "lucide-react";
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
@@ -170,6 +170,7 @@ const Profile = () => {
   const documentContent = userContent?.filter(c => c.content_type === "document") || [];
   const readingContent = userContent?.filter(c => c.content_type === "lectura") || [];
   const quizContent = userContent?.filter(c => c.content_type === "quiz") || [];
+  const gameContent = userContent?.filter(c => c.content_type === "game") || [];
 
   const CourseItem = ({ course }: { course: any }) => (
     <Card 
@@ -402,7 +403,11 @@ const Profile = () => {
                 className="h-8 w-8 bg-foreground/90 backdrop-blur-sm hover:bg-foreground text-background"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/edit/${item.id}`);
+                  if (item.content_type === 'game') {
+                    navigate(`/games/edit/${item.id}`);
+                  } else {
+                    navigate(`/edit/${item.id}`);
+                  }
                 }}
                 title="Editar"
               >
@@ -642,7 +647,7 @@ const Profile = () => {
 
         {/* Content tabs */}
         <Tabs defaultValue="videos" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="videos" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">Videos</span> ({videoContent.length})
@@ -658,6 +663,10 @@ const Profile = () => {
             <TabsTrigger value="quizzes" className="flex items-center gap-2">
               <HelpCircle className="w-4 h-4" />
               <span className="hidden sm:inline">Quizzes</span> ({quizContent.length})
+            </TabsTrigger>
+            <TabsTrigger value="games" className="flex items-center gap-2">
+              <Gamepad2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Juegos</span> ({gameContent.length})
             </TabsTrigger>
             <TabsTrigger value="paths" className="flex items-center gap-2">
               <Map className="w-4 h-4" />
@@ -716,6 +725,28 @@ const Profile = () => {
                 <div className="col-span-full text-center py-12 text-muted-foreground">
                   <HelpCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p>No tienes quizzes aún</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="games" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {gameContent.length > 0 ? (
+                gameContent.map((item) => <ContentItem key={item.id} item={item} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  <Gamepad2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No tienes juegos aún</p>
+                  {isOwnProfile && (
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => navigate("/create")}
+                    >
+                      Crear juego
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

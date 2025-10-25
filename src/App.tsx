@@ -39,6 +39,7 @@ import QuizEvaluations from "./pages/QuizEvaluations";
 import CreateCourse from "./pages/CreateCourse";
 import Courses from "./pages/Courses";
 import ViewCourse from "./pages/ViewCourse";
+import EditGame from "./pages/EditGame";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/buy-educoins" element={<BuyEducoins />} />
           <Route path="/create" element={<CreateContent />} />
           <Route path="/edit/:id" element={<EditContent />} />
+          <Route path="/games/edit/:id" element={<EditGame />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/profile/professional" element={<ProfessionalProfile />} />
