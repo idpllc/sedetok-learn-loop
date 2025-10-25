@@ -509,6 +509,110 @@ export type Database = {
           },
         ]
       }
+      game_questions: {
+        Row: {
+          correct_sentence: string
+          created_at: string | null
+          game_id: string
+          id: string
+          image_url: string | null
+          order_index: number
+          points: number | null
+          question_text: string
+          video_url: string | null
+          words: Json
+        }
+        Insert: {
+          correct_sentence: string
+          created_at?: string | null
+          game_id: string
+          id?: string
+          image_url?: string | null
+          order_index: number
+          points?: number | null
+          question_text: string
+          video_url?: string | null
+          words?: Json
+        }
+        Update: {
+          correct_sentence?: string
+          created_at?: string | null
+          game_id?: string
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          points?: number | null
+          question_text?: string
+          video_url?: string | null
+          words?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_questions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          category: Database["public"]["Enums"]["category_type"]
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          game_type: string
+          grade_level: Database["public"]["Enums"]["grade_level"]
+          id: string
+          is_public: boolean | null
+          random_order: boolean | null
+          status: string | null
+          subject: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          time_limit: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["category_type"]
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          game_type?: string
+          grade_level: Database["public"]["Enums"]["grade_level"]
+          id?: string
+          is_public?: boolean | null
+          random_order?: boolean | null
+          status?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          time_limit?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["category_type"]
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          game_type?: string
+          grade_level?: Database["public"]["Enums"]["grade_level"]
+          id?: string
+          is_public?: boolean | null
+          random_order?: boolean | null
+          status?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          time_limit?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       institution_achievements: {
         Row: {
           achievement_type: string
@@ -1887,7 +1991,7 @@ export type Database = {
         | "arte"
         | "tecnologia"
         | "otros"
-      content_type: "video" | "document" | "quiz" | "lectura"
+      content_type: "video" | "document" | "quiz" | "lectura" | "game"
       frecuencia_estudio: "Diaria" | "Semanal" | "Esporádica"
       genero: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir"
       grade_level:
@@ -2091,7 +2195,7 @@ export const Constants = {
         "tecnologia",
         "otros",
       ],
-      content_type: ["video", "document", "quiz", "lectura"],
+      content_type: ["video", "document", "quiz", "lectura", "game"],
       frecuencia_estudio: ["Diaria", "Semanal", "Esporádica"],
       genero: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
       grade_level: [

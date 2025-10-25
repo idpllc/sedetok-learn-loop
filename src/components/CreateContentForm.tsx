@@ -21,6 +21,10 @@ import { QuizStep3 } from "./quiz/QuizStep3";
 import { PathBasicInfo } from "./learning-paths/wizard/PathBasicInfo";
 import { PathBuilder } from "./learning-paths/wizard/PathBuilder";
 import { PathReview } from "./learning-paths/wizard/PathReview";
+import { GameStep1 } from "./game/GameStep1";
+import { GameStep2 } from "./game/GameStep2";
+import { GameStep3 } from "./game/GameStep3";
+import { useGames, useGameQuestions, GameQuestion } from "@/hooks/useGames";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +64,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const { createQuiz, updateQuiz } = useQuizzes();
   const { createQuestion, deleteQuestion } = useQuizQuestions();
   const { createPath, updatePath } = useLearningPaths(user?.id, 'created');
+  const { createGame, updateGame } = useGames();
   const [isUpdating, setIsUpdating] = useState(false);
   const [quizStep, setQuizStep] = useState(0); // 0 = basic form, 1 = questions, 2 = config
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -67,6 +72,14 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     time_limit: undefined as number | undefined,
     random_order: false,
     final_message: "¡Excelente trabajo! Has completado el quiz.",
+  });
+  
+  // Game states
+  const [gameStep, setGameStep] = useState(0); // 0 = basic form, 1 = questions, 2 = config
+  const [gameQuestions, setGameQuestions] = useState<GameQuestion[]>([]);
+  const [gameConfig, setGameConfig] = useState({
+    time_limit: undefined as number | undefined,
+    random_order: false,
   });
   
   // Learning Path states
@@ -194,6 +207,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         lectura: "Crear Lectura",
         quiz: "Crear Quiz",
         learning_path: "Crear Ruta de Aprendizaje",
+        game: "Crear Juego",
       };
       onTitleChange(formData.content_type ? titles[formData.content_type as ContentType | 'learning_path'] : "Crear Contenido");
     }
@@ -426,6 +440,89 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     }
   };
 
+  const handleGameSubmit = async (status: "draft" | "published") => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para crear un juego");
+      return;
+    }
+
+    if (gameQuestions.length < 3) {
+      toast.error("Debes agregar al menos 3 preguntas antes de guardar el juego");
+      return;
+    }
+
+    // Validar que todas las preguntas tengan palabras y una oración correcta
+    if (status === "published") {
+      const invalidQuestions = gameQuestions.filter(q => 
+        !q.question_text || !q.correct_sentence || !q.words || q.words.length === 0
+      );
+      if (invalidQuestions.length > 0) {
+        toast.error("Todas las preguntas deben tener una instrucción, oración correcta y palabras antes de publicar");
+        return;
+      }
+    }
+
+    try {
+      const gameData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
+        grade_level: formData.grade_level,
+        game_type: 'word_order',
+        is_public: isPublic,
+        status,
+        time_limit: gameConfig.time_limit,
+        random_order: gameConfig.random_order,
+        tags: tags,
+        creator_id: user.id,
+      };
+
+      let targetGameId: string;
+
+      // If editing, update existing game
+      if (editMode && contentData?.id) {
+        await updateGame.mutateAsync({ 
+          id: contentData.id, 
+          updates: gameData 
+        } as any);
+        targetGameId = contentData.id;
+      } else {
+        // Creating new game
+        const createdGame = await createGame.mutateAsync(gameData as any);
+        targetGameId = createdGame.id;
+      }
+
+      // Create questions
+      const pointsPerQuestion = 10;
+      for (let i = 0; i < gameQuestions.length; i++) {
+        const question = gameQuestions[i];
+        await supabase.from("game_questions").insert({
+          game_id: targetGameId,
+          question_text: question.question_text,
+          correct_sentence: question.correct_sentence,
+          words: question.words,
+          points: question.points || pointsPerQuestion,
+          order_index: i,
+          image_url: question.image_url,
+          video_url: question.video_url,
+        });
+      }
+
+      toast.success(
+        editMode 
+          ? "¡Juego actualizado exitosamente!" 
+          : status === "published" 
+            ? "¡Juego publicado!" 
+            : "Juego guardado como borrador"
+      );
+      navigate("/profile");
+    } catch (error) {
+      console.error("Error saving game:", error);
+      toast.error(editMode ? "Error al actualizar el juego" : "Error al guardar el juego");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -485,6 +582,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const isLoading = uploading || createMutation.isPending || isUpdating;
   const isQuizMode = formData.content_type === 'quiz';
   const isPathMode = formData.content_type === 'learning_path' as any;
+  const isGameMode = formData.content_type === 'game';
 
   const getFileTypeIcon = () => {
     if (!fileType) return <Upload className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
@@ -786,6 +884,137 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     );
   }
 
+  // Game wizard rendering
+  if (isGameMode && gameStep > 0) {
+    return (
+      <div className="space-y-4 pb-6">
+        {/* Steps indicator */}
+        <div className="flex items-center justify-between px-2">
+          {[1, 2, 3].map((step, index) => (
+            <div key={step} className="flex items-center flex-1">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                    gameStep >= step
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {step}
+                </div>
+                <p className="text-xs mt-2 text-center hidden md:block">
+                  {step === 1 ? "Info Básica" : step === 2 ? "Preguntas" : "Configuración"}
+                </p>
+              </div>
+              {index < 2 && (
+                <div
+                  className={`flex-1 h-1 mx-2 ${
+                    gameStep > step ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          {gameStep === 1 && (
+            <div className="border rounded-lg p-6 bg-card">
+              <h3 className="text-xl font-semibold mb-2">Información Básica del Juego</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Define el título y descripción del juego
+              </p>
+              <GameStep1
+                title={formData.title}
+                description={formData.description || ""}
+                onTitleChange={(value) => setFormData({ ...formData, title: value })}
+                onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
+              />
+            </div>
+          )}
+          {gameStep === 2 && (
+            <div className="border rounded-lg p-6 bg-card">
+              <h3 className="text-xl font-semibold mb-2">Preguntas</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Crea preguntas de ordenar palabras
+              </p>
+              <GameStep2 
+                questions={gameQuestions} 
+                onChange={setGameQuestions}
+              />
+            </div>
+          )}
+          {gameStep === 3 && (
+            <div className="border rounded-lg p-6 bg-card">
+              <h3 className="text-xl font-semibold mb-2">Configuración Final</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Ajusta la configuración antes de publicar
+              </p>
+              <GameStep3
+                config={gameConfig}
+                onChange={setGameConfig}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Navigation buttons */}
+        <div className="flex justify-between pt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              const newStep = Math.max(0, gameStep - 1);
+              setGameStep(newStep);
+              if (newStep === 0) {
+                onTitleChange?.("Crear Juego");
+              }
+            }}
+          >
+            Anterior
+          </Button>
+
+          <div className="flex gap-2">
+            {gameStep === 3 && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => handleGameSubmit("draft")}
+                  disabled={gameQuestions.length === 0}
+                >
+                  Guardar borrador
+                </Button>
+                <Button
+                  onClick={() => handleGameSubmit("published")}
+                  disabled={gameQuestions.length === 0}
+                >
+                  Publicar
+                </Button>
+              </>
+            )}
+
+            {gameStep < 3 && (
+              <Button
+                onClick={() => {
+                  const newStep = gameStep + 1;
+                  setGameStep(newStep);
+                  if (newStep === 2) {
+                    onTitleChange?.("Crear Juego - Preguntas");
+                  } else if (newStep === 3) {
+                    onTitleChange?.("Crear Juego - Configuración");
+                  }
+                }}
+                disabled={gameStep === 1 && (!formData.title || !formData.description)}
+              >
+                Siguiente
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Normal form or quiz step 1 (basic data)
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -812,6 +1041,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <SelectItem value="document">📄 Recurso</SelectItem>
             <SelectItem value="lectura">📖 Lectura</SelectItem>
             <SelectItem value="quiz">📝 Quiz</SelectItem>
+            <SelectItem value="game">🎮 Juego</SelectItem>
             <SelectItem value="learning_path">🗺️ Ruta de Aprendizaje</SelectItem>
           </SelectContent>
         </Select>
@@ -912,7 +1142,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {/* Contenido según tipo */}
-      {!isQuizMode && !isPathMode && (
+      {!isQuizMode && !isPathMode && !isGameMode && (
         <>
           {formData.content_type === 'lectura' ? (
             <div className="space-y-2">
@@ -1214,6 +1444,23 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         >
           <ArrowRight className="w-4 h-4 mr-2" />
           Crear Preguntas y Respuestas
+        </Button>
+      ) : isGameMode ? (
+        <Button 
+          type="button" 
+          className="w-full"
+          onClick={() => {
+            if (!formData.title || !formData.description) {
+              toast.error("Por favor completa el título y descripción del juego");
+              return;
+            }
+            setGameStep(1);
+            onTitleChange?.("Crear Juego - Info Básica");
+          }}
+          disabled={!formData.title || !formData.category || !formData.grade_level}
+        >
+          <ArrowRight className="w-4 h-4 mr-2" />
+          Continuar con el Juego
         </Button>
       ) : isPathMode ? (
         <Button 
