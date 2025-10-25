@@ -94,6 +94,7 @@ const Search = () => {
     { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
     { id: "document" as ContentType, label: "Documentos", icon: "📄" },
     { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
+    { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
     { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
   ];
 
@@ -130,6 +131,8 @@ const Search = () => {
         return <FileText className="w-5 h-5" />;
       case "quiz":
         return <ClipboardCheck className="w-5 h-5" />;
+      case "game":
+        return <span className="text-base">🎮</span>;
       case "learning_path":
         return <Map className="w-5 h-5" />;
     }
@@ -361,6 +364,8 @@ const Search = () => {
                         navigate(`/learning-paths/${item.id}`);
                       } else if (isQuiz) {
                         navigate(`/?quiz=${item.id}`);
+                      } else if (item.content_type === 'game') {
+                        navigate(`/?game=${item.id}`);
                       } else {
                         navigate(`/?content=${item.id}`);
                       }
@@ -393,7 +398,8 @@ const Search = () => {
                                 {isLearningPath ? '🗺️' : 
                                  item.content_type === 'video' ? '🎥' : 
                                  item.content_type === 'document' ? '📄' : 
-                                 item.content_type === 'lectura' ? '📖' : '📝'}
+                                 item.content_type === 'lectura' ? '📖' : 
+                                 item.content_type === 'game' ? '🎮' : '📝'}
                               </div>
                             </div>
                           </div>
@@ -407,7 +413,8 @@ const Search = () => {
                               {isLearningPath ? 'Ruta' : 
                                item.content_type === 'video' ? 'Video' : 
                                item.content_type === 'lectura' ? 'Lectura' :
-                               item.content_type === 'document' ? 'Documento' : 'Quiz'}
+                               item.content_type === 'document' ? 'Documento' : 
+                               item.content_type === 'game' ? 'Juego' : 'Quiz'}
                             </span>
                           </Badge>
                         </div>

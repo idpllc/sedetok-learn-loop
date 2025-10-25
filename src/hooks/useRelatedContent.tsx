@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useRelatedContent = (contentId?: string, quizId?: string) => {
+export const useRelatedContent = (contentId?: string, quizId?: string, gameId?: string) => {
   return useQuery({
-    queryKey: ["related-content", contentId, quizId],
+    queryKey: ["related-content", contentId, quizId, gameId],
     queryFn: async () => {
-      if (!contentId && !quizId) return null;
+      if (!contentId && !quizId && !gameId) return null;
 
-      // First, fetch the target content/quiz to get its category
+      // First, fetch the target content/quiz/game to get its category
       let targetItem: any = null;
       let category: string | null = null;
 
@@ -31,6 +31,48 @@ export const useRelatedContent = (contentId?: string, quizId?: string) => {
         if (contentError) throw contentError;
         targetItem = contentData;
         category = contentData.category;
+      } else if (gameId) {
+        const { data: gameData, error: gameError } = await supabase
+          .from("games")
+          .select(`
+            *,
+            profiles:creator_id (
+              username,
+              full_name,
+              avatar_url,
+              institution,
+              is_verified
+            )
+          `)
+          .eq("id", gameId)
+          .eq("is_public", true)
+          .single();
+
+        if (gameError) throw gameError;
+        
+        // Get question count for the game
+        const { data: questionsData } = await supabase
+          .from("game_questions")
+          .select("game_id")
+          .eq("game_id", gameId);
+
+        const questionCount = questionsData?.length || 0;
+
+        targetItem = {
+          ...gameData,
+          content_type: 'game' as const,
+          likes_count: 0,
+          views_count: 0,
+          saves_count: 0,
+          shares_count: 0,
+          comments_count: 0,
+          video_url: null,
+          document_url: null,
+          rich_text: null,
+          tags: gameData.tags || [],
+          questions_count: questionCount,
+        };
+        category = gameData.category;
       } else if (quizId) {
         const { data: quizData, error: quizError } = await supabase
           .from("quizzes")
@@ -200,13 +242,68 @@ export const useRelatedContent = (contentId?: string, quizId?: string) => {
         questions_count: questionCounts[quiz.id] || 0,
       }));
 
+      // Fetch related games from the same category
+      const { data: relatedGameData, error: gameError } = await supabase
+        .from("games")
+        .select(`
+          *,
+          profiles:creator_id (
+            username,
+            full_name,
+            avatar_url,
+            institution,
+            is_verified
+          )
+        `)
+        .eq("is_public", true)
+        .eq("status", "publicado")
+        .eq("category", category as any)
+        .neq("id", gameId || "")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (gameError) throw gameError;
+
+      // Get question counts for related games
+      const gameIds = (relatedGameData || []).map(g => g.id);
+      const gameQuestionCounts: Record<string, number> = {};
+      
+      if (gameIds.length > 0) {
+        const { data: gameQuestionsData } = await supabase
+          .from("game_questions")
+          .select("game_id")
+          .in("game_id", gameIds);
+        
+        if (gameQuestionsData) {
+          gameQuestionsData.forEach((q) => {
+            gameQuestionCounts[q.game_id] = (gameQuestionCounts[q.game_id] || 0) + 1;
+          });
+        }
+      }
+
+      // Transform games
+      const relatedGames = (relatedGameData || []).map(game => ({
+        ...game,
+        content_type: 'game' as const,
+        likes_count: 0,
+        views_count: 0,
+        saves_count: 0,
+        shares_count: 0,
+        comments_count: 0,
+        video_url: null,
+        document_url: null,
+        rich_text: null,
+        tags: game.tags || [],
+        questions_count: gameQuestionCounts[game.id] || 0,
+      }));
+
       // Combine target item with related content, shuffled
-      const allRelated = [...(relatedContentData || []), ...relatedQuizzes]
+      const allRelated = [...(relatedContentData || []), ...relatedQuizzes, ...relatedGames]
         .sort(() => Math.random() - 0.5)
         .slice(0, 9); // Get 9 related items
 
       return [targetItem, ...allRelated];
     },
-    enabled: !!(contentId || quizId),
+    enabled: !!(contentId || quizId || gameId),
   });
 };

@@ -88,10 +88,11 @@ const Index = () => {
   const contentIdFromUrl = searchParams.get("content");
   const quizIdFromUrl = searchParams.get("quiz");
   const pathIdFromUrl = searchParams.get("path");
+  const gameIdFromUrl = searchParams.get("game");
   const { user, loading: authLoading } = useAuth();
   const { content, isLoading } = useContent();
-  const { data: targetItem, isLoading: isLoadingTarget } = useTargetItem(contentIdFromUrl || undefined, quizIdFromUrl || undefined);
-  const { data: relatedContent, isLoading: isLoadingRelated } = useRelatedContent(contentIdFromUrl || undefined, quizIdFromUrl || undefined);
+  const { data: targetItem, isLoading: isLoadingTarget } = useTargetItem(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
+  const { data: relatedContent, isLoading: isLoadingRelated } = useRelatedContent(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
@@ -163,7 +164,7 @@ const Index = () => {
   }, [pathIdFromUrl, navigate]);
 
   // Show loading for related content when coming from search
-  if ((contentIdFromUrl || quizIdFromUrl) && isLoadingTarget) {
+  if ((contentIdFromUrl || quizIdFromUrl || gameIdFromUrl) && isLoadingTarget) {
     return (
       <div className="relative h-screen">
         <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
@@ -203,7 +204,7 @@ const Index = () => {
     }
   }));
 
-  const contentData = (contentIdFromUrl || quizIdFromUrl)
+  const contentData = (contentIdFromUrl || quizIdFromUrl || gameIdFromUrl)
     ? (targetItem
         ? [
             targetItem as any,
