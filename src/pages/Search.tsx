@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search as SearchIcon, Filter, BookOpen, Map } from "lucide-react";
+import { Search as SearchIcon, Filter, BookOpen, Map, X } from "lucide-react";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,8 +16,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { subjects } from "@/lib/subjects";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
+type CategoryType = Database["public"]["Enums"]["category_type"];
+type GradeLevel = Database["public"]["Enums"]["grade_level"];
 type SearchContentType = ContentType | "learning_path" | "all";
 
 const Search = () => {
@@ -25,6 +30,10 @@ const Search = () => {
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<SearchContentType>("all");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType | "all">("all");
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
+  const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">("all");
+  const [showFilters, setShowFilters] = useState(false);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: contentLoading } = useInfiniteContent(
     selectedType === "all" ? undefined : selectedType === "learning_path" ? undefined : selectedType,
     searchQuery
@@ -97,15 +106,21 @@ const Search = () => {
         item.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
         item.subject?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      return selectedType === "all" || selectedType === "learning_path" ? matchesSearch : false;
+      const matchesType = selectedType === "all" || selectedType === "learning_path";
+      const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+      const matchesSubject = selectedSubject === "all" || item.subject?.toLowerCase() === selectedSubject.toLowerCase();
+      const matchesGrade = selectedGrade === "all" || item.grade_level === selectedGrade;
+      
+      return matchesSearch && matchesType && matchesCategory && matchesSubject && matchesGrade;
     }
     
-    // For content and quizzes, server-side filtering is already applied
-    if (selectedType === "all" || selectedType === item.content_type || (selectedType === "quiz" && item.content_type === "quiz")) {
-      return true;
-    }
+    // For content and quizzes, apply all filters
+    const matchesType = selectedType === "all" || selectedType === item.content_type || (selectedType === "quiz" && item.content_type === "quiz");
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
+    const matchesSubject = selectedSubject === "all" || item.subject?.toLowerCase() === selectedSubject.toLowerCase();
+    const matchesGrade = selectedGrade === "all" || item.grade_level === selectedGrade;
     
-    return false;
+    return matchesType && matchesCategory && matchesSubject && matchesGrade;
   });
 
   const getContentIcon = (type: ContentType | "learning_path") => {
@@ -199,6 +214,37 @@ const Search = () => {
     saveMutation.mutate({ contentId, isSaved, isQuiz });
   };
 
+  const categories = [
+    { value: "all", label: "Todas las categorías" },
+    { value: "matematicas", label: "Matemáticas" },
+    { value: "ciencias", label: "Ciencias" },
+    { value: "lenguaje", label: "Lenguaje" },
+    { value: "historia", label: "Historia" },
+    { value: "arte", label: "Arte" },
+    { value: "tecnologia", label: "Tecnología" },
+    { value: "otros", label: "Otros" },
+  ];
+
+  const gradeLevels = [
+    { value: "all", label: "Todos los niveles" },
+    { value: "primaria", label: "Primaria" },
+    { value: "secundaria", label: "Secundaria" },
+    { value: "preparatoria", label: "Preparatoria" },
+    { value: "universidad", label: "Universidad" },
+    { value: "libre", label: "Libre" },
+  ];
+
+  const activeFiltersCount = 
+    (selectedCategory !== "all" ? 1 : 0) +
+    (selectedSubject !== "all" ? 1 : 0) +
+    (selectedGrade !== "all" ? 1 : 0);
+
+  const clearAllFilters = () => {
+    setSelectedCategory("all");
+    setSelectedSubject("all");
+    setSelectedGrade("all");
+  };
+
   return (
     <>
       <Sidebar />
@@ -209,19 +255,113 @@ const Search = () => {
             <h1 className="text-2xl font-bold">Explorar Contenido</h1>
           </div>
           
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar por título, descripción o etiquetas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar por título, descripción o etiquetas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Sheet open={showFilters} onOpenChange={setShowFilters}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="relative">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filtros
+                  {activeFiltersCount > 0 && (
+                    <Badge variant="default" className="ml-2 px-1.5 py-0.5 text-xs">
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Filtros de búsqueda</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-6">
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="w-full"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Limpiar todos los filtros
+                    </Button>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Categoría</label>
+                    <Select
+                      value={selectedCategory}
+                      onValueChange={(value) => setSelectedCategory(value as CategoryType | "all")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Asignatura</label>
+                    <Select
+                      value={selectedSubject}
+                      onValueChange={setSelectedSubject}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona asignatura" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <SelectItem value="all">Todas las asignaturas</SelectItem>
+                        {subjects.map((subject) => (
+                          <SelectItem key={subject.value} value={subject.value}>
+                            {subject.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Nivel educativo</label>
+                    <Select
+                      value={selectedGrade}
+                      onValueChange={(value) => setSelectedGrade(value as GradeLevel | "all")}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona nivel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {gradeLevels.map((level) => (
+                          <SelectItem key={level.value} value={level.value}>
+                            {level.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            <Filter className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <div className="flex items-center gap-1 flex-shrink-0 text-sm text-muted-foreground">
+              <span>Tipo:</span>
+            </div>
             {contentTypes.map((type) => (
               <Badge
                 key={type.id}
