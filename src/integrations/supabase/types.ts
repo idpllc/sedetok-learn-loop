@@ -1767,6 +1767,72 @@ export type Database = {
           },
         ]
       }
+      user_subject_results: {
+        Row: {
+          area_academica: string
+          asignatura_codigo: string | null
+          asignatura_nombre: string
+          completed_at: string | null
+          created_at: string | null
+          docente_nombre: string | null
+          id: string
+          institution_id: string
+          max_score: number
+          observaciones: string | null
+          passed: boolean | null
+          periodo_academico: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          area_academica: string
+          asignatura_codigo?: string | null
+          asignatura_nombre: string
+          completed_at?: string | null
+          created_at?: string | null
+          docente_nombre?: string | null
+          id?: string
+          institution_id: string
+          max_score: number
+          observaciones?: string | null
+          passed?: boolean | null
+          periodo_academico: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          area_academica?: string
+          asignatura_codigo?: string | null
+          asignatura_nombre?: string
+          completed_at?: string | null
+          created_at?: string | null
+          docente_nombre?: string | null
+          id?: string
+          institution_id?: string
+          max_score?: number
+          observaciones?: string | null
+          passed?: boolean | null
+          periodo_academico?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subject_results_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_subject_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_xp_log: {
         Row: {
           action_type: string

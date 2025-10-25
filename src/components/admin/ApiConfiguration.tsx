@@ -1111,6 +1111,29 @@ export function ApiConfiguration() {
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="w-5 h-5" />
+            API - Resultados Académicos
+          </CardTitle>
+          <CardDescription>
+            Endpoint para enviar resultados de asignaturas desde Sedefy Académico
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <code className="block px-3 py-2 bg-muted rounded text-sm">
+            POST https://{projectId}.supabase.co/functions/v1/submit-subject-results
+          </code>
+          
+          <p className="text-sm text-muted-foreground">
+            Envía resultados académicos que se integran automáticamente al perfil del estudiante.
+            Máximo 5000 resultados por solicitud. Requiere: institution_id, results[numero_documento, 
+            area_academica, asignatura_nombre, periodo_academico, score, max_score].
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -7,6 +7,10 @@ verify_jwt = true
 verify_jwt = true
 timeout = 300
 
+[functions.submit-subject-results]
+verify_jwt = false
+timeout = 300
+
 [functions.sedetok-search]
 verify_jwt = false
 

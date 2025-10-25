@@ -48,7 +48,7 @@ export const useAcademicMetrics = (userId?: string) => {
       });
 
       // Ejecutar todas las queries en paralelo para mejor rendimiento
-      const [watchedVideosResult, quizResultsResult, likedContentResult, completedPathsResult] = await Promise.all([
+      const [watchedVideosResult, quizResultsResult, subjectResultsResult, likedContentResult, completedPathsResult] = await Promise.all([
         // 1. Videos vistos
         supabase
           .from("user_path_progress")
@@ -64,7 +64,7 @@ export const useAcademicMetrics = (userId?: string) => {
           .eq("completed", true)
           .not("content_id", "is", null),
         
-        // 2. Quizzes completados
+        // 2. Quizzes completados (internos)
         supabase
           .from("user_quiz_results")
           .select(`
@@ -78,7 +78,13 @@ export const useAcademicMetrics = (userId?: string) => {
           `)
           .eq("user_id", userId),
         
-        // 3. Likes en contenido
+        // 3. Resultados de asignaturas (externos - Sedefy Académico)
+        supabase
+          .from("user_subject_results")
+          .select("*")
+          .eq("user_id", userId),
+        
+        // 4. Likes en contenido
         supabase
           .from("likes")
           .select(`
@@ -95,7 +101,7 @@ export const useAcademicMetrics = (userId?: string) => {
           `)
           .eq("user_id", userId),
         
-        // 4. Rutas completadas
+        // 5. Rutas completadas
         supabase
           .from("user_path_progress")
           .select(`
@@ -113,6 +119,7 @@ export const useAcademicMetrics = (userId?: string) => {
 
       const watchedVideos = watchedVideosResult.data;
       const quizResults = quizResultsResult.data;
+      const subjectResults = subjectResultsResult.data;
       const likedContent = likedContentResult.data;
       const completedPaths = completedPathsResult.data;
 
@@ -138,10 +145,40 @@ export const useAcademicMetrics = (userId?: string) => {
         });
       }
 
-      // Procesar quizzes completados
+      // Procesar quizzes completados (internos)
       if (quizResults) {
         quizResults.forEach((result: any) => {
           const subjectToUse = result.quiz?.subject || result.quiz?.category;
+          if (subjectToUse && result.max_score && result.max_score > 0) {
+            // Convertir score a porcentaje
+            const scorePercentage = (result.score / result.max_score) * 100;
+            
+            // Para áreas académicas
+            const areaId = getAreaForSubject(subjectToUse);
+            if (areaId && areaMetrics[areaId]) {
+              areaMetrics[areaId].quizzesCompleted++;
+              areaMetrics[areaId].totalScore += scorePercentage;
+              areaMetrics[areaId].quizCount++;
+            }
+            
+            // Para inteligencias
+            const intelligenceIds = getIntelligencesForSubject(subjectToUse);
+            intelligenceIds.forEach(intId => {
+              if (intelligenceMetrics[intId]) {
+                intelligenceMetrics[intId].quizzesCompleted++;
+                intelligenceMetrics[intId].totalScore += scorePercentage;
+                intelligenceMetrics[intId].quizCount++;
+              }
+            });
+          }
+        });
+      }
+
+      // Procesar resultados de asignaturas (externos - Sedefy Académico)
+      if (subjectResults) {
+        subjectResults.forEach((result: any) => {
+          // area_academica ya viene en formato estándar desde Sedefy
+          const subjectToUse = result.area_academica;
           if (subjectToUse && result.max_score && result.max_score > 0) {
             // Convertir score a porcentaje
             const scorePercentage = (result.score / result.max_score) * 100;

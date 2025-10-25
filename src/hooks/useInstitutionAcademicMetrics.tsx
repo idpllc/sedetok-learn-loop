@@ -69,7 +69,8 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
       if (!students || students.length === 0) return null;
 
       const studentIds = students.map((s: any) => s.user_id);
-      // Get all quiz results from students
+      
+      // Get all quiz results from students (internal quizzes)
       const { data: quizResults, error: quizError } = await supabase
         .from("user_quiz_results")
         .select("score, max_score, area_academica, quiz_id, user_id")
@@ -80,7 +81,20 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
         throw quizError;
       }
 
-      console.log(`Found ${quizResults?.length || 0} quiz results for ${studentIds.length} students`);
+      console.log(`Found ${quizResults?.length || 0} internal quiz results for ${studentIds.length} students`);
+
+      // Get subject results from external systems (Sedefy Académico)
+      const { data: subjectResults, error: subjectError } = await supabase
+        .from("user_subject_results")
+        .select("*")
+        .eq("institution_id", institutionId);
+
+      if (subjectError) {
+        console.error("Error fetching subject results:", subjectError);
+        throw subjectError;
+      }
+
+      console.log(`Found ${subjectResults?.length || 0} subject results from Sedefy Académico`);
 
       // Get videos watched through user_path_progress
       const { data: videoProgress, error: progressError } = await supabase
@@ -133,12 +147,12 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
         };
       });
 
-      // Process quiz results
+      // Process internal quiz results
       let totalQuizzes = 0;
       let totalScore = 0;
       let totalMaxScore = 0;
 
-      console.log("Processing quiz results...");
+      console.log("Processing internal quiz results...");
       
       quizResults?.forEach(result => {
         const dbAreaName = result.area_academica;
@@ -175,7 +189,40 @@ export const useInstitutionAcademicMetrics = (institutionId?: string) => {
         }
       });
 
-      console.log("Quiz processing complete. Area metrics:", areaMetrics);
+      // Process external subject results (Sedefy Académico)
+      console.log("Processing subject results from Sedefy Académico...");
+      
+      subjectResults?.forEach(result => {
+        const areaName = result.area_academica;
+        
+        console.log(`Subject area: "${areaName}"`);
+        
+        if (areaMetrics[areaName]) {
+          areaMetrics[areaName].quizzesCompleted++;
+          const percentage = (result.score / result.max_score) * 100;
+          areaMetrics[areaName].averageScore += percentage;
+        } else {
+          console.warn(`Area "${areaName}" not found in metrics. Available areas:`, Object.keys(areaMetrics));
+        }
+
+        totalQuizzes++;
+        totalScore += Number(result.score);
+        totalMaxScore += Number(result.max_score);
+
+        // Map to intelligences
+        const area = academicAreas.find(a => a.name === areaName);
+        if (area && area.relatedIntelligences) {
+          area.relatedIntelligences.forEach(intelName => {
+            if (intelligenceMetrics[intelName]) {
+              intelligenceMetrics[intelName].quizzesCompleted++;
+              const percentage = (result.score / result.max_score) * 100;
+              intelligenceMetrics[intelName].averageScore += percentage;
+            }
+          });
+        }
+      });
+
+      console.log("All results processing complete. Area metrics:", areaMetrics);
 
       // Calculate average scores and final scores for areas
       Object.keys(areaMetrics).forEach(key => {
