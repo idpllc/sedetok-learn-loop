@@ -933,7 +933,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   {step}
                 </div>
                 <p className="text-xs mt-2 text-center hidden md:block">
-                  {step === 1 ? "Info Básica" : step === 2 ? "Preguntas" : "Configuración"}
+                  {step === 1 ? "Tipo y Datos" : step === 2 ? (gameType === "word_order" ? "Preguntas" : "Conexiones") : "Configuración"}
                 </p>
               </div>
               {index < 2 && (
@@ -1045,7 +1045,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   const newStep = gameStep + 1;
                   setGameStep(newStep);
                   if (newStep === 2) {
-                    onTitleChange?.("Crear Juego - Preguntas");
+                    const stepTitle = gameType === "word_order" 
+                      ? "Crear Juego - Ordenar Palabras"
+                      : "Crear Juego - Conectar Columnas";
+                    onTitleChange?.(stepTitle);
                   } else if (newStep === 3) {
                     onTitleChange?.("Crear Juego - Configuración");
                   }
