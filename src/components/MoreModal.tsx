@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X, User, GraduationCap, Calendar, BookOpen, Store, Building2, Smartphone, FileEdit } from "lucide-react";
+import { X, User, GraduationCap, Calendar, BookOpen, Store, Building2, Smartphone, FileEdit, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface MoreModalProps {
@@ -16,6 +16,12 @@ export const MoreModal = ({ open, onOpenChange }: MoreModalProps) => {
   };
 
   const menuItems = [
+    {
+      icon: ClipboardList,
+      label: "Actividad",
+      path: "/profile?tab=activity",
+      description: "Ver tu actividad: me gusta, guardados y compartidos",
+    },
     {
       icon: User,
       label: "Perfil profesional",

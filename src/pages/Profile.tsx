@@ -29,6 +29,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useUserContent } from "@/hooks/useUserContent";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
+import { useCourses } from "@/hooks/useCourses";
 import { useFollow } from "@/hooks/useFollow";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { useProfileUpdate } from "@/hooks/useProfileUpdate";
@@ -47,11 +48,14 @@ const Profile = () => {
   const isOwnProfile = !userId || userId === user?.id;
   const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(userId);
   const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(userId || user?.id, 'created');
+  const { courses, isLoading: coursesLoading, deleteCourse } = useCourses('created');
   const { isFollowing, toggleFollow, isProcessing } = useFollow(userId || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
   const [pathToDelete, setPathToDelete] = useState<string | null>(null);
   const [deletePathDialogOpen, setDeletePathDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
+  const [deleteCourseDialogOpen, setDeleteCourseDialogOpen] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState<{ url: string; title: string } | null>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
@@ -124,6 +128,19 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteCourse = (courseId: string) => {
+    setCourseToDelete(courseId);
+    setDeleteCourseDialogOpen(true);
+  };
+
+  const confirmDeleteCourse = () => {
+    if (courseToDelete) {
+      deleteCourse.mutate(courseToDelete);
+      setDeleteCourseDialogOpen(false);
+      setCourseToDelete(null);
+    }
+  };
+
   const toggleVisibility = (contentId: string, isPublic: boolean) => {
     updateMutation.mutate({
       contentId,
@@ -153,6 +170,90 @@ const Profile = () => {
   const documentContent = userContent?.filter(c => c.content_type === "document") || [];
   const readingContent = userContent?.filter(c => c.content_type === "lectura") || [];
   const quizContent = userContent?.filter(c => c.content_type === "quiz") || [];
+
+  const CourseItem = ({ course }: { course: any }) => (
+    <Card 
+      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => navigate(`/courses/${course.id}`)}
+    >
+      <div className="relative">
+        <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20">
+          {course.cover_url ? (
+            <img 
+              src={course.cover_url} 
+              alt={course.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <GraduationCap className="w-12 h-12" />
+            </div>
+          )}
+        </div>
+        
+        {isOwnProfile && (
+          <div className="absolute top-2 right-2 flex gap-1">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-foreground/90 backdrop-blur-sm hover:bg-foreground text-background"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/courses/edit/${course.id}`);
+              }}
+              title="Editar"
+            >
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              className="h-8 w-8 backdrop-blur-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteCourse(course.id);
+              }}
+              title="Eliminar"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <CardHeader className="space-y-2 p-4">
+        <CardTitle className="text-base line-clamp-2">{course.title}</CardTitle>
+        <CardDescription className="text-sm line-clamp-2">
+          {course.description || "Sin descripción"}
+        </CardDescription>
+        
+        <div className="flex items-center gap-2 flex-wrap pt-2">
+          <Badge variant="secondary" className="text-xs">{course.category}</Badge>
+          <Badge variant="outline" className="text-xs">{course.grade_level}</Badge>
+          {!course.is_public && (
+            <Badge variant="destructive" className="text-xs">Privado</Badge>
+          )}
+          {course.status === 'draft' && (
+            <Badge variant="secondary" className="text-xs">Borrador</Badge>
+          )}
+          {course.status === 'published' && (
+            <Badge className="text-xs bg-green-500/10 text-green-500 border-green-500/20">Publicado</Badge>
+          )}
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-4 pt-0">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            📚 <span className="text-foreground font-medium">{course.estimated_duration || 0} min</span>
+          </span>
+          <span className="flex items-center gap-1">
+            ⭐ <span className="text-foreground font-medium">{course.total_xp || 0} XP</span>
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   const PathItem = ({ path }: { path: any }) => (
     <Card 
@@ -551,12 +652,10 @@ const Profile = () => {
               <Map className="w-4 h-4" />
               <span className="hidden sm:inline">Rutas</span> ({learningPaths?.length || 0})
             </TabsTrigger>
-            {isOwnProfile && (
-              <TabsTrigger value="activity" className="flex items-center gap-2">
-                <Heart className="w-4 h-4" />
-                <span className="hidden sm:inline">Actividad</span>
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="courses" className="flex items-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              <span className="hidden sm:inline">Cursos</span> ({courses?.length || 0})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="videos" className="mt-6">
@@ -630,6 +729,32 @@ const Profile = () => {
                       onClick={() => navigate("/learning-paths/create")}
                     >
                       Crear ruta de aprendizaje
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="courses" className="mt-6">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {coursesLoading ? (
+                [1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-64 w-full" />
+                ))
+              ) : courses && courses.length > 0 ? (
+                courses.map((course) => <CourseItem key={course.id} course={course} />)
+              ) : (
+                <div className="col-span-full text-center py-12 text-muted-foreground">
+                  <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No tienes cursos aún</p>
+                  {isOwnProfile && (
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => navigate("/courses/create")}
+                    >
+                      Crear curso
                     </Button>
                   )}
                 </div>
@@ -735,6 +860,24 @@ const Profile = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeletePath} className="bg-destructive hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete course confirmation dialog */}
+      <AlertDialog open={deleteCourseDialogOpen} onOpenChange={setDeleteCourseDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El curso será eliminado permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteCourse} className="bg-destructive hover:bg-destructive/90">
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
