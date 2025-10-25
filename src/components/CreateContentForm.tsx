@@ -25,6 +25,7 @@ import { PathReview } from "./learning-paths/wizard/PathReview";
 import { GameStep1 } from "./game/GameStep1";
 import { GameStep2 } from "./game/GameStep2";
 import { GameStep3 } from "./game/GameStep3";
+import { WordWheelQuestionsEditor } from "./game/WordWheelQuestionsEditor";
 import { useGames, useGameQuestions, GameQuestion } from "@/hooks/useGames";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -967,17 +968,28 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           {gameStep === 2 && (
             <div className="border rounded-lg p-6 bg-card">
               <h3 className="text-xl font-semibold mb-2">
-                {gameType === "word_order" ? "Preguntas" : "Configurar Conexiones"}
+                {gameType === "word_order" 
+                  ? "Preguntas" 
+                  : gameType === "word_wheel"
+                  ? "Configurar Ruleta de Palabras"
+                  : "Configurar Conexiones"}
               </h3>
               <p className="text-sm text-muted-foreground mb-6">
                 {gameType === "word_order" 
                   ? "Crea preguntas de ordenar palabras"
+                  : gameType === "word_wheel"
+                  ? "Define las preguntas para cada letra del abecedario"
                   : "Crea los pares de items para conectar"}
               </p>
               {gameType === "word_order" ? (
                 <GameStep2 
                   questions={gameQuestions} 
                   onChange={setGameQuestions}
+                />
+              ) : gameType === "word_wheel" ? (
+                <WordWheelQuestionsEditor
+                  questions={gameQuestions as any}
+                  onChange={setGameQuestions as any}
                 />
               ) : (
                 <GameColumnMatchEditor

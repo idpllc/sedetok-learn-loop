@@ -11,6 +11,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { GameColumnMatchEditor } from "@/components/game/GameColumnMatchEditor";
 import { WordOrderEditor } from "@/components/game/WordOrderEditor";
 import { WordWheelEditor } from "@/components/game/WordWheelEditor";
+import { WordWheelQuestionsEditor } from "@/components/game/WordWheelQuestionsEditor";
 import { useGames, useGameQuestions, GameQuestion } from "@/hooks/useGames";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { toast } from "sonner";
@@ -346,122 +347,41 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
       {gameType === "word_wheel" && (
         <Card>
           <CardHeader>
-            <CardTitle>Preguntas ({questions?.length || 0})</CardTitle>
-            <CardDescription>Gestiona las preguntas de la ruleta de palabras</CardDescription>
+            <CardTitle>Preguntas de Ruleta ({questions?.length || 0})</CardTitle>
+            <CardDescription>Configura las preguntas para cada letra del abecedario</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* List of existing questions */}
-            {questions && questions.length > 0 && (
-              <div className="space-y-3">
-                {questions.map((q: any, index: number) => (
-                  <Card key={q.id} className="border-2">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-                              {q.initial_letter || "?"}
-                            </div>
-                            <h4 className="font-medium">Pregunta {index + 1}</h4>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">{q.question_text}</p>
-                          <p className="text-sm font-medium mt-2">Respuesta: {q.correct_sentence}</p>
-                        </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => deleteQuestion.mutate(q.id)}
-                          disabled={deleteQuestion.isPending}
-                        >
-                          {deleteQuestion.isPending ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {/* Add new question form */}
-            {!newQuestion ? (
-              <Button onClick={() => setNewQuestion({
-                question_text: "",
-                correct_sentence: "",
-                words: [],
-                points: 10,
-                order_index: questions?.length || 0,
-              })} className="w-full">
-                <Plus className="w-4 h-4 mr-2" />
-                Agregar Nueva Pregunta
-              </Button>
-            ) : (
-              <Card className="border-2 border-primary">
-                <CardHeader>
-                  <CardTitle className="text-base">Nueva Pregunta</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <WordWheelEditor
-                    question={{
-                      question_text: newQuestion.question_text,
-                      correct_sentence: newQuestion.correct_sentence,
-                      initial_letter: (newQuestion as any).initial_letter || "A",
-                      points: newQuestion.points,
-                      order_index: newQuestion.order_index,
-                    }}
-                    onChange={(updated) => setNewQuestion({
-                      ...newQuestion,
-                      question_text: updated.question_text,
-                      correct_sentence: updated.correct_sentence,
-                      points: updated.points,
-                      order_index: updated.order_index,
-                      initial_letter: updated.initial_letter,
-                    } as any)}
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={async () => {
-                        if (!newQuestion.question_text || !newQuestion.correct_sentence || !(newQuestion as any).initial_letter) {
-                          toast.error("Completa todos los campos de la pregunta");
-                          return;
-                        }
-                        
-                        try {
-                          await createQuestion.mutateAsync({
-                            ...newQuestion,
-                            initial_letter: (newQuestion as any).initial_letter,
-                            game_id: gameData.id,
-                          } as any);
-                          setNewQuestion(null);
-                          toast.success("Pregunta agregada");
-                        } catch (error) {
-                          toast.error("Error al agregar pregunta");
-                        }
-                      }}
-                      disabled={createQuestion.isPending}
-                    >
-                      {createQuestion.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Guardar Pregunta
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setNewQuestion(null)}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            {!questions || questions.length === 0 && !newQuestion && (
-              <p className="text-center text-muted-foreground py-8">
-                No hay preguntas aún. Agrega la primera pregunta.
-              </p>
-            )}
+          <CardContent>
+            <WordWheelQuestionsEditor
+              questions={(questions || []).map(q => ({
+                question_text: q.question_text,
+                correct_sentence: q.correct_sentence,
+                initial_letter: (q as any).initial_letter || "A",
+                points: q.points,
+                order_index: q.order_index,
+              }))}
+              onChange={(updated) => {
+                // Delete all existing questions
+                const deletePromises = (questions || []).map(q => 
+                  deleteQuestion.mutateAsync(q.id)
+                );
+                
+                Promise.all(deletePromises).then(() => {
+                  // Create new questions
+                  const createPromises = updated.map((q, index) => 
+                    createQuestion.mutateAsync({
+                      ...q,
+                      game_id: gameData.id,
+                      order_index: index,
+                    } as any)
+                  );
+                  
+                  return Promise.all(createPromises);
+                }).catch(error => {
+                  console.error("Error updating questions:", error);
+                  toast.error("Error al actualizar preguntas");
+                });
+              }}
+            />
           </CardContent>
         </Card>
       )}
