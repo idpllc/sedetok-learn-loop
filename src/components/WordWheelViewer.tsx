@@ -301,15 +301,15 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="h-full overflow-y-auto p-4 md:p-6 bg-gradient-to-br from-background to-muted/20">
+    <div className="h-full overflow-y-auto p-2 md:p-3 bg-gradient-to-br from-background to-muted/20">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {[...Array(3)].map((_, i) => (
               <Heart
                 key={i}
-                className={`w-6 h-6 ${
+                className={`w-5 h-5 ${
                   i < lives
                     ? "fill-red-500 text-red-500"
                     : "fill-muted text-muted"
@@ -317,30 +317,30 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
               />
             ))}
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             {timeRemaining !== null && (
-              <div className="flex items-center gap-2 text-primary">
-                <Clock className="w-5 h-5" />
-                <span className="font-mono font-bold text-lg">{formatTime(timeRemaining)}</span>
+              <div className="flex items-center gap-1 text-primary">
+                <Clock className="w-4 h-4" />
+                <span className="font-mono font-bold text-base">{formatTime(timeRemaining)}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
-              <Trophy className="w-5 h-5 text-primary" />
-              <span className="font-bold text-lg">{score}</span>
+            <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
+              <Trophy className="w-4 h-4 text-primary" />
+              <span className="font-bold text-base">{score}</span>
             </div>
           </div>
         </div>
 
         {/* Title */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold mb-2">{gameData?.title}</h2>
-          <p className="text-muted-foreground">{gameData?.description}</p>
+        <div className="text-center mb-3">
+          <h2 className="text-xl font-bold mb-1">{gameData?.title}</h2>
+          <p className="text-sm text-muted-foreground">{gameData?.description}</p>
         </div>
 
         {/* Question */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <p className="text-lg text-center font-medium">{currentQuestion.question_text}</p>
+        <Card className="mb-4">
+          <CardContent className="p-3">
+            <p className="text-base text-center font-medium">{currentQuestion.question_text}</p>
           </CardContent>
         </Card>
 
@@ -385,11 +385,11 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
           </div>
 
           {/* Center Content */}
-          <div className="relative z-10 w-80 space-y-4">
-            <div className="bg-card/95 backdrop-blur-sm p-6 rounded-xl shadow-2xl border-2 border-primary/20">
-              <div className="text-center mb-4">
-                <p className="text-sm text-muted-foreground mb-1">Empieza por</p>
-                <div className="text-5xl font-bold text-primary">
+          <div className="relative z-10 w-56 space-y-2">
+            <div className="bg-card/95 backdrop-blur-sm p-3 rounded-xl shadow-2xl border-2 border-primary/20">
+              <div className="text-center mb-2">
+                <p className="text-xs text-muted-foreground mb-1">Empieza por</p>
+                <div className="text-3xl font-bold text-primary">
                   {currentQuestion.initial_letter.toUpperCase()}
                 </div>
               </div>
@@ -400,15 +400,15 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSubmit();
                 }}
-                placeholder="Escribe tu respuesta..."
-                className="text-center text-lg font-medium mb-4"
+                placeholder="Tu respuesta..."
+                className="text-center text-sm font-medium mb-2 h-9"
                 autoFocus
               />
 
               <div className="flex gap-2">
                 <Button
                   onClick={handleSubmit}
-                  className="flex-1"
+                  className="flex-1 h-8 text-sm"
                   disabled={!userAnswer.trim()}
                 >
                   Enviar
@@ -416,7 +416,7 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
                 <Button
                   onClick={handleSkip}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 h-8 text-sm"
                 >
                   Pasar
                 </Button>
@@ -424,8 +424,8 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
             </div>
 
             {/* Progress indicator */}
-            <div className="bg-card/80 backdrop-blur-sm p-3 rounded-lg text-center border border-border">
-              <div className="text-sm font-medium">
+            <div className="bg-card/80 backdrop-blur-sm p-2 rounded-lg text-center border border-border">
+              <div className="text-xs font-medium">
                 <span className="text-primary font-bold">{correctCount}</span>
                 <span className="text-muted-foreground">/{totalQuestions}</span>
               </div>
