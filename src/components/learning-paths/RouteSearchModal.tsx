@@ -110,17 +110,31 @@ export const RouteSearchModal = ({
                     className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold truncate">{route.title}</h4>
+                    <h4 className="font-semibold truncate flex-1">{route.title}</h4>
                     {isSelected && (
                       <Check className="w-4 h-4 text-primary flex-shrink-0" />
                     )}
                   </div>
                   {route.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words">
                       {route.description}
                     </p>
+                  )}
+                  {route.profiles && (
+                    <div className="flex items-center gap-2 mb-2">
+                      {route.profiles.avatar_url && (
+                        <img
+                          src={route.profiles.avatar_url}
+                          alt={route.profiles.username}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      )}
+                      <span className="text-xs text-muted-foreground truncate">
+                        por {route.profiles.full_name || route.profiles.username}
+                      </span>
+                    </div>
                   )}
                   <div className="flex items-center gap-2 flex-wrap">
                     {route.subject && (
@@ -133,11 +147,11 @@ export const RouteSearchModal = ({
                         {route.grade_level}
                       </Badge>
                     )}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
                       ⚡ {route.total_xp || 0} XP
                     </span>
                     {route.status === "published" && (
-                      <Badge className="text-xs bg-green-500/10 text-green-500 border-green-500/20">
+                      <Badge className="text-xs bg-green-500/10 text-green-500 border-green-500/20 whitespace-nowrap">
                         Publicada
                       </Badge>
                     )}

@@ -377,18 +377,32 @@ export default function CreateCourse() {
                           className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
                         />
                       )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">{path.title}</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <p className="font-medium truncate">{path.title}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1 break-words">
                           {path.description}
                         </p>
+                        {path.profiles && (
+                          <div className="flex items-center gap-2 mt-1">
+                            {path.profiles.avatar_url && (
+                              <img
+                                src={path.profiles.avatar_url}
+                                alt={path.profiles.username}
+                                className="w-4 h-4 rounded-full object-cover"
+                              />
+                            )}
+                            <span className="text-xs text-muted-foreground truncate">
+                              por {path.profiles.full_name || path.profiles.username}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
                           {path.subject && (
                             <Badge variant="secondary" className="text-xs">
                               {path.subject}
                             </Badge>
                           )}
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
                             ⚡ {path.total_xp || 0} XP
                           </span>
                         </div>
@@ -466,18 +480,23 @@ export default function CreateCourse() {
                           key={path.id}
                           className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30"
                         >
-                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex-shrink-0">
                             {index + 1}
                           </div>
                           {(path.thumbnail_url || path.cover_url) && (
                             <img
                               src={path.thumbnail_url || path.cover_url}
                               alt={path.title}
-                              className="w-12 h-12 rounded object-cover"
+                              className="w-12 h-12 rounded object-cover flex-shrink-0"
                             />
                           )}
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 overflow-hidden">
                             <p className="text-sm font-medium truncate">{path.title}</p>
+                            {path.profiles && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                por {path.profiles.full_name || path.profiles.username}
+                              </p>
+                            )}
                             <p className="text-xs text-muted-foreground">
                               ⚡ {path.total_xp || 0} XP
                             </p>

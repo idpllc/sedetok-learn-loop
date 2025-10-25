@@ -13,7 +13,10 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         // Public paths for non-authenticated users
         const { data, error } = await supabase
           .from("learning_paths")
-          .select("*")
+          .select(`
+            *,
+            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+          `)
           .eq("is_public", true)
           .order("created_at", { ascending: false });
         
@@ -25,7 +28,10 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         // Only paths created by the user
         const { data, error } = await supabase
           .from("learning_paths")
-          .select("*")
+          .select(`
+            *,
+            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+          `)
           .eq("creator_id", userId)
           .order("created_at", { ascending: false });
         
@@ -46,7 +52,10 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         
         const { data, error } = await supabase
           .from("learning_paths")
-          .select("*")
+          .select(`
+            *,
+            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+          `)
           .in("id", pathIds)
           .order("created_at", { ascending: false });
         
@@ -56,7 +65,10 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         // All public paths + own (including drafts) when logged in
         let query = supabase
           .from("learning_paths")
-          .select("*")
+          .select(`
+            *,
+            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+          `)
           .order("created_at", { ascending: false });
         if (userId) {
           // Show public paths or those created by the current user
