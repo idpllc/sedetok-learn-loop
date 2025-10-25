@@ -16,8 +16,8 @@ export const useInfiniteContent = (
   return useInfiniteQuery({
     queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
-      const from = pageParam * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      // Fetch a larger dynamic batch to merge two sources and paginate reliably
+      const batchSize = (pageParam + 2) * ITEMS_PER_PAGE;
       
       // Fetch regular content
       let contentQuery = supabase
@@ -34,7 +34,7 @@ export const useInfiniteContent = (
         `)
         .eq("is_public", true)
         .order("created_at", { ascending: false })
-        .range(from, to);
+        .limit(batchSize);
 
       if (contentType && contentType !== "all" && contentType !== "quiz") {
         contentQuery = contentQuery.eq("content_type", contentType as any);
@@ -46,9 +46,9 @@ export const useInfiniteContent = (
       }
 
       // Apply subject filter
-        // Subject filter handled client-side for accent-insensitive matching
-
-
+      if (subject && subject !== "all") {
+        contentQuery = contentQuery.ilike("subject", `%${subject}%`);
+      }
       // Apply grade level filter
       if (gradeLevel && gradeLevel !== "all") {
         contentQuery = contentQuery.eq("grade_level", gradeLevel as any);
@@ -76,7 +76,7 @@ export const useInfiniteContent = (
           .eq("is_public", true)
           .eq("status", "publicado")
           .order("created_at", { ascending: false })
-          .range(from, to);
+          .limit(batchSize);
 
         // Apply search filter
         if (searchQuery && searchQuery.trim() !== "") {
@@ -84,9 +84,9 @@ export const useInfiniteContent = (
         }
 
         // Apply subject filter
-        // Subject filter handled client-side for accent-insensitive matching
-
-
+        if (subject && subject !== "all") {
+          quizQuery = quizQuery.ilike("subject", `%${subject}%`);
+        }
         // Apply grade level filter
         if (gradeLevel && gradeLevel !== "all") {
           quizQuery = quizQuery.eq("grade_level", gradeLevel as any);
@@ -194,9 +194,14 @@ export const useInfiniteContent = (
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
+      // Paginate the combined results to ensure exactly ITEMS_PER_PAGE per page
+      const startIndex = pageParam * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE;
+      const paginatedItems = allContent.slice(startIndex, endIndex);
+
       return {
-        items: allContent,
-        nextPage: allContent.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
+        items: paginatedItems,
+        nextPage: endIndex < allContent.length ? pageParam + 1 : undefined,
         totalCount: allContent.length,
       };
     },
