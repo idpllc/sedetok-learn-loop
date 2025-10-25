@@ -131,7 +131,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
   return (
     <div className="relative">
       {/* Portada */}
-      <div className="relative h-48 md:h-64 bg-gradient-to-r from-primary to-secondary rounded-t-lg overflow-hidden">
+      <div className="relative h-32 md:h-48 bg-gradient-to-r from-primary to-secondary rounded-t-lg overflow-hidden">
         {profile?.cover_image_url && (
           <img 
             src={profile.cover_image_url} 
@@ -140,10 +140,10 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
           />
         )}
         {isOwnProfile && (
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-2 right-2 md:top-4 md:right-4">
             <Button variant="secondary" size="sm" disabled={uploading} onClick={() => coverInputRef.current?.click()}>
-              <Camera className="w-4 h-4 mr-2" />
-              {uploading ? "Subiendo..." : "Cambiar portada"}
+              <Camera className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
+              <span className="hidden md:inline">{uploading ? "Subiendo..." : "Cambiar portada"}</span>
             </Button>
             <input
               ref={coverInputRef}
@@ -158,18 +158,18 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
       </div>
 
       {/* Información del perfil */}
-      <div className="px-6 pb-6">
+      <div className="px-3 pb-3 md:px-6 md:pb-6">
         {/* Avatar y acciones */}
-        <div className="flex items-start gap-4 -mt-16 mb-4">
+        <div className="flex items-start gap-2 md:gap-4 -mt-10 md:-mt-16 mb-2 md:mb-4">
           <div className="relative">
-            <Avatar className="w-32 h-32 border-4 border-background">
+            <Avatar className="w-20 h-20 md:w-32 md:h-32 border-2 md:border-4 border-background">
               <AvatarImage src={profile?.avatar_url} />
-              <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
+              <AvatarFallback className="text-lg md:text-2xl">{getInitials()}</AvatarFallback>
             </Avatar>
             {isOwnProfile && (
-              <div className="absolute -top-2 -right-2">
-                <Button size="icon" variant="secondary" className="rounded-full shadow-lg" disabled={uploading} onClick={() => avatarInputRef.current?.click()}>
-                  <Camera className="w-4 h-4" />
+              <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2">
+                <Button size="icon" variant="secondary" className="rounded-full shadow-lg h-7 w-7 md:h-10 md:w-10" disabled={uploading} onClick={() => avatarInputRef.current?.click()}>
+                  <Camera className="w-3 h-3 md:w-4 md:h-4" />
                 </Button>
                 <input
                   ref={avatarInputRef}
@@ -184,48 +184,48 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
           </div>
 
           {/* Redes sociales y compartir */}
-          <div className="flex items-center gap-2 mt-auto">
+          <div className="flex items-center gap-1 md:gap-2 mt-auto">
             {hasSocialLinks && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 md:gap-1">
                 {socialLinks.linkedin && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" asChild>
                     <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer">
-                      <Linkedin className="w-4 h-4" />
+                      <Linkedin className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </a>
                   </Button>
                 )}
                 {socialLinks.instagram && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" asChild>
                     <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer">
-                      <Instagram className="w-4 h-4" />
+                      <Instagram className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </a>
                   </Button>
                 )}
                 {socialLinks.facebook && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" asChild>
                     <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer">
-                      <Facebook className="w-4 h-4" />
+                      <Facebook className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </a>
                   </Button>
                 )}
                 {socialLinks.twitter && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" asChild>
                     <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer">
-                      <Twitter className="w-4 h-4" />
+                      <Twitter className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </a>
                   </Button>
                 )}
                 {socialLinks.tiktok && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" asChild>
                     <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer">
-                      <FaTiktok className="w-4 h-4" />
+                      <FaTiktok className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </a>
                   </Button>
                 )}
                 {socialLinks.github && (
-                  <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" asChild>
                     <a href={socialLinks.github} target="_blank" rel="noopener noreferrer">
-                      <Github className="w-4 h-4" />
+                      <Github className="w-3.5 h-3.5 md:w-4 md:h-4" />
                     </a>
                   </Button>
                 )}
@@ -235,8 +235,8 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
             {/* Modal de compartir */}
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9" title="Compartir perfil">
-                  <Share2 className="w-4 h-4" />
+                <Button variant="ghost" size="icon" className="h-7 w-7 md:h-9 md:w-9" title="Compartir perfil">
+                  <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
@@ -327,72 +327,72 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
         </div>
 
         {/* Nombre y título */}
-        <div className="space-y-2">
+        <div className="space-y-1 md:space-y-2">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold">{profile?.full_name || profile?.username}</h1>
+              <h1 className="text-xl md:text-3xl font-bold">{profile?.full_name || profile?.username}</h1>
               {profile?.bio && (
-                <p className="text-muted-foreground mt-1">{profile.bio}</p>
+                <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{profile.bio}</p>
               )}
             </div>
             {profile?.is_verified && (
-              <Badge variant="default" className="ml-2">
+              <Badge variant="default" className="ml-2 text-xs">
                 ✓ Verificado
               </Badge>
             )}
           </div>
 
           {/* Información básica */}
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap gap-2 md:gap-4 text-xs md:text-sm text-muted-foreground">
             {profile?.institution && (
               <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {profile.institution}
+                <MapPin className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="line-clamp-1">{profile.institution}</span>
               </div>
             )}
             {(profile?.pais || profile?.municipio) && (
               <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {[profile.municipio, profile.departamento, profile.pais].filter(Boolean).join(", ")}
+                <MapPin className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="line-clamp-1">{[profile.municipio, profile.departamento, profile.pais].filter(Boolean).join(", ")}</span>
               </div>
             )}
             {age && (
               <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-3 h-3 md:w-4 md:h-4" />
                 {age} años
               </div>
             )}
             {profile?.email && (
               <div className="flex items-center gap-1">
-                <Mail className="w-4 h-4" />
-                {profile.email}
+                <Mail className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="line-clamp-1">{profile.email}</span>
               </div>
             )}
             {profile?.phone && (
               <div className="flex items-center gap-1">
-                <Phone className="w-4 h-4" />
+                <Phone className="w-3 h-3 md:w-4 md:h-4" />
                 {profile.phone}
               </div>
             )}
           </div>
 
           {/* Estadísticas rápidas */}
-          <div className="flex gap-6 pt-4">
+          <div className="flex gap-3 md:gap-6 pt-2 md:pt-4">
             <div>
-              <div className="text-2xl font-bold text-primary">{profile?.experience_points || 0}</div>
-              <div className="text-xs text-muted-foreground">XP</div>
+              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.experience_points || 0}</div>
+              <div className="text-[10px] md:text-xs text-muted-foreground">XP</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-primary">{profile?.followers_count || 0}</div>
-              <div className="text-xs text-muted-foreground">Seguidores</div>
+              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.followers_count || 0}</div>
+              <div className="text-[10px] md:text-xs text-muted-foreground">Seguidores</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-primary">{profile?.following_count || 0}</div>
-              <div className="text-xs text-muted-foreground">Siguiendo</div>
+              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.following_count || 0}</div>
+              <div className="text-[10px] md:text-xs text-muted-foreground">Siguiendo</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-primary">{profile?.profile_views || 0}</div>
-              <div className="text-xs text-muted-foreground">Visitas</div>
+              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.profile_views || 0}</div>
+              <div className="text-[10px] md:text-xs text-muted-foreground">Visitas</div>
             </div>
           </div>
         </div>

@@ -460,13 +460,13 @@ const Profile = () => {
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* Profile Summary Card with Level */}
         {profileData && (
-          <Card className="mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-6">
+          <Card className="mb-4 md:mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+            <CardContent className="p-3 md:p-6">
+              <div className="flex items-center gap-3 md:gap-6">
                 <div className="relative group">
-                  <Avatar className="w-20 h-20 border-4 border-primary/20">
+                  <Avatar className="w-16 h-16 md:w-20 md:h-20 border-2 md:border-4 border-primary/20">
                     <AvatarImage src={profileData.avatar_url || ""} alt={profileData.username} />
-                    <AvatarFallback className="text-2xl">
+                    <AvatarFallback className="text-lg md:text-2xl">
                       {profileData.username?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
@@ -477,7 +477,7 @@ const Profile = () => {
                         disabled={uploading}
                         className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                       >
-                        <Camera className="w-6 h-6 text-white" />
+                        <Camera className="w-4 h-4 md:w-6 md:h-6 text-white" />
                       </button>
                       <input
                         ref={fileInputRef}
@@ -489,26 +489,26 @@ const Profile = () => {
                     </>
                   )}
                 </div>
-                <div className="text-5xl">
+                <div className="text-3xl md:text-5xl">
                   {getUserLevel(profileData.experience_points || 0).icon}
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold mb-1">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg md:text-2xl font-bold mb-0.5 md:mb-1">
                     {getUserLevel(profileData.experience_points || 0).level}
                   </h2>
-                  <p className="text-lg text-muted-foreground mb-2">
+                  <p className="text-sm md:text-lg text-muted-foreground mb-1 md:mb-2">
                     {(profileData.experience_points || 0).toLocaleString()} XP
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1 md:gap-2">
                     {getUserLevel(profileData.experience_points || 0).benefits.map((benefit, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                      <Badge key={idx} variant="secondary" className="text-[10px] md:text-xs">
                         {benefit}
                       </Badge>
                     ))}
                   </div>
                 </div>
                 {isOwnProfile && (
-                  <div className="flex flex-col gap-2">
+                  <div className="hidden md:flex flex-col gap-2">
                     <Button 
                       variant="default" 
                       size="sm" 
