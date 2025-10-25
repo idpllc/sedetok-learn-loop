@@ -1002,6 +1002,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <GameStep2 
                   questions={gameQuestions} 
                   onChange={setGameQuestions}
+                  gameContext={{
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.category,
+                    grade_level: formData.grade_level,
+                    gameType,
+                  }}
                 />
               ) : gameType === "word_wheel" ? (
                 <WordWheelQuestionsEditor
