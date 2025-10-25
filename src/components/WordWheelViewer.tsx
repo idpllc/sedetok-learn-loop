@@ -301,10 +301,10 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="h-full overflow-y-auto p-2 md:p-3 bg-gradient-to-br from-background to-muted/20">
+    <div className="h-full overflow-y-auto bg-gradient-to-br from-background to-muted/20">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between p-2">
           <div className="flex items-center gap-2">
             {[...Array(3)].map((_, i) => (
               <Heart
@@ -332,13 +332,13 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
         </div>
 
         {/* Title */}
-        <div className="text-center mb-3">
+        <div className="text-center px-2 mb-2">
           <h2 className="text-xl font-bold mb-1">{gameData?.title}</h2>
           <p className="text-sm text-muted-foreground">{gameData?.description}</p>
         </div>
 
         {/* Question */}
-        <Card className="mb-4">
+        <Card className="mb-2 mx-2">
           <CardContent className="p-3">
             <p className="text-base text-center font-medium">{currentQuestion.question_text}</p>
           </CardContent>
@@ -385,7 +385,7 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
           </div>
 
           {/* Center Content */}
-          <div className="relative z-10 w-56 space-y-2">
+          <div className="relative z-0 w-56">
             <div className="bg-card/95 backdrop-blur-sm p-3 rounded-xl shadow-2xl border-2 border-primary/20">
               <div className="text-center mb-2">
                 <p className="text-xs text-muted-foreground mb-1">Empieza por</p>
@@ -420,14 +420,6 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
                 >
                   Pasar
                 </Button>
-              </div>
-            </div>
-
-            {/* Progress indicator */}
-            <div className="bg-card/80 backdrop-blur-sm p-2 rounded-lg text-center border border-border">
-              <div className="text-xs font-medium">
-                <span className="text-primary font-bold">{correctCount}</span>
-                <span className="text-muted-foreground">/{totalQuestions}</span>
               </div>
             </div>
           </div>
