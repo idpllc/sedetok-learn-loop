@@ -1735,17 +1735,17 @@ export type Database = {
       quiz_difficulty: "basico" | "intermedio" | "avanzado"
       quiz_status: "borrador" | "publicado"
       tipo_aprendizaje:
-        | "Lingüística"
         | "Lógico-Matemática"
-        | "Espacial"
+        | "Lingüístico-Verbal"
+        | "Visual-Espacial"
         | "Musical"
-        | "Cinético-Corporal"
+        | "Corporal-Kinestésica"
         | "Interpersonal"
         | "Intrapersonal"
         | "Naturalista"
         | "Existencial"
-        | "Creativa"
-        | "Digital"
+        | "Digital-Tecnológica"
+        | "Creativa-Innovadora"
         | "Emocional"
       tipo_documento:
         | "RC"
@@ -1942,17 +1942,17 @@ export const Constants = {
       quiz_difficulty: ["basico", "intermedio", "avanzado"],
       quiz_status: ["borrador", "publicado"],
       tipo_aprendizaje: [
-        "Lingüística",
         "Lógico-Matemática",
-        "Espacial",
+        "Lingüístico-Verbal",
+        "Visual-Espacial",
         "Musical",
-        "Cinético-Corporal",
+        "Corporal-Kinestésica",
         "Interpersonal",
         "Intrapersonal",
         "Naturalista",
         "Existencial",
-        "Creativa",
-        "Digital",
+        "Digital-Tecnológica",
+        "Creativa-Innovadora",
         "Emocional",
       ],
       tipo_documento: [
