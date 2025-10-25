@@ -110,7 +110,6 @@ export const useInfiniteContent = (
             )
           `)
           .eq("is_public", true)
-          .eq("status", "publicado")
           .order("created_at", { ascending: false })
           .limit(batchSize);
 
@@ -335,7 +334,6 @@ export const useContent = () => {
           )
         `)
         .eq("is_public", true)
-        .eq("status", "publicado")
         .order("created_at", { ascending: false })
         .limit(50);
 

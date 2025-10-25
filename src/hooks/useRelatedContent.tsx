@@ -256,7 +256,6 @@ export const useRelatedContent = (contentId?: string, quizId?: string, gameId?: 
           )
         `)
         .eq("is_public", true)
-        .eq("status", "publicado")
         .eq("category", category as any)
         .neq("id", gameId || "")
         .order("created_at", { ascending: false })
