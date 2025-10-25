@@ -210,43 +210,51 @@ const EditProfile = () => {
       await updateProfile(updates);
 
       // Award XP for new additions
-      // Social links
+      // Social links - award for each new link
       const socialLinksPromises = Object.keys(socialLinks).map(async (key) => {
-        if (socialLinks[key] && !previousSocialLinks[key]) {
-          await awardProfileXP('social_link_added', 200);
+        const hasValue = socialLinks[key] && socialLinks[key].trim() !== '';
+        const hadValue = previousSocialLinks[key] && previousSocialLinks[key].trim() !== '';
+        if (hasValue && !hadValue) {
+          await awardProfileXP('social_link_added', 200, true);
         }
       });
       await Promise.all(socialLinksPromises);
 
-      // Education
-      if (formalEducation.length > (Array.isArray(previousEducation) ? previousEducation.length : 0)) {
-        await awardProfileXP('formal_education_added', 200);
+      // Education - award for each new item
+      const newEducationCount = formalEducation.length - (Array.isArray(previousEducation) ? previousEducation.length : 0);
+      for (let i = 0; i < newEducationCount; i++) {
+        await awardProfileXP('formal_education_added', 200, true);
       }
 
-      // Complementary education
-      if (complementaryEducation.length > (Array.isArray(previousComplementaryEducation) ? previousComplementaryEducation.length : 0)) {
-        await awardProfileXP('complementary_education_added', 200);
+      // Complementary education - award for each new item
+      const newComplementaryCount = complementaryEducation.length - (Array.isArray(previousComplementaryEducation) ? previousComplementaryEducation.length : 0);
+      for (let i = 0; i < newComplementaryCount; i++) {
+        await awardProfileXP('complementary_education_added', 200, true);
       }
 
-      // Work experience
-      if (workExperience.length > (Array.isArray(previousWorkExperience) ? previousWorkExperience.length : 0)) {
-        await awardProfileXP('work_experience_added', 200);
+      // Work experience - award for each new item
+      const newWorkExpCount = workExperience.length - (Array.isArray(previousWorkExperience) ? previousWorkExperience.length : 0);
+      for (let i = 0; i < newWorkExpCount; i++) {
+        await awardProfileXP('work_experience_added', 200, true);
       }
 
-      // Skills
+      // Skills - award for each new skill
       const prevTechnicalSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'technical') : [];
       const prevSoftSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'soft') : [];
       const newTechnicalSkills = skills.filter(s => s.type === 'technical');
       const newSoftSkills = skills.filter(s => s.type === 'soft');
 
-      if (newTechnicalSkills.length > prevTechnicalSkills.length) {
-        await awardProfileXP('technical_skill_added', 200);
+      const newTechCount = newTechnicalSkills.length - prevTechnicalSkills.length;
+      const newSoftCount = newSoftSkills.length - prevSoftSkills.length;
+
+      for (let i = 0; i < newTechCount; i++) {
+        await awardProfileXP('technical_skill_added', 200, true);
       }
-      if (newSoftSkills.length > prevSoftSkills.length) {
-        await awardProfileXP('soft_skill_added', 200);
+      for (let i = 0; i < newSoftCount; i++) {
+        await awardProfileXP('soft_skill_added', 200, true);
       }
 
-      // Check if profile 360 is complete
+      // Check if profile 360 is complete - only award once
       const isProfile360Complete = 
         formData.full_name &&
         formData.bio &&
@@ -258,7 +266,7 @@ const EditProfile = () => {
 
       if (isProfile360Complete && !profile?.perfil_completo_360) {
         await updateProfile({ perfil_completo_360: true });
-        await awardProfileXP('profile_360_complete', 1000);
+        await awardProfileXP('profile_360_complete', 1000, false);
       }
 
       setLastSaved(new Date());

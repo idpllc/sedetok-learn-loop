@@ -116,22 +116,24 @@ export const useXP = () => {
     }
   };
 
-  const awardProfileXP = async (actionType: string, xpAmount: number) => {
+  const awardProfileXP = async (actionType: string, xpAmount: number, allowMultiple: boolean = true) => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) return false;
 
     try {
-      // Check if XP has already been awarded for this action
-      const { data: existing } = await supabase
-        .from('user_xp_log')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('action_type', actionType)
-        .single();
+      // For profile_360_complete and cv_variation_created, only award once
+      if (!allowMultiple) {
+        const { data: existing } = await supabase
+          .from('user_xp_log')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('action_type', actionType)
+          .maybeSingle();
 
-      if (existing) {
-        return false; // Already awarded
+        if (existing) {
+          return false; // Already awarded
+        }
       }
 
       // Log the XP award
