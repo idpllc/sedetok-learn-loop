@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList, Eye, Users } from "lucide-react";
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
@@ -404,12 +404,16 @@ const Profile = () => {
           </Button>
           <div className="flex-1">
             <h1 className="text-xl font-bold">{isOwnProfile ? "Mi Perfil" : profileData?.username || "Perfil"}</h1>
-            <p className="text-sm text-muted-foreground">
-              {isOwnProfile 
-                ? (user?.user_metadata?.username || user?.email)
-                : (profileData?.full_name || profileData?.username || "Usuario")
-              }
-            </p>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Eye className="w-4 h-4" />
+                <span>{userContent?.reduce((sum, c) => sum + (c.views_count || 0), 0) || 0}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                <span>{profileData?.followers_count || 0}</span>
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {isOwnProfile ? (
@@ -522,135 +526,6 @@ const Profile = () => {
               />
             </TabsContent>
           </Tabs>
-        </div>
-
-        {/* Nivel y Logros - Movido más abajo */}
-        {profileData && (
-          <Card className="mb-4 md:mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
-            <CardContent className="p-3 md:p-6">
-              <div className="flex items-center gap-3 md:gap-6">
-                <div className="relative group">
-                  <Avatar className="w-16 h-16 md:w-20 md:h-20 border-2 md:border-4 border-primary/20">
-                    <AvatarImage src={profileData.avatar_url || ""} alt={profileData.username} />
-                    <AvatarFallback className="text-lg md:text-2xl">
-                      {profileData.username?.charAt(0).toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  {isOwnProfile && (
-                    <>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                        className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
-                      >
-                        <Camera className="w-4 h-4 md:w-6 md:h-6 text-white" />
-                      </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarChange}
-                        className="hidden"
-                      />
-                    </>
-                  )}
-                </div>
-                <div className="text-3xl md:text-5xl">
-                  {getUserLevel(profileData.experience_points || 0).icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg md:text-2xl font-bold mb-0.5 md:mb-1">
-                    {getUserLevel(profileData.experience_points || 0).level}
-                  </h2>
-                  <p className="text-sm md:text-lg text-muted-foreground mb-1 md:mb-2">
-                    {(profileData.experience_points || 0).toLocaleString()} XP
-                  </p>
-                  <div className="flex flex-wrap gap-1 md:gap-2">
-                    {getUserLevel(profileData.experience_points || 0).benefits.map((benefit, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-[10px] md:text-xs">
-                        {benefit}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                {isOwnProfile && (
-                  <div className="hidden md:flex flex-col gap-2">
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onClick={() => navigate("/profile/professional")} 
-                      className="flex items-center gap-2"
-                    >
-                      <Briefcase className="w-4 h-4" />
-                      <span>Mi Perfil Profesional</span>
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={() => navigate("/profile/vocational")} 
-                      className="flex items-center gap-2"
-                    >
-                      <GraduationCap className="w-4 h-4" />
-                      <span>Mi Perfil Vocacional</span>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => navigate("/cv-variations")} 
-                      className="flex items-center gap-2"
-                    >
-                      <ClipboardList className="w-4 h-4" />
-                      <span>Mis Hojas de Vida</span>
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-2 md:gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
-              <CardTitle className="text-lg md:text-2xl font-bold text-center">
-                {userContent?.length || 0}
-              </CardTitle>
-              <CardDescription className="text-xs md:text-sm text-center">Cápsulas</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
-              <CardTitle className="text-lg md:text-2xl font-bold text-center">
-                {userContent?.reduce((sum, c) => sum + (c.likes_count || 0), 0) || 0}
-              </CardTitle>
-              <CardDescription className="text-xs md:text-sm text-center">Likes</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
-              <CardTitle className="text-lg md:text-2xl font-bold text-center">
-                {userContent?.reduce((sum, c) => sum + (c.views_count || 0), 0) || 0}
-              </CardTitle>
-              <CardDescription className="text-xs md:text-sm text-center">Vistas</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="hidden md:block">
-            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
-              <CardTitle className="text-lg md:text-2xl font-bold text-center">
-                {userContent?.reduce((sum, c) => sum + (c.saves_count || 0), 0) || 0}
-              </CardTitle>
-              <CardDescription className="text-xs md:text-sm text-center">Guardados</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card className="hidden md:block">
-            <CardHeader className="pb-2 md:pb-3 px-2 md:px-6 pt-2 md:pt-6">
-              <CardTitle className="text-lg md:text-2xl font-bold text-center">
-                {userContent?.reduce((sum, c) => sum + (c.shares_count || 0), 0) || 0}
-              </CardTitle>
-              <CardDescription className="text-xs md:text-sm text-center">Compartidos</CardDescription>
-            </CardHeader>
-          </Card>
         </div>
 
         {/* Content tabs */}
