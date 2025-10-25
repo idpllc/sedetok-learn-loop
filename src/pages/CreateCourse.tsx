@@ -365,7 +365,7 @@ export default function CreateCourse() {
                   {selectedPathsData.map((path, index) => (
                     <div
                       key={path.id}
-                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden"
                     >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0 mt-1">
                         {index + 1}
@@ -379,11 +379,15 @@ export default function CreateCourse() {
                       )}
                       <div className="flex-1 min-w-0 overflow-hidden">
                         <p className="font-medium truncate">{path.title}</p>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1 break-words">
-                          {path.description}
+                        <p className="text-sm text-muted-foreground mt-1 break-words">
+                          {path.description
+                            ? path.description.length > 80
+                              ? `${path.description.substring(0, 80)}...`
+                              : path.description
+                            : ""}
                         </p>
                         {path.profiles && (
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2 mt-1 min-w-0">
                             {path.profiles.avatar_url && (
                               <img
                                 src={path.profiles.avatar_url}
@@ -391,12 +395,12 @@ export default function CreateCourse() {
                                 className="w-4 h-4 rounded-full object-cover"
                               />
                             )}
-                            <span className="text-xs text-muted-foreground truncate">
+                            <span className="text-xs text-muted-foreground truncate flex-1">
                               por {path.profiles.full_name || path.profiles.username}
                             </span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <div className="flex items-center gap-2 gap-y-1 mt-2 flex-wrap">
                           {path.subject && (
                             <Badge variant="secondary" className="text-xs">
                               {path.subject}

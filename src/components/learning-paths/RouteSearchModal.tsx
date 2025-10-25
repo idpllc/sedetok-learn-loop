@@ -95,7 +95,7 @@ export const RouteSearchModal = ({
           return (
             <div
               key={route.id}
-              className={`p-3 rounded-lg border cursor-pointer transition-all ${
+              className={`p-3 rounded-lg border cursor-pointer transition-all overflow-hidden ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
@@ -125,7 +125,7 @@ export const RouteSearchModal = ({
                     </p>
                   )}
                   {route.profiles && (
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 min-w-0">
                       {route.profiles.avatar_url && (
                         <img
                           src={route.profiles.avatar_url}
@@ -133,12 +133,12 @@ export const RouteSearchModal = ({
                           className="w-5 h-5 rounded-full object-cover"
                         />
                       )}
-                      <span className="text-xs text-muted-foreground truncate">
+                      <span className="text-xs text-muted-foreground truncate flex-1">
                         por {route.profiles.full_name || route.profiles.username}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 gap-y-1 flex-wrap">
                     {route.subject && (
                       <Badge variant="secondary" className="text-xs">
                         {route.subject}
