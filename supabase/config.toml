@@ -3,6 +3,10 @@ project_id = "mdvlhfxcllpfnatvltde"
 [functions.generate-quiz-questions]
 verify_jwt = true
 
+[functions.webhook-subject-results]
+verify_jwt = false
+timeout = 300
+
 [functions.upload-to-cloudinary]
 verify_jwt = true
 timeout = 300

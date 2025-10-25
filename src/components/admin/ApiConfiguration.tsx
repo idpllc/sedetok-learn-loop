@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Code, Copy, Check, ExternalLink, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { WebhookDocumentation } from "./WebhookDocumentation";
 
 export function ApiConfiguration() {
   const { toast } = useToast();
@@ -1747,6 +1748,9 @@ echo "Procesados: {$response['processed']}, Errores: {$response['errors']}";
           </div>
         </CardContent>
       </Card>
+
+      {/* Webhook de Consolidado de Notas */}
+      <WebhookDocumentation />
     </div>
   );
 }
