@@ -365,7 +365,7 @@ export default function CreateCourse() {
                   {selectedPathsData.map((path, index) => (
                     <div
                       key={path.id}
-                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden"
+                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden w-full min-w-0"
                     >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0 mt-1">
                         {index + 1}
@@ -379,7 +379,7 @@ export default function CreateCourse() {
                       )}
                       <div className="flex-1 min-w-0 overflow-hidden">
                         <p className="font-medium truncate">{path.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1 break-words">
+                        <p className="text-sm text-muted-foreground mt-1 break-words break-all">
                           {path.description
                             ? path.description.length > 80
                               ? `${path.description.substring(0, 80)}...`

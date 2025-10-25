@@ -95,14 +95,14 @@ export const RouteSearchModal = ({
           return (
             <div
               key={route.id}
-              className={`p-3 rounded-lg border cursor-pointer transition-all overflow-hidden ${
+              className={`p-3 rounded-lg border cursor-pointer transition-all w-full overflow-hidden ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
               }`}
               onClick={() => handleToggleRoute(route.id)}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0">
                 {(route.thumbnail_url || route.cover_url) && (
                   <img
                     src={route.thumbnail_url || route.cover_url}
@@ -118,7 +118,7 @@ export const RouteSearchModal = ({
                     )}
                   </div>
                   {route.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words break-all">
                       {route.description.length > 80 
                         ? `${route.description.substring(0, 80)}...` 
                         : route.description}
