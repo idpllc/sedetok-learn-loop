@@ -468,6 +468,22 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           return;
         }
       }
+    } else if (gameType === "word_wheel") {
+      if (gameQuestions.length < 3) {
+        toast.error("Debes agregar al menos 3 preguntas antes de guardar el juego");
+        return;
+      }
+
+      // Validar que todas las preguntas tengan texto y respuesta correcta
+      if (status === "published") {
+        const invalidQuestions = gameQuestions.filter(q => 
+          !q.question_text || !q.correct_sentence || !(q as any).initial_letter
+        );
+        if (invalidQuestions.length > 0) {
+          toast.error("Todas las preguntas deben tener definición, respuesta y letra inicial antes de publicar");
+          return;
+        }
+      }
     } else if (gameType === "column_match") {
       if (leftColumnItems.length < 3 || rightColumnItems.length < 3) {
         toast.error("Debes agregar al menos 3 pares antes de guardar el juego");
@@ -522,8 +538,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         targetGameId = createdGame.id;
       }
 
-      // Create questions only for word_order type
-      if (gameType === "word_order") {
+      // Create questions for word_order and word_wheel types
+      if (gameType === "word_order" || gameType === "word_wheel") {
         const pointsPerQuestion = 10;
         for (let i = 0; i < gameQuestions.length; i++) {
           const question = gameQuestions[i];
@@ -532,6 +548,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             question_text: question.question_text,
             correct_sentence: question.correct_sentence,
             words: question.words,
+            initial_letter: (question as any).initial_letter,
             points: question.points || pointsPerQuestion,
             order_index: i,
             image_url: question.image_url,
@@ -1038,13 +1055,21 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <Button
                   variant="outline"
                   onClick={() => handleGameSubmit("draft")}
-                  disabled={gameType === "word_order" ? gameQuestions.length === 0 : (leftColumnItems.length === 0 || rightColumnItems.length === 0)}
+                  disabled={
+                    gameType === "word_order" || gameType === "word_wheel" 
+                      ? gameQuestions.length === 0 
+                      : (leftColumnItems.length === 0 || rightColumnItems.length === 0)
+                  }
                 >
                   Guardar borrador
                 </Button>
                 <Button
                   onClick={() => handleGameSubmit("published")}
-                  disabled={gameType === "word_order" ? gameQuestions.length === 0 : (leftColumnItems.length === 0 || rightColumnItems.length === 0)}
+                  disabled={
+                    gameType === "word_order" || gameType === "word_wheel"
+                      ? gameQuestions.length === 0 
+                      : (leftColumnItems.length === 0 || rightColumnItems.length === 0)
+                  }
                 >
                   Publicar
                 </Button>
