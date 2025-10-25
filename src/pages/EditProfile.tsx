@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,10 @@ const EditProfile = () => {
   const { profile, isLoading, updateProfile } = useProfileUpdate();
   const { toast } = useToast();
   const { awardProfileXP } = useXP();
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const previousStateRef = useRef<any>(null);
 
   const [formData, setFormData] = useState({
     // Datos generales
@@ -124,20 +128,36 @@ const EditProfile = () => {
       });
       
       // Cargar datos complejos
-      setWorkExperience(Array.isArray(profile.work_experience) ? profile.work_experience : []);
-      setSkills(Array.isArray(profile.skills) ? profile.skills : []);
-      setFormalEducation(Array.isArray((profile as any).education) ? (profile as any).education : []);
-      setComplementaryEducation(Array.isArray(profile.complementary_education) ? profile.complementary_education : []);
-      setSocialLinks(
-        typeof profile.social_links === 'object' && profile.social_links !== null
+      const workExp = Array.isArray(profile.work_experience) ? profile.work_experience : [];
+      const skillsData = Array.isArray(profile.skills) ? profile.skills : [];
+      const formalEdu = Array.isArray((profile as any).education) ? (profile as any).education : [];
+      const complementaryEdu = Array.isArray(profile.complementary_education) ? profile.complementary_education : [];
+      const social = typeof profile.social_links === 'object' && profile.social_links !== null
           ? profile.social_links
-          : { linkedin: "", instagram: "", facebook: "", twitter: "", tiktok: "", github: "" }
-      );
+          : { linkedin: "", instagram: "", facebook: "", twitter: "", tiktok: "", github: "" };
+      
+      setWorkExperience(workExp);
+      setSkills(skillsData);
+      setFormalEducation(formalEdu);
+      setComplementaryEducation(complementaryEdu);
+      setSocialLinks(social);
+      
+      // Guardar estado inicial
+      previousStateRef.current = {
+        workExperience: workExp,
+        skills: skillsData,
+        formalEducation: formalEdu,
+        complementaryEducation: complementaryEdu,
+        socialLinks: social,
+      };
     }
   }, [profile]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Función de autoguardado
+  const autoSave = useCallback(async () => {
+    if (!previousStateRef.current) return;
+    
+    setSaving(true);
     
     const updates: any = {
       full_name: formData.full_name || null,
@@ -180,12 +200,12 @@ const EditProfile = () => {
     };
 
     try {
-      // Track previous state for XP awards
-      const previousSocialLinks = profile?.social_links || {};
-      const previousEducation = profile?.education || [];
-      const previousComplementaryEducation = profile?.complementary_education || [];
-      const previousWorkExperience = profile?.work_experience || [];
-      const previousSkills = profile?.skills || [];
+      // Track previous state for XP awards desde previousStateRef
+      const previousSocialLinks = previousStateRef.current?.socialLinks || {};
+      const previousEducation = previousStateRef.current?.formalEducation || [];
+      const previousComplementaryEducation = previousStateRef.current?.complementaryEducation || [];
+      const previousWorkExperience = previousStateRef.current?.workExperience || [];
+      const previousSkills = previousStateRef.current?.skills || [];
 
       await updateProfile(updates);
 
@@ -241,25 +261,43 @@ const EditProfile = () => {
         await awardProfileXP('profile_360_complete', 1000);
       }
 
-      toast({
-        title: "Perfil actualizado",
-        description: "Tus cambios se guardaron correctamente",
-      });
+      setLastSaved(new Date());
+      setSaving(false);
+      
+      // Actualizar estado previo después de guardar exitosamente
+      previousStateRef.current = {
+        workExperience: [...workExperience],
+        skills: [...skills],
+        formalEducation: [...formalEducation],
+        complementaryEducation: [...complementaryEducation],
+        socialLinks: {...socialLinks},
+      };
     } catch (error: any) {
-      let errorMessage = "No se pudo actualizar el perfil";
-      
-      // Check for unique constraint violations
-      if (error.code === '23505' || error.message?.includes('unique_user_document')) {
-        errorMessage = 'Este tipo y número de documento ya están registrados por otro usuario';
-      }
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      setSaving(false);
+      console.error('Error al guardar perfil:', error);
     }
-  };
+  }, [formData, workExperience, skills, formalEducation, complementaryEducation, socialLinks, profile, updateProfile, awardProfileXP]);
+
+  // Efecto para autoguardado con debouncing
+  useEffect(() => {
+    if (!profile || !previousStateRef.current) return;
+
+    // Limpiar timeout previo
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Programar autoguardado después de 2 segundos sin cambios
+    saveTimeoutRef.current = setTimeout(() => {
+      autoSave();
+    }, 2000);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [formData, workExperience, skills, formalEducation, complementaryEducation, socialLinks, autoSave, profile]);
 
   if (authLoading || !user) {
     return (
@@ -297,16 +335,32 @@ const EditProfile = () => {
       <Sidebar />
       <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
         <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
-          <div className="flex items-center gap-3 max-w-4xl mx-auto">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl font-bold">Editar Perfil 360°</h1>
+          <div className="flex items-center justify-between gap-3 max-w-4xl mx-auto">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/profile")}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h1 className="text-xl font-bold">Editar Perfil 360°</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              {saving && (
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Save className="w-4 h-4 animate-pulse" />
+                  Guardando...
+                </span>
+              )}
+              {!saving && lastSaved && (
+                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  Guardado
+                </span>
+              )}
+            </div>
           </div>
         </header>
 
         <main className="max-w-4xl mx-auto px-4 py-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
           {/* Datos Generales */}
           <Card>
             <CardHeader>
@@ -749,17 +803,16 @@ const EditProfile = () => {
             </CardContent>
           </Card>
 
-          <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 justify-end items-center">
+            <p className="text-sm text-muted-foreground">
+              Los cambios se guardan automáticamente
+            </p>
             <Button type="button" variant="outline" onClick={() => navigate("/profile")}>
-              Cancelar
-            </Button>
-            <Button type="submit" className="flex items-center gap-2">
-              <Save className="w-4 h-4" />
-              Guardar Cambios
+              Volver al Perfil
             </Button>
           </div>
-        </form>
-      </main>
+          </div>
+        </main>
     </div>
     </>
   );
