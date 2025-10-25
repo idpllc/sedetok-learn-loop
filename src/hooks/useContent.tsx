@@ -46,9 +46,8 @@ export const useInfiniteContent = (
       }
 
       // Apply subject filter
-      if (subject && subject !== "all") {
-        contentQuery = contentQuery.ilike("subject", `%${subject}%`);
-      }
+        // Subject filter handled client-side for accent-insensitive matching
+
 
       // Apply grade level filter
       if (gradeLevel && gradeLevel !== "all") {
@@ -85,9 +84,8 @@ export const useInfiniteContent = (
         }
 
         // Apply subject filter
-        if (subject && subject !== "all") {
-          quizQuery = quizQuery.ilike("subject", `%${subject}%`);
-        }
+        // Subject filter handled client-side for accent-insensitive matching
+
 
         // Apply grade level filter
         if (gradeLevel && gradeLevel !== "all") {
@@ -166,8 +164,33 @@ export const useInfiniteContent = (
         questions_count: questionCounts[quiz.id] || 0,
       }));
 
+      // Accent-insensitive normalization
+      const normalize = (s?: string | null) => (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+      // Client-side filters to handle accents and ensure matches
+      let filteredContentData = (contentData || []);
+      let filteredQuizzes = quizzes;
+
+      if ((subject && subject !== 'all') || (searchQuery && searchQuery.trim() !== '')) {
+        const subjectFilter = normalize(subject || '');
+        const textFilter = normalize(searchQuery || '');
+        const matches = (item: any) => {
+          const subj = normalize((item as any).subject);
+          const title = normalize((item as any).title);
+          const desc = normalize((item as any).description);
+          let ok = true;
+          if (subject && subject !== 'all') ok = ok && subj.includes(subjectFilter);
+          if (searchQuery && searchQuery.trim() !== '') {
+            ok = ok && (title.includes(textFilter) || desc.includes(textFilter) || subj.includes(textFilter));
+          }
+          return ok;
+        };
+        filteredContentData = filteredContentData.filter(matches);
+        filteredQuizzes = filteredQuizzes.filter(matches);
+      }
+
       // Combine both arrays and sort by created_at
-      const allContent = [...(contentData || []), ...quizzes].sort(
+      const allContent = [...filteredContentData, ...filteredQuizzes].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
