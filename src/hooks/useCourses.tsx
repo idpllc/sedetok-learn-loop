@@ -46,7 +46,7 @@ export const useCourses = (filter?: "created" | "all") => {
         .from("courses")
         .select(`
           *,
-          profiles!courses_creator_id_fkey(username, avatar_url, full_name)
+          profiles!creator_id(username, avatar_url, full_name)
         `)
         .order("created_at", { ascending: false });
 
