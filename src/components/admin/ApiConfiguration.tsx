@@ -611,6 +611,250 @@ export function ApiConfiguration() {
         </CardContent>
       </Card>
 
+      {/* Bulk User Creation Endpoint Documentation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="w-5 h-5" />
+            API REST - Creación Masiva de Usuarios
+          </CardTitle>
+          <CardDescription>
+            Endpoint para crear hasta 3000 usuarios simultáneamente con autoverificación
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Endpoint URL</label>
+              <Badge variant="outline" className="gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Activo
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-3 py-2 bg-muted rounded text-sm font-mono break-all">
+                {`https://${projectId}.supabase.co/functions/v1/create-users-bulk`}
+              </code>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(`https://${projectId}.supabase.co/functions/v1/create-users-bulk`, 'user-endpoint')}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Método HTTP</label>
+            <Badge>POST</Badge>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Headers Requeridos</label>
+            <code className="block px-3 py-2 bg-muted rounded text-sm">
+              Content-Type: application/json
+            </code>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Timeout</label>
+            <Badge variant="secondary">300 segundos (5 minutos)</Badge>
+            <p className="text-xs text-muted-foreground">
+              Configurado para soportar la creación de hasta 3000 usuarios
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Estructura del Request Body (JSON)</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "users": [
+    {
+      "tipo_documento": "CC",
+      "numero_documento": "1234567890",
+      "email": "usuario1@example.com",
+      "full_name": "Juan Pérez",
+      "username": "jperez"
+    },
+    {
+      "tipo_documento": "TI",
+      "numero_documento": "9876543210",
+      "full_name": "María García"
+    }
+    // ... hasta 3000 usuarios
+  ]
+}`}
+            </pre>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Campos por Usuario</label>
+            <div className="space-y-1 text-sm">
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">tipo_documento</code>
+                <span className="text-muted-foreground">Tipo de documento (requerido) - Valores: RC, NES, PPT, TI, CC, CE, TE, DIE, DESC</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">numero_documento</code>
+                <span className="text-muted-foreground">Número de documento (requerido)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">email</code>
+                <span className="text-muted-foreground">Correo electrónico (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">full_name</code>
+                <span className="text-muted-foreground">Nombre completo (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">username</code>
+                <span className="text-muted-foreground">Nombre de usuario (opcional)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2 p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+            <label className="text-sm font-medium flex items-center gap-2">
+              ⚠️ Límites y Validaciones
+            </label>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>✓ Mínimo: 1 usuario</p>
+              <p>✓ Máximo: 3000 usuarios por solicitud</p>
+              <p>✓ No se crean usuarios duplicados (validación por número de documento)</p>
+              <p>✓ Emails automáticamente confirmados</p>
+              <p>✓ Si un usuario falla, continúa con los demás</p>
+              <p>✓ Email predeterminado si no se provee: numero_documento@sedefy.com</p>
+              <p>✓ Username predeterminado si no se provee: numero_documento</p>
+              <p>✓ Contraseña: número de documento</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Respuesta Exitosa (200)</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "success": true,
+  "summary": {
+    "total": 100,
+    "success": 98,
+    "errors": 2
+  },
+  "results": [
+    {
+      "success": true,
+      "user": {
+        "id": "uuid-generado",
+        "email": "usuario1@example.com",
+        "numero_documento": "1234567890",
+        "tipo_documento": "CC"
+      },
+      "numero_documento": "1234567890"
+    },
+    {
+      "success": false,
+      "error": "Ya existe un usuario con ese número de documento",
+      "numero_documento": "9999999999"
+    }
+    // ... más resultados
+  ]
+}`}
+            </pre>
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-sm font-medium">Respuestas de Error</label>
+            
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Content-Type incorrecto</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{
+  "error": "Content-Type debe ser application/json"
+}`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Body inválido</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{
+  "error": "Body inválido o vacío. Debe enviar un JSON válido con un array de usuarios."
+}`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - users no es array</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{
+  "error": "El campo \\"users\\" debe ser un array de objetos con los datos de usuario"
+}`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Array vacío</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{
+  "error": "Debe proporcionar al menos un usuario"
+}`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Límite excedido</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{
+  "error": "No se pueden crear más de 3000 usuarios en una sola solicitud"
+}`}
+              </pre>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ejemplo cURL - Creación Masiva</CardTitle>
+          <CardDescription>Request de ejemplo con múltiples usuarios</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`curl -X POST "https://${projectId}.supabase.co/functions/v1/create-users-bulk" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "users": [
+      {
+        "tipo_documento": "CC",
+        "numero_documento": "1234567890",
+        "email": "juan@example.com",
+        "full_name": "Juan Pérez",
+        "username": "jperez"
+      },
+      {
+        "tipo_documento": "TI",
+        "numero_documento": "9876543210",
+        "full_name": "María García"
+      },
+      {
+        "tipo_documento": "CE",
+        "numero_documento": "5555555555",
+        "email": "carlos@example.com",
+        "full_name": "Carlos López"
+      }
+    ]
+  }'`}
+          </pre>
+          
+          <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <p className="text-sm text-muted-foreground">
+              <strong>Nota:</strong> Este ejemplo muestra solo 3 usuarios, pero puedes enviar hasta 3000 en un solo request.
+              El endpoint procesa cada usuario secuencialmente y retorna un resultado detallado para cada uno.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Auto-login Endpoint Documentation */}
       <Card>
         <CardHeader>

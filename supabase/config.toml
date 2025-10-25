@@ -30,3 +30,7 @@ verify_jwt = false
 
 [functions.auto-login]
 verify_jwt = false
+
+[functions.create-users-bulk]
+verify_jwt = false
+timeout = 300
