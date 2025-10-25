@@ -43,9 +43,9 @@ export const useCVVariations = (userId?: string) => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["cv-variations", userId] });
-      awardProfileXP('cv_variation_created', 500);
+      await awardProfileXP('cv_variation_created', 500);
       toast({ title: "Variación creada exitosamente" });
     },
     onError: (error) => {

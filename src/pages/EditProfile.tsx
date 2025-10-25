@@ -191,25 +191,26 @@ const EditProfile = () => {
 
       // Award XP for new additions
       // Social links
-      Object.keys(socialLinks).forEach(key => {
+      const socialLinksPromises = Object.keys(socialLinks).map(async (key) => {
         if (socialLinks[key] && !previousSocialLinks[key]) {
-          awardProfileXP('social_link_added', 200);
+          await awardProfileXP('social_link_added', 200);
         }
       });
+      await Promise.all(socialLinksPromises);
 
       // Education
       if (formalEducation.length > (Array.isArray(previousEducation) ? previousEducation.length : 0)) {
-        awardProfileXP('formal_education_added', 200);
+        await awardProfileXP('formal_education_added', 200);
       }
 
       // Complementary education
       if (complementaryEducation.length > (Array.isArray(previousComplementaryEducation) ? previousComplementaryEducation.length : 0)) {
-        awardProfileXP('complementary_education_added', 200);
+        await awardProfileXP('complementary_education_added', 200);
       }
 
       // Work experience
       if (workExperience.length > (Array.isArray(previousWorkExperience) ? previousWorkExperience.length : 0)) {
-        awardProfileXP('work_experience_added', 200);
+        await awardProfileXP('work_experience_added', 200);
       }
 
       // Skills
@@ -219,10 +220,10 @@ const EditProfile = () => {
       const newSoftSkills = skills.filter(s => s.type === 'soft');
 
       if (newTechnicalSkills.length > prevTechnicalSkills.length) {
-        awardProfileXP('technical_skill_added', 200);
+        await awardProfileXP('technical_skill_added', 200);
       }
       if (newSoftSkills.length > prevSoftSkills.length) {
-        awardProfileXP('soft_skill_added', 200);
+        await awardProfileXP('soft_skill_added', 200);
       }
 
       // Check if profile 360 is complete
@@ -237,7 +238,7 @@ const EditProfile = () => {
 
       if (isProfile360Complete && !profile?.perfil_completo_360) {
         await updateProfile({ perfil_completo_360: true });
-        awardProfileXP('profile_360_complete', 1000);
+        await awardProfileXP('profile_360_complete', 1000);
       }
 
       toast({
