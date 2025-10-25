@@ -17,7 +17,9 @@ export const useInfiniteContent = (
     queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
       // Fetch a larger dynamic batch to merge two sources and paginate reliably
-      const batchSize = (pageParam + 2) * ITEMS_PER_PAGE;
+      const hasTextFilters = (subject && subject !== 'all') || (searchQuery && searchQuery.trim() !== '');
+      const multiplier = hasTextFilters ? 10 : 2;
+      const batchSize = (pageParam + 1) * ITEMS_PER_PAGE * multiplier;
       
       // Fetch regular content
       let contentQuery = supabase
@@ -46,9 +48,7 @@ export const useInfiniteContent = (
       }
 
       // Apply subject filter
-      if (subject && subject !== "all") {
-        contentQuery = contentQuery.ilike("subject", `%${subject}%`);
-      }
+      // Subject filter handled client-side for accent-insensitive matching
       // Apply grade level filter
       if (gradeLevel && gradeLevel !== "all") {
         contentQuery = contentQuery.eq("grade_level", gradeLevel as any);
@@ -84,9 +84,7 @@ export const useInfiniteContent = (
         }
 
         // Apply subject filter
-        if (subject && subject !== "all") {
-          quizQuery = quizQuery.ilike("subject", `%${subject}%`);
-        }
+        // Subject filter handled client-side for accent-insensitive matching
         // Apply grade level filter
         if (gradeLevel && gradeLevel !== "all") {
           quizQuery = quizQuery.eq("grade_level", gradeLevel as any);
