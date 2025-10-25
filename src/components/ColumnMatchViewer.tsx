@@ -225,6 +225,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
 
     const maxScore = leftItems.length * 10;
     const normalizedScore = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+    const passed = normalizedScore >= 60;
 
     if (success) {
       confetti({
@@ -232,26 +233,46 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
         spread: 70,
         origin: { y: 0.6 },
       });
+    }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("experience_points")
-          .eq("id", user.id)
-          .single();
-        
-        if (profile) {
-          await supabase
-            .from("profiles")
-            .update({ experience_points: (profile.experience_points || 0) + normalizedScore })
-            .eq("id", user.id);
-        }
+    // Save result to database
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const payload: any = {
+        user_id: user.id,
+        game_id: gameId,
+        score: normalizedScore,
+        max_score: 100,
+        passed,
+      };
+
+      if (evaluationEventId) {
+        payload.evaluation_event_id = evaluationEventId;
       }
 
-      toast.success(`¡Felicitaciones! Puntuación: ${normalizedScore}/100`);
-    } else {
-      toast.error(`Juego terminado. Puntuación: ${normalizedScore}/100`);
+      await supabase.from("user_quiz_results").insert(payload);
+
+      // Award XP
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("experience_points")
+        .eq("id", user.id)
+        .single();
+      
+      if (profile) {
+        await supabase
+          .from("profiles")
+          .update({ experience_points: (profile.experience_points || 0) + normalizedScore })
+          .eq("id", user.id);
+      }
+    }
+
+    if (showResultsImmediately) {
+      if (success) {
+        toast.success(`¡Felicitaciones! Puntuación: ${normalizedScore}/100`);
+      } else {
+        toast.error(`Juego terminado. Puntuación: ${normalizedScore}/100`);
+      }
     }
 
     // Don't call onComplete here - let user close manually via button

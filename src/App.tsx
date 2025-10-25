@@ -37,6 +37,7 @@ import CVVariations from "./pages/CVVariations";
 import VocationalProfile from "./pages/VocationalProfile";
 import QuizEvaluation from "./pages/QuizEvaluation";
 import QuizEvaluations from "./pages/QuizEvaluations";
+import GameEvaluation from "./pages/GameEvaluation";
 import CreateCourse from "./pages/CreateCourse";
 import Courses from "./pages/Courses";
 import ViewCourse from "./pages/ViewCourse";
@@ -90,6 +91,8 @@ const App = () => (
           <Route path="/install" element={<Install />} />
           <Route path="/quiz-evaluation" element={<QuizEvaluation />} />
           <Route path="/quiz-evaluation/:accessCode" element={<QuizEvaluation />} />
+          <Route path="/game-evaluation" element={<GameEvaluation />} />
+          <Route path="/game-evaluation/:accessCode" element={<GameEvaluation />} />
           <Route path="/quiz-evaluations/:quizId" element={<QuizEvaluations />} />
           <Route path="/quiz-evaluations/results/:eventId" element={<QuizEvaluations />} />
           <Route path="/quiz-evaluations" element={<QuizEvaluations />} />

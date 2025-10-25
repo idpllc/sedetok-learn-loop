@@ -33,7 +33,7 @@ export const GameEvaluationEventsList = ({ gameId, status = "all" }: GameEvaluat
   const [editingEvent, setEditingEvent] = useState<any>(null);
 
   const copyEventLink = (accessCode: string) => {
-    const link = `${window.location.origin}/quiz-evaluation?code=${accessCode}`;
+    const link = `${window.location.origin}/game-evaluation?code=${accessCode}`;
     navigator.clipboard.writeText(link);
     toast({
       title: "Enlace copiado",
@@ -42,7 +42,7 @@ export const GameEvaluationEventsList = ({ gameId, status = "all" }: GameEvaluat
   };
 
   const openEventLink = (accessCode: string) => {
-    const link = `${window.location.origin}/quiz-evaluation?code=${accessCode}`;
+    const link = `${window.location.origin}/game-evaluation?code=${accessCode}`;
     window.open(link, "_blank");
   };
 
@@ -142,7 +142,7 @@ export const GameEvaluationEventsList = ({ gameId, status = "all" }: GameEvaluat
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate(`/quiz-evaluations/${event.id}`)}
+                    onClick={() => navigate(`/quiz-evaluations/results/${event.id}`)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
                     Ver Resultados
