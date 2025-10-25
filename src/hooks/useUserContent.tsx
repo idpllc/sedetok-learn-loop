@@ -62,6 +62,26 @@ export const useUserContent = (userId?: string) => {
       const { data: quizData, error: quizError } = await quizQuery.order("created_at", { ascending: false });
       if (quizError) throw quizError;
 
+      // Fetch games with profile data
+      let gameQuery = supabase
+        .from("games")
+        .select(`
+          *,
+          profiles:creator_id (
+            username,
+            avatar_url,
+            institution
+          )
+        `)
+        .eq("creator_id", targetUserId);
+
+      if (!isOwnContent) {
+        gameQuery = gameQuery.eq("is_public", true);
+      }
+
+      const { data: gameData, error: gameError } = await gameQuery.order("created_at", { ascending: false });
+      if (gameError) throw gameError;
+
       // Combine and mark quizzes with content_type
       const quizzes = (quizData || []).map(quiz => ({
         ...quiz,
@@ -74,8 +94,20 @@ export const useUserContent = (userId?: string) => {
         tags: quiz.tags || [],
       }));
 
-      // Combine both arrays and sort by created_at
-      const allContent = [...(contentData || []), ...quizzes].sort(
+      // Combine and mark games with content_type
+      const games = (gameData || []).map(game => ({
+        ...game,
+        content_type: 'game' as const,
+        likes_count: 0,
+        views_count: 0,
+        saves_count: 0,
+        shares_count: 0,
+        comments_count: 0,
+        tags: game.tags || [],
+      }));
+
+      // Combine all arrays and sort by created_at
+      const allContent = [...(contentData || []), ...quizzes, ...games].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
@@ -92,6 +124,14 @@ export const useUserContent = (userId?: string) => {
         // Delete from quizzes table
         const { error } = await supabase
           .from("quizzes")
+          .delete()
+          .eq("id", contentId);
+        
+        if (error) throw error;
+      } else if (content?.content_type === 'game') {
+        // Delete from games table
+        const { error } = await supabase
+          .from("games")
           .delete()
           .eq("id", contentId);
         

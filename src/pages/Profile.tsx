@@ -341,7 +341,13 @@ const Profile = () => {
     const scientist = item.content_type === 'quiz' ? getQuizScientistIcon(item.category) : null;
     
     const handleContentClick = () => {
-      navigate(`/creator/${userId || user?.id}/content?content=${item.id}`);
+      if (item.content_type === 'quiz') {
+        navigate(`/?quiz=${item.id}`);
+      } else if (item.content_type === 'game') {
+        navigate(`/?game=${item.id}`);
+      } else {
+        navigate(`/?content=${item.id}`);
+      }
     };
     
     return (
@@ -366,6 +372,10 @@ const Profile = () => {
                   className="w-24 h-24 rounded-full border-4 border-white/30 object-cover"
                 />
               </div>
+            ) : item.content_type === "game" ? (
+              <div className="w-full h-full bg-gradient-to-br from-blue-500/30 via-cyan-500/30 to-teal-500/30 flex items-center justify-center">
+                <div className="text-6xl">🎮</div>
+              </div>
             ) : item.thumbnail_url ? (
               <img 
                 src={item.thumbnail_url} 
@@ -378,6 +388,7 @@ const Profile = () => {
                 {item.content_type === "document" && <FileText className="w-12 h-12" />}
                 {item.content_type === "lectura" && <BookOpen className="w-12 h-12" />}
                 {item.content_type === "quiz" && <HelpCircle className="w-12 h-12" />}
+                {item.content_type === "game" && <span className="text-5xl">🎮</span>}
               </div>
             )}
           </div>

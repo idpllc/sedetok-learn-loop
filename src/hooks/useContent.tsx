@@ -321,8 +321,29 @@ export const useContent = () => {
 
       if (quizError) throw quizError;
 
-      // Get question counts for each quiz
+      // Fetch games
+      const { data: gameData, error: gameError } = await supabase
+        .from("games")
+        .select(`
+          *,
+          profiles:creator_id (
+            username,
+            full_name,
+            avatar_url,
+            institution,
+            is_verified
+          )
+        `)
+        .eq("is_public", true)
+        .eq("status", "publicado")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (gameError) throw gameError;
+
+      // Get question counts for each quiz and game
       const quizIds = (quizData || []).map(q => q.id);
+      const gameIds = (gameData || []).map(g => g.id);
       const questionCounts: Record<string, number> = {};
       const likeCounts: Record<string, number> = {};
       const commentCounts: Record<string, number> = {};
@@ -371,6 +392,20 @@ export const useContent = () => {
         }
       }
 
+      // Get question counts for games
+      if (gameIds.length > 0) {
+        const { data: gameQuestionsData } = await supabase
+          .from("game_questions")
+          .select("game_id")
+          .in("game_id", gameIds);
+        
+        if (gameQuestionsData) {
+          gameQuestionsData.forEach((q) => {
+            questionCounts[q.game_id] = (questionCounts[q.game_id] || 0) + 1;
+          });
+        }
+      }
+
       // Combine and mark quizzes with content_type
       const quizzes = (quizData || []).map(quiz => ({
         ...quiz,
@@ -387,8 +422,24 @@ export const useContent = () => {
         questions_count: questionCounts[quiz.id] || 0,
       }));
 
-      // Combine both arrays and sort by created_at
-      const allContent = [...(contentData || []), ...quizzes].sort(
+      // Combine and mark games with content_type
+      const games = (gameData || []).map(game => ({
+        ...game,
+        content_type: 'game' as const,
+        likes_count: 0,
+        views_count: 0,
+        saves_count: 0,
+        shares_count: 0,
+        comments_count: 0,
+        video_url: null,
+        document_url: null,
+        rich_text: null,
+        tags: [],
+        questions_count: questionCounts[game.id] || 0,
+      }));
+
+      // Combine all arrays and sort by created_at
+      const allContent = [...(contentData || []), ...quizzes, ...games].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       ).slice(0, 50);
 
