@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useXP } from "@/hooks/useXP";
+import { ColumnMatchViewer } from "./ColumnMatchViewer";
 
 interface GameViewerProps {
   gameId: string;
@@ -30,6 +31,7 @@ interface GameData {
   description: string;
   time_limit?: number;
   random_order: boolean;
+  game_type: string;
 }
 
 export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
@@ -47,6 +49,54 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
   const [isCorrect, setIsCorrect] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchGameData();
+  }, [gameId]);
+
+  const fetchGameData = async () => {
+    try {
+      const { data: game, error } = await supabase
+        .from("games")
+        .select("*")
+        .eq("id", gameId)
+        .single();
+
+      if (error) throw error;
+
+      setGameData({
+        id: game.id,
+        title: game.title,
+        description: game.description,
+        time_limit: game.time_limit,
+        random_order: game.random_order,
+        game_type: game.game_type || "word_order",
+      });
+
+      // Only fetch questions for word_order type
+      if (game.game_type === "word_order" || !game.game_type) {
+        const { data: questionsData, error: questionsError } = await supabase
+          .from("game_questions")
+          .select("*")
+          .eq("game_id", gameId)
+          .order("order_index");
+
+        if (questionsError) throw questionsError;
+        setQuestions(questionsData || []);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching game:", error);
+      toast.error("Error al cargar el juego");
+      setLoading(false);
+    }
+  };
+
+  // If it's a column match game, delegate to ColumnMatchViewer
+  if (!loading && gameData?.game_type === "column_match") {
+    return <ColumnMatchViewer gameId={gameId} onComplete={onComplete} />;
+  }
 
   useEffect(() => {
     fetchGameData();

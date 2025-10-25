@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Database } from "@/integrations/supabase/types";
 import { QuizStep2, QuizQuestion } from "./quiz/QuizStep2";
 import { QuizStep3 } from "./quiz/QuizStep3";
+import { GameColumnMatchEditor } from "./game/GameColumnMatchEditor";
 import { PathBasicInfo } from "./learning-paths/wizard/PathBasicInfo";
 import { PathBuilder } from "./learning-paths/wizard/PathBuilder";
 import { PathReview } from "./learning-paths/wizard/PathReview";
@@ -81,6 +82,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     time_limit: undefined as number | undefined,
     random_order: false,
   });
+  const [gameType, setGameType] = useState<string>("word_order");
+  const [leftColumnItems, setLeftColumnItems] = useState<any[]>([]);
+  const [rightColumnItems, setRightColumnItems] = useState<any[]>([]);
   
   // Learning Path states
   const [pathStep, setPathStep] = useState(1); // 1 = basic info, 2 = builder, 3 = review
@@ -446,19 +450,41 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       return;
     }
 
-    if (gameQuestions.length < 3) {
-      toast.error("Debes agregar al menos 3 preguntas antes de guardar el juego");
-      return;
-    }
-
-    // Validar que todas las preguntas tengan palabras y una oración correcta
-    if (status === "published") {
-      const invalidQuestions = gameQuestions.filter(q => 
-        !q.question_text || !q.correct_sentence || !q.words || q.words.length === 0
-      );
-      if (invalidQuestions.length > 0) {
-        toast.error("Todas las preguntas deben tener una instrucción, oración correcta y palabras antes de publicar");
+    // Validate based on game type
+    if (gameType === "word_order") {
+      if (gameQuestions.length < 3) {
+        toast.error("Debes agregar al menos 3 preguntas antes de guardar el juego");
         return;
+      }
+
+      // Validar que todas las preguntas tengan palabras y una oración correcta
+      if (status === "published") {
+        const invalidQuestions = gameQuestions.filter(q => 
+          !q.question_text || !q.correct_sentence || !q.words || q.words.length === 0
+        );
+        if (invalidQuestions.length > 0) {
+          toast.error("Todas las preguntas deben tener una instrucción, oración correcta y palabras antes de publicar");
+          return;
+        }
+      }
+    } else if (gameType === "column_match") {
+      if (leftColumnItems.length < 3 || rightColumnItems.length < 3) {
+        toast.error("Debes agregar al menos 3 pares antes de guardar el juego");
+        return;
+      }
+
+      if (leftColumnItems.length !== rightColumnItems.length) {
+        toast.error("Debe haber la misma cantidad de items en ambas columnas");
+        return;
+      }
+
+      if (status === "published") {
+        const invalidLeft = leftColumnItems.filter(item => !item.text.trim());
+        const invalidRight = rightColumnItems.filter(item => !item.text.trim());
+        if (invalidLeft.length > 0 || invalidRight.length > 0) {
+          toast.error("Todos los items deben tener texto antes de publicar");
+          return;
+        }
       }
     }
 
@@ -469,13 +495,15 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         category: formData.category,
         subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
         grade_level: formData.grade_level,
-        game_type: 'word_order',
+        game_type: gameType,
         is_public: isPublic,
         status,
         time_limit: gameConfig.time_limit,
         random_order: gameConfig.random_order,
         tags: tags,
         creator_id: user.id,
+        left_column_items: gameType === "column_match" ? leftColumnItems : null,
+        right_column_items: gameType === "column_match" ? rightColumnItems : null,
       };
 
       let targetGameId: string;
@@ -493,20 +521,22 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         targetGameId = createdGame.id;
       }
 
-      // Create questions
-      const pointsPerQuestion = 10;
-      for (let i = 0; i < gameQuestions.length; i++) {
-        const question = gameQuestions[i];
-        await supabase.from("game_questions").insert({
-          game_id: targetGameId,
-          question_text: question.question_text,
-          correct_sentence: question.correct_sentence,
-          words: question.words,
-          points: question.points || pointsPerQuestion,
-          order_index: i,
-          image_url: question.image_url,
-          video_url: question.video_url,
-        });
+      // Create questions only for word_order type
+      if (gameType === "word_order") {
+        const pointsPerQuestion = 10;
+        for (let i = 0; i < gameQuestions.length; i++) {
+          const question = gameQuestions[i];
+          await supabase.from("game_questions").insert({
+            game_id: targetGameId,
+            question_text: question.question_text,
+            correct_sentence: question.correct_sentence,
+            words: question.words,
+            points: question.points || pointsPerQuestion,
+            order_index: i,
+            image_url: question.image_url,
+            video_url: question.video_url,
+          });
+        }
       }
 
       toast.success(
@@ -927,21 +957,38 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
               <GameStep1
                 title={formData.title}
                 description={formData.description || ""}
+                gameType={gameType}
                 onTitleChange={(value) => setFormData({ ...formData, title: value })}
                 onDescriptionChange={(value) => setFormData({ ...formData, description: value })}
+                onGameTypeChange={(value) => setGameType(value)}
               />
             </div>
           )}
           {gameStep === 2 && (
             <div className="border rounded-lg p-6 bg-card">
-              <h3 className="text-xl font-semibold mb-2">Preguntas</h3>
+              <h3 className="text-xl font-semibold mb-2">
+                {gameType === "word_order" ? "Preguntas" : "Configurar Conexiones"}
+              </h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Crea preguntas de ordenar palabras
+                {gameType === "word_order" 
+                  ? "Crea preguntas de ordenar palabras"
+                  : "Crea los pares de items para conectar"}
               </p>
-              <GameStep2 
-                questions={gameQuestions} 
-                onChange={setGameQuestions}
-              />
+              {gameType === "word_order" ? (
+                <GameStep2 
+                  questions={gameQuestions} 
+                  onChange={setGameQuestions}
+                />
+              ) : (
+                <GameColumnMatchEditor
+                  leftItems={leftColumnItems}
+                  rightItems={rightColumnItems}
+                  onChange={(left, right) => {
+                    setLeftColumnItems(left);
+                    setRightColumnItems(right);
+                  }}
+                />
+              )}
             </div>
           )}
           {gameStep === 3 && (
@@ -979,13 +1026,13 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <Button
                   variant="outline"
                   onClick={() => handleGameSubmit("draft")}
-                  disabled={gameQuestions.length === 0}
+                  disabled={gameType === "word_order" ? gameQuestions.length === 0 : (leftColumnItems.length === 0 || rightColumnItems.length === 0)}
                 >
                   Guardar borrador
                 </Button>
                 <Button
                   onClick={() => handleGameSubmit("published")}
-                  disabled={gameQuestions.length === 0}
+                  disabled={gameType === "word_order" ? gameQuestions.length === 0 : (leftColumnItems.length === 0 || rightColumnItems.length === 0)}
                 >
                   Publicar
                 </Button>

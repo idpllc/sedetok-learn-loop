@@ -1,22 +1,45 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface GameStep1Props {
   title: string;
   description: string;
+  gameType: string;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
+  onGameTypeChange: (value: string) => void;
 }
 
 export const GameStep1 = ({
   title,
   description,
+  gameType,
   onTitleChange,
   onDescriptionChange,
+  onGameTypeChange,
 }: GameStep1Props) => {
   return (
     <div className="space-y-6">
+      <div className="space-y-2">
+        <Label>Tipo de Juego</Label>
+        <RadioGroup value={gameType} onValueChange={onGameTypeChange}>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="word_order" id="word_order" />
+            <Label htmlFor="word_order" className="font-normal cursor-pointer">
+              Ordenar Palabras - Construye oraciones ordenando palabras
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="column_match" id="column_match" />
+            <Label htmlFor="column_match" className="font-normal cursor-pointer">
+              Conectar Columnas - Conecta items de la izquierda con la derecha
+            </Label>
+          </div>
+        </RadioGroup>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="game-title">Título del Juego</Label>
         <Input

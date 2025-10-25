@@ -566,7 +566,9 @@ export type Database = {
           grade_level: Database["public"]["Enums"]["grade_level"]
           id: string
           is_public: boolean | null
+          left_column_items: Json | null
           random_order: boolean | null
+          right_column_items: Json | null
           status: string | null
           subject: string | null
           tags: string[] | null
@@ -584,7 +586,9 @@ export type Database = {
           grade_level: Database["public"]["Enums"]["grade_level"]
           id?: string
           is_public?: boolean | null
+          left_column_items?: Json | null
           random_order?: boolean | null
+          right_column_items?: Json | null
           status?: string | null
           subject?: string | null
           tags?: string[] | null
@@ -602,7 +606,9 @@ export type Database = {
           grade_level?: Database["public"]["Enums"]["grade_level"]
           id?: string
           is_public?: boolean | null
+          left_column_items?: Json | null
           random_order?: boolean | null
+          right_column_items?: Json | null
           status?: string | null
           subject?: string | null
           tags?: string[] | null
