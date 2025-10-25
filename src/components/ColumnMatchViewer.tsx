@@ -127,12 +127,15 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
     return newArray;
   };
 
-  const getItemCenter = (ref: HTMLDivElement | null): { x: number; y: number } | null => {
+  const getItemEdge = (ref: HTMLDivElement | null, side: 'left' | 'right'): { x: number; y: number } | null => {
     if (!ref || !containerRef.current) return null;
     const rect = ref.getBoundingClientRect();
     const containerRect = containerRef.current.getBoundingClientRect();
+    
     return {
-      x: rect.left + rect.width / 2 - containerRect.left,
+      x: side === 'left' 
+        ? rect.right - containerRect.left  // Right edge of left item
+        : rect.left - containerRect.left,   // Left edge of right item
       y: rect.top + rect.height / 2 - containerRect.top,
     };
   };
@@ -142,11 +145,11 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
     const isConnected = connections.some((conn) => conn.leftId === itemId);
     if (isConnected) return;
 
-    const center = getItemCenter(leftItemRefs.current[itemId]);
-    if (center) {
+    const edge = getItemEdge(leftItemRefs.current[itemId], 'left');
+    if (edge) {
       setIsDragging(true);
-      setDragStart({ id: itemId, x: center.x, y: center.y });
-      setCurrentMousePos({ x: center.x, y: center.y });
+      setDragStart({ id: itemId, x: edge.x, y: edge.y });
+      setCurrentMousePos({ x: edge.x, y: edge.y });
     }
   };
 
@@ -362,26 +365,26 @@ export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps
         >
           {/* Draw completed connections */}
           {connections.map((conn) => {
-            const leftCenter = getItemCenter(leftItemRefs.current[conn.leftId]);
-            const rightCenter = getItemCenter(rightItemRefs.current[conn.rightId]);
+            const leftEdge = getItemEdge(leftItemRefs.current[conn.leftId], 'left');
+            const rightEdge = getItemEdge(rightItemRefs.current[conn.rightId], 'right');
             
-            if (!leftCenter || !rightCenter) return null;
+            if (!leftEdge || !rightEdge) return null;
 
-            const midX = (leftCenter.x + rightCenter.x) / 2;
+            const midX = (leftEdge.x + rightEdge.x) / 2;
             const curveOffset = 50;
             
             return (
               <g key={`${conn.leftId}-${conn.rightId}`}>
                 <path
-                  d={`M ${leftCenter.x} ${leftCenter.y} Q ${midX} ${leftCenter.y - curveOffset}, ${rightCenter.x} ${rightCenter.y}`}
+                  d={`M ${leftEdge.x} ${leftEdge.y} Q ${midX} ${leftEdge.y - curveOffset}, ${rightEdge.x} ${rightEdge.y}`}
                   stroke="hsl(var(--primary))"
                   strokeWidth="3"
                   fill="none"
                   strokeLinecap="round"
                   className="animate-fade-in"
                 />
-                <circle cx={leftCenter.x} cy={leftCenter.y} r="8" fill="hsl(var(--primary))" />
-                <circle cx={rightCenter.x} cy={rightCenter.y} r="8" fill="hsl(var(--primary))" />
+                <circle cx={leftEdge.x} cy={leftEdge.y} r="8" fill="hsl(var(--primary))" />
+                <circle cx={rightEdge.x} cy={rightEdge.y} r="8" fill="hsl(var(--primary))" />
               </g>
             );
           })}
