@@ -8,6 +8,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import AutoLogin from "./pages/AutoLogin";
 import Search from "./pages/Search";
 import Achievements from "./pages/Achievements";
 import XPHistory from "./pages/XPHistory";
@@ -51,6 +52,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auto-login" element={<AutoLogin />} />
           <Route path="/search" element={<Search />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/xp-history" element={<XPHistory />} />
