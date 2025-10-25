@@ -12,6 +12,8 @@ interface UserData {
   email?: string;
   full_name?: string;
   username?: string;
+  nit_institucion?: string;
+  member_role?: string;
 }
 
 interface BulkResult {
@@ -115,7 +117,7 @@ serve(async (req) => {
 
     // Procesar usuarios uno por uno
     for (const userData of users as UserData[]) {
-      const { tipo_documento, numero_documento, email, full_name, username } = userData;
+      const { tipo_documento, numero_documento, email, full_name, username, nit_institucion, member_role } = userData;
 
       // Validar datos requeridos
       if (!tipo_documento || !numero_documento) {
@@ -191,6 +193,37 @@ serve(async (req) => {
 
         if (profileError) {
           console.error(`Error updating profile for ${numero_documento}:`, profileError);
+        }
+
+        // Si se proporcionó NIT de institución, agregar al usuario como miembro
+        if (nit_institucion && nit_institucion.trim() !== '') {
+          const { data: institution } = await supabase
+            .from('institutions')
+            .select('id')
+            .eq('nit', nit_institucion.trim())
+            .single();
+
+          if (institution) {
+            // Validar el rol, si no es válido usar 'student' por defecto
+            const validRoles = ['admin', 'teacher', 'student'];
+            const finalRole = member_role && validRoles.includes(member_role) ? member_role : 'student';
+
+            const { error: memberError } = await supabase
+              .from('institution_members')
+              .insert({
+                institution_id: institution.id,
+                user_id: authData.user.id,
+                member_role: finalRole,
+                invited_by: institution.id, // Usar el ID de la institución como invitador
+                status: 'active'
+              });
+
+            if (memberError) {
+              console.error(`Error adding user ${numero_documento} to institution:`, memberError);
+            }
+          } else {
+            console.warn(`Institution with NIT ${nit_institucion} not found for user ${numero_documento}`);
+          }
         }
 
         results.push({

@@ -163,6 +163,36 @@ export const UserCreationApi = () => {
             </div>
 
             <div>
+              <h4 className="text-sm font-medium mb-2">Ejemplo 3: Registro masivo (hasta 3000 usuarios)</h4>
+              <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
+{`curl -X POST '${projectUrl}/functions/v1/create-users-bulk' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "users": [
+      {
+        "tipo_documento": "CC",
+        "numero_documento": "1234567890",
+        "email": "usuario1@ejemplo.com",
+        "full_name": "Juan Pérez",
+        "nit_institucion": "900123456",
+        "member_role": "student"
+      },
+      {
+        "tipo_documento": "TI",
+        "numero_documento": "9876543210",
+        "full_name": "María García",
+        "nit_institucion": "900123456",
+        "member_role": "student"
+      }
+    ]
+  }'`}
+              </pre>
+              <p className="text-xs text-muted-foreground mt-2">
+                ⚠️ Límite: máximo 3000 usuarios por solicitud. Los campos opcionales son los mismos que en creación individual.
+              </p>
+            </div>
+
+            <div>
               <h4 className="text-sm font-medium mb-2">JavaScript/TypeScript</h4>
               <pre className="bg-muted p-3 rounded-md text-xs overflow-x-auto">
 {`const response = await fetch('${endpointUrl}', {
