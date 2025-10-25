@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Combobox } from "@/components/ui/combobox";
 import { GameColumnMatchEditor } from "@/components/game/GameColumnMatchEditor";
 import { WordOrderEditor } from "@/components/game/WordOrderEditor";
 import { useGames, useGameQuestions, GameQuestion } from "@/hooks/useGames";
+import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 
@@ -24,9 +26,15 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
   
   const [title, setTitle] = useState(gameData.title || "");
   const [description, setDescription] = useState(gameData.description || "");
+  
+  // Find the subject value from the stored data
+  const initialSubject = gameData.subject 
+    ? subjects.find(s => s.label === gameData.subject)?.value || gameData.subject
+    : "";
+    
+  const [subject, setSubject] = useState(initialSubject);
   const [category, setCategory] = useState(gameData.category || "");
   const [gradeLevel, setGradeLevel] = useState(gameData.grade_level || "");
-  const [subject, setSubject] = useState(gameData.subject || "");
   const [tags, setTags] = useState<string[]>(gameData.tags || []);
   const [thumbnailUrl, setThumbnailUrl] = useState(gameData.thumbnail_url || "");
   const [gameType, setGameType] = useState(gameData.game_type || "word_order");
@@ -63,7 +71,7 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
       description,
       category,
       grade_level: gradeLevel,
-      subject,
+      subject: subject ? subjects.find(s => s.value === subject)?.label || subject : undefined,
       tags,
       thumbnail_url: thumbnailUrl,
       game_type: gameType,
@@ -127,21 +135,19 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category">Categoría *</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="matematicas">Matemáticas</SelectItem>
-                  <SelectItem value="ciencias">Ciencias</SelectItem>
-                  <SelectItem value="lenguaje">Lenguaje</SelectItem>
-                  <SelectItem value="historia">Historia</SelectItem>
-                  <SelectItem value="arte">Arte</SelectItem>
-                  <SelectItem value="tecnologia">Tecnología</SelectItem>
-                  <SelectItem value="otros">Otros</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="subject">Asignatura *</Label>
+              <Combobox
+                options={subjects}
+                value={subject}
+                onChange={(value) => {
+                  const categoryValue = subjectToCategoryMap[value] || value;
+                  setSubject(value);
+                  setCategory(categoryValue);
+                }}
+                placeholder="Selecciona asignatura"
+                searchPlaceholder="Buscar asignatura..."
+                emptyMessage="No se encontró la asignatura."
+              />
             </div>
 
             <div className="space-y-2">
@@ -159,16 +165,6 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="subject">Asignatura (Opcional)</Label>
-            <Input
-              id="subject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Ej: Álgebra, Biología, Gramática, etc."
-            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
