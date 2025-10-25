@@ -428,6 +428,13 @@ export function ApiConfiguration() {
           </div>
 
           <div className="space-y-2">
+            <label className="text-sm font-medium">Headers Requeridos</label>
+            <code className="block px-3 py-2 bg-muted rounded text-sm">
+              Content-Type: application/json
+            </code>
+          </div>
+
+          <div className="space-y-2">
             <label className="text-sm font-medium">Autenticación</label>
             <p className="text-sm text-muted-foreground">
               Endpoint público (no requiere API key) - Diseñado para integraciones institucionales
@@ -439,7 +446,7 @@ export function ApiConfiguration() {
             <div className="space-y-1 text-sm">
               <div className="flex gap-2">
                 <code className="px-2 py-1 bg-muted rounded text-xs">tipo_documento</code>
-                <span className="text-muted-foreground">Tipo de documento (requerido)</span>
+                <span className="text-muted-foreground">Tipo de documento (requerido) - Valores: RC, NES, PPT, TI, CC, CE, TE, DIE, DESC</span>
               </div>
               <div className="flex gap-2">
                 <code className="px-2 py-1 bg-muted rounded text-xs">numero_documento</code>
@@ -563,6 +570,25 @@ export function ApiConfiguration() {
 
           <div className="space-y-4">
             <label className="text-sm font-medium">Respuestas de Error</label>
+            
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Content-Type incorrecto</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "error": "Content-Type debe ser application/json"
+}`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Body vacío o JSON inválido</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "error": "Body inválido o vacío. Debe enviar un JSON válido con los datos requeridos."
+}`}
+              </pre>
+            </div>
+
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground">Error 400 - Datos incompletos</label>
               <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
@@ -571,6 +597,7 @@ export function ApiConfiguration() {
 }`}
               </pre>
             </div>
+
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground">Error 409 - Usuario duplicado</label>
               <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">

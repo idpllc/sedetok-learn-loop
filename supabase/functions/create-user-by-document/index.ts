@@ -17,13 +17,43 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Verificar que el body no esté vacío
+    const contentType = req.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Content-Type debe ser application/json' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (jsonError) {
+      console.error('Error parsing JSON:', jsonError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Body inválido o vacío. Debe enviar un JSON válido con los datos requeridos.' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const { 
       tipo_documento, 
       numero_documento, 
       email, 
       full_name,
       username 
-    } = await req.json();
+    } = requestData;
 
     // Validar datos requeridos
     if (!tipo_documento || !numero_documento) {
