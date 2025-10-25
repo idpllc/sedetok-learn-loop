@@ -47,7 +47,7 @@ export const useInfiniteContent = (
 
       // Apply subject filter
       if (subject && subject !== "all") {
-        contentQuery = contentQuery.ilike("subject", subject);
+        contentQuery = contentQuery.ilike("subject", `%${subject}%`);
       }
 
       // Apply grade level filter
@@ -86,7 +86,7 @@ export const useInfiniteContent = (
 
         // Apply subject filter
         if (subject && subject !== "all") {
-          quizQuery = quizQuery.ilike("subject", subject);
+          quizQuery = quizQuery.ilike("subject", `%${subject}%`);
         }
 
         // Apply grade level filter
