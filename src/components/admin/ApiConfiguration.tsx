@@ -9,6 +9,9 @@ export function ApiConfiguration() {
   const { toast } = useToast();
   const [copiedEndpoint, setCopiedEndpoint] = useState(false);
   const [copiedExample, setCopiedExample] = useState(false);
+  const [copiedContentEndpoint, setCopiedContentEndpoint] = useState(false);
+  const [copiedContentExample, setCopiedContentExample] = useState(false);
+  const [copiedUserEndpoint, setCopiedUserEndpoint] = useState(false);
 
   const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
   const pathsEndpoint = `https://${projectId}.supabase.co/functions/v1/sedetok-search`;
@@ -66,9 +69,6 @@ export function ApiConfiguration() {
   }
 }`;
 
-  const [copiedContentEndpoint, setCopiedContentEndpoint] = useState(false);
-  const [copiedContentExample, setCopiedContentExample] = useState(false);
-
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     
@@ -88,6 +88,10 @@ export function ApiConfiguration() {
       case 'content-example':
         setCopiedContentExample(true);
         setTimeout(() => setCopiedContentExample(false), 2000);
+        break;
+      case 'user-endpoint':
+        setCopiedUserEndpoint(true);
+        setTimeout(() => setCopiedUserEndpoint(false), 2000);
         break;
     }
     
@@ -381,6 +385,200 @@ export function ApiConfiguration() {
           <div className="flex gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5"></div>
             <p>Endpoints de solo lectura - no permiten modificaciones</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="w-5 h-5" />
+            API REST - Creación de Usuarios
+          </CardTitle>
+          <CardDescription>
+            Endpoint para registro automatizado de usuarios desde sistemas externos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Endpoint URL</label>
+              <Badge variant="outline" className="gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Activo
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-3 py-2 bg-muted rounded text-sm font-mono break-all">
+                {`https://${projectId}.supabase.co/functions/v1/create-user-by-document`}
+              </code>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(`https://${projectId}.supabase.co/functions/v1/create-user-by-document`, 'user-endpoint')}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Método HTTP</label>
+            <Badge>POST</Badge>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Autenticación</label>
+            <p className="text-sm text-muted-foreground">
+              Endpoint público (no requiere API key) - Diseñado para integraciones institucionales
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Campos del Request Body (JSON)</label>
+            <div className="space-y-1 text-sm">
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">tipo_documento</code>
+                <span className="text-muted-foreground">Tipo de documento (requerido)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">numero_documento</code>
+                <span className="text-muted-foreground">Número de documento (requerido)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">email</code>
+                <span className="text-muted-foreground">Correo electrónico (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">full_name</code>
+                <span className="text-muted-foreground">Nombre completo (opcional)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">username</code>
+                <span className="text-muted-foreground">Nombre de usuario (opcional)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Key className="w-4 h-4" />
+              Lógica de Creación de Usuarios
+            </label>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p><strong>1. Con correo electrónico:</strong></p>
+              <ul className="list-disc list-inside pl-4 space-y-1">
+                <li>Email: El proporcionado en el campo <code className="px-1 py-0.5 bg-muted rounded">email</code></li>
+                <li>Contraseña: El número de documento</li>
+              </ul>
+              
+              <p className="mt-2"><strong>2. Sin correo electrónico:</strong></p>
+              <ul className="list-disc list-inside pl-4 space-y-1">
+                <li>Email: <code className="px-1 py-0.5 bg-muted rounded">{"{numero_documento}@sedefy.com"}</code></li>
+                <li>Contraseña: El número de documento</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Validaciones</label>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p>✓ No permite crear usuarios duplicados (valida por número de documento)</p>
+              <p>✓ Email automáticamente confirmado (no requiere verificación)</p>
+              <p>✓ Retorna error 409 si ya existe un usuario con ese documento</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Ejemplo de Uso - Creación de Usuarios</CardTitle>
+          <CardDescription>Requests de ejemplo para ambos casos</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <label className="text-sm font-medium">Caso 1: Usuario con correo</label>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Request cURL</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`curl -X POST "https://${projectId}.supabase.co/functions/v1/create-user-by-document" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "tipo_documento": "CC",
+    "numero_documento": "1234567890",
+    "email": "estudiante@example.com",
+    "full_name": "Juan Pérez",
+    "username": "jperez"
+  }'`}
+              </pre>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Response exitoso</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "success": true,
+  "user": {
+    "id": "uuid-generado",
+    "email": "estudiante@example.com",
+    "numero_documento": "1234567890",
+    "tipo_documento": "CC",
+    "message": "Usuario creado exitosamente. Contraseña: número de documento"
+  }
+}`}
+              </pre>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-sm font-medium">Caso 2: Usuario sin correo</label>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Request cURL</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`curl -X POST "https://${projectId}.supabase.co/functions/v1/create-user-by-document" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "tipo_documento": "TI",
+    "numero_documento": "9876543210",
+    "full_name": "María García"
+  }'`}
+              </pre>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Response exitoso</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "success": true,
+  "user": {
+    "id": "uuid-generado",
+    "email": "9876543210@sedefy.com",
+    "numero_documento": "9876543210",
+    "tipo_documento": "TI",
+    "message": "Usuario creado exitosamente. Contraseña: número de documento"
+  }
+}`}
+              </pre>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-sm font-medium">Respuestas de Error</label>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Datos incompletos</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "error": "tipo_documento y numero_documento son requeridos"
+}`}
+              </pre>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 409 - Usuario duplicado</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "error": "Ya existe un usuario con ese número de documento"
+}`}
+              </pre>
+            </div>
           </div>
         </CardContent>
       </Card>
