@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Check, ArrowDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +35,12 @@ export const RouteSearchModal = ({
   const { paths: publicPaths, isLoading: loadingPublicPaths } = useLearningPaths(undefined, 'all');
   const [searchTerm, setSearchTerm] = useState("");
   const [selected, setSelected] = useState<string[]>(selectedRoutes);
+  const [activeTab, setActiveTab] = useState<"my" | "public">("my");
+  const [visiblePublicCount, setVisiblePublicCount] = useState(10);
 
+  useEffect(() => {
+    setVisiblePublicCount(10);
+  }, [searchTerm, activeTab]);
   const handleToggleRoute = (routeId: string) => {
     setSelected((prev) =>
       prev.includes(routeId)
@@ -190,7 +195,7 @@ export const RouteSearchModal = ({
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden px-6 py-4">
-          <Tabs defaultValue="my" className="h-full flex flex-col">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "my" | "public")} className="h-full flex flex-col">
             <TabsList className="grid w-full grid-cols-2 min-w-0">
               <TabsTrigger value="my">Mis rutas</TabsTrigger>
               <TabsTrigger value="public">Rutas públicas</TabsTrigger>
@@ -198,14 +203,25 @@ export const RouteSearchModal = ({
 
             <div className="flex-1 min-h-0 overflow-hidden mt-4">
               <TabsContent value="my" className="h-full mt-0">
-                <div className="h-full overflow-y-auto pr-2 -mr-2">
+                <div className="max-h-[50vh] overflow-y-auto pr-2 -mr-2">
                   <RouteList routes={myPaths} loading={loadingMyPaths} />
                 </div>
               </TabsContent>
 
               <TabsContent value="public" className="h-full mt-0">
-                <div className="h-full overflow-y-auto pr-2 -mr-2">
-                  <RouteList routes={publicPaths} loading={loadingPublicPaths} excludeOwn={true} />
+                <div className="max-h-[50vh] overflow-y-auto pr-2 -mr-2">
+                  <RouteList 
+                    routes={filterRoutes(publicPaths, true).slice(0, visiblePublicCount)} 
+                    loading={loadingPublicPaths} 
+                    excludeOwn={false} 
+                  />
+                  {filterRoutes(publicPaths, true).length > visiblePublicCount && (
+                    <div className="pt-2">
+                      <Button variant="outline" className="w-full" onClick={() => setVisiblePublicCount((c) => c + 10)}>
+                        <ArrowDown className="w-4 h-4 mr-2" /> Cargar más
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </div>
