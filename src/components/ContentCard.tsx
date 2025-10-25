@@ -13,6 +13,7 @@ import { PDFViewer } from "./PDFViewer";
 import { PDFModal } from "./PDFModal";
 import { ReadingModal } from "./ReadingModal";
 import { QuizViewer } from "./QuizViewer";
+import { GameViewer } from "./GameViewer";
 import { useQuizAttempts } from "@/hooks/useQuizAttempts";
 import { BookOpen } from "lucide-react";
 import { ContentInfoSheet } from "./ContentInfoSheet";
@@ -106,6 +107,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
+  const [gameModalOpen, setGameModalOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPdfContent, setShowPdfContent] = useState(true);
   const [isMuted, setIsMuted] = useState(() => {
@@ -375,6 +377,32 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               </div>
             );
           })()
+        ) : contentType === 'game' ? (
+          <div className="w-full h-full bg-gradient-to-br from-blue-500/30 via-cyan-500/30 to-teal-500/30 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30" />
+            <div className="text-center p-8 relative z-10">
+              <div className="mb-6">
+                <div className="w-32 h-32 mx-auto rounded-full shadow-2xl border-4 border-white/30 bg-white/10 backdrop-blur-sm flex items-center justify-center animate-bounce">
+                  <span className="text-6xl">🎮</span>
+                </div>
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-4">{title}</h3>
+              <p className="text-white/80 text-sm mb-2">{questionsCount} preguntas</p>
+              
+              <div className="mt-8">
+                <Button
+                  size="lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setGameModalOpen(true);
+                  }}
+                  className="bg-white hover:bg-white/90 text-blue-600 font-bold text-lg px-8 py-6 shadow-2xl hover:scale-105 transition-transform pointer-events-auto"
+                >
+                  🎯 Jugar Ahora
+                </Button>
+              </div>
+            </div>
+          </div>
         ) : thumbnail ? (
           <img 
             src={thumbnail} 
@@ -639,6 +667,22 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   if (passed && onQuizComplete) {
                     onQuizComplete(passed);
                   }
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Game Viewer Dialog */}
+      {contentType === 'game' && (
+        <Dialog open={gameModalOpen} onOpenChange={setGameModalOpen}>
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[90vh] overflow-hidden p-0">
+            <div className="h-[90vh] overflow-y-auto overflow-x-hidden">
+              <GameViewer 
+                gameId={id}
+                onComplete={() => {
+                  setGameModalOpen(false);
                 }}
               />
             </div>
