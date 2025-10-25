@@ -50,9 +50,40 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchGameData();
-  }, [gameId]);
+  // Helper functions defined before useEffects
+  const shuffleArray = (array: string[]) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
+  const completeGame = async () => {
+    setIsCompleted(true);
+
+    if (!user) {
+      toast.error("Debes iniciar sesión para guardar tus resultados");
+      onComplete?.();
+      return;
+    }
+
+    try {
+      const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
+      const percentage = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+
+      // Award XP for game completion
+      awardXP(gameId, 'view_complete', false);
+
+      toast.success(`¡Juego completado! Puntuación: ${percentage}%`);
+    } catch (error) {
+      console.error("Error saving game result:", error);
+      toast.error("Error al guardar el resultado");
+    }
+
+    onComplete?.();
+  };
 
   const fetchGameData = async () => {
     try {
@@ -115,6 +146,10 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
   };
 
   useEffect(() => {
+    fetchGameData();
+  }, [gameId]);
+
+  useEffect(() => {
     if (timeRemaining !== null && timeRemaining > 0 && !isCompleted) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
@@ -130,15 +165,6 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
       return () => clearInterval(timer);
     }
   }, [timeRemaining, isCompleted]);
-
-  const shuffleArray = (array: string[]) => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-  };
 
   // If it's a column match game, delegate to ColumnMatchViewer
   if (!loading && gameData?.game_type === "column_match") {
@@ -203,31 +229,6 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
     setAvailableWords(words);
     setShowFeedback(false);
     setIsCorrect(false);
-  };
-
-  const completeGame = async () => {
-    setIsCompleted(true);
-
-    if (!user) {
-      toast.error("Debes iniciar sesión para guardar tus resultados");
-      onComplete?.();
-      return;
-    }
-
-    try {
-      const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
-      const percentage = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
-
-      // Award XP for game completion (using view_complete as action type)
-      awardXP(gameId, 'view_complete', false);
-
-      toast.success(`¡Juego completado! Puntuación: ${percentage}%`);
-    } catch (error) {
-      console.error("Error saving game result:", error);
-      toast.error("Error al guardar el resultado");
-    }
-
-    onComplete?.();
   };
 
   const formatTime = (seconds: number) => {
