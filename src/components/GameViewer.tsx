@@ -60,9 +60,14 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
         .from("games")
         .select("*")
         .eq("id", gameId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!game) {
+        setLoading(false);
+        toast.error("Juego no encontrado");
+        return;
+      }
 
       setGameData({
         id: game.id,
@@ -82,12 +87,28 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
           .order("order_index");
 
         if (questionsError) throw questionsError;
-        setQuestions(questionsData || []);
+        const normalized = (questionsData || []).map((q: any) => ({
+          ...q,
+          words: Array.isArray(q.words)
+            ? (q.words as string[])
+            : typeof q.words === "string"
+              ? (JSON.parse(q.words) as string[])
+              : [],
+        })) as GameQuestion[];
+        setQuestions(normalized);
+
+        if (normalized.length > 0) {
+          const first = normalized[0];
+          const words = game.random_order ? shuffleArray([...first.words]) : [...first.words];
+          setAvailableWords(words);
+          setStartTime(Date.now());
+        }
       }
 
+      if (game.time_limit) setTimeRemaining(game.time_limit);
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching game:", error);
+    } catch (err) {
+      console.error("Error fetching game:", err);
       toast.error("Error al cargar el juego");
       setLoading(false);
     }
@@ -119,46 +140,6 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
     }
   }, [timeRemaining, isCompleted]);
 
-  const fetchGameData = async () => {
-    try {
-      const { data: game, error: gameError } = await supabase
-        .from("games")
-        .select("*")
-        .eq("id", gameId)
-        .single();
-
-      if (gameError) throw gameError;
-      setGameData(game);
-
-      if (game.time_limit) {
-        setTimeRemaining(game.time_limit);
-      }
-
-      const { data: questionsData, error: questionsError } = await supabase
-        .from("game_questions")
-        .select("*")
-        .eq("game_id", gameId)
-        .order("order_index", { ascending: true });
-
-      if (questionsError) throw questionsError;
-
-      setQuestions(questionsData as GameQuestion[]);
-      
-      if (questionsData && questionsData.length > 0) {
-        const firstQuestion = questionsData[0];
-        const words = game.random_order 
-          ? shuffleArray([...(firstQuestion.words as string[])])
-          : [...(firstQuestion.words as string[])];
-        setAvailableWords(words);
-        setStartTime(Date.now());
-      }
-    } catch (error) {
-      console.error("Error loading game:", error);
-      toast.error("Error al cargar el juego");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const shuffleArray = (array: string[]) => {
     const newArray = [...array];
