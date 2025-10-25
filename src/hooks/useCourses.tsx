@@ -20,6 +20,13 @@ interface CourseData {
   institutions?: string[];
 }
 
+interface CourseLevelData {
+  name: string;
+  description?: string;
+  order_index: number;
+  routes: CourseRouteData[];
+}
+
 interface CourseRouteData {
   path_id: string;
   order_index: number;
@@ -58,10 +65,10 @@ export const useCourses = (filter?: "created" | "all") => {
   const createCourse = useMutation({
     mutationFn: async ({ 
       courseData, 
-      routes 
+      levels 
     }: { 
       courseData: CourseData; 
-      routes: CourseRouteData[];
+      levels: CourseLevelData[];
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
@@ -81,18 +88,38 @@ export const useCourses = (filter?: "created" | "all") => {
 
       if (courseError) throw courseError;
 
-      // Add routes to course
-      if (routes.length > 0) {
-        const routeInserts = routes.map(route => ({
-          course_id: course.id,
-          ...route
-        }));
+      // Add levels and routes to course
+      if (levels.length > 0) {
+        for (const levelData of levels) {
+          // Create level
+          const { data: level, error: levelError } = await supabase
+            .from("course_levels")
+            .insert([{
+              course_id: course.id,
+              name: levelData.name,
+              description: levelData.description,
+              order_index: levelData.order_index,
+            }])
+            .select()
+            .single();
 
-        const { error: routesError } = await supabase
-          .from("course_routes")
-          .insert(routeInserts);
+          if (levelError) throw levelError;
 
-        if (routesError) throw routesError;
+          // Add routes to level
+          if (levelData.routes.length > 0) {
+            const routeInserts = levelData.routes.map(route => ({
+              course_id: course.id,
+              level_id: level.id,
+              ...route
+            }));
+
+            const { error: routesError } = await supabase
+              .from("course_routes")
+              .insert(routeInserts);
+
+            if (routesError) throw routesError;
+          }
+        }
       }
 
       // Add institutions if course is private

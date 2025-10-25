@@ -59,7 +59,6 @@ export const Sidebar = () => {
   const menuItems = useMemo(() => [
     { id: "home", icon: Home, label: "Inicio", path: "/" },
     { id: "search", icon: Search, label: "Explorar", path: "/search" },
-    { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ], []);
@@ -198,42 +197,6 @@ export const Sidebar = () => {
         <div className="p-4 border-t border-border">
           <nav className="space-y-2 text-xs text-muted-foreground">
             <button
-              onClick={() => handleNavigate("/install")}
-              className="block hover:text-foreground transition-colors font-medium text-primary"
-            >
-              Instalar App
-            </button>
-            <a
-              href="https://tienda.sedefy.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block hover:text-foreground transition-colors font-medium text-primary"
-            >
-              Sede Market
-            </a>
-            <a
-              href="https://instituciones.sedefy.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block hover:text-foreground transition-colors font-medium text-primary"
-            >
-              Sede Instituciones
-            </a>
-            <a
-              href="https://appstore.sedefy.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block hover:text-foreground transition-colors font-medium text-primary"
-            >
-              Sede App Store
-            </a>
-            <button
-              onClick={() => handleNavigate("/register-institution")}
-              className="block hover:text-foreground transition-colors font-medium text-primary"
-            >
-              Registrar Institución
-            </button>
-            <button
               onClick={() => handleNavigate("/about")}
               className="block hover:text-foreground transition-colors"
             >
@@ -294,25 +257,6 @@ export const Sidebar = () => {
           </SheetContent>
         </Sheet>
 
-        {/* Quick Links */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/learning-paths")}
-            className="text-white font-medium bg-black/60 backdrop-blur-sm hover:bg-black/80 border border-white/20 rounded-full px-4 h-10 shadow-lg"
-          >
-            Rutas
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/search")}
-            className="text-white font-medium bg-black/60 backdrop-blur-sm hover:bg-black/80 border border-white/20 rounded-full px-4 h-10 shadow-lg"
-          >
-            Explorar
-          </Button>
-        </div>
       </div>
 
       <AuthModal 

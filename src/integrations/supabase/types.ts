@@ -219,12 +219,48 @@ export type Database = {
           },
         ]
       }
+      course_levels: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          order_index: number
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          order_index: number
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_levels_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_routes: {
         Row: {
           course_id: string
           created_at: string | null
           id: string
           is_required: boolean | null
+          level_id: string | null
           order_index: number
           path_id: string
         }
@@ -233,6 +269,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_required?: boolean | null
+          level_id?: string | null
           order_index: number
           path_id: string
         }
@@ -241,6 +278,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_required?: boolean | null
+          level_id?: string | null
           order_index?: number
           path_id?: string
         }
@@ -250,6 +288,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_routes_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "course_levels"
             referencedColumns: ["id"]
           },
           {

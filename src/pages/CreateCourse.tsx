@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import { ArrowLeft, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,9 +80,18 @@ export default function CreateCourse() {
     institutions: [] as string[],
   });
 
-  const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
+  const [levels, setLevels] = useState<Array<{
+    id: string;
+    name: string;
+    description: string;
+    routes: string[];
+    expanded: boolean;
+  }>>([]);
+  const [currentLevelId, setCurrentLevelId] = useState<string | null>(null);
   const [showRouteModal, setShowRouteModal] = useState(false);
   const [newTag, setNewTag] = useState("");
+  const [newLevelName, setNewLevelName] = useState("");
+  const [newLevelDescription, setNewLevelDescription] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,15 +110,30 @@ export default function CreateCourse() {
       return;
     }
 
-    const routes = selectedRoutes.map((routeId, index) => ({
-      path_id: routeId,
+    // Validate that there is at least one level with routes
+    if (levels.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes agregar al menos un nivel con rutas de aprendizaje",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const levelsData = levels.map((level, index) => ({
+      name: level.name,
+      description: level.description,
       order_index: index,
-      is_required: true,
+      routes: level.routes.map((routeId, routeIndex) => ({
+        path_id: routeId,
+        order_index: routeIndex,
+        is_required: true,
+      })),
     }));
 
     await createCourse.mutateAsync({
       courseData: formData,
-      routes,
+      levels: levelsData,
     });
 
     navigate("/learning-paths");
@@ -141,11 +165,62 @@ export default function CreateCourse() {
     }));
   };
 
-  const handleRemoveRoute = (routeId: string) => {
-    setSelectedRoutes(prev => prev.filter(id => id !== routeId));
+  const handleAddLevel = () => {
+    if (!newLevelName.trim()) {
+      toast({
+        title: "Error",
+        description: "El nombre del nivel es obligatorio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newLevel = {
+      id: crypto.randomUUID(),
+      name: newLevelName.trim(),
+      description: newLevelDescription.trim(),
+      routes: [],
+      expanded: true,
+    };
+
+    setLevels(prev => [...prev, newLevel]);
+    setNewLevelName("");
+    setNewLevelDescription("");
   };
 
-  const selectedPathsData = paths?.filter(path => selectedRoutes.includes(path.id));
+  const handleRemoveLevel = (levelId: string) => {
+    setLevels(prev => prev.filter(level => level.id !== levelId));
+  };
+
+  const handleToggleLevel = (levelId: string) => {
+    setLevels(prev => prev.map(level => 
+      level.id === levelId ? { ...level, expanded: !level.expanded } : level
+    ));
+  };
+
+  const handleAddRoutesToLevel = (levelId: string) => {
+    setCurrentLevelId(levelId);
+    setShowRouteModal(true);
+  };
+
+  const handleRoutesSelected = (selectedRoutes: string[]) => {
+    if (currentLevelId) {
+      setLevels(prev => prev.map(level => 
+        level.id === currentLevelId 
+          ? { ...level, routes: selectedRoutes }
+          : level
+      ));
+    }
+    setCurrentLevelId(null);
+  };
+
+  const handleRemoveRouteFromLevel = (levelId: string, routeId: string) => {
+    setLevels(prev => prev.map(level => 
+      level.id === levelId
+        ? { ...level, routes: level.routes.filter(id => id !== routeId) }
+        : level
+    ));
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -344,91 +419,158 @@ export default function CreateCourse() {
             </CardContent>
           </Card>
 
-          {/* Routes */}
+          {/* Levels and Routes */}
           <Card>
             <CardHeader>
-              <CardTitle>Rutas de Aprendizaje</CardTitle>
+              <CardTitle>Niveles y Rutas de Aprendizaje</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button
-                type="button"
-                onClick={() => setShowRouteModal(true)}
-                variant="outline"
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Rutas de Aprendizaje
-              </Button>
-
-              {selectedPathsData && selectedPathsData.length > 0 && (
+              {/* Add New Level */}
+              <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                <h4 className="font-medium">Agregar Nuevo Nivel</h4>
                 <div className="space-y-2">
-                  {selectedPathsData.map((path, index) => (
-                    <div
-                      key={path.id}
-                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden w-full min-w-0"
-                    >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0 mt-1">
-                        {index + 1}
-                      </div>
-                      {(path.thumbnail_url || path.cover_url) && (
-                        <img
-                          src={path.thumbnail_url || path.cover_url}
-                          alt={path.title}
-                          className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <p className="font-medium truncate">{path.title}</p>
-                        <p className="text-sm text-muted-foreground mt-1 break-words break-all">
-                          {path.description
-                            ? path.description.length > 80
-                              ? `${path.description.substring(0, 80)}...`
-                              : path.description
-                            : ""}
-                        </p>
-                        {path.profiles && (
-                          <div className="flex items-center gap-2 mt-1 min-w-0">
-                            {path.profiles.avatar_url && (
-                              <img
-                                src={path.profiles.avatar_url}
-                                alt={path.profiles.username}
-                                className="w-4 h-4 rounded-full object-cover"
-                              />
-                            )}
-                            <span className="text-xs text-muted-foreground truncate flex-1">
-                              por {path.profiles.full_name || path.profiles.username}
-                            </span>
+                  <Input
+                    placeholder="Nombre del nivel (ej: Fundamentos, Intermedio, Avanzado)"
+                    value={newLevelName}
+                    onChange={(e) => setNewLevelName(e.target.value)}
+                  />
+                  <Textarea
+                    placeholder="Descripción del nivel (opcional)"
+                    value={newLevelDescription}
+                    onChange={(e) => setNewLevelDescription(e.target.value)}
+                    rows={2}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddLevel}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Agregar Nivel
+                  </Button>
+                </div>
+              </div>
+
+              {/* Levels List */}
+              {levels.length > 0 && (
+                <div className="space-y-3">
+                  {levels.map((level, levelIndex) => {
+                    const levelPaths = paths?.filter(path => level.routes.includes(path.id));
+                    
+                    return (
+                      <div key={level.id} className="border rounded-lg overflow-hidden">
+                        {/* Level Header */}
+                        <div className="flex items-center justify-between p-3 bg-muted/50">
+                          <div className="flex items-center gap-3 flex-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleToggleLevel(level.id)}
+                            >
+                              {level.expanded ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Nivel {levelIndex + 1}: {level.name}</span>
+                                <Badge variant="secondary" className="text-xs">
+                                  {level.routes.length} ruta{level.routes.length !== 1 ? 's' : ''}
+                                </Badge>
+                              </div>
+                              {level.description && (
+                                <p className="text-sm text-muted-foreground mt-1">{level.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddRoutesToLevel(level.id)}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Rutas
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveLevel(level.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Level Routes */}
+                        {level.expanded && levelPaths && levelPaths.length > 0 && (
+                          <div className="p-3 space-y-2 bg-background">
+                            {levelPaths.map((path, routeIndex) => (
+                              <div
+                                key={path.id}
+                                className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors overflow-hidden w-full min-w-0"
+                              >
+                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-semibold flex-shrink-0 mt-1">
+                                  {routeIndex + 1}
+                                </div>
+                                {(path.thumbnail_url || path.cover_url) && (
+                                  <img
+                                    src={path.thumbnail_url || path.cover_url}
+                                    alt={path.title}
+                                    className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0 overflow-hidden">
+                                  <p className="font-medium truncate">{path.title}</p>
+                                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                    {path.description || ""}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    {path.subject && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {path.subject}
+                                      </Badge>
+                                    )}
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                      ⚡ {path.total_xp || 0} XP
+                                    </span>
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRemoveRouteFromLevel(level.id, path.id)}
+                                  className="flex-shrink-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
                           </div>
                         )}
-                        <div className="flex items-center gap-2 gap-y-1 mt-2 flex-wrap">
-                          {path.subject && (
-                            <Badge variant="secondary" className="text-xs">
-                              {path.subject}
-                            </Badge>
-                          )}
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            ⚡ {path.total_xp || 0} XP
-                          </span>
-                        </div>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveRoute(path.id)}
-                        className="flex-shrink-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
+                </div>
+              )}
+
+              {levels.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No hay niveles agregados. Crea tu primer nivel para organizar las rutas de aprendizaje.</p>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Course Preview */}
-          {(formData.title || formData.cover_url || selectedPathsData && selectedPathsData.length > 0) && (
+          {(formData.title || formData.cover_url || levels.length > 0) && (
             <Card>
               <CardHeader>
                 <CardTitle>Vista Previa del Curso</CardTitle>
@@ -473,44 +615,72 @@ export default function CreateCourse() {
                   </div>
                 )}
 
-                {selectedPathsData && selectedPathsData.length > 0 && (
+
+                {levels.length > 0 && (
                   <div>
                     <h4 className="font-semibold mb-3">
-                      Contenido del curso ({selectedPathsData.length} rutas)
+                      Estructura del curso ({levels.length} nivel{levels.length !== 1 ? 'es' : ''})
                     </h4>
-                    <div className="space-y-2">
-                      {selectedPathsData.map((path, index) => (
-                        <div
-                          key={path.id}
-                          className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30"
-                        >
-                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex-shrink-0">
-                            {index + 1}
-                          </div>
-                          {(path.thumbnail_url || path.cover_url) && (
-                            <img
-                              src={path.thumbnail_url || path.cover_url}
-                              alt={path.title}
-                              className="w-12 h-12 rounded object-cover flex-shrink-0"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0 overflow-hidden">
-                            <p className="text-sm font-medium truncate">{path.title}</p>
-                            {path.profiles && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                por {path.profiles.full_name || path.profiles.username}
-                              </p>
+                    <div className="space-y-3">
+                      {levels.map((level, levelIndex) => {
+                        const levelPaths = paths?.filter(path => level.routes.includes(path.id)) || [];
+                        const levelXP = levelPaths.reduce((sum, path) => sum + (path.total_xp || 0), 0);
+                        
+                        return (
+                          <div key={level.id} className="border rounded-lg overflow-hidden">
+                            <div className="p-3 bg-muted/30">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-semibold">Nivel {levelIndex + 1}: {level.name}</p>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {level.routes.length} ruta{level.routes.length !== 1 ? 's' : ''}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    ⚡ {levelXP} XP
+                                  </span>
+                                </div>
+                              </div>
+                              {level.description && (
+                                <p className="text-xs text-muted-foreground mt-1">{level.description}</p>
+                              )}
+                            </div>
+                            {levelPaths.length > 0 && (
+                              <div className="p-3 space-y-2">
+                                {levelPaths.map((path, index) => (
+                                  <div
+                                    key={path.id}
+                                    className="flex items-center gap-3 p-2 border rounded-lg bg-muted/10"
+                                  >
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-semibold flex-shrink-0">
+                                      {index + 1}
+                                    </div>
+                                    {(path.thumbnail_url || path.cover_url) && (
+                                      <img
+                                        src={path.thumbnail_url || path.cover_url}
+                                        alt={path.title}
+                                        className="w-10 h-10 rounded object-cover flex-shrink-0"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0 overflow-hidden">
+                                      <p className="text-xs font-medium truncate">{path.title}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        ⚡ {path.total_xp || 0} XP
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
-                            <p className="text-xs text-muted-foreground">
-                              ⚡ {path.total_xp || 0} XP
-                            </p>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <div className="mt-3 p-3 bg-primary/5 rounded-lg">
                       <p className="text-sm font-medium">
-                        Total XP: ⚡ {selectedPathsData.reduce((sum, path) => sum + (path.total_xp || 0), 0)} XP
+                        Total XP: ⚡ {levels.reduce((sum, level) => {
+                          const levelPaths = paths?.filter(path => level.routes.includes(path.id)) || [];
+                          return sum + levelPaths.reduce((pathSum, path) => pathSum + (path.total_xp || 0), 0);
+                        }, 0)} XP
                       </p>
                     </div>
                   </div>
@@ -542,9 +712,12 @@ export default function CreateCourse() {
 
       <RouteSearchModal
         open={showRouteModal}
-        onClose={() => setShowRouteModal(false)}
-        selectedRoutes={selectedRoutes}
-        onSelect={setSelectedRoutes}
+        onClose={() => {
+          setShowRouteModal(false);
+          setCurrentLevelId(null);
+        }}
+        selectedRoutes={currentLevelId ? (levels.find(l => l.id === currentLevelId)?.routes || []) : []}
+        onSelect={handleRoutesSelected}
       />
     </div>
   );
