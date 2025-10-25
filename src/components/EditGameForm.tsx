@@ -133,14 +133,13 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
                   <SelectValue placeholder="Selecciona categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Matematicas">Matemáticas</SelectItem>
-                  <SelectItem value="Ciencias">Ciencias</SelectItem>
-                  <SelectItem value="Lenguaje">Lenguaje</SelectItem>
-                  <SelectItem value="Sociales">Sociales</SelectItem>
-                  <SelectItem value="Ingles">Inglés</SelectItem>
-                  <SelectItem value="Arte">Arte</SelectItem>
-                  <SelectItem value="Deportes">Deportes</SelectItem>
-                  <SelectItem value="Tecnologia">Tecnología</SelectItem>
+                  <SelectItem value="matematicas">Matemáticas</SelectItem>
+                  <SelectItem value="ciencias">Ciencias</SelectItem>
+                  <SelectItem value="lenguaje">Lenguaje</SelectItem>
+                  <SelectItem value="historia">Historia</SelectItem>
+                  <SelectItem value="arte">Arte</SelectItem>
+                  <SelectItem value="tecnologia">Tecnología</SelectItem>
+                  <SelectItem value="otros">Otros</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -152,27 +151,27 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
                   <SelectValue placeholder="Selecciona nivel" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Primaria">Primaria</SelectItem>
-                  <SelectItem value="Secundaria">Secundaria</SelectItem>
-                  <SelectItem value="Bachillerato">Bachillerato</SelectItem>
-                  <SelectItem value="Universidad">Universidad</SelectItem>
-                  <SelectItem value="Todos">Todos</SelectItem>
+                  <SelectItem value="primaria">Primaria</SelectItem>
+                  <SelectItem value="secundaria">Secundaria</SelectItem>
+                  <SelectItem value="preparatoria">Preparatoria</SelectItem>
+                  <SelectItem value="universidad">Universidad</SelectItem>
+                  <SelectItem value="libre">Libre</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subject">Materia</Label>
+            <Label htmlFor="subject">Asignatura (Opcional)</Label>
             <Input
               id="subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Ej: Álgebra, Biología, etc."
+              placeholder="Ej: Álgebra, Biología, Gramática, etc."
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="gameType">Tipo de Juego</Label>
               <Select value={gameType} onValueChange={setGameType}>
@@ -184,6 +183,19 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
                   <SelectItem value="column_match">Conectar Columnas</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="timeLimit">Tiempo límite (segundos)</Label>
+              <Input
+                id="timeLimit"
+                type="number"
+                min="0"
+                value={timeLimit || ""}
+                onChange={(e) => setTimeLimit(e.target.value ? parseInt(e.target.value) : null)}
+                placeholder="Sin límite"
+              />
+              <p className="text-xs text-muted-foreground">Dejar vacío para sin límite</p>
             </div>
 
             <div className="space-y-2">
