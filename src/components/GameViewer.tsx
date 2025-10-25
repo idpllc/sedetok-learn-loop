@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useXP } from "@/hooks/useXP";
 import { ColumnMatchViewer } from "./ColumnMatchViewer";
+import { WordWheelViewer } from "./WordWheelViewer";
 
 interface GameViewerProps {
   gameId: string;
@@ -170,6 +171,11 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
   // If it's a column match game, delegate to ColumnMatchViewer
   if (!loading && gameData?.game_type === "column_match") {
     return <ColumnMatchViewer gameId={gameId} onComplete={onComplete} />;
+  }
+
+  // If it's a word wheel game, delegate to WordWheelViewer
+  if (!loading && gameData?.game_type === "word_wheel") {
+    return <WordWheelViewer gameId={gameId} onComplete={onComplete} />;
   }
 
   const handleWordClick = (word: string, fromAvailable: boolean) => {

@@ -516,6 +516,7 @@ export type Database = {
           game_id: string
           id: string
           image_url: string | null
+          initial_letter: string | null
           order_index: number
           points: number | null
           question_text: string
@@ -528,6 +529,7 @@ export type Database = {
           game_id: string
           id?: string
           image_url?: string | null
+          initial_letter?: string | null
           order_index: number
           points?: number | null
           question_text: string
@@ -540,6 +542,7 @@ export type Database = {
           game_id?: string
           id?: string
           image_url?: string | null
+          initial_letter?: string | null
           order_index?: number
           points?: number | null
           question_text?: string

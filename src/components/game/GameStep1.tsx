@@ -37,6 +37,12 @@ export const GameStep1 = ({
               Conectar Columnas - Conecta items de la izquierda con la derecha
             </Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="word_wheel" id="word_wheel" />
+            <Label htmlFor="word_wheel" className="font-normal cursor-pointer">
+              Ruleta de Palabras - Adivina palabras según su letra inicial
+            </Label>
+          </div>
         </RadioGroup>
       </div>
 
