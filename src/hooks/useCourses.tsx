@@ -44,10 +44,7 @@ export const useCourses = (filter?: "created" | "all") => {
       
       let query = supabase
         .from("courses")
-        .select(`
-          *,
-          profiles!creator_id(username, avatar_url, full_name)
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (filter === "created" && user) {
