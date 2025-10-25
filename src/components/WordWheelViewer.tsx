@@ -345,7 +345,7 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
         </Card>
 
         {/* Wheel Container */}
-        <div className="relative w-full max-w-3xl mx-auto aspect-square flex items-center justify-center">
+        <div className="relative w-full max-w-md mx-auto aspect-square flex items-center justify-center">
           {/* Letters Circle */}
           <div className="absolute inset-0 flex items-center justify-center">
             {ALPHABET.map((letter, index) => {
@@ -366,15 +366,15 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
                   }}
                 >
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
                       hasQuestion ? "shadow-lg" : "opacity-50"
                     }`}
                     style={{
                       backgroundColor: hasQuestion ? getLetterColor(letter) : "hsl(var(--muted))",
                       color: hasQuestion ? getLetterTextColor(letter) : "hsl(var(--muted-foreground))",
                       border: currentQuestion.initial_letter.toUpperCase() === letter 
-                        ? "3px solid hsl(var(--primary))" 
-                        : "2px solid transparent",
+                        ? "2px solid hsl(var(--primary))" 
+                        : "1px solid transparent",
                     }}
                   >
                     {letter}
@@ -385,11 +385,11 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
           </div>
 
           {/* Center Content */}
-          <div className="relative z-0 w-56">
-            <div className="bg-card/95 backdrop-blur-sm p-3 rounded-xl shadow-2xl border-2 border-primary/20">
-              <div className="text-center mb-2">
-                <p className="text-xs text-muted-foreground mb-1">Empieza por</p>
-                <div className="text-3xl font-bold text-primary">
+          <div className="relative z-0 w-48">
+            <div className="bg-card/95 backdrop-blur-sm p-2.5 rounded-xl shadow-2xl border-2 border-primary/20">
+              <div className="text-center mb-1.5">
+                <p className="text-xs text-muted-foreground">Empieza por</p>
+                <div className="text-2xl font-bold text-primary">
                   {currentQuestion.initial_letter.toUpperCase()}
                 </div>
               </div>
@@ -401,14 +401,14 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
                   if (e.key === "Enter") handleSubmit();
                 }}
                 placeholder="Tu respuesta..."
-                className="text-center text-sm font-medium mb-2 h-9"
+                className="text-center text-sm font-medium mb-2 h-8"
                 autoFocus
               />
 
               <div className="flex gap-2">
                 <Button
                   onClick={handleSubmit}
-                  className="flex-1 h-8 text-sm"
+                  className="flex-1 h-7 text-xs"
                   disabled={!userAnswer.trim()}
                 >
                   Enviar
@@ -416,7 +416,7 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
                 <Button
                   onClick={handleSkip}
                   variant="outline"
-                  className="flex-1 h-8 text-sm"
+                  className="flex-1 h-7 text-xs"
                 >
                   Pasar
                 </Button>
