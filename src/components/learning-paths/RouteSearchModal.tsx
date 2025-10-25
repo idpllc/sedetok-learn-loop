@@ -95,7 +95,7 @@ export const RouteSearchModal = ({
           return (
             <div
               key={route.id}
-              className={`p-3 rounded-lg border cursor-pointer transition-all w-full overflow-hidden ${
+              className={`p-3 rounded-lg border cursor-pointer transition-all w-full min-w-0 overflow-hidden ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
@@ -111,7 +111,7 @@ export const RouteSearchModal = ({
                   />
                 )}
                 <div className="flex-1 min-w-0 overflow-hidden">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 min-w-0">
                     <h4 className="font-semibold truncate flex-1">{route.title}</h4>
                     {isSelected && (
                       <Check className="w-4 h-4 text-primary flex-shrink-0" />
@@ -138,7 +138,7 @@ export const RouteSearchModal = ({
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 gap-y-1 flex-wrap">
+                  <div className="flex items-center gap-2 gap-y-1 flex-wrap min-w-0">
                     {route.subject && (
                       <Badge variant="secondary" className="text-xs">
                         {route.subject}
@@ -169,7 +169,7 @@ export const RouteSearchModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh]">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Seleccionar rutas prerequisito</DialogTitle>
           <DialogDescription>
@@ -183,14 +183,14 @@ export const RouteSearchModal = ({
             placeholder="Buscar rutas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full max-w-full"
           />
         </div>
 
         <Tabs defaultValue="my" className="flex-1">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my">Mis rutas</TabsTrigger>
-            <TabsTrigger value="public">Rutas públicas</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 min-w-0">
+            <TabsTrigger value="my" className="truncate">Mis rutas</TabsTrigger>
+            <TabsTrigger value="public" className="truncate">Rutas públicas</TabsTrigger>
           </TabsList>
 
           <ScrollArea className="h-[400px] mt-4">
