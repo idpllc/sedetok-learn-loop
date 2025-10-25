@@ -31,8 +31,8 @@ export const RouteSearchModal = ({
   onSelect,
 }: RouteSearchModalProps) => {
   const { user } = useAuth();
-  const { paths: myPaths, isLoading: loadingMyPaths } = useLearningPaths(user?.id);
-  const { paths: publicPaths, isLoading: loadingPublicPaths } = useLearningPaths();
+  const { paths: myPaths, isLoading: loadingMyPaths } = useLearningPaths(user?.id, 'created');
+  const { paths: publicPaths, isLoading: loadingPublicPaths } = useLearningPaths(undefined, 'all');
   const [searchTerm, setSearchTerm] = useState("");
   const [selected, setSelected] = useState<string[]>(selectedRoutes);
 
@@ -49,17 +49,25 @@ export const RouteSearchModal = ({
     onClose();
   };
 
-  const filterRoutes = (routes: any[] | undefined) => {
+  const filterRoutes = (routes: any[] | undefined, excludeOwn: boolean = false) => {
     if (!routes) return [];
-    return routes.filter(
+    let filtered = routes;
+    
+    // Excluir rutas propias si se solicita (para pestaña de rutas públicas)
+    if (excludeOwn && user?.id) {
+      filtered = filtered.filter(route => route.creator_id !== user.id);
+    }
+    
+    // Filtrar por término de búsqueda
+    return filtered.filter(
       (route) =>
         route.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         route.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
-  const RouteList = ({ routes, loading }: { routes: any[] | undefined; loading: boolean }) => {
-    const filtered = filterRoutes(routes);
+  const RouteList = ({ routes, loading, excludeOwn = false }: { routes: any[] | undefined; loading: boolean; excludeOwn?: boolean }) => {
+    const filtered = filterRoutes(routes, excludeOwn);
 
     if (loading) {
       return (
@@ -168,7 +176,7 @@ export const RouteSearchModal = ({
             </TabsContent>
 
             <TabsContent value="public" className="mt-0">
-              <RouteList routes={publicPaths} loading={loadingPublicPaths} />
+              <RouteList routes={publicPaths} loading={loadingPublicPaths} excludeOwn={true} />
             </TabsContent>
           </ScrollArea>
         </Tabs>
