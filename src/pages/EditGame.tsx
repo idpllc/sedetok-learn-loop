@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditGameForm } from "@/components/EditGameForm";
+import { CreateGameEvaluationEvent } from "@/components/game/CreateGameEvaluationEvent";
+import { GameEvaluationEventsList } from "@/components/game/GameEvaluationEventsList";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -90,7 +93,32 @@ const EditGame = () => {
       </header>
 
       <main className="w-full px-4 py-6 max-w-6xl mx-auto">
-        <EditGameForm gameData={game} />
+        <Tabs defaultValue="edit" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="edit">Editar Juego</TabsTrigger>
+            <TabsTrigger value="events">Eventos de Evaluación</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="edit">
+            <EditGameForm gameData={game} />
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold">Eventos de Evaluación</h2>
+                <p className="text-muted-foreground text-sm">
+                  Crea eventos para que los estudiantes jueguen este juego en períodos específicos
+                </p>
+              </div>
+              <CreateGameEvaluationEvent 
+                gameId={id!} 
+                gameTitle={game.title} 
+              />
+            </div>
+            <GameEvaluationEventsList gameId={id} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

@@ -11,6 +11,8 @@ import confetti from "canvas-confetti";
 interface ColumnMatchViewerProps {
   gameId: string;
   onComplete?: () => void;
+  evaluationEventId?: string;
+  showResultsImmediately?: boolean;
 }
 
 interface ColumnItem {
@@ -38,7 +40,7 @@ interface DragLine {
   endY: number;
 }
 
-export const ColumnMatchViewer = ({ gameId, onComplete }: ColumnMatchViewerProps) => {
+export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: ColumnMatchViewerProps) => {
   const navigate = useNavigate();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [leftItems, setLeftItems] = useState<ColumnItem[]>([]);

@@ -12,6 +12,8 @@ import { useXP } from "@/hooks/useXP";
 interface WordWheelViewerProps {
   gameId: string;
   onComplete?: () => void;
+  evaluationEventId?: string;
+  showResultsImmediately?: boolean;
 }
 
 interface WheelQuestion {
@@ -34,7 +36,7 @@ type LetterState = "pending" | "correct" | "failed" | "skipped";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) => {
+export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: WordWheelViewerProps) => {
   const { user } = useAuth();
   const { awardXP } = useXP();
   const [gameData, setGameData] = useState<GameData | null>(null);
@@ -137,9 +139,27 @@ export const WordWheelViewer = ({ gameId, onComplete }: WordWheelViewerProps) =>
     try {
       const totalPoints = questions.reduce((sum, q) => sum + q.points, 0);
       const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+      const passed = normalizedScore >= 60;
+
+      const payload: any = {
+        user_id: user.id,
+        game_id: gameId,
+        score: normalizedScore,
+        max_score: 100,
+        passed,
+      };
+
+      if (evaluationEventId) {
+        payload.evaluation_event_id = evaluationEventId;
+      }
+
+      await supabase.from("user_quiz_results").insert(payload);
 
       awardXP(gameId, 'view_complete', false);
-      toast.success(`¡Juego completado! Puntuación: ${normalizedScore}/100`);
+      
+      if (showResultsImmediately) {
+        toast.success(`¡Juego completado! Puntuación: ${normalizedScore}/100`);
+      }
     } catch (error) {
       console.error("Error saving game result:", error);
       toast.error("Error al guardar el resultado");

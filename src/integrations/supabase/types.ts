@@ -1294,8 +1294,9 @@ export type Database = {
           creator_id: string
           description: string | null
           end_date: string
+          game_id: string | null
           id: string
-          quiz_id: string
+          quiz_id: string | null
           require_authentication: boolean | null
           show_results_immediately: boolean | null
           start_date: string
@@ -1309,8 +1310,9 @@ export type Database = {
           creator_id: string
           description?: string | null
           end_date: string
+          game_id?: string | null
           id?: string
-          quiz_id: string
+          quiz_id?: string | null
           require_authentication?: boolean | null
           show_results_immediately?: boolean | null
           start_date: string
@@ -1324,8 +1326,9 @@ export type Database = {
           creator_id?: string
           description?: string | null
           end_date?: string
+          game_id?: string | null
           id?: string
-          quiz_id?: string
+          quiz_id?: string | null
           require_authentication?: boolean | null
           show_results_immediately?: boolean | null
           start_date?: string
@@ -1333,6 +1336,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "quiz_evaluation_events_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quiz_evaluation_events_quiz_id_fkey"
             columns: ["quiz_id"]
@@ -1682,11 +1692,12 @@ export type Database = {
           area_academica: string | null
           completed_at: string | null
           evaluation_event_id: string | null
+          game_id: string | null
           id: string
           max_score: number
           no_documento: string | null
           passed: boolean | null
-          quiz_id: string
+          quiz_id: string | null
           score: number
           time_taken: number | null
           user_id: string
@@ -1695,11 +1706,12 @@ export type Database = {
           area_academica?: string | null
           completed_at?: string | null
           evaluation_event_id?: string | null
+          game_id?: string | null
           id?: string
           max_score: number
           no_documento?: string | null
           passed?: boolean | null
-          quiz_id: string
+          quiz_id?: string | null
           score: number
           time_taken?: number | null
           user_id: string
@@ -1708,11 +1720,12 @@ export type Database = {
           area_academica?: string | null
           completed_at?: string | null
           evaluation_event_id?: string | null
+          game_id?: string | null
           id?: string
           max_score?: number
           no_documento?: string | null
           passed?: boolean | null
-          quiz_id?: string
+          quiz_id?: string | null
           score?: number
           time_taken?: number | null
           user_id?: string
@@ -1723,6 +1736,13 @@ export type Database = {
             columns: ["evaluation_event_id"]
             isOneToOne: false
             referencedRelation: "quiz_evaluation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quiz_results_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
           {
@@ -1998,9 +2018,9 @@ export type Database = {
           creator_id: string
           description: string
           end_date: string
+          game_id: string
           id: string
           quiz_id: string
-          quizzes: Json
           require_authentication: boolean
           show_results_immediately: boolean
           start_date: string

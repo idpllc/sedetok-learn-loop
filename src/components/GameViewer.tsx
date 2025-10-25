@@ -13,6 +13,8 @@ import { WordWheelViewer } from "./WordWheelViewer";
 interface GameViewerProps {
   gameId: string;
   onComplete?: () => void;
+  evaluationEventId?: string;
+  showResultsImmediately?: boolean;
 }
 
 interface GameQuestion {
@@ -35,7 +37,7 @@ interface GameData {
   game_type: string;
 }
 
-export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
+export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: GameViewerProps) => {
   const { user } = useAuth();
   const { awardXP } = useXP();
   const [gameData, setGameData] = useState<GameData | null>(null);
@@ -170,12 +172,12 @@ export const GameViewer = ({ gameId, onComplete }: GameViewerProps) => {
 
   // If it's a column match game, delegate to ColumnMatchViewer
   if (!loading && gameData?.game_type === "column_match") {
-    return <ColumnMatchViewer gameId={gameId} onComplete={onComplete} />;
+    return <ColumnMatchViewer gameId={gameId} onComplete={onComplete} evaluationEventId={evaluationEventId} showResultsImmediately={showResultsImmediately} />;
   }
 
   // If it's a word wheel game, delegate to WordWheelViewer
   if (!loading && gameData?.game_type === "word_wheel") {
-    return <WordWheelViewer gameId={gameId} onComplete={onComplete} />;
+    return <WordWheelViewer gameId={gameId} onComplete={onComplete} evaluationEventId={evaluationEventId} showResultsImmediately={showResultsImmediately} />;
   }
 
   const handleWordClick = (word: string, fromAvailable: boolean) => {

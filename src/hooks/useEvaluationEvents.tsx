@@ -5,7 +5,8 @@ import { toast } from "@/hooks/use-toast";
 
 interface EvaluationEvent {
   id: string;
-  quiz_id: string;
+  quiz_id?: string;
+  game_id?: string;
   creator_id: string;
   title: string;
   description?: string;
@@ -20,7 +21,8 @@ interface EvaluationEvent {
 }
 
 interface CreateEvaluationEventInput {
-  quiz_id: string;
+  quiz_id?: string;
+  game_id?: string;
   title: string;
   description?: string;
   start_date: string;
@@ -30,24 +32,28 @@ interface CreateEvaluationEventInput {
   show_results_immediately?: boolean;
 }
 
-export const useEvaluationEvents = (quizId?: string, eventId?: string) => {
+export const useEvaluationEvents = (quizId?: string, gameId?: string, eventId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch events created by the user
   const { data: events, isLoading } = useQuery({
-    queryKey: ["evaluation-events", user?.id, quizId],
+    queryKey: ["evaluation-events", user?.id, quizId, gameId],
     queryFn: async () => {
       if (!user) return [];
 
       let query = supabase
         .from("quiz_evaluation_events")
-        .select("*, quizzes(title)")
+        .select("*, quizzes(title), games(title)")
         .eq("creator_id", user.id)
         .order("created_at", { ascending: false });
 
       if (quizId) {
         query = query.eq("quiz_id", quizId);
+      }
+
+      if (gameId) {
+        query = query.eq("game_id", gameId);
       }
 
       const { data, error } = await query;
