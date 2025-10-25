@@ -95,7 +95,7 @@ export const RouteSearchModal = ({
           return (
             <div
               key={route.id}
-              className={`p-3 rounded-lg border cursor-pointer transition-all w-full min-w-0 overflow-hidden ${
+              className={`p-3 rounded-lg border cursor-pointer transition-all ${
                 isSelected
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50"
@@ -110,15 +110,15 @@ export const RouteSearchModal = ({
                     className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />
                 )}
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <div className="flex items-center gap-2 mb-1 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-semibold truncate flex-1">{route.title}</h4>
                     {isSelected && (
                       <Check className="w-4 h-4 text-primary flex-shrink-0" />
                     )}
                   </div>
                   {route.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words break-all">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2 break-words">
                       {route.description.length > 80 
                         ? `${route.description.substring(0, 80)}...` 
                         : route.description}
@@ -130,15 +130,15 @@ export const RouteSearchModal = ({
                         <img
                           src={route.profiles.avatar_url}
                           alt={route.profiles.username}
-                          className="w-5 h-5 rounded-full object-cover"
+                          className="w-5 h-5 rounded-full object-cover flex-shrink-0"
                         />
                       )}
-                      <span className="text-xs text-muted-foreground truncate flex-1">
+                      <span className="text-xs text-muted-foreground truncate">
                         por {route.profiles.full_name || route.profiles.username}
                       </span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 gap-y-1 flex-wrap min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {route.subject && (
                       <Badge variant="secondary" className="text-xs">
                         {route.subject}
@@ -169,49 +169,59 @@ export const RouteSearchModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>Seleccionar rutas prerequisito</DialogTitle>
-          <DialogDescription>
-            Los estudiantes deberán completar estas rutas antes de acceder a la nueva ruta
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col gap-0 p-0">
+        <div className="px-6 pt-6">
+          <DialogHeader>
+            <DialogTitle>Seleccionar rutas prerequisito</DialogTitle>
+            <DialogDescription>
+              Los estudiantes deberán completar estas rutas antes de acceder a la nueva ruta
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar rutas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full max-w-full"
-          />
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar rutas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
         </div>
 
-        <Tabs defaultValue="my" className="flex-1">
-          <TabsList className="grid w-full grid-cols-2 min-w-0">
-            <TabsTrigger value="my" className="truncate">Mis rutas</TabsTrigger>
-            <TabsTrigger value="public" className="truncate">Rutas públicas</TabsTrigger>
-          </TabsList>
+        <div className="flex-1 overflow-hidden px-6 py-4">
+          <Tabs defaultValue="my" className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="my">Mis rutas</TabsTrigger>
+              <TabsTrigger value="public">Rutas públicas</TabsTrigger>
+            </TabsList>
 
-          <ScrollArea className="h-[400px] mt-4">
-            <TabsContent value="my" className="mt-0">
-              <RouteList routes={myPaths} loading={loadingMyPaths} />
-            </TabsContent>
+            <div className="flex-1 overflow-hidden mt-4">
+              <TabsContent value="my" className="h-full mt-0">
+                <ScrollArea className="h-full">
+                  <RouteList routes={myPaths} loading={loadingMyPaths} />
+                </ScrollArea>
+              </TabsContent>
 
-            <TabsContent value="public" className="mt-0">
-              <RouteList routes={publicPaths} loading={loadingPublicPaths} excludeOwn={true} />
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
+              <TabsContent value="public" className="h-full mt-0">
+                <ScrollArea className="h-full">
+                  <RouteList routes={publicPaths} loading={loadingPublicPaths} excludeOwn={true} />
+                </ScrollArea>
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button onClick={handleConfirm}>
-            Confirmar ({selected.length} seleccionadas)
-          </Button>
-        </DialogFooter>
+        <div className="px-6 pb-6 border-t pt-4">
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirm}>
+              Confirmar ({selected.length} seleccionadas)
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
