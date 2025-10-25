@@ -222,6 +222,12 @@ export default function CreateCourse() {
     ));
   };
 
+  const handleUpdateLevel = (levelId: string, updates: Partial<{ name: string; description: string }>) => {
+    setLevels(prev => prev.map(level => 
+      level.id === levelId ? { ...level, ...updates } : level
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="container max-w-4xl mx-auto px-4 py-6">
@@ -507,6 +513,23 @@ export default function CreateCourse() {
                             </Button>
                           </div>
                         </div>
+
+                        {/* Level Editor */}
+                        {level.expanded && (
+                          <div className="p-3 border-t bg-background/50 space-y-2">
+                            <Label>Nombre del nivel</Label>
+                            <Input
+                              value={level.name}
+                              onChange={(e) => handleUpdateLevel(level.id, { name: e.target.value })}
+                            />
+                            <Label>Descripción</Label>
+                            <Textarea
+                              rows={2}
+                              value={level.description}
+                              onChange={(e) => handleUpdateLevel(level.id, { description: e.target.value })}
+                            />
+                          </div>
+                        )}
 
                         {/* Level Routes */}
                         {level.expanded && levelPaths && levelPaths.length > 0 && (

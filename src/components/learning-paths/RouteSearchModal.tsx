@@ -169,7 +169,7 @@ export const RouteSearchModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col gap-0 p-0">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col gap-0 p-0">
         <div className="px-6 pt-6">
           <DialogHeader>
             <DialogTitle>Seleccionar rutas prerequisito</DialogTitle>
@@ -198,15 +198,15 @@ export const RouteSearchModal = ({
 
             <div className="flex-1 overflow-hidden mt-4">
               <TabsContent value="my" className="h-full mt-0">
-                <ScrollArea className="h-full">
+                <div className="h-full overflow-y-auto pr-2 -mr-2">
                   <RouteList routes={myPaths} loading={loadingMyPaths} />
-                </ScrollArea>
+                </div>
               </TabsContent>
 
               <TabsContent value="public" className="h-full mt-0">
-                <ScrollArea className="h-full">
+                <div className="h-full overflow-y-auto pr-2 -mr-2">
                   <RouteList routes={publicPaths} loading={loadingPublicPaths} excludeOwn={true} />
-                </ScrollArea>
+                </div>
               </TabsContent>
             </div>
           </Tabs>
