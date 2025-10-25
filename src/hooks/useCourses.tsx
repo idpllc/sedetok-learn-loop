@@ -73,17 +73,28 @@ export const useCourses = (filter?: "created" | "all") => {
       // Extract institutions from courseData
       const { institutions, ...courseDataWithoutInstitutions } = courseData;
 
-      // Create course
-      const { data: course, error: courseError } = await supabase
+      // Create course (no select to avoid RLS on representation)
+      const { error: courseError } = await supabase
         .from("courses")
-        .insert([{
-          ...courseDataWithoutInstitutions,
-          creator_id: user.id,
-        }])
-        .select()
-        .single();
+        .insert([
+          {
+            ...courseDataWithoutInstitutions,
+            creator_id: user.id,
+          },
+        ]);
 
       if (courseError) throw courseError;
+
+      // Fetch the created course explicitly (creator can view their own course)
+      const { data: course, error: fetchCourseError } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("creator_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (fetchCourseError || !course) throw fetchCourseError || new Error("No se pudo obtener el curso creado");
 
       // Add levels and routes to course
       if (levels.length > 0) {
@@ -91,12 +102,14 @@ export const useCourses = (filter?: "created" | "all") => {
           // Create level
           const { data: level, error: levelError } = await supabase
             .from("course_levels")
-            .insert([{
-              course_id: course.id,
-              name: levelData.name,
-              description: levelData.description,
-              order_index: levelData.order_index,
-            }])
+            .insert([
+              {
+                course_id: course.id,
+                name: levelData.name,
+                description: levelData.description,
+                order_index: levelData.order_index,
+              },
+            ])
             .select()
             .single();
 
@@ -104,10 +117,10 @@ export const useCourses = (filter?: "created" | "all") => {
 
           // Add routes to level
           if (levelData.routes.length > 0) {
-            const routeInserts = levelData.routes.map(route => ({
+            const routeInserts = levelData.routes.map((route) => ({
               course_id: course.id,
               level_id: level.id,
-              ...route
+              ...route,
             }));
 
             const { error: routesError } = await supabase
@@ -121,9 +134,9 @@ export const useCourses = (filter?: "created" | "all") => {
 
       // Add institutions if course is private
       if (!courseData.is_public && institutions && institutions.length > 0) {
-        const institutionInserts = institutions.map(institutionId => ({
+        const institutionInserts = institutions.map((institutionId) => ({
           course_id: course.id,
-          institution_id: institutionId
+          institution_id: institutionId,
         }));
 
         const { error: institutionsError } = await supabase
