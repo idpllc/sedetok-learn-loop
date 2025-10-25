@@ -212,6 +212,7 @@ const Search = () => {
 
   const gradeLevels = [
     { value: "all", label: "Todos" },
+    { value: "preescolar", label: "Preescolar" },
     { value: "primaria", label: "Primaria" },
     { value: "secundaria", label: "Secundaria" },
     { value: "preparatoria", label: "Preparatoria" },

@@ -1709,6 +1709,7 @@ export type Database = {
         | "preparatoria"
         | "universidad"
         | "libre"
+        | "preescolar"
       horario_estudio: "Mañana" | "Tarde" | "Noche"
       modo_consumo: "Videos" | "PDF" | "Quizzes" | "Textos" | "Mixto"
       motivacion_principal:
@@ -1912,6 +1913,7 @@ export const Constants = {
         "preparatoria",
         "universidad",
         "libre",
+        "preescolar",
       ],
       horario_estudio: ["Mañana", "Tarde", "Noche"],
       modo_consumo: ["Videos", "PDF", "Quizzes", "Textos", "Mixto"],
