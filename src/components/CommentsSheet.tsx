@@ -13,19 +13,21 @@ import { es } from "date-fns/locale";
 interface CommentsSheetProps {
   contentId: string;
   commentsCount: number;
+  isQuiz?: boolean;
+  isGame?: boolean;
 }
 
-export const CommentsSheet = ({ contentId, commentsCount }: CommentsSheetProps) => {
+export const CommentsSheet = ({ contentId, commentsCount, isQuiz = false, isGame = false }: CommentsSheetProps) => {
   const [open, setOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
   const { user } = useAuth();
   const { awardXP } = useXP();
   
   const handleCommentAdded = () => {
-    awardXP(contentId, 'comment');
+    awardXP(contentId, 'comment', isQuiz || isGame);
   };
   
-  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, false, handleCommentAdded);
+  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, isQuiz, isGame, handleCommentAdded);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;

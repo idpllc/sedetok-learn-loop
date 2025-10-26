@@ -214,15 +214,15 @@ export const useInfiniteContent = (
       const games = gameData.map(game => ({
         ...game,
         content_type: 'game' as const,
-        likes_count: 0,
+        likes_count: game.likes_count || 0,
         views_count: 0,
-        saves_count: 0,
-        shares_count: 0,
-        comments_count: 0,
+        saves_count: game.saves_count || 0,
+        shares_count: game.shares_count || 0,
+        comments_count: game.comments_count || 0,
         video_url: null,
         document_url: null,
         rich_text: null,
-        tags: [],
+        tags: game.tags || [],
         questions_count: questionCounts[game.id] || 0,
       }));
 
@@ -424,15 +424,15 @@ export const useContent = () => {
       const games = (gameData || []).map(game => ({
         ...game,
         content_type: 'game' as const,
-        likes_count: 0,
+        likes_count: game.likes_count || 0,
         views_count: 0,
-        saves_count: 0,
-        shares_count: 0,
-        comments_count: 0,
+        saves_count: game.saves_count || 0,
+        shares_count: game.shares_count || 0,
+        comments_count: game.comments_count || 0,
         video_url: null,
         document_url: null,
         rich_text: null,
-        tags: [],
+        tags: game.tags || [],
         questions_count: questionCounts[game.id] || 0,
       }));
 
@@ -446,11 +446,11 @@ export const useContent = () => {
   });
 
   const likeMutation = useMutation({
-    mutationFn: async ({ contentId, isLiked, isQuiz }: { contentId: string; isLiked: boolean; isQuiz?: boolean }) => {
+    mutationFn: async ({ contentId, isLiked, isQuiz, isGame }: { contentId: string; isLiked: boolean; isQuiz?: boolean; isGame?: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
-      const idField = isQuiz ? "quiz_id" : "content_id";
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
       
       if (isLiked) {
         const { error } = await supabase
@@ -480,11 +480,11 @@ export const useContent = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ contentId, isSaved, isQuiz }: { contentId: string; isSaved: boolean; isQuiz?: boolean }) => {
+    mutationFn: async ({ contentId, isSaved, isQuiz, isGame }: { contentId: string; isSaved: boolean; isQuiz?: boolean; isGame?: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
-      const idField = isQuiz ? "quiz_id" : "content_id";
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
       
       if (isSaved) {
         const { error } = await supabase

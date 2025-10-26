@@ -12,7 +12,7 @@ export const useUserActivity = () => {
 
       const { data: likes, error: likesError } = await supabase
         .from("likes")
-        .select("content_id, quiz_id, created_at")
+        .select("content_id, quiz_id, game_id, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -20,6 +20,7 @@ export const useUserActivity = () => {
 
       const contentIds = likes?.filter(l => l.content_id).map(l => l.content_id) || [];
       const quizIds = likes?.filter(l => l.quiz_id).map(l => l.quiz_id) || [];
+      const gameIds = likes?.filter(l => l.game_id).map(l => l.game_id) || [];
 
       let content = [];
       if (contentIds.length > 0) {
@@ -39,7 +40,16 @@ export const useUserActivity = () => {
         quizzes = (quizData || []).map(q => ({ ...q, content_type: 'quiz' }));
       }
 
-      return [...content, ...quizzes];
+      let games = [];
+      if (gameIds.length > 0) {
+        const { data: gameData } = await supabase
+          .from("games")
+          .select("*")
+          .in("id", gameIds);
+        games = (gameData || []).map(g => ({ ...g, content_type: 'game' }));
+      }
+
+      return [...content, ...quizzes, ...games];
     },
     enabled: !!user,
   });
@@ -51,7 +61,7 @@ export const useUserActivity = () => {
 
       const { data: saves, error: savesError } = await supabase
         .from("saves")
-        .select("content_id, quiz_id, created_at")
+        .select("content_id, quiz_id, game_id, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -59,6 +69,7 @@ export const useUserActivity = () => {
 
       const contentIds = saves?.filter(s => s.content_id).map(s => s.content_id) || [];
       const quizIds = saves?.filter(s => s.quiz_id).map(s => s.quiz_id) || [];
+      const gameIds = saves?.filter(s => s.game_id).map(s => s.game_id) || [];
 
       let content = [];
       if (contentIds.length > 0) {
@@ -78,7 +89,16 @@ export const useUserActivity = () => {
         quizzes = (quizData || []).map(q => ({ ...q, content_type: 'quiz' }));
       }
 
-      return [...content, ...quizzes];
+      let games = [];
+      if (gameIds.length > 0) {
+        const { data: gameData } = await supabase
+          .from("games")
+          .select("*")
+          .in("id", gameIds);
+        games = (gameData || []).map(g => ({ ...g, content_type: 'game' }));
+      }
+
+      return [...content, ...quizzes, ...games];
     },
     enabled: !!user,
   });

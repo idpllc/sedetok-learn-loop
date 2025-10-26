@@ -155,10 +155,11 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       return;
     }
     const isQuiz = contentType === 'quiz';
-    likeMutation.mutate({ contentId: id, isLiked, isQuiz });
+    const isGame = contentType === 'game';
+    likeMutation.mutate({ contentId: id, isLiked, isQuiz, isGame });
     // Award XP only when liking (not unliking)
     if (!isLiked) {
-      awardXP(id, 'like', isQuiz);
+      awardXP(id, 'like', isQuiz || isGame);
     }
   };
 
@@ -169,21 +170,23 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       return;
     }
     const isQuiz = contentType === 'quiz';
-    saveMutation.mutate({ contentId: id, isSaved, isQuiz });
+    const isGame = contentType === 'game';
+    saveMutation.mutate({ contentId: id, isSaved, isQuiz, isGame });
     // Award XP only when saving (not unsaving)
     if (!isSaved) {
-      awardXP(id, 'save', isQuiz);
+      awardXP(id, 'save', isQuiz || isGame);
     }
   };
 
   const handleAuthSuccess = () => {
     const isQuiz = contentType === 'quiz';
+    const isGame = contentType === 'game';
     if (pendingAction === 'like') {
-      likeMutation.mutate({ contentId: id, isLiked: false, isQuiz });
-      awardXP(id, 'like', isQuiz);
+      likeMutation.mutate({ contentId: id, isLiked: false, isQuiz, isGame });
+      awardXP(id, 'like', isQuiz || isGame);
     } else if (pendingAction === 'save') {
-      saveMutation.mutate({ contentId: id, isSaved: false, isQuiz });
-      awardXP(id, 'save', isQuiz);
+      saveMutation.mutate({ contentId: id, isSaved: false, isQuiz, isGame });
+      awardXP(id, 'save', isQuiz || isGame);
     }
     setPendingAction(null);
   };
@@ -605,6 +608,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             contentId={id} 
             contentTitle={title} 
             isQuiz={contentType === 'quiz'}
+            isGame={contentType === 'game'}
             sharesCount={initialShares}
           />
 
@@ -669,6 +673,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         creatorAvatar={creatorAvatar}
         commentsCount={initialComments}
         isQuiz={contentType === 'quiz'}
+        isGame={contentType === 'game'}
         questionsCount={questionsCount}
         difficulty={difficulty}
       />

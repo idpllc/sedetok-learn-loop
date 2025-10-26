@@ -24,6 +24,7 @@ interface ContentInfoSheetProps {
   creatorAvatar?: string;
   commentsCount: number;
   isQuiz?: boolean;
+  isGame?: boolean;
   questionsCount?: number;
   difficulty?: string;
 }
@@ -40,6 +41,7 @@ export function ContentInfoSheet({
   creatorAvatar,
   commentsCount,
   isQuiz = false,
+  isGame = false,
   questionsCount,
   difficulty
 }: ContentInfoSheetProps) {
@@ -48,10 +50,10 @@ export function ContentInfoSheet({
   const { awardXP } = useXP();
   
   const handleCommentAdded = () => {
-    awardXP(contentId, 'comment', isQuiz);
+    awardXP(contentId, 'comment', isQuiz || isGame);
   };
   
-  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, isQuiz, handleCommentAdded);
+  const { comments, isLoading, addComment, deleteComment } = useComments(contentId, isQuiz, isGame, handleCommentAdded);
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;

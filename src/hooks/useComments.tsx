@@ -2,13 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useComments = (contentId: string, isQuiz?: boolean, onCommentAdded?: () => void) => {
+export const useComments = (contentId: string, isQuiz?: boolean, isGame?: boolean, onCommentAdded?: () => void) => {
   const queryClient = useQueryClient();
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ["comments", contentId],
     queryFn: async () => {
-      const idField = isQuiz ? "quiz_id" : "content_id";
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
       const { data, error } = await supabase
         .from("comments")
         .select(`
@@ -32,7 +32,7 @@ export const useComments = (contentId: string, isQuiz?: boolean, onCommentAdded?
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user logged in");
 
-      const idField = isQuiz ? "quiz_id" : "content_id";
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
       const { data, error } = await supabase
         .from("comments")
         .insert({

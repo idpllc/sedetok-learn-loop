@@ -46,6 +46,7 @@ export type Database = {
           comment_text: string
           content_id: string | null
           created_at: string | null
+          game_id: string | null
           id: string
           parent_id: string | null
           quiz_id: string | null
@@ -56,6 +57,7 @@ export type Database = {
           comment_text: string
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           parent_id?: string | null
           quiz_id?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           comment_text?: string
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           parent_id?: string | null
           quiz_id?: string | null
@@ -78,6 +81,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
           {
@@ -562,6 +572,7 @@ export type Database = {
       games: {
         Row: {
           category: Database["public"]["Enums"]["category_type"]
+          comments_count: number | null
           created_at: string | null
           creator_id: string
           description: string | null
@@ -570,8 +581,11 @@ export type Database = {
           id: string
           is_public: boolean | null
           left_column_items: Json | null
+          likes_count: number | null
           random_order: boolean | null
           right_column_items: Json | null
+          saves_count: number | null
+          shares_count: number | null
           status: string | null
           subject: string | null
           tags: string[] | null
@@ -582,6 +596,7 @@ export type Database = {
         }
         Insert: {
           category: Database["public"]["Enums"]["category_type"]
+          comments_count?: number | null
           created_at?: string | null
           creator_id: string
           description?: string | null
@@ -590,8 +605,11 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           left_column_items?: Json | null
+          likes_count?: number | null
           random_order?: boolean | null
           right_column_items?: Json | null
+          saves_count?: number | null
+          shares_count?: number | null
           status?: string | null
           subject?: string | null
           tags?: string[] | null
@@ -602,6 +620,7 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["category_type"]
+          comments_count?: number | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
@@ -610,8 +629,11 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           left_column_items?: Json | null
+          likes_count?: number | null
           random_order?: boolean | null
           right_column_items?: Json | null
+          saves_count?: number | null
+          shares_count?: number | null
           status?: string | null
           subject?: string | null
           tags?: string[] | null
@@ -945,6 +967,7 @@ export type Database = {
         Row: {
           content_id: string | null
           created_at: string | null
+          game_id: string | null
           id: string
           quiz_id: string | null
           user_id: string
@@ -952,6 +975,7 @@ export type Database = {
         Insert: {
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           quiz_id?: string | null
           user_id: string
@@ -959,6 +983,7 @@ export type Database = {
         Update: {
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           quiz_id?: string | null
           user_id?: string
@@ -969,6 +994,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
           {
@@ -1527,6 +1559,7 @@ export type Database = {
         Row: {
           content_id: string | null
           created_at: string | null
+          game_id: string | null
           id: string
           quiz_id: string | null
           user_id: string
@@ -1534,6 +1567,7 @@ export type Database = {
         Insert: {
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           quiz_id?: string | null
           user_id: string
@@ -1541,6 +1575,7 @@ export type Database = {
         Update: {
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           quiz_id?: string | null
           user_id?: string
@@ -1551,6 +1586,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saves_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
           {
@@ -2055,6 +2097,10 @@ export type Database = {
       }
       increment_shares_count:
         | { Args: { content_id: string }; Returns: undefined }
+        | {
+            Args: { content_id?: string; game_id?: string; quiz_id?: string }
+            Returns: undefined
+          }
         | {
             Args: { content_id?: string; quiz_id?: string }
             Returns: undefined

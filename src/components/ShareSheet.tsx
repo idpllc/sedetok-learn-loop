@@ -9,22 +9,24 @@ interface ShareSheetProps {
   contentId: string;
   contentTitle: string;
   isQuiz?: boolean;
+  isGame?: boolean;
   sharesCount?: number;
 }
 
-export const ShareSheet = ({ contentId, contentTitle, isQuiz, sharesCount = 0 }: ShareSheetProps) => {
+export const ShareSheet = ({ contentId, contentTitle, isQuiz, isGame, sharesCount = 0 }: ShareSheetProps) => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const paramName = isQuiz ? 'quiz' : 'content';
+  const paramName = isGame ? 'game' : isQuiz ? 'quiz' : 'content';
   const shareUrl = `${window.location.origin}/?${paramName}=${contentId}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(contentTitle);
 
   const incrementShareCount = async () => {
-    if (isQuiz) {
-      // Para quizzes, simplemente llamamos la función sin incrementar en la DB
+    if (isGame) {
+      await supabase.rpc('increment_shares_count', { game_id: contentId });
+    } else if (isQuiz) {
       await supabase.rpc('increment_shares_count', { quiz_id: contentId });
     } else {
       await supabase.rpc('increment_shares_count', { content_id: contentId });
