@@ -371,7 +371,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
   const progress = (connections.length / leftItems.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-500 to-green-400 p-2 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-500 to-green-400 p-2 md:p-6 pr-8 md:pr-10">
       {/* Header */}
       <div className="bg-green-600/80 backdrop-blur-sm rounded-xl p-3 md:p-6 mb-3 shadow-lg">
         <div className="flex items-center justify-between mb-3">

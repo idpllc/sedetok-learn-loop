@@ -320,7 +320,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
     <div className="h-full overflow-y-auto p-4 md:p-6">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pr-8">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-muted-foreground">
               Pregunta {currentQuestion + 1} de {questions.length}

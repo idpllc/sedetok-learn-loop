@@ -334,7 +334,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
     <div className="h-full overflow-y-auto bg-gradient-to-br from-background to-muted/20">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-2">
+        <div className="flex items-center justify-between p-2 pr-10">
           <div className="flex items-center gap-2">
             {[...Array(3)].map((_, i) => (
               <Heart
