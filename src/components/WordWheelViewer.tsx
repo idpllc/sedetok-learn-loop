@@ -40,7 +40,7 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: WordWheelViewerProps) => {
   const { user } = useAuth();
   const { awardXP } = useXP();
-  const { playLoseLife, playTimeWarning, playClick, playVictory } = useGameSounds();
+  const { playLoseLife, playTimeWarning, playClick, playVictory, playCorrect } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [questions, setQuestions] = useState<WheelQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -206,7 +206,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
     // Check if answer is correct
     if (userAnswerClean === correctAnswer) {
-      playClick();
+      playCorrect();
       toast.success("¡Correcto!");
       setScore(score + currentQuestion.points);
       setLetterStates(prev => ({
