@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
+import { subjects as subjectOptions } from "@/lib/subjects";
 const ITEMS_PER_PAGE = 10;
 
 export const useInfiniteContent = (
@@ -44,10 +44,20 @@ export const useInfiniteContent = (
         contentQuery = contentQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
       }
 
-      // Apply subject filter directly in database query (accent-insensitive fallback)
+      // Apply subject filter directly in database query (accent-insensitive with label/value variants)
       if (subject && subject !== "all") {
-        const normalizedSubject = subject.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        contentQuery = contentQuery.or(`subject.ilike.%${subject}%,subject.ilike.%${normalizedSubject}%`);
+        const opt = subjectOptions.find(s => s.value === subject);
+        const label = opt?.label || subject;
+        const deaccent = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const patterns = Array.from(new Set([subject, label, deaccent(label), deaccent(subject)]));
+        const orFilters = patterns
+          .flatMap(p => [
+            `subject.ilike.%${p}%`,
+            `title.ilike.%${p}%`,
+            `description.ilike.%${p}%`
+          ])
+          .join(',');
+        contentQuery = contentQuery.or(orFilters);
       }
 
       // Apply grade level filter
@@ -84,10 +94,20 @@ export const useInfiniteContent = (
           quizQuery = quizQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         }
 
-        // Apply subject filter directly in database query (accent-insensitive fallback)
+        // Apply subject filter directly in database query (accent-insensitive with label/value variants)
         if (subject && subject !== "all") {
-          const normalizedSubject = subject.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          quizQuery = quizQuery.or(`subject.ilike.%${subject}%,subject.ilike.%${normalizedSubject}%`);
+          const opt = subjectOptions.find(s => s.value === subject);
+          const label = opt?.label || subject;
+          const deaccent = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const patterns = Array.from(new Set([subject, label, deaccent(label), deaccent(subject)]));
+          const orFilters = patterns
+            .flatMap(p => [
+              `subject.ilike.%${p}%`,
+              `title.ilike.%${p}%`,
+              `description.ilike.%${p}%`
+            ])
+            .join(',');
+          quizQuery = quizQuery.or(orFilters);
         }
 
         // Apply grade level filter
