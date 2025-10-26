@@ -43,12 +43,17 @@ export const GameStep2 = ({ questions, onChange, gameContext }: GameStep2Props) 
 
   // For interactive_image, render a completely different UI
   if (gameContext?.gameType === "interactive_image") {
+    // Initialize with empty array if no questions
+    const interactiveQuestions = questions.length > 0 
+      ? questions 
+      : [];
+
     return (
       <div className="space-y-6">
         <InteractiveImageEditor
           value={{
-            image_url: questions[0]?.image_url,
-            points: questions.map((q, idx) => ({
+            image_url: interactiveQuestions[0]?.image_url,
+            points: interactiveQuestions.map((q, idx) => ({
               id: q.id || `point-${idx}`,
               x: q.point_x || 50,
               y: q.point_y || 50,
@@ -58,9 +63,10 @@ export const GameStep2 = ({ questions, onChange, gameContext }: GameStep2Props) 
             })),
           }}
           onChange={(value) => {
+            // Ensure all points get the same image_url
             const updatedQuestions: GameQuestion[] = value.points.map((point, idx) => ({
-              id: questions[idx]?.id,
-              image_url: value.image_url,
+              id: interactiveQuestions[idx]?.id,
+              image_url: value.image_url || "",
               point_x: point.x,
               point_y: point.y,
               question_text: point.question,
