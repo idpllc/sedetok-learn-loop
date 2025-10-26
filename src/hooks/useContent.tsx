@@ -44,7 +44,7 @@ export const useInfiniteContent = (
         contentQuery = contentQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
       }
 
-      // Apply subject filter (accent-insensitive handled client-side)
+      // Apply subject filter directly in database query
       if (subject && subject !== "all") {
         contentQuery = contentQuery.ilike("subject", `%${subject}%`);
       }
@@ -83,7 +83,7 @@ export const useInfiniteContent = (
           quizQuery = quizQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         }
 
-        // Apply subject filter
+        // Apply subject filter directly in database query
         if (subject && subject !== "all") {
           quizQuery = quizQuery.ilike("subject", `%${subject}%`);
         }
@@ -124,7 +124,7 @@ export const useInfiniteContent = (
           gameQuery = gameQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         }
 
-        // Apply subject filter
+        // Apply subject filter directly in database query
         if (subject && subject !== "all") {
           gameQuery = gameQuery.ilike("subject", `%${subject}%`);
         }
@@ -238,27 +238,8 @@ export const useInfiniteContent = (
         questions_count: questionCounts[game.id] || 0,
       }));
 
-      // Accent-insensitive normalization for client-side refinement
-      const normalize = (s?: string | null) => (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-      // Client-side accent-insensitive subject filter refinement
-      let filteredContentData = (contentData || []);
-      let filteredQuizzes = quizzes;
-      let filteredGames = games;
-
-      if (subject && subject !== 'all') {
-        const subjectFilter = normalize(subject);
-        const subjectMatches = (item: any) => {
-          const itemSubject = normalize(item.subject);
-          return itemSubject.includes(subjectFilter);
-        };
-        filteredContentData = filteredContentData.filter(subjectMatches);
-        filteredQuizzes = filteredQuizzes.filter(subjectMatches);
-        filteredGames = filteredGames.filter(subjectMatches);
-      }
-
       // Combine all arrays and sort by created_at
-      const allContent = [...filteredContentData, ...filteredQuizzes, ...filteredGames].sort(
+      const allContent = [...(contentData || []), ...quizzes, ...games].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
