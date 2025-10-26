@@ -276,7 +276,8 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
   const calculateLetterPosition = (index: number, total: number) => {
     const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
-    const radius = 180;
+    // Responsive radius: smaller on mobile
+    const radius = window.innerWidth < 768 ? 140 : 180;
     const x = Math.cos(angle) * radius;
     const y = Math.sin(angle) * radius;
     return { x, y };
@@ -332,15 +333,15 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="h-full overflow-y-auto bg-gradient-to-br from-background to-muted/20">
-      <div className="max-w-6xl mx-auto">
+    <div className="h-full overflow-hidden bg-gradient-to-br from-background to-muted/20">
+      <div className="h-full flex flex-col max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-2 pr-10">
+        <div className="flex items-center justify-between p-2 pr-10 flex-shrink-0">
           <div className="flex items-center gap-2">
             {[...Array(3)].map((_, i) => (
               <Heart
                 key={i}
-                className={`w-5 h-5 ${
+                className={`w-4 h-4 md:w-5 md:h-5 ${
                   i < lives
                     ? "fill-red-500 text-red-500"
                     : "fill-muted text-muted"
@@ -348,109 +349,113 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
               />
             ))}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {timeRemaining !== null && (
               <div className="flex items-center gap-1 text-primary">
-                <Clock className="w-4 h-4" />
-                <span className="font-mono font-bold text-base">{formatTime(timeRemaining)}</span>
+                <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="font-mono font-bold text-xs md:text-base">{formatTime(timeRemaining)}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
-              <Trophy className="w-4 h-4 text-primary" />
-              <span className="font-bold text-base">{score}</span>
+            <div className="flex items-center gap-1 md:gap-2 bg-primary/10 px-2 md:px-3 py-1 rounded-full">
+              <Trophy className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+              <span className="font-bold text-xs md:text-base">{score}</span>
             </div>
           </div>
         </div>
 
         {/* Title */}
-        <div className="text-center px-2 mb-2">
-          <h2 className="text-xl font-bold mb-1">{gameData?.title}</h2>
-          <p className="text-sm text-muted-foreground">{gameData?.description}</p>
+        <div className="text-center px-2 mb-1 md:mb-2 flex-shrink-0">
+          <h2 className="text-base md:text-xl font-bold mb-0.5 md:mb-1">{gameData?.title}</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">{gameData?.description}</p>
         </div>
 
         {/* Question */}
-        <Card className="mb-2 mx-2">
-          <CardContent className="p-3">
-            <p className="text-base text-center font-medium">{currentQuestion.question_text}</p>
+        <Card className="mb-1 md:mb-2 mx-2 flex-shrink-0">
+          <CardContent className="p-2 md:p-3">
+            <p className="text-sm md:text-base text-center font-medium">{currentQuestion.question_text}</p>
           </CardContent>
         </Card>
 
-        {/* Wheel Container */}
-        <div className="relative w-full max-w-md mx-auto aspect-square flex items-center justify-center">
-          {/* Letters Circle */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            {ALPHABET.map((letter, index) => {
-              const { x, y } = calculateLetterPosition(index, ALPHABET.length);
-              const hasQuestion = letterStates[letter] !== undefined;
-              
-              return (
-                <motion.div
-                  key={letter}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="absolute"
-                  style={{
-                    left: `calc(50% + ${x}px)`,
-                    top: `calc(50% + ${y}px)`,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                >
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
-                      hasQuestion ? "shadow-lg" : "opacity-50"
-                    }`}
+        {/* Wheel Container - Fixed height and centered */}
+        <div className="flex-1 flex items-center justify-center px-2 py-2 md:py-4 overflow-hidden">
+          <div className="relative w-full max-w-[320px] md:max-w-md aspect-square">
+            {/* Letters Circle */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {ALPHABET.map((letter, index) => {
+                const { x, y } = calculateLetterPosition(index, ALPHABET.length);
+                const hasQuestion = letterStates[letter] !== undefined;
+                
+                return (
+                  <motion.div
+                    key={letter}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="absolute"
                     style={{
-                      backgroundColor: hasQuestion ? getLetterColor(letter) : "hsl(var(--muted))",
-                      color: hasQuestion ? getLetterTextColor(letter) : "hsl(var(--muted-foreground))",
-                      border: currentQuestion.initial_letter.toUpperCase() === letter 
-                        ? "2px solid hsl(var(--primary))" 
-                        : "1px solid transparent",
+                      left: `calc(50% + ${x}px)`,
+                      top: `calc(50% + ${y}px)`,
+                      transform: "translate(-50%, -50%)",
                     }}
                   >
-                    {letter}
+                    <div
+                      className={`w-7 h-7 md:w-9 md:h-9 rounded-full flex items-center justify-center font-bold text-xs md:text-sm transition-all duration-300 ${
+                        hasQuestion ? "shadow-lg" : "opacity-50"
+                      }`}
+                      style={{
+                        backgroundColor: hasQuestion ? getLetterColor(letter) : "hsl(var(--muted))",
+                        color: hasQuestion ? getLetterTextColor(letter) : "hsl(var(--muted-foreground))",
+                        border: currentQuestion.initial_letter.toUpperCase() === letter 
+                          ? "2px solid hsl(var(--primary))" 
+                          : "1px solid transparent",
+                      }}
+                    >
+                      {letter}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Center Content - Absolutely centered */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-40 md:w-48">
+                <div className="bg-card/95 backdrop-blur-sm p-2 md:p-2.5 rounded-xl shadow-2xl border-2 border-primary/20">
+                  <div className="text-center mb-1 md:mb-1.5">
+                    <p className="text-[10px] md:text-xs text-muted-foreground">Empieza por</p>
+                    <div className="text-xl md:text-2xl font-bold text-primary">
+                      {currentQuestion.initial_letter.toUpperCase()}
+                    </div>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                  
+                  <Input
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSubmit();
+                    }}
+                    placeholder="Tu respuesta..."
+                    className="text-center text-xs md:text-sm font-medium mb-1.5 md:mb-2 h-7 md:h-8"
+                    autoFocus
+                  />
 
-          {/* Center Content */}
-          <div className="relative z-0 w-48">
-            <div className="bg-card/95 backdrop-blur-sm p-2.5 rounded-xl shadow-2xl border-2 border-primary/20">
-              <div className="text-center mb-1.5">
-                <p className="text-xs text-muted-foreground">Empieza por</p>
-                <div className="text-2xl font-bold text-primary">
-                  {currentQuestion.initial_letter.toUpperCase()}
+                  <div className="flex gap-1.5 md:gap-2">
+                    <Button
+                      onClick={handleSubmit}
+                      className="flex-1 h-6 md:h-7 text-[10px] md:text-xs"
+                      disabled={!userAnswer.trim()}
+                    >
+                      Enviar
+                    </Button>
+                    <Button
+                      onClick={handleSkip}
+                      variant="outline"
+                      className="flex-1 h-6 md:h-7 text-[10px] md:text-xs"
+                    >
+                      Pasar
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              
-              <Input
-                value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSubmit();
-                }}
-                placeholder="Tu respuesta..."
-                className="text-center text-sm font-medium mb-2 h-8"
-                autoFocus
-              />
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSubmit}
-                  className="flex-1 h-7 text-xs"
-                  disabled={!userAnswer.trim()}
-                >
-                  Enviar
-                </Button>
-                <Button
-                  onClick={handleSkip}
-                  variant="outline"
-                  className="flex-1 h-7 text-xs"
-                >
-                  Pasar
-                </Button>
               </div>
             </div>
           </div>
