@@ -503,6 +503,18 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           return;
         }
       }
+    } else if (gameType === "interactive_image") {
+      if (gameQuestions.length < 1) {
+        toast.error("Agrega al menos un punto en la imagen");
+        return;
+      }
+      const invalidPoints = gameQuestions.filter(q => 
+        !q.image_url || q.point_x === undefined || q.point_y === undefined || !q.question_text
+      );
+      if (invalidPoints.length > 0) {
+        toast.error("Cada punto debe tener imagen, posición y pregunta");
+        return;
+      }
     }
 
     try {
@@ -538,8 +550,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         targetGameId = createdGame.id;
       }
 
-      // Create questions for word_order and word_wheel types
-      if (gameType === "word_order" || gameType === "word_wheel") {
+      // Create questions for word_order, word_wheel and interactive_image types
+      if (gameType === "word_order" || gameType === "word_wheel" || gameType === "interactive_image") {
         const pointsPerQuestion = 10;
         for (let i = 0; i < gameQuestions.length; i++) {
           const question = gameQuestions[i];
@@ -553,6 +565,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             order_index: i,
             image_url: question.image_url,
             video_url: question.video_url,
+            point_x: (question as any).point_x,
+            point_y: (question as any).point_y,
+            lives_cost: (question as any).lives_cost || 1,
+            feedback: (question as any).feedback || null,
           });
         }
       }
@@ -989,6 +1005,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   ? "Preguntas" 
                   : gameType === "word_wheel"
                   ? "Configurar Ruleta de Palabras"
+                  : gameType === "interactive_image"
+                  ? "Configurar Imagen Interactiva"
                   : "Configurar Conexiones"}
               </h3>
               <p className="text-sm text-muted-foreground mb-6">
@@ -996,9 +1014,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   ? "Crea preguntas de ordenar palabras"
                   : gameType === "word_wheel"
                   ? "Define las preguntas para cada letra del abecedario"
+                  : gameType === "interactive_image"
+                  ? "Sube una imagen y agrega puntos con sus preguntas y retroalimentación"
                   : "Crea los pares de items para conectar"}
               </p>
-              {gameType === "word_order" ? (
+              {gameType === "word_order" || gameType === "interactive_image" ? (
                 <GameStep2 
                   questions={gameQuestions} 
                   onChange={setGameQuestions}

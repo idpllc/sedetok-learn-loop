@@ -523,6 +523,7 @@ export type Database = {
         Row: {
           correct_sentence: string
           created_at: string | null
+          feedback: string | null
           game_id: string
           id: string
           image_url: string | null
@@ -539,6 +540,7 @@ export type Database = {
         Insert: {
           correct_sentence: string
           created_at?: string | null
+          feedback?: string | null
           game_id: string
           id?: string
           image_url?: string | null
@@ -555,6 +557,7 @@ export type Database = {
         Update: {
           correct_sentence?: string
           created_at?: string | null
+          feedback?: string | null
           game_id?: string
           id?: string
           image_url?: string | null

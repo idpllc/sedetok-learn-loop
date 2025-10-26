@@ -140,8 +140,8 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
         game_type: game.game_type || "word_order",
       });
 
-      // Only fetch questions for word_order type
-      if (game.game_type === "word_order" || !game.game_type) {
+      // Fetch questions for word_order and interactive_image types
+      if (game.game_type === "word_order" || game.game_type === "interactive_image" || !game.game_type) {
         const { data: questionsData, error: questionsError } = await supabase
           .from("game_questions")
           .select("*")
@@ -159,7 +159,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
         })) as GameQuestion[];
         setQuestions(normalized);
 
-        if (normalized.length > 0) {
+        if (normalized.length > 0 && game.game_type === "word_order") {
           const first = normalized[0];
           const words = game.random_order ? shuffleArray([...first.words]) : [...first.words];
           setAvailableWords(words);
@@ -204,7 +204,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   // If it's an interactive image game, delegate to InteractiveImageViewer
   if (!loading && gameData?.game_type === "interactive_image") {
     return <InteractiveImageViewer 
-      imageUrl={gameData.description || ""} 
+      imageUrl={questions[0]?.image_url || ""} 
       points={questions.map((q) => ({
         id: q.id,
         x: q.point_x || 50,
