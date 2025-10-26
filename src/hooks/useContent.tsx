@@ -39,7 +39,7 @@ export const useInfiniteContent = (
         contentQuery = contentQuery.eq("content_type", contentType as any);
       }
 
-      // Apply search filter
+      // Apply search filter (title, description, subject)
       if (searchQuery && searchQuery.trim() !== "") {
         contentQuery = contentQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
       }
@@ -89,7 +89,7 @@ export const useInfiniteContent = (
           .eq("status", "publicado")
           .order("created_at", { ascending: false });
 
-        // Apply search filter
+        // Apply search filter (title, description, subject)
         if (searchQuery && searchQuery.trim() !== "") {
           quizQuery = quizQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         }
@@ -141,7 +141,7 @@ export const useInfiniteContent = (
           .eq("is_public", true)
           .order("created_at", { ascending: false });
 
-        // Apply search filter
+        // Apply search filter (title, description, subject)
         if (searchQuery && searchQuery.trim() !== "") {
           gameQuery = gameQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         }
@@ -262,9 +262,28 @@ export const useInfiniteContent = (
       }));
 
       // Combine all arrays and sort by created_at
-      const allContent = [...(contentData || []), ...quizzes, ...games].sort(
+      let allContent = [...(contentData || []), ...quizzes, ...games].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
+
+      // Apply client-side tag filtering if search query exists
+      if (searchQuery && searchQuery.trim() !== "") {
+        const searchLower = searchQuery.toLowerCase();
+        allContent = allContent.filter(item => {
+          // Already matched by DB query (title, description, subject)
+          const matchedByDB = 
+            item.title?.toLowerCase().includes(searchLower) ||
+            item.description?.toLowerCase().includes(searchLower) ||
+            item.subject?.toLowerCase().includes(searchLower);
+          
+          // Check if any tag matches
+          const matchedByTags = item.tags?.some((tag: string) => 
+            tag.toLowerCase().includes(searchLower)
+          );
+          
+          return matchedByDB || matchedByTags;
+        });
+      }
 
       // Paginate the combined results to ensure exactly ITEMS_PER_PAGE per page
       const startIndex = pageParam * ITEMS_PER_PAGE;
