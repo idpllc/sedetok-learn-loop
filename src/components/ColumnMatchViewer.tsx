@@ -362,45 +362,41 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
   const progress = (connections.length / leftItems.length) * 100;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-green-600 via-green-500 to-green-400 p-4 md:p-6">
       {/* Header */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{gameData.title}</h1>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Heart className="w-5 h-5 text-destructive" />
-              <span className="font-bold">{lives}</span>
-            </div>
-            <div className="text-lg font-bold">
-              {score} pts
-            </div>
+      <div className="bg-green-600/80 backdrop-blur-sm rounded-2xl p-4 md:p-6 mb-4 shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3 bg-white/20 rounded-full px-4 py-2">
+            <Heart className="w-5 h-5 text-white fill-white" />
+            <span className="font-bold text-white text-lg">{lives}</span>
+          </div>
+          <h1 className="text-xl md:text-2xl font-bold text-white text-center flex-1 px-4">{gameData.title}</h1>
+          <div className="flex items-center gap-3 bg-white/20 rounded-full px-4 py-2">
+            <span className="font-bold text-white text-lg">{score}</span>
           </div>
         </div>
 
         {gameData.description && (
-          <p className="text-muted-foreground">{gameData.description}</p>
+          <p className="text-white/90 text-center text-sm md:text-base mb-4">{gameData.description}</p>
         )}
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Conectadas: {connections.length}/{leftItems.length}
+        <div className="flex items-center justify-between text-sm text-white">
+          <span className="font-medium">
+            Parejas: {connections.length}/{leftItems.length}
+          </span>
+          {timeRemaining !== null && (
+            <span className="font-mono font-bold text-lg">
+              {formatTime(timeRemaining)}
             </span>
-            {timeRemaining !== null && (
-              <span className="font-mono font-bold">
-                {formatTime(timeRemaining)}
-              </span>
-            )}
-          </div>
-          <Progress value={progress} className="h-2" />
+          )}
         </div>
+        <Progress value={progress} className="h-2 mt-2 bg-white/20" />
       </div>
 
       {/* Game Board with SVG overlay */}
       <div 
         ref={containerRef}
-        className="relative"
+        className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-6"
         onMouseMove={handleMouseMove}
         onMouseUp={() => handleMouseUp()}
         onMouseLeave={() => handleMouseUp()}
@@ -418,20 +414,20 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
             if (!leftEdge || !rightEdge) return null;
 
             const midX = (leftEdge.x + rightEdge.x) / 2;
-            const curveOffset = 50;
+            const curveOffset = 30;
             
             return (
               <g key={`${conn.leftId}-${conn.rightId}`}>
                 <path
                   d={`M ${leftEdge.x} ${leftEdge.y} Q ${midX} ${leftEdge.y - curveOffset}, ${rightEdge.x} ${rightEdge.y}`}
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="3"
+                  stroke="#86efac"
+                  strokeWidth="4"
                   fill="none"
                   strokeLinecap="round"
                   className="animate-fade-in"
                 />
-                <circle cx={leftEdge.x} cy={leftEdge.y} r="8" fill="hsl(var(--primary))" />
-                <circle cx={rightEdge.x} cy={rightEdge.y} r="8" fill="hsl(var(--primary))" />
+                <circle cx={leftEdge.x} cy={leftEdge.y} r="10" fill="#86efac" />
+                <circle cx={rightEdge.x} cy={rightEdge.y} r="10" fill="#86efac" />
               </g>
             );
           })}
@@ -440,21 +436,21 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
           {isDragging && dragStart && currentMousePos && (
             <g>
               <path
-                d={`M ${dragStart.x} ${dragStart.y} Q ${(dragStart.x + currentMousePos.x) / 2} ${dragStart.y - 50}, ${currentMousePos.x} ${currentMousePos.y}`}
-                stroke="hsl(var(--primary))"
-                strokeWidth="3"
+                d={`M ${dragStart.x} ${dragStart.y} Q ${(dragStart.x + currentMousePos.x) / 2} ${dragStart.y - 30}, ${currentMousePos.x} ${currentMousePos.y}`}
+                stroke="#86efac"
+                strokeWidth="4"
                 fill="none"
                 strokeLinecap="round"
-                opacity="0.5"
-                strokeDasharray="5,5"
+                opacity="0.6"
+                strokeDasharray="8,8"
               />
-              <circle cx={dragStart.x} cy={dragStart.y} r="8" fill="hsl(var(--primary))" />
-              <circle cx={currentMousePos.x} cy={currentMousePos.y} r="6" fill="hsl(var(--primary))" opacity="0.5" />
+              <circle cx={dragStart.x} cy={dragStart.y} r="10" fill="#86efac" />
+              <circle cx={currentMousePos.x} cy={currentMousePos.y} r="8" fill="#86efac" opacity="0.6" />
             </g>
           )}
         </svg>
 
-        <div className="grid grid-cols-2 gap-8 relative">
+        <div className="grid grid-cols-2 gap-4 md:gap-6 relative">
           {/* Left Column */}
           <div className="space-y-2 md:space-y-3">
             {leftItems.map((item) => {
@@ -468,35 +464,40 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                   whileHover={{ scale: isConnected ? 1 : 1.02 }}
                   whileTap={{ scale: isConnected ? 1 : 0.98 }}
                 >
-                  <Button
+                  <button
                     onClick={() => handleLeftClick(item.id)}
                     onMouseDown={(e) => handleLeftMouseDown(item.id, e)}
                     disabled={isConnected}
-                    variant="outline"
-                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 cursor-pointer relative overflow-hidden ${
-                      isConnected ? "opacity-50 bg-primary/20" : ""
-                    } ${isSelected ? "ring-2 ring-primary bg-primary/10" : ""}`}
+                    className={`w-full h-auto min-h-[60px] md:min-h-[70px] p-3 md:p-4 cursor-pointer relative overflow-hidden transition-all duration-200 
+                      ${isConnected 
+                        ? "bg-white/40 opacity-60" 
+                        : isSelected
+                        ? "bg-green-300 shadow-lg scale-105"
+                        : "bg-white hover:bg-green-50 hover:shadow-md"
+                      } rounded-full border-2 ${isSelected ? "border-green-600" : "border-green-300"}`}
                   >
                     {/* Connection point circle */}
-                    <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 z-10 ${
-                      isConnected 
-                        ? "bg-primary border-primary" 
+                    <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full z-20 transition-all duration-200 flex items-center justify-center
+                      ${isConnected 
+                        ? "bg-green-300 border-4 border-green-400" 
                         : isSelected
-                        ? "bg-primary/50 border-primary animate-pulse"
-                        : "bg-background border-primary"
-                    }`} />
+                        ? "bg-green-300 border-4 border-green-400 animate-pulse scale-110"
+                        : "bg-green-200 border-4 border-green-300"
+                      }`}>
+                      <div className="w-2 h-2 rounded-full bg-green-600" />
+                    </div>
                     
-                    <div className="w-full flex flex-col gap-1 md:gap-2 overflow-hidden">
+                    <div className="w-full flex flex-col gap-1 md:gap-2 overflow-hidden pr-6">
                       {item.image_url && (
                         <img
                           src={item.image_url}
                           alt={item.text}
-                          className="w-full h-16 md:h-24 object-cover rounded flex-shrink-0"
+                          className="w-full h-16 md:h-20 object-cover rounded-2xl flex-shrink-0"
                         />
                       )}
-                      <span className="text-xs md:text-sm break-words hyphens-auto text-left w-full overflow-hidden">{item.text}</span>
+                      <span className="text-xs md:text-sm text-gray-900 break-words hyphens-auto text-left w-full overflow-hidden leading-relaxed font-medium">{item.text}</span>
                     </div>
-                  </Button>
+                  </button>
                 </motion.div>
               );
             })}
@@ -515,32 +516,36 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                   whileTap={{ scale: isConnected ? 1 : 0.98 }}
                   onMouseUp={() => handleMouseUp(item.id)}
                 >
-                  <Button
+                  <button
                     onClick={() => handleRightClick(item.id)}
                     disabled={isConnected || (isMobile && !selectedLeftItem)}
-                    variant="outline"
-                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 relative overflow-hidden ${
-                      isConnected ? "opacity-50 bg-primary/20" : ""
-                    }`}
+                    className={`w-full h-auto min-h-[60px] md:min-h-[70px] p-3 md:p-4 cursor-pointer relative overflow-hidden transition-all duration-200
+                      ${isConnected 
+                        ? "bg-white/40 opacity-60" 
+                        : "bg-white hover:bg-green-50 hover:shadow-md"
+                      } rounded-full border-2 border-green-300
+                      ${isMobile && !selectedLeftItem ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     {/* Connection point circle */}
-                    <div className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 z-10 ${
-                      isConnected 
-                        ? "bg-primary border-primary" 
-                        : "bg-background border-primary"
-                    }`} />
+                    <div className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 rounded-full z-20 transition-all duration-200 flex items-center justify-center
+                      ${isConnected 
+                        ? "bg-green-300 border-4 border-green-400" 
+                        : "bg-green-200 border-4 border-green-300"
+                      }`}>
+                      <div className="w-2 h-2 rounded-full bg-green-600" />
+                    </div>
                     
-                    <div className="w-full flex flex-col gap-1 md:gap-2 overflow-hidden">
+                    <div className="w-full flex flex-col gap-1 md:gap-2 overflow-hidden pl-6">
                       {item.image_url && (
                         <img
                           src={item.image_url}
                           alt={item.text}
-                          className="w-full h-16 md:h-24 object-cover rounded flex-shrink-0"
+                          className="w-full h-16 md:h-20 object-cover rounded-2xl flex-shrink-0"
                         />
                       )}
-                      <span className="text-xs md:text-sm break-words hyphens-auto text-left w-full overflow-hidden">{item.text}</span>
+                      <span className="text-xs md:text-sm text-gray-900 break-words hyphens-auto text-left w-full overflow-hidden leading-relaxed font-medium">{item.text}</span>
                     </div>
-                  </Button>
+                  </button>
                 </motion.div>
               );
             })}
@@ -548,12 +553,19 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
         </div>
       </div>
 
-      {/* Instructions */}
-      <div className="bg-accent/50 p-3 md:p-4 rounded-lg text-center text-xs md:text-sm text-muted-foreground">
-        {isMobile 
-          ? "Toca un item de la izquierda, luego toca su par correcto de la derecha"
-          : "Arrastra desde un item de la izquierda hasta su par correcto de la derecha"
-        }
+      {/* Bottom Info */}
+      <div className="flex items-center justify-between mt-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg">
+          <span className="text-gray-900 font-bold text-lg">
+            {timeRemaining !== null ? formatTime(timeRemaining) : "00:00"}
+          </span>
+        </div>
+        <div className="bg-white/20 backdrop-blur-sm p-3 md:p-4 rounded-2xl text-center text-xs md:text-sm text-white shadow-lg">
+          {isMobile 
+            ? "Toca un item de la izquierda, luego toca su par correcto de la derecha"
+            : "Arrastra desde un item de la izquierda hasta su par correcto de la derecha"
+          }
+        </div>
       </div>
     </div>
   );
