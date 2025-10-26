@@ -11,6 +11,10 @@ export interface GameQuestion {
   order_index: number;
   image_url?: string;
   video_url?: string;
+  point_x?: number;
+  point_y?: number;
+  lives_cost?: number;
+  feedback?: string;
 }
 
 export const useGames = () => {

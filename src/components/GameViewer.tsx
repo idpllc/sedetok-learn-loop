@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useXP } from "@/hooks/useXP";
 import { ColumnMatchViewer } from "./ColumnMatchViewer";
 import { WordWheelViewer } from "./WordWheelViewer";
+import { InteractiveImageViewer } from "./game/InteractiveImageViewer";
 import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface GameViewerProps {
@@ -27,6 +28,10 @@ interface GameQuestion {
   order_index: number;
   image_url?: string;
   video_url?: string;
+  point_x?: number;
+  point_y?: number;
+  lives_cost?: number;
+  feedback?: string;
 }
 
 interface GameData {
@@ -195,6 +200,34 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
       return () => clearInterval(timer);
     }
   }, [timeRemaining, isCompleted]);
+
+  // If it's an interactive image game, delegate to InteractiveImageViewer
+  if (!loading && gameData?.game_type === "interactive_image") {
+    return <InteractiveImageViewer 
+      imageUrl={gameData.description || ""} 
+      points={questions.map((q) => ({
+        id: q.id,
+        x: q.point_x || 50,
+        y: q.point_y || 50,
+        question: q.question_text,
+        feedback: q.feedback,
+        lives_cost: q.lives_cost || 1,
+      }))}
+      onComplete={(score, maxScore) => {
+        if (user) {
+          supabase.from("user_quiz_results").insert({
+            user_id: user.id,
+            game_id: gameId,
+            score,
+            max_score: maxScore,
+            passed: score >= (maxScore * 0.6),
+            evaluation_event_id: evaluationEventId,
+          });
+        }
+        if (onComplete) onComplete();
+      }}
+    />;
+  }
 
   // If it's a column match game, delegate to ColumnMatchViewer
   if (!loading && gameData?.game_type === "column_match") {

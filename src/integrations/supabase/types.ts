@@ -527,7 +527,10 @@ export type Database = {
           id: string
           image_url: string | null
           initial_letter: string | null
+          lives_cost: number | null
           order_index: number
+          point_x: number | null
+          point_y: number | null
           points: number | null
           question_text: string
           video_url: string | null
@@ -540,7 +543,10 @@ export type Database = {
           id?: string
           image_url?: string | null
           initial_letter?: string | null
+          lives_cost?: number | null
           order_index: number
+          point_x?: number | null
+          point_y?: number | null
           points?: number | null
           question_text: string
           video_url?: string | null
@@ -553,7 +559,10 @@ export type Database = {
           id?: string
           image_url?: string | null
           initial_letter?: string | null
+          lives_cost?: number | null
           order_index?: number
+          point_x?: number | null
+          point_y?: number | null
           points?: number | null
           question_text?: string
           video_url?: string | null

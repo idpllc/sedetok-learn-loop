@@ -43,6 +43,12 @@ export const GameStep1 = ({
               Ruleta de Palabras - Adivina palabras según su letra inicial
             </Label>
           </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="interactive_image" id="interactive_image" />
+            <Label htmlFor="interactive_image" className="font-normal cursor-pointer">
+              Imagen Interactiva - Identifica puntos en una imagen
+            </Label>
+          </div>
         </RadioGroup>
       </div>
 

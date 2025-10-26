@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { InteractiveImageEditor } from "./InteractiveImageEditor";
 import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
 
 interface GameStep2Props {
@@ -317,10 +318,42 @@ export const GameStep2 = ({ questions, onChange, gameContext }: GameStep2Props) 
           </CardHeader>
           <CardContent>
             {currentQuestion && (
-              <WordOrderEditor
-                question={currentQuestion}
-                onChange={(updated) => updateQuestion(selectedQuestionIndex, updated)}
-              />
+              gameContext?.gameType === "interactive_image" ? (
+                <InteractiveImageEditor
+                  value={{
+                    image_url: currentQuestion.image_url,
+                    points: questions.map((q, idx) => ({
+                      id: `point-${idx}`,
+                      x: q.point_x || 50,
+                      y: q.point_y || 50,
+                      question: q.question_text || "",
+                      feedback: q.feedback || "",
+                      lives_cost: q.lives_cost || 1,
+                    })),
+                  }}
+                  onChange={(value) => {
+                    const updatedQuestions = value.points.map((point, idx) => ({
+                      ...questions[idx],
+                      image_url: value.image_url,
+                      point_x: point.x,
+                      point_y: point.y,
+                      question_text: point.question,
+                      feedback: point.feedback,
+                      lives_cost: point.lives_cost,
+                      correct_sentence: "",
+                      words: [],
+                      points: 10,
+                      order_index: idx,
+                    }));
+                    onChange(updatedQuestions);
+                  }}
+                />
+              ) : (
+                <WordOrderEditor
+                  question={currentQuestion}
+                  onChange={(updated) => updateQuestion(selectedQuestionIndex, updated)}
+                />
+              )
             )}
           </CardContent>
         </Card>
