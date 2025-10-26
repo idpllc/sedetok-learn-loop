@@ -74,14 +74,8 @@ export const MoreModal = ({ open, onOpenChange }: MoreModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-background border-border p-0 gap-0">
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center p-4 border-b border-border">
           <h2 className="text-xl font-semibold">Más</h2>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
         
         <div className="py-2">
