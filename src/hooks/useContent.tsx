@@ -16,10 +16,10 @@ export const useInfiniteContent = (
   return useInfiniteQuery({
     queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
-      // Fetch sufficient items to allow filtering + pagination without over-fetching
-      const batchSize = Math.max((pageParam + 1) * ITEMS_PER_PAGE, 30);
+      const from = pageParam * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
       
-      // Fetch regular content
+      // Fetch regular content with pagination
       let contentQuery = supabase
         .from("content")
         .select(`
@@ -31,12 +31,11 @@ export const useInfiniteContent = (
             institution,
             is_verified
           )
-        `)
+        `, { count: 'exact' })
         .eq("is_public", true)
-        .order("created_at", { ascending: false })
-        .limit(batchSize);
+        .order("created_at", { ascending: false });
 
-      if (contentType && contentType !== "all" && contentType !== "quiz") {
+      if (contentType && contentType !== "all" && contentType !== "quiz" && contentType !== "game") {
         contentQuery = contentQuery.eq("content_type", contentType as any);
       }
 
@@ -45,19 +44,23 @@ export const useInfiniteContent = (
         contentQuery = contentQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
       }
 
-      // Apply subject filter
-      // Subject filter handled client-side for accent-insensitive matching
+      // Apply subject filter (accent-insensitive handled client-side)
+      if (subject && subject !== "all") {
+        contentQuery = contentQuery.ilike("subject", `%${subject}%`);
+      }
+
       // Apply grade level filter
       if (gradeLevel && gradeLevel !== "all") {
         contentQuery = contentQuery.eq("grade_level", gradeLevel as any);
       }
 
-      const { data: contentData, error: contentError } = await contentQuery;
+      const { data: contentData, error: contentError, count: contentCount } = await contentQuery.range(from, to);
 
       if (contentError) throw contentError;
 
       // Fetch quizzes only if not filtering by specific content type or if type is quiz
       let quizData = [];
+      let quizCount = 0;
       if (!contentType || contentType === "all" || contentType === "quiz") {
         let quizQuery = supabase
           .from("quizzes")
@@ -70,11 +73,10 @@ export const useInfiniteContent = (
               institution,
               is_verified
             )
-          `)
+          `, { count: 'exact' })
           .eq("is_public", true)
           .eq("status", "publicado")
-          .order("created_at", { ascending: false })
-          .limit(batchSize);
+          .order("created_at", { ascending: false });
 
         // Apply search filter
         if (searchQuery && searchQuery.trim() !== "") {
@@ -82,20 +84,25 @@ export const useInfiniteContent = (
         }
 
         // Apply subject filter
-        // Subject filter handled client-side for accent-insensitive matching
+        if (subject && subject !== "all") {
+          quizQuery = quizQuery.ilike("subject", `%${subject}%`);
+        }
+
         // Apply grade level filter
         if (gradeLevel && gradeLevel !== "all") {
           quizQuery = quizQuery.eq("grade_level", gradeLevel as any);
         }
 
-        const { data: fetchedQuizData, error: quizError } = await quizQuery;
+        const { data: fetchedQuizData, error: quizError, count: fetchedQuizCount } = await quizQuery.range(from, to);
 
         if (quizError) throw quizError;
         quizData = fetchedQuizData || [];
+        quizCount = fetchedQuizCount || 0;
       }
 
       // Fetch games only if not filtering by specific content type or if type is game
       let gameData = [];
+      let gameCount = 0;
       if (!contentType || contentType === "all" || contentType === "game") {
         let gameQuery = supabase
           .from("games")
@@ -108,14 +115,18 @@ export const useInfiniteContent = (
               institution,
               is_verified
             )
-          `)
+          `, { count: 'exact' })
           .eq("is_public", true)
-          .order("created_at", { ascending: false })
-          .limit(batchSize);
+          .order("created_at", { ascending: false });
 
         // Apply search filter
         if (searchQuery && searchQuery.trim() !== "") {
           gameQuery = gameQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+        }
+
+        // Apply subject filter
+        if (subject && subject !== "all") {
+          gameQuery = gameQuery.ilike("subject", `%${subject}%`);
         }
 
         // Apply grade level filter
@@ -123,10 +134,11 @@ export const useInfiniteContent = (
           gameQuery = gameQuery.eq("grade_level", gradeLevel as any);
         }
 
-        const { data: fetchedGameData, error: gameError } = await gameQuery;
+        const { data: fetchedGameData, error: gameError, count: fetchedGameCount } = await gameQuery.range(from, to);
 
         if (gameError) throw gameError;
         gameData = fetchedGameData || [];
+        gameCount = fetchedGameCount || 0;
       }
 
       // Get question counts for each quiz and game
@@ -226,31 +238,23 @@ export const useInfiniteContent = (
         questions_count: questionCounts[game.id] || 0,
       }));
 
-      // Accent-insensitive normalization
+      // Accent-insensitive normalization for client-side refinement
       const normalize = (s?: string | null) => (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-      // Client-side filters to handle accents and ensure matches
+      // Client-side accent-insensitive subject filter refinement
       let filteredContentData = (contentData || []);
       let filteredQuizzes = quizzes;
       let filteredGames = games;
 
-      if ((subject && subject !== 'all') || (searchQuery && searchQuery.trim() !== '')) {
-        const subjectFilter = normalize(subject || '');
-        const textFilter = normalize(searchQuery || '');
-        const matches = (item: any) => {
-          const subj = normalize((item as any).subject);
-          const title = normalize((item as any).title);
-          const desc = normalize((item as any).description);
-          let ok = true;
-          if (subject && subject !== 'all') ok = ok && subj.includes(subjectFilter);
-          if (searchQuery && searchQuery.trim() !== '') {
-            ok = ok && (title.includes(textFilter) || desc.includes(textFilter) || subj.includes(textFilter));
-          }
-          return ok;
+      if (subject && subject !== 'all') {
+        const subjectFilter = normalize(subject);
+        const subjectMatches = (item: any) => {
+          const itemSubject = normalize(item.subject);
+          return itemSubject.includes(subjectFilter);
         };
-        filteredContentData = filteredContentData.filter(matches);
-        filteredQuizzes = filteredQuizzes.filter(matches);
-        filteredGames = filteredGames.filter(matches);
+        filteredContentData = filteredContentData.filter(subjectMatches);
+        filteredQuizzes = filteredQuizzes.filter(subjectMatches);
+        filteredGames = filteredGames.filter(subjectMatches);
       }
 
       // Combine all arrays and sort by created_at
@@ -258,15 +262,13 @@ export const useInfiniteContent = (
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Paginate the combined results to ensure exactly ITEMS_PER_PAGE per page
-      const startIndex = pageParam * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      const paginatedItems = allContent.slice(startIndex, endIndex);
+      // Total count of all content types
+      const totalCount = (contentCount || 0) + (quizCount || 0) + (gameCount || 0);
 
       return {
-        items: paginatedItems,
-        nextPage: endIndex < allContent.length ? pageParam + 1 : undefined,
-        totalCount: allContent.length,
+        items: allContent,
+        nextPage: allContent.length === ITEMS_PER_PAGE ? pageParam + 1 : undefined,
+        totalCount: totalCount,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
