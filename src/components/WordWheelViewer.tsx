@@ -260,7 +260,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
   const getLetterColor = (letter: string): string => {
     const state = letterStates[letter];
-    if (state === "correct") return "hsl(var(--chart-2))"; // green
+    if (state === "correct") return "#22c55e"; // green check
     if (state === "failed") return "hsl(var(--destructive))"; // red
     if (state === "skipped") return "hsl(var(--muted))"; // gray
     return "hsl(var(--card))"; // white/default
