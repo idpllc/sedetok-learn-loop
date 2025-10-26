@@ -45,7 +45,7 @@ interface DragLine {
 export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: ColumnMatchViewerProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { playLoseLife, playTimeWarning, playClick } = useGameSounds();
+  const { playLoseLife, playTimeWarning, playClick, playVictory } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [leftItems, setLeftItems] = useState<ColumnItem[]>([]);
   const [rightItems, setRightItems] = useState<ColumnItem[]>([]);
@@ -255,6 +255,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
 
   const completeGame = async (success: boolean) => {
     setCompleted(true);
+    playVictory();
 
     const maxScore = leftItems.length * 10;
     const normalizedScore = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;

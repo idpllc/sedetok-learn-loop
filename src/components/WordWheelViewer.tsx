@@ -40,7 +40,7 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: WordWheelViewerProps) => {
   const { user } = useAuth();
   const { awardXP } = useXP();
-  const { playLoseLife, playTimeWarning, playClick } = useGameSounds();
+  const { playLoseLife, playTimeWarning, playClick, playVictory } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [questions, setQuestions] = useState<WheelQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -136,6 +136,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
   const completeGame = async () => {
     setIsCompleted(true);
+    playVictory();
 
     if (!user) {
       toast.error("Debes iniciar sesión para guardar tus resultados");

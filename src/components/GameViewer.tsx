@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, X, Clock, RotateCcw, Trophy } from "lucide-react";
+import { Check, X, Clock, RotateCcw, Trophy, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,7 +41,7 @@ interface GameData {
 export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: GameViewerProps) => {
   const { user } = useAuth();
   const { awardXP } = useXP();
-  const { playTimeWarning, playClick } = useGameSounds();
+  const { playLoseLife, playTimeWarning, playClick, playVictory } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [questions, setQuestions] = useState<GameQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -54,6 +54,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   const [isCorrect, setIsCorrect] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
+  const [lives, setLives] = useState(3);
 
   // Helper functions defined before useEffects
   const shuffleArray = (array: string[]) => {
@@ -67,6 +68,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
 
   const completeGame = async () => {
     setIsCompleted(true);
+    playVictory();
 
     if (!user) {
       toast.error("Debes iniciar sesión para guardar tus resultados");
@@ -229,10 +231,20 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
     setShowFeedback(true);
 
     if (correct) {
+      playClick();
       setScore(score + currentQ.points);
       toast.success("¡Correcto!");
     } else {
+      playLoseLife();
+      setLives(lives - 1);
       toast.error("Incorrecto. La respuesta correcta es: " + currentQ.correct_sentence);
+      
+      if (lives - 1 <= 0) {
+        setTimeout(() => {
+          toast.error("¡Has perdido todas las vidas!");
+          completeGame();
+        }, 1500);
+      }
     }
   };
 
@@ -322,6 +334,18 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
         {/* Header */}
         <div className="flex items-center justify-between pr-8">
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {[...Array(3)].map((_, i) => (
+                <Heart
+                  key={i}
+                  className={`w-5 h-5 ${
+                    i < lives
+                      ? "fill-red-500 text-red-500"
+                      : "fill-muted text-muted"
+                  }`}
+                />
+              ))}
+            </div>
             <span className="text-sm font-medium text-muted-foreground">
               Pregunta {currentQuestion + 1} de {questions.length}
             </span>
