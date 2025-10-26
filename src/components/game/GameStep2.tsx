@@ -41,6 +41,106 @@ export const GameStep2 = ({ questions, onChange, gameContext }: GameStep2Props) 
   const { balance, deductEducoins, showBuyModal, openBuyModal, closeBuyModal, requiredAmount } = useEducoins();
   const { deductXP } = useXP();
 
+  // For interactive_image, render a completely different UI
+  if (gameContext?.gameType === "interactive_image") {
+    return (
+      <div className="space-y-6">
+        <InteractiveImageEditor
+          value={{
+            image_url: questions[0]?.image_url,
+            points: questions.map((q, idx) => ({
+              id: q.id || `point-${idx}`,
+              x: q.point_x || 50,
+              y: q.point_y || 50,
+              question: q.question_text || "",
+              feedback: q.feedback || "",
+              lives_cost: q.lives_cost || 1,
+            })),
+          }}
+          onChange={(value) => {
+            const updatedQuestions: GameQuestion[] = value.points.map((point, idx) => ({
+              id: questions[idx]?.id,
+              image_url: value.image_url,
+              point_x: point.x,
+              point_y: point.y,
+              question_text: point.question,
+              feedback: point.feedback,
+              lives_cost: point.lives_cost,
+              correct_sentence: "",
+              words: [],
+              points: 10,
+              order_index: idx,
+            }));
+            onChange(updatedQuestions);
+          }}
+        />
+
+        <AlertDialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Generar Juego con IA</AlertDialogTitle>
+              <AlertDialogDescription>
+                Elige cómo pagar la generación automática del juego:
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-3 py-4">
+              <Button 
+                onClick={async () => {
+                  const success = await deductEducoins(2, "Generación de juego con IA", false);
+                  if (success) {
+                    setShowPaymentDialog(false);
+                  } else {
+                    setShowPaymentDialog(false);
+                    openBuyModal(2);
+                  }
+                }}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                <span className="text-lg mr-2">💰</span>
+                <div className="flex-1 text-left">
+                  <div className="font-semibold">Pagar con Educoins</div>
+                  <div className="text-xs text-muted-foreground">
+                    Costo: 2 Educoins (Tienes: {balance || 0})
+                  </div>
+                </div>
+              </Button>
+              <Button 
+                onClick={async () => {
+                  const success = await deductXP(10000, "Generación de juego con IA");
+                  if (success) {
+                    setShowPaymentDialog(false);
+                  } else {
+                    setShowPaymentDialog(false);
+                  }
+                }}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                <span className="text-lg mr-2">⭐</span>
+                <div className="flex-1 text-left">
+                  <div className="font-semibold">Pagar con XP</div>
+                  <div className="text-xs text-muted-foreground">
+                    Costo: 10,000 XP
+                  </div>
+                </div>
+              </Button>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <BuyEducoinsModal
+          open={showBuyModal}
+          onOpenChange={closeBuyModal}
+          requiredAmount={requiredAmount}
+        />
+      </div>
+    );
+  }
+
   const addQuestion = () => {
     const newQuestion: GameQuestion = {
       question_text: "",
@@ -318,42 +418,10 @@ export const GameStep2 = ({ questions, onChange, gameContext }: GameStep2Props) 
           </CardHeader>
           <CardContent>
             {currentQuestion && (
-              gameContext?.gameType === "interactive_image" ? (
-                <InteractiveImageEditor
-                  value={{
-                    image_url: currentQuestion.image_url,
-                    points: questions.map((q, idx) => ({
-                      id: `point-${idx}`,
-                      x: q.point_x || 50,
-                      y: q.point_y || 50,
-                      question: q.question_text || "",
-                      feedback: q.feedback || "",
-                      lives_cost: q.lives_cost || 1,
-                    })),
-                  }}
-                  onChange={(value) => {
-                    const updatedQuestions = value.points.map((point, idx) => ({
-                      ...questions[idx],
-                      image_url: value.image_url,
-                      point_x: point.x,
-                      point_y: point.y,
-                      question_text: point.question,
-                      feedback: point.feedback,
-                      lives_cost: point.lives_cost,
-                      correct_sentence: "",
-                      words: [],
-                      points: 10,
-                      order_index: idx,
-                    }));
-                    onChange(updatedQuestions);
-                  }}
-                />
-              ) : (
-                <WordOrderEditor
-                  question={currentQuestion}
-                  onChange={(updated) => updateQuestion(selectedQuestionIndex, updated)}
-                />
-              )
+              <WordOrderEditor
+                question={currentQuestion}
+                onChange={(updated) => updateQuestion(selectedQuestionIndex, updated)}
+              />
             )}
           </CardContent>
         </Card>
