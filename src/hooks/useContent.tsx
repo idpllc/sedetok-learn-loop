@@ -527,10 +527,10 @@ export const useUserLikes = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("likes")
-        .select("content_id, quiz_id");
+        .select("content_id, quiz_id, game_id");
 
       if (error) throw error;
-      return new Set(data.map(like => like.content_id || like.quiz_id));
+      return new Set(data.map(like => like.content_id || like.quiz_id || like.game_id));
     },
   });
 
@@ -543,10 +543,10 @@ export const useUserSaves = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("saves")
-        .select("content_id, quiz_id");
+        .select("content_id, quiz_id, game_id");
 
       if (error) throw error;
-      return new Set(data.map(save => save.content_id || save.quiz_id));
+      return new Set(data.map(save => save.content_id || save.quiz_id || save.game_id));
     },
   });
 

@@ -139,11 +139,11 @@ const Search = () => {
   };
 
   const likeMutation = useMutation({
-    mutationFn: async ({ contentId, isLiked, isQuiz }: { contentId: string; isLiked: boolean; isQuiz?: boolean }) => {
+    mutationFn: async ({ contentId, isLiked, isQuiz, isGame }: { contentId: string; isLiked: boolean; isQuiz?: boolean; isGame?: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
-      const idField = isQuiz ? "quiz_id" : "content_id";
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
       
       if (isLiked) {
         const { error } = await supabase
@@ -173,11 +173,11 @@ const Search = () => {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ contentId, isSaved, isQuiz }: { contentId: string; isSaved: boolean; isQuiz?: boolean }) => {
+    mutationFn: async ({ contentId, isSaved, isQuiz, isGame }: { contentId: string; isSaved: boolean; isQuiz?: boolean; isGame?: boolean }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
-      const idField = isQuiz ? "quiz_id" : "content_id";
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
       
       if (isSaved) {
         const { error } = await supabase
@@ -206,12 +206,12 @@ const Search = () => {
     },
   });
 
-  const handleLike = (contentId: string, isLiked: boolean, isQuiz?: boolean) => {
-    likeMutation.mutate({ contentId, isLiked, isQuiz });
+  const handleLike = (contentId: string, isLiked: boolean, isQuiz?: boolean, isGame?: boolean) => {
+    likeMutation.mutate({ contentId, isLiked, isQuiz, isGame });
   };
 
-  const handleSave = (contentId: string, isSaved: boolean, isQuiz?: boolean) => {
-    saveMutation.mutate({ contentId, isSaved, isQuiz });
+  const handleSave = (contentId: string, isSaved: boolean, isQuiz?: boolean, isGame?: boolean) => {
+    saveMutation.mutate({ contentId, isSaved, isQuiz, isGame });
   };
 
   const gradeLevels = [
@@ -503,7 +503,7 @@ const Search = () => {
                                   className="h-8 w-8"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleLike(item.id, isLiked, isQuiz);
+                                    handleLike(item.id, isLiked, item.content_type === 'quiz', item.content_type === 'game');
                                   }}
                                 >
                                   <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
@@ -514,7 +514,7 @@ const Search = () => {
                                   className="h-8 w-8"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleSave(item.id, isSaved, isQuiz);
+                                    handleSave(item.id, isSaved, item.content_type === 'quiz', item.content_type === 'game');
                                   }}
                                 >
                                   <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-yellow-500 text-yellow-500' : ''}`} />
