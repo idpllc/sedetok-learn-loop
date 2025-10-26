@@ -473,12 +473,12 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                     onMouseDown={(e) => handleLeftMouseDown(item.id, e)}
                     disabled={isConnected}
                     variant="outline"
-                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 cursor-pointer relative ${
+                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 cursor-pointer relative overflow-hidden ${
                       isConnected ? "opacity-50 bg-primary/20" : ""
                     } ${isSelected ? "ring-2 ring-primary bg-primary/10" : ""}`}
                   >
                     {/* Connection point circle */}
-                    <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 ${
+                    <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 z-10 ${
                       isConnected 
                         ? "bg-primary border-primary" 
                         : isSelected
@@ -486,14 +486,16 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                         : "bg-background border-primary"
                     }`} />
                     
-                    {item.image_url && (
-                      <img
-                        src={item.image_url}
-                        alt={item.text}
-                        className="w-full h-16 md:h-24 object-cover rounded"
-                      />
-                    )}
-                    <span className="text-xs md:text-base break-words line-clamp-3">{item.text}</span>
+                    <div className="w-full flex flex-col gap-1 md:gap-2 overflow-hidden">
+                      {item.image_url && (
+                        <img
+                          src={item.image_url}
+                          alt={item.text}
+                          className="w-full h-16 md:h-24 object-cover rounded flex-shrink-0"
+                        />
+                      )}
+                      <span className="text-xs md:text-sm break-words hyphens-auto text-left w-full overflow-hidden">{item.text}</span>
+                    </div>
                   </Button>
                 </motion.div>
               );
@@ -517,25 +519,27 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                     onClick={() => handleRightClick(item.id)}
                     disabled={isConnected || (isMobile && !selectedLeftItem)}
                     variant="outline"
-                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 relative ${
+                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 relative overflow-hidden ${
                       isConnected ? "opacity-50 bg-primary/20" : ""
                     }`}
                   >
                     {/* Connection point circle */}
-                    <div className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 ${
+                    <div className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 z-10 ${
                       isConnected 
                         ? "bg-primary border-primary" 
                         : "bg-background border-primary"
                     }`} />
                     
-                    {item.image_url && (
-                      <img
-                        src={item.image_url}
-                        alt={item.text}
-                        className="w-full h-16 md:h-24 object-cover rounded"
-                      />
-                    )}
-                    <span className="text-xs md:text-base break-words line-clamp-3">{item.text}</span>
+                    <div className="w-full flex flex-col gap-1 md:gap-2 overflow-hidden">
+                      {item.image_url && (
+                        <img
+                          src={item.image_url}
+                          alt={item.text}
+                          className="w-full h-16 md:h-24 object-cover rounded flex-shrink-0"
+                        />
+                      )}
+                      <span className="text-xs md:text-sm break-words hyphens-auto text-left w-full overflow-hidden">{item.text}</span>
+                    </div>
                   </Button>
                 </motion.div>
               );
