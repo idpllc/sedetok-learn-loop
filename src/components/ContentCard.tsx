@@ -707,8 +707,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       {/* Game Viewer Dialog */}
       {contentType === 'game' && (
         <Dialog open={gameModalOpen} onOpenChange={setGameModalOpen}>
-          <DialogContent className="w-[calc(100vw-2rem)] max-w-4xl max-h-[90vh] overflow-hidden p-0">
-            <div className="h-[90vh] overflow-y-auto overflow-x-hidden">
+          <DialogContent className="w-full md:w-[calc(100vw-2rem)] md:max-w-4xl max-h-screen md:max-h-[90vh] overflow-hidden p-0 m-0 md:m-4">
+            <div className="h-screen md:h-[90vh] overflow-y-auto overflow-x-hidden">
               <GameViewer 
                 gameId={id}
                 onComplete={() => {
