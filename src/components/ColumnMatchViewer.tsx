@@ -7,6 +7,7 @@ import { ArrowLeft, Trophy, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ColumnMatchViewerProps {
   gameId: string;
@@ -42,6 +43,7 @@ interface DragLine {
 
 export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: ColumnMatchViewerProps) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [leftItems, setLeftItems] = useState<ColumnItem[]>([]);
   const [rightItems, setRightItems] = useState<ColumnItem[]>([]);
@@ -53,7 +55,10 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
   const [loading, setLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   
-  // Drag state
+  // Click selection for mobile
+  const [selectedLeftItem, setSelectedLeftItem] = useState<string | null>(null);
+  
+  // Drag state for desktop
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ id: string; x: number; y: number } | null>(null);
   const [currentMousePos, setCurrentMousePos] = useState<{ x: number; y: number } | null>(null);
@@ -142,8 +147,19 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
     };
   };
 
-  const handleLeftMouseDown = (itemId: string, e: React.MouseEvent) => {
+  const handleLeftClick = (itemId: string) => {
     if (completed) return;
+    const isConnected = connections.some((conn) => conn.leftId === itemId);
+    if (isConnected) return;
+
+    if (isMobile) {
+      // Mobile: toggle selection
+      setSelectedLeftItem(selectedLeftItem === itemId ? null : itemId);
+    }
+  };
+
+  const handleLeftMouseDown = (itemId: string, e: React.MouseEvent) => {
+    if (completed || isMobile) return;
     const isConnected = connections.some((conn) => conn.leftId === itemId);
     if (isConnected) return;
 
@@ -165,8 +181,54 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
     });
   };
 
+  const handleRightClick = (rightId: string) => {
+    if (completed) return;
+    const isConnected = connections.some((conn) => conn.rightId === rightId);
+    if (isConnected) return;
+
+    if (isMobile && selectedLeftItem) {
+      // Mobile: make connection with selected left item
+      makeConnection(selectedLeftItem, rightId);
+      setSelectedLeftItem(null);
+    }
+  };
+
+  const makeConnection = (leftId: string, rightId: string) => {
+    const leftItem = leftItems.find((item) => item.id === leftId);
+    const rightItem = rightItems.find((item) => item.id === rightId);
+
+    if (!leftItem || !rightItem) return;
+
+    // Check if already connected
+    const existingLeftConn = connections.find((conn) => conn.leftId === leftId);
+    const existingRightConn = connections.find((conn) => conn.rightId === rightId);
+
+    if (existingLeftConn || existingRightConn) {
+      toast.error("Estos items ya están conectados");
+      return;
+    }
+
+    // Check if match is correct
+    if (leftItem.match_id === rightItem.match_id) {
+      setConnections([...connections, { leftId, rightId }]);
+      setScore(score + 10);
+      toast.success("¡Correcto! +10 puntos");
+
+      if (connections.length + 1 === leftItems.length) {
+        completeGame(true);
+      }
+    } else {
+      setLives(lives - 1);
+      toast.error("Incorrecto. -1 vida");
+
+      if (lives - 1 <= 0) {
+        completeGame(false);
+      }
+    }
+  };
+
   const handleMouseUp = (rightId?: string) => {
-    if (!isDragging || !dragStart) {
+    if (isMobile || !isDragging || !dragStart) {
       setIsDragging(false);
       setDragStart(null);
       setCurrentMousePos(null);
@@ -174,45 +236,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
     }
 
     if (rightId) {
-      const leftItem = leftItems.find((item) => item.id === dragStart.id);
-      const rightItem = rightItems.find((item) => item.id === rightId);
-
-      if (!leftItem || !rightItem) {
-        setIsDragging(false);
-        setDragStart(null);
-        setCurrentMousePos(null);
-        return;
-      }
-
-      // Check if already connected
-      const existingLeftConn = connections.find((conn) => conn.leftId === dragStart.id);
-      const existingRightConn = connections.find((conn) => conn.rightId === rightId);
-
-      if (existingLeftConn || existingRightConn) {
-        toast.error("Estos items ya están conectados");
-        setIsDragging(false);
-        setDragStart(null);
-        setCurrentMousePos(null);
-        return;
-      }
-
-      // Check if match is correct
-      if (leftItem.match_id === rightItem.match_id) {
-        setConnections([...connections, { leftId: dragStart.id, rightId }]);
-        setScore(score + 10);
-        toast.success("¡Correcto! +10 puntos");
-
-        if (connections.length + 1 === leftItems.length) {
-          completeGame(true);
-        }
-      } else {
-        setLives(lives - 1);
-        toast.error("Incorrecto. -1 vida");
-
-        if (lives - 1 <= 0) {
-          completeGame(false);
-        }
-      }
+      makeConnection(dragStart.id, rightId);
     }
 
     setIsDragging(false);
@@ -432,9 +456,10 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
 
         <div className="grid grid-cols-2 gap-8 relative">
           {/* Left Column */}
-          <div className="space-y-3">
+          <div className="space-y-2 md:space-y-3">
             {leftItems.map((item) => {
               const isConnected = connections.some((conn) => conn.leftId === item.id);
+              const isSelected = selectedLeftItem === item.id;
 
               return (
                 <motion.div
@@ -444,17 +469,20 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                   whileTap={{ scale: isConnected ? 1 : 0.98 }}
                 >
                   <Button
+                    onClick={() => handleLeftClick(item.id)}
                     onMouseDown={(e) => handleLeftMouseDown(item.id, e)}
                     disabled={isConnected}
                     variant="outline"
-                    className={`w-full h-auto min-h-[80px] p-4 flex flex-col gap-2 cursor-pointer relative ${
+                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 cursor-pointer relative ${
                       isConnected ? "opacity-50 bg-primary/20" : ""
-                    }`}
+                    } ${isSelected ? "ring-2 ring-primary bg-primary/10" : ""}`}
                   >
                     {/* Connection point circle */}
-                    <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 ${
+                    <div className={`absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 ${
                       isConnected 
                         ? "bg-primary border-primary" 
+                        : isSelected
+                        ? "bg-primary/50 border-primary animate-pulse"
                         : "bg-background border-primary"
                     }`} />
                     
@@ -462,10 +490,10 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                       <img
                         src={item.image_url}
                         alt={item.text}
-                        className="w-full h-24 object-cover rounded"
+                        className="w-full h-16 md:h-24 object-cover rounded"
                       />
                     )}
-                    <span className="text-base">{item.text}</span>
+                    <span className="text-xs md:text-base break-words line-clamp-3">{item.text}</span>
                   </Button>
                 </motion.div>
               );
@@ -473,7 +501,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
           </div>
 
           {/* Right Column */}
-          <div className="space-y-3">
+          <div className="space-y-2 md:space-y-3">
             {shuffledRightItems.map((item) => {
               const isConnected = connections.some((conn) => conn.rightId === item.id);
 
@@ -486,14 +514,15 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                   onMouseUp={() => handleMouseUp(item.id)}
                 >
                   <Button
-                    disabled={isConnected}
+                    onClick={() => handleRightClick(item.id)}
+                    disabled={isConnected || (isMobile && !selectedLeftItem)}
                     variant="outline"
-                    className={`w-full h-auto min-h-[80px] p-4 flex flex-col gap-2 relative ${
+                    className={`w-full h-auto min-h-[60px] md:min-h-[80px] p-2 md:p-4 flex flex-col gap-1 md:gap-2 relative ${
                       isConnected ? "opacity-50 bg-primary/20" : ""
                     }`}
                   >
                     {/* Connection point circle */}
-                    <div className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 ${
+                    <div className={`absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 ${
                       isConnected 
                         ? "bg-primary border-primary" 
                         : "bg-background border-primary"
@@ -503,10 +532,10 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
                       <img
                         src={item.image_url}
                         alt={item.text}
-                        className="w-full h-24 object-cover rounded"
+                        className="w-full h-16 md:h-24 object-cover rounded"
                       />
                     )}
-                    <span className="text-base">{item.text}</span>
+                    <span className="text-xs md:text-base break-words line-clamp-3">{item.text}</span>
                   </Button>
                 </motion.div>
               );
@@ -516,8 +545,11 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
       </div>
 
       {/* Instructions */}
-      <div className="bg-accent/50 p-4 rounded-lg text-center text-sm text-muted-foreground">
-        Arrastra desde un item de la izquierda hasta su par correcto de la derecha
+      <div className="bg-accent/50 p-3 md:p-4 rounded-lg text-center text-xs md:text-sm text-muted-foreground">
+        {isMobile 
+          ? "Toca un item de la izquierda, luego toca su par correcto de la derecha"
+          : "Arrastra desde un item de la izquierda hasta su par correcto de la derecha"
+        }
       </div>
     </div>
   );
