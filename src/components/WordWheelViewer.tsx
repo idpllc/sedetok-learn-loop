@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useXP } from "@/hooks/useXP";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface WordWheelViewerProps {
   gameId: string;
@@ -39,6 +40,7 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: WordWheelViewerProps) => {
   const { user } = useAuth();
   const { awardXP } = useXP();
+  const { playLoseLife, playTimeWarning, playClick } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [questions, setQuestions] = useState<WheelQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -120,6 +122,10 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
             completeGame();
             return 0;
           }
+          // Play warning sound when 5 seconds remain
+          if (prev === 6) {
+            playTimeWarning();
+          }
           return prev - 1;
         });
       }, 1000);
@@ -179,6 +185,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
     // Check if answer starts with correct letter
     if (firstLetter !== currentQuestion.initial_letter.toUpperCase()) {
+      playLoseLife();
       toast.error(`La palabra debe empezar con ${currentQuestion.initial_letter.toUpperCase()}`);
       setLives(lives - 1);
       setLetterStates(prev => ({
@@ -198,6 +205,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
     // Check if answer is correct
     if (userAnswerClean === correctAnswer) {
+      playClick();
       toast.success("¡Correcto!");
       setScore(score + currentQuestion.points);
       setLetterStates(prev => ({
@@ -206,6 +214,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
       }));
       moveToNext();
     } else {
+      playLoseLife();
       toast.error(`Incorrecto. La respuesta era: ${currentQuestion.correct_sentence}`);
       setLives(lives - 1);
       setLetterStates(prev => ({
@@ -224,6 +233,7 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
   };
 
   const handleSkip = () => {
+    playClick();
     const currentQuestion = questions[currentQuestionIndex];
     setLetterStates(prev => ({
       ...prev,

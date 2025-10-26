@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useXP } from "@/hooks/useXP";
 import { ColumnMatchViewer } from "./ColumnMatchViewer";
 import { WordWheelViewer } from "./WordWheelViewer";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface GameViewerProps {
   gameId: string;
@@ -40,6 +41,7 @@ interface GameData {
 export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: GameViewerProps) => {
   const { user } = useAuth();
   const { awardXP } = useXP();
+  const { playTimeWarning, playClick } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [questions, setQuestions] = useState<GameQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -180,6 +182,10 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
             completeGame();
             return 0;
           }
+          // Play warning sound when 5 seconds remain
+          if (prev === 6) {
+            playTimeWarning();
+          }
           return prev - 1;
         });
       }, 1000);
@@ -201,6 +207,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   const handleWordClick = (word: string, fromAvailable: boolean) => {
     if (showFeedback) return;
 
+    playClick();
     if (fromAvailable) {
       setSelectedWords([...selectedWords, word]);
       setAvailableWords(availableWords.filter(w => w !== word));

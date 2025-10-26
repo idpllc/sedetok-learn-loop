@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface ColumnMatchViewerProps {
   gameId: string;
@@ -44,6 +45,7 @@ interface DragLine {
 export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: ColumnMatchViewerProps) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { playLoseLife, playTimeWarning, playClick } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [leftItems, setLeftItems] = useState<ColumnItem[]>([]);
   const [rightItems, setRightItems] = useState<ColumnItem[]>([]);
@@ -78,6 +80,10 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
         if (prev === null || prev <= 1) {
           completeGame(false);
           return 0;
+        }
+        // Play warning sound when 5 seconds remain
+        if (prev === 6) {
+          playTimeWarning();
         }
         return prev - 1;
       });
@@ -153,6 +159,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
     if (isConnected) return;
 
     if (isMobile) {
+      playClick();
       // Mobile: toggle selection
       setSelectedLeftItem(selectedLeftItem === itemId ? null : itemId);
     }
@@ -187,6 +194,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
     if (isConnected) return;
 
     if (isMobile && selectedLeftItem) {
+      playClick();
       // Mobile: make connection with selected left item
       makeConnection(selectedLeftItem, rightId);
       setSelectedLeftItem(null);
@@ -219,6 +227,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
       }
     } else {
       setLives(lives - 1);
+      playLoseLife();
       toast.error("Incorrecto. -1 vida");
 
       if (lives - 1 <= 0) {
