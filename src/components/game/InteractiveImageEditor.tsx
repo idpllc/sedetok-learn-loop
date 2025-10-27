@@ -30,6 +30,26 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
   const { toast } = useToast();
   const [selectedPoint, setSelectedPoint] = useState<string | null>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const draggingPointRef = useRef<string | null>(null);
+  const isDraggingRef = useRef(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!draggingPointRef.current || !imageRef.current) return;
+    const rect = imageRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const clampedX = Math.max(0, Math.min(100, x));
+    const clampedY = Math.max(0, Math.min(100, y));
+    updatePoint(draggingPointRef.current, { x: clampedX, y: clampedY });
+    isDraggingRef.current = true;
+  };
+
+  const endDrag = () => {
+    draggingPointRef.current = null;
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 0);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -48,6 +68,11 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
   };
 
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDraggingRef.current) {
+      // Ignore click triggered right after dragging
+      isDraggingRef.current = false;
+      return;
+    }
     if (!imageRef.current) return;
 
     const rect = imageRef.current.getBoundingClientRect();
@@ -117,6 +142,9 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
               ref={imageRef}
               className="relative w-full min-h-[400px] bg-muted rounded-lg overflow-hidden cursor-crosshair border-2 border-border"
               onClick={handleImageClick}
+              onMouseMove={handleMouseMove}
+              onMouseUp={endDrag}
+              onMouseLeave={endDrag}
             >
               <img
                 src={value.image_url}
@@ -134,6 +162,12 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
                   style={{
                     left: `${point.x}%`,
                     top: `${point.y}%`,
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedPoint(point.id);
+                    draggingPointRef.current = point.id;
                   }}
                   onClick={(e) => {
                     e.stopPropagation();

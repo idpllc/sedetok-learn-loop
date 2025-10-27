@@ -1097,8 +1097,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   variant="outline"
                   onClick={() => handleGameSubmit("draft")}
                   disabled={
-                    gameType === "word_order" || gameType === "word_wheel" 
-                      ? gameQuestions.length === 0 
+                    (gameType === "word_order" || gameType === "word_wheel" || gameType === "interactive_image")
+                      ? gameQuestions.length === 0
                       : (leftColumnItems.length === 0 || rightColumnItems.length === 0)
                   }
                 >
@@ -1107,8 +1107,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <Button
                   onClick={() => handleGameSubmit("published")}
                   disabled={
-                    gameType === "word_order" || gameType === "word_wheel"
-                      ? gameQuestions.length === 0 
+                    (gameType === "word_order" || gameType === "word_wheel" || gameType === "interactive_image")
+                      ? gameQuestions.length === 0
                       : (leftColumnItems.length === 0 || rightColumnItems.length === 0)
                   }
                 >
