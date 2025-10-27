@@ -311,25 +311,6 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="lives">Vidas perdidas por error</Label>
-                    <Input
-                      id="lives"
-                      type="number"
-                      min="1"
-                      max="5"
-                      value={selectedPointData.lives_cost}
-                      onChange={(e) =>
-                        updatePoint(selectedPointData.id, {
-                          lives_cost: parseInt(e.target.value) || 1,
-                        })
-                      }
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Número de vidas que pierde el jugador si hace clic en el lugar equivocado
-                    </p>
-                  </div>
-
                   <div className="pt-2 border-t">
                     <p className="text-xs text-muted-foreground">
                       <strong>Posición:</strong> {selectedPointData.x.toFixed(1)}% x{" "}

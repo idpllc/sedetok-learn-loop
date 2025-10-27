@@ -25,7 +25,7 @@ interface InteractiveImageViewerProps {
 export const InteractiveImageViewer = ({
   imageUrl,
   points,
-  maxLives = 5,
+  maxLives = 3,
   timeLimit,
   onComplete,
 }: InteractiveImageViewerProps) => {
@@ -177,7 +177,7 @@ export const InteractiveImageViewer = ({
       }, 1500);
     } else {
       playLoseLife();
-      setLives(lives - (currentPoint?.lives_cost || 1));
+      setLives(lives - 1); // Always lose 1 life per error
       setWrongPointClicks([...wrongPointClicks, clickedPointId]);
       // Remove the wrong indicator after 1 second
       setTimeout(() => {

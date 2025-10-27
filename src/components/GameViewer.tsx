@@ -46,7 +46,7 @@ interface GameData {
 
 export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: GameViewerProps) => {
   const { user } = useAuth();
-  const { awardXP } = useXP();
+  const { awardProfileXP } = useXP();
   const { playLoseLife, playTimeWarning, playClick, playVictory } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [questions, setQuestions] = useState<GameQuestion[]>([]);
@@ -104,8 +104,8 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
 
       await supabase.from("user_quiz_results").insert(payload);
 
-      // Award XP for game completion
-      awardXP(gameId, 'view_complete', false);
+      // Award 100 XP for game completion
+      awardProfileXP('game_complete', 100);
 
       if (showResultsImmediately) {
         toast.success(`¡Juego completado! Puntuación: ${normalizedScore}/100`);
@@ -218,19 +218,23 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
             y: q.point_y || 50,
             question: q.question_text,
             feedback: q.feedback,
-            lives_cost: q.lives_cost || 1,
+            lives_cost: 1, // Fixed at 1 life per error
           }))}
+          maxLives={3}
           timeLimit={gameData.time_limit}
-          onComplete={(score, maxScore) => {
+          onComplete={async (score, maxScore) => {
             if (user) {
-              supabase.from("user_quiz_results").insert({
+              await supabase.from("user_quiz_results").insert({
                 user_id: user.id,
                 game_id: gameId,
                 score,
-                max_score: maxScore,
-                passed: score >= (maxScore * 0.6),
+                max_score: 100, // Always 100 max
+                passed: score >= 60,
                 evaluation_event_id: evaluationEventId,
               });
+              
+              // Award 100 XP
+              awardProfileXP('game_complete', 100);
             }
             if (onComplete) onComplete();
           }}
