@@ -1,4 +1,4 @@
-import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin } from "lucide-react";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -387,6 +387,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             const isWordOrder = gameType === "word_order" || !gameType;
             const isColumnMatch = gameType === "column_match";
             const isWordWheel = gameType === "word_wheel";
+            const isInteractiveImage = gameType === "interactive_image";
             
             return (
               <div className={`w-full h-full flex items-center justify-center relative overflow-hidden ${
@@ -394,6 +395,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   ? "bg-gradient-to-br from-emerald-500/30 via-teal-500/30 to-cyan-500/30"
                   : isWordWheel
                   ? "bg-gradient-to-br from-orange-500/30 via-yellow-500/30 to-red-500/30"
+                  : isInteractiveImage
+                  ? "bg-gradient-to-br from-pink-500/30 via-rose-500/30 to-fuchsia-500/30"
                   : "bg-gradient-to-br from-blue-500/30 via-indigo-500/30 to-purple-500/30"
               }`}>
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjEiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30" />
@@ -404,6 +407,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                         <Columns3 className="w-16 h-16 text-white" />
                       ) : isWordWheel ? (
                         <CircleDot className="w-16 h-16 text-white" />
+                      ) : isInteractiveImage ? (
+                        <MapPin className="w-16 h-16 text-white" />
                       ) : (
                         <ArrowRightLeft className="w-16 h-16 text-white" />
                       )}
@@ -411,7 +416,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{title}</h3>
                   <p className="text-white/90 text-base mb-2">
-                    {isColumnMatch ? "🔗 Conectar Columnas" : isWordWheel ? "🎯 Ruleta de Palabras" : "🔤 Ordenar Palabras"}
+                    {isColumnMatch ? "🔗 Conectar Columnas" : isWordWheel ? "🎯 Ruleta de Palabras" : isInteractiveImage ? "📍 Imagen Interactiva" : "🔤 Ordenar Palabras"}
                   </p>
                   <p className="text-white/80 text-sm mb-2">{questionsCount} preguntas</p>
                   
