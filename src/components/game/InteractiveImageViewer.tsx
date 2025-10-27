@@ -34,6 +34,8 @@ export const InteractiveImageViewer = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+  const [zoomedPoint, setZoomedPoint] = useState<string | null>(null);
+  const [feedbackHistory, setFeedbackHistory] = useState<Array<{question: string, feedback: string}>>([]);
   const imageRef = useRef<HTMLDivElement>(null);
   const { playCorrect, playLoseLife, playVictory } = useGameSounds();
 
@@ -76,19 +78,35 @@ export const InteractiveImageViewer = ({
 
   const handlePointClick = (clickedPointId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (gameOver || showFeedback) return;
+    if (gameOver || showFeedback || zoomedPoint) return;
 
     const isCorrect = clickedPointId === currentPoint.id;
 
     if (isCorrect) {
       playCorrect();
       setCorrectAnswers([...correctAnswers, currentPoint.id]);
-      setShowFeedback(true);
+      setZoomedPoint(clickedPointId);
+      
+      // Save feedback for later
+      if (currentPoint.feedback) {
+        setFeedbackHistory([...feedbackHistory, {
+          question: currentPoint.question,
+          feedback: currentPoint.feedback
+        }]);
+      }
+      
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
       });
+
+      // Auto advance after zoom animation
+      setTimeout(() => {
+        setZoomedPoint(null);
+        setWrongPointClicks([]);
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      }, 1500);
     } else {
       playLoseLife();
       setLives(lives - (currentPoint.lives_cost || 1));
@@ -100,30 +118,38 @@ export const InteractiveImageViewer = ({
     }
   };
 
-  const handleNext = () => {
-    setShowFeedback(false);
-    setWrongPointClicks([]);
-    setCurrentQuestionIndex(currentQuestionIndex + 1);
-  };
-
   if (gameOver) {
     const percentage = (score / maxScore) * 100;
     return (
-      <Card className="p-8 text-center">
-        <h2 className="text-3xl font-bold mb-4">¡Juego Terminado!</h2>
-        <div className="text-6xl font-bold mb-4 text-primary">
-          {score}/{maxScore}
+      <Card className="p-8">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold mb-4">¡Juego Terminado!</h2>
+          <div className="text-6xl font-bold mb-4 text-primary">
+            {score}/{maxScore}
+          </div>
+          <p className="text-xl mb-2">
+            {percentage >= 80
+              ? "¡Excelente trabajo!"
+              : percentage >= 60
+              ? "¡Buen intento!"
+              : "Sigue practicando"}
+          </p>
+          <p className="text-muted-foreground">
+            Respondiste correctamente {correctAnswers.length} de {points.length} preguntas
+          </p>
         </div>
-        <p className="text-xl mb-6">
-          {percentage >= 80
-            ? "¡Excelente trabajo!"
-            : percentage >= 60
-            ? "¡Buen intento!"
-            : "Sigue practicando"}
-        </p>
-        <p className="text-muted-foreground">
-          Respondiste correctamente {correctAnswers.length} de {points.length} preguntas
-        </p>
+
+        {feedbackHistory.length > 0 && (
+          <div className="space-y-4 mt-8">
+            <h3 className="text-xl font-semibold mb-4">Retroalimentación</h3>
+            {feedbackHistory.map((item, index) => (
+              <div key={index} className="p-4 bg-muted rounded-lg">
+                <h4 className="font-semibold mb-2">{item.question}</h4>
+                <p className="text-sm text-muted-foreground">{item.feedback}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     );
   }
@@ -175,27 +201,28 @@ export const InteractiveImageViewer = ({
             const isCurrentPoint = point.id === currentPoint.id;
             const isAnswered = correctAnswers.includes(point.id);
             const isWrongClick = wrongPointClicks.includes(point.id);
+            const isZoomed = zoomedPoint === point.id;
             
             return (
               <button
                 key={point.id}
-                className={`absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-3 transition-all flex items-center justify-center font-bold text-sm shadow-lg ${
-                  showFeedback && isCurrentPoint
-                    ? "bg-green-500 text-white border-white scale-125 z-20"
+                className={`absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-3 flex items-center justify-center font-bold text-sm shadow-lg ${
+                  isZoomed
+                    ? "bg-green-500 text-white border-white scale-150 z-20 transition-transform duration-500 ease-out"
                     : isWrongClick
-                    ? "bg-red-500 text-white border-white scale-110 z-10"
+                    ? "bg-red-500 text-white border-white scale-110 z-10 transition-all duration-300"
                     : isAnswered
-                    ? "bg-gray-400 text-white border-white opacity-50 cursor-not-allowed"
-                    : "bg-blue-500 text-white border-white hover:scale-110 hover:bg-blue-600 cursor-pointer z-10"
+                    ? "bg-gray-400 text-white border-white opacity-50 cursor-not-allowed transition-all duration-300"
+                    : "bg-blue-500 text-white border-white hover:scale-110 hover:bg-blue-600 cursor-pointer z-10 transition-all duration-300"
                 }`}
                 style={{
                   left: `${point.x}%`,
                   top: `${point.y}%`,
                 }}
-                onClick={(e) => !isAnswered && !showFeedback && handlePointClick(point.id, e)}
-                disabled={isAnswered || showFeedback}
+                onClick={(e) => !isAnswered && !zoomedPoint && handlePointClick(point.id, e)}
+                disabled={isAnswered || zoomedPoint !== null}
               >
-                {showFeedback && isCurrentPoint ? (
+                {isZoomed ? (
                   <CheckCircle2 className="w-5 h-5" />
                 ) : isWrongClick ? (
                   <XCircle className="w-5 h-5" />
@@ -207,32 +234,6 @@ export const InteractiveImageViewer = ({
           })}
         </div>
 
-        {showFeedback && (
-          <div className="mt-6 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400 mt-1 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-green-900 dark:text-green-100 mb-2">
-                  ¡Correcto!
-                </h3>
-                {currentPoint.feedback && (
-                  <p className="text-sm text-green-800 dark:text-green-200">
-                    {currentPoint.feedback}
-                  </p>
-                )}
-              </div>
-            </div>
-            <Button onClick={handleNext} className="w-full mt-4" size="lg">
-              {currentQuestionIndex < points.length - 1 ? (
-                <>
-                  Siguiente pregunta <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              ) : (
-                "Ver resultados"
-              )}
-            </Button>
-          </div>
-        )}
       </Card>
     </div>
   );
