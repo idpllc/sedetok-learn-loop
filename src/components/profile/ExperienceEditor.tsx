@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Briefcase, Plus, Trash2 } from "lucide-react";
+import { Briefcase, Plus, Trash2, Save } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,9 +30,10 @@ interface Experience {
 interface ExperienceEditorProps {
   experiences: Experience[];
   onChange: (experiences: Experience[]) => void;
+  onSave?: () => void;
 }
 
-export const ExperienceEditor = ({ experiences, onChange }: ExperienceEditorProps) => {
+export const ExperienceEditor = ({ experiences, onChange, onSave }: ExperienceEditorProps) => {
   const [open, setOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<Experience>({
@@ -234,6 +235,15 @@ export const ExperienceEditor = ({ experiences, onChange }: ExperienceEditorProp
                 )}
               </div>
             ))}
+          </div>
+        )}
+        
+        {onSave && (
+          <div className="flex justify-end pt-4">
+            <Button onClick={onSave} size="sm">
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Experiencia
+            </Button>
           </div>
         )}
       </CardContent>

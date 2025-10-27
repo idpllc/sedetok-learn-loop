@@ -163,66 +163,97 @@ const EditProfile = () => {
     }
   }, [profile]);
 
-  // Función de autoguardado
-  const autoSave = useCallback(async () => {
-    if (!previousStateRef.current) return;
-    
+  // Función de guardado para datos básicos
+  const saveBasicInfo = async () => {
     setSaving(true);
-    
-    const updates: any = {
-      full_name: formData.full_name || null,
-      tipo_documento: formData.tipo_documento || null,
-      numero_documento: formData.numero_documento || null,
-      fecha_nacimiento: formData.fecha_nacimiento || null,
-      genero: formData.genero || null,
-      pais: formData.pais || null,
-      departamento: formData.departamento || null,
-      municipio: formData.municipio || null,
-      phone: formData.phone || null,
-      idioma_preferido: formData.idioma_preferido || "Español",
-      tipo_usuario: formData.tipo_usuario || "Estudiante",
-      nivel_educativo: formData.nivel_educativo || null,
-      grado_actual: formData.grado_actual || null,
-      institution: formData.institution || null,
-      bio: formData.bio || null,
-      custom_url: formData.custom_url || null,
-      tipo_aprendizaje: formData.tipo_aprendizaje || null,
-      nivel_motivacion: formData.nivel_motivacion ? parseInt(formData.nivel_motivacion) : null,
-      preferencia_duracion_contenido: formData.preferencia_duracion_contenido || null,
-      horario_preferido_estudio: formData.horario_preferido_estudio || null,
-      modo_consumo_preferido: formData.modo_consumo_preferido || null,
-      frecuencia_estudio: formData.frecuencia_estudio || null,
-      nivel_autonomia: formData.nivel_autonomia || null,
-      dificultades_aprendizaje: formData.dificultades_aprendizaje || null,
-      idioma_contenido_preferido: formData.idioma_contenido_preferido || "Español",
-      areas_interes: formData.areas_interes.length > 0 ? formData.areas_interes : null,
-      temas_favoritos: formData.temas_favoritos.length > 0 ? formData.temas_favoritos : null,
-      profesiones_de_interes: formData.profesiones_de_interes.length > 0 ? formData.profesiones_de_interes : null,
-      habilidades_a_desarrollar: formData.habilidades_a_desarrollar.length > 0 ? formData.habilidades_a_desarrollar : null,
-      motivaciones_principales: formData.motivaciones_principales || null,
-      nivel_meta_aprendizaje: formData.nivel_meta_aprendizaje || null,
-      // Agregar datos complejos
-      work_experience: workExperience,
-      skills: skills,
-      education: formalEducation,
-      complementary_education: complementaryEducation,
-      projects: projects,
-      awards: awards,
-      social_links: socialLinks,
-    };
-
     try {
-      // Track previous state for XP awards desde previousStateRef
-      const previousSocialLinks = previousStateRef.current?.socialLinks || {};
-      const previousEducation = previousStateRef.current?.formalEducation || [];
-      const previousComplementaryEducation = previousStateRef.current?.complementaryEducation || [];
-      const previousWorkExperience = previousStateRef.current?.workExperience || [];
-      const previousSkills = previousStateRef.current?.skills || [];
-
+      const updates: any = {
+        full_name: formData.full_name || null,
+        tipo_documento: formData.tipo_documento || null,
+        numero_documento: formData.numero_documento || null,
+        fecha_nacimiento: formData.fecha_nacimiento || null,
+        genero: formData.genero || null,
+        pais: formData.pais || null,
+        departamento: formData.departamento || null,
+        municipio: formData.municipio || null,
+        phone: formData.phone || null,
+        idioma_preferido: formData.idioma_preferido || "Español",
+        tipo_usuario: formData.tipo_usuario || "Estudiante",
+        nivel_educativo: formData.nivel_educativo || null,
+        grado_actual: formData.grado_actual || null,
+        institution: formData.institution || null,
+        bio: formData.bio || null,
+        custom_url: formData.custom_url || null,
+      };
+      
       await updateProfile(updates);
+      toast({ title: "Datos guardados", description: "Información básica actualizada correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar la información", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      // Award XP for new additions
-      // Social links - award for each new link
+  // Función de guardado para perfil cognitivo
+  const saveLearningProfile = async () => {
+    setSaving(true);
+    try {
+      const updates: any = {
+        tipo_aprendizaje: formData.tipo_aprendizaje || null,
+        nivel_motivacion: formData.nivel_motivacion ? parseInt(formData.nivel_motivacion) : null,
+        preferencia_duracion_contenido: formData.preferencia_duracion_contenido || null,
+        horario_preferido_estudio: formData.horario_preferido_estudio || null,
+        modo_consumo_preferido: formData.modo_consumo_preferido || null,
+        frecuencia_estudio: formData.frecuencia_estudio || null,
+        nivel_autonomia: formData.nivel_autonomia || null,
+        dificultades_aprendizaje: formData.dificultades_aprendizaje || null,
+        idioma_contenido_preferido: formData.idioma_contenido_preferido || "Español",
+      };
+      
+      await updateProfile(updates);
+      toast({ title: "Perfil guardado", description: "Preferencias de aprendizaje actualizadas" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar el perfil de aprendizaje", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Función de guardado para intereses
+  const saveInterests = async () => {
+    setSaving(true);
+    try {
+      const updates: any = {
+        areas_interes: formData.areas_interes.length > 0 ? formData.areas_interes : null,
+        temas_favoritos: formData.temas_favoritos.length > 0 ? formData.temas_favoritos : null,
+        profesiones_de_interes: formData.profesiones_de_interes.length > 0 ? formData.profesiones_de_interes : null,
+        habilidades_a_desarrollar: formData.habilidades_a_desarrollar.length > 0 ? formData.habilidades_a_desarrollar : null,
+        motivaciones_principales: formData.motivaciones_principales || null,
+        nivel_meta_aprendizaje: formData.nivel_meta_aprendizaje || null,
+      };
+      
+      await updateProfile(updates);
+      toast({ title: "Intereses guardados", description: "Tus objetivos de aprendizaje han sido actualizados" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar los intereses", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Función de guardado para redes sociales
+  const saveSocialLinks = async () => {
+    setSaving(true);
+    try {
+      const previousSocialLinks = previousStateRef.current?.socialLinks || {};
+      
+      await updateProfile({ social_links: socialLinks });
+      
+      // Award XP for each new link
       const socialLinksPromises = Object.keys(socialLinks).map(async (key) => {
         const hasValue = socialLinks[key] && socialLinks[key].trim() !== '';
         const hadValue = previousSocialLinks[key] && previousSocialLinks[key].trim() !== '';
@@ -231,26 +262,101 @@ const EditProfile = () => {
         }
       });
       await Promise.all(socialLinksPromises);
+      
+      previousStateRef.current = { ...previousStateRef.current, socialLinks: {...socialLinks} };
+      toast({ title: "Redes sociales guardadas", description: "Enlaces actualizados correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar las redes sociales", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      // Education - award for each new item
+  // Función de guardado para educación formal
+  const saveFormalEducation = async () => {
+    setSaving(true);
+    try {
+      const previousEducation = previousStateRef.current?.formalEducation || [];
+      
+      await updateProfile({ education: formalEducation });
+      
+      // Award XP for each new item
       const newEducationCount = formalEducation.length - (Array.isArray(previousEducation) ? previousEducation.length : 0);
       for (let i = 0; i < newEducationCount; i++) {
         await awardProfileXP('formal_education_added', 200, true);
       }
+      
+      previousStateRef.current = { ...previousStateRef.current, formalEducation: [...formalEducation] };
+      await checkProfile360Complete();
+      toast({ title: "Educación guardada", description: "Educación formal actualizada correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar la educación", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      // Complementary education - award for each new item
+  // Función de guardado para formación complementaria
+  const saveComplementaryEducation = async () => {
+    setSaving(true);
+    try {
+      const previousComplementaryEducation = previousStateRef.current?.complementaryEducation || [];
+      
+      await updateProfile({ complementary_education: complementaryEducation });
+      
+      // Award XP for each new item
       const newComplementaryCount = complementaryEducation.length - (Array.isArray(previousComplementaryEducation) ? previousComplementaryEducation.length : 0);
       for (let i = 0; i < newComplementaryCount; i++) {
         await awardProfileXP('complementary_education_added', 200, true);
       }
+      
+      previousStateRef.current = { ...previousStateRef.current, complementaryEducation: [...complementaryEducation] };
+      await checkProfile360Complete();
+      toast({ title: "Formación guardada", description: "Certificaciones actualizadas correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar la formación", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      // Work experience - award for each new item
+  // Función de guardado para experiencia laboral
+  const saveWorkExperience = async () => {
+    setSaving(true);
+    try {
+      const previousWorkExperience = previousStateRef.current?.workExperience || [];
+      
+      await updateProfile({ work_experience: workExperience });
+      
+      // Award XP for each new item
       const newWorkExpCount = workExperience.length - (Array.isArray(previousWorkExperience) ? previousWorkExperience.length : 0);
       for (let i = 0; i < newWorkExpCount; i++) {
         await awardProfileXP('work_experience_added', 200, true);
       }
+      
+      previousStateRef.current = { ...previousStateRef.current, workExperience: [...workExperience] };
+      await checkProfile360Complete();
+      toast({ title: "Experiencia guardada", description: "Experiencia laboral actualizada correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar la experiencia", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      // Skills - award for each new skill
+  // Función de guardado para habilidades
+  const saveSkills = async () => {
+    setSaving(true);
+    try {
+      const previousSkills = previousStateRef.current?.skills || [];
+      
+      await updateProfile({ skills: skills });
+      
+      // Award XP for each new skill
       const prevTechnicalSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'technical') : [];
       const prevSoftSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'soft') : [];
       const newTechnicalSkills = skills.filter(s => s.type === 'technical');
@@ -265,63 +371,86 @@ const EditProfile = () => {
       for (let i = 0; i < newSoftCount; i++) {
         await awardProfileXP('soft_skill_added', 200, true);
       }
-
-      // Check if profile 360 is complete - only award once
-      const isProfile360Complete = 
-        formData.full_name &&
-        formData.bio &&
-        Object.values(socialLinks).some(link => link) &&
-        formalEducation.length > 0 &&
-        complementaryEducation.length > 0 &&
-        workExperience.length > 0 &&
-        skills.length > 0 &&
-        projects.length > 0 &&
-        awards.length > 0;
-
-      if (isProfile360Complete && !profile?.perfil_completo_360) {
-        await updateProfile({ perfil_completo_360: true });
-        await awardProfileXP('profile_360_complete', 1000, false);
-      }
-
-      setLastSaved(new Date());
-      setSaving(false);
       
-      // Actualizar estado previo después de guardar exitosamente
-      previousStateRef.current = {
-        workExperience: [...workExperience],
-        skills: [...skills],
-        formalEducation: [...formalEducation],
-        complementaryEducation: [...complementaryEducation],
-        projects: [...projects],
-        awards: [...awards],
-        socialLinks: {...socialLinks},
-      };
-    } catch (error: any) {
+      previousStateRef.current = { ...previousStateRef.current, skills: [...skills] };
+      await checkProfile360Complete();
+      toast({ title: "Habilidades guardadas", description: "Habilidades actualizadas correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar las habilidades", variant: "destructive" });
+    } finally {
       setSaving(false);
-      console.error('Error al guardar perfil:', error);
     }
-  }, [formData, workExperience, skills, formalEducation, complementaryEducation, socialLinks, profile, updateProfile, awardProfileXP]);
+  };
 
-  // Efecto para autoguardado con debouncing
-  useEffect(() => {
-    if (!profile || !previousStateRef.current) return;
-
-    // Limpiar timeout previo
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    // Programar autoguardado después de 2 segundos sin cambios
-    saveTimeoutRef.current = setTimeout(() => {
-      autoSave();
-    }, 2000);
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+  // Función de guardado para proyectos
+  const saveProjects = async () => {
+    setSaving(true);
+    try {
+      const previousProjects = previousStateRef.current?.projects || [];
+      
+      await updateProfile({ projects: projects });
+      
+      // Award XP for each new project
+      const newProjectsCount = projects.length - (Array.isArray(previousProjects) ? previousProjects.length : 0);
+      for (let i = 0; i < newProjectsCount; i++) {
+        await awardProfileXP('project_added', 200, true);
       }
-    };
-  }, [formData, workExperience, skills, formalEducation, complementaryEducation, projects, awards, socialLinks, autoSave, profile]);
+      
+      previousStateRef.current = { ...previousStateRef.current, projects: [...projects] };
+      await checkProfile360Complete();
+      toast({ title: "Proyectos guardados", description: "Proyectos actualizados correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar los proyectos", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Función de guardado para premios
+  const saveAwards = async () => {
+    setSaving(true);
+    try {
+      const previousAwards = previousStateRef.current?.awards || [];
+      
+      await updateProfile({ awards: awards });
+      
+      // Award XP for each new award
+      const newAwardsCount = awards.length - (Array.isArray(previousAwards) ? previousAwards.length : 0);
+      for (let i = 0; i < newAwardsCount; i++) {
+        await awardProfileXP('award_added', 200, true);
+      }
+      
+      previousStateRef.current = { ...previousStateRef.current, awards: [...awards] };
+      await checkProfile360Complete();
+      toast({ title: "Premios guardados", description: "Reconocimientos actualizados correctamente" });
+      setLastSaved(new Date());
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo guardar los premios", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Verificar si el perfil 360 está completo
+  const checkProfile360Complete = async () => {
+    const isProfile360Complete = 
+      formData.full_name &&
+      formData.bio &&
+      Object.values(socialLinks).some(link => link) &&
+      formalEducation.length > 0 &&
+      complementaryEducation.length > 0 &&
+      workExperience.length > 0 &&
+      skills.length > 0 &&
+      projects.length > 0 &&
+      awards.length > 0;
+
+    if (isProfile360Complete && !profile?.perfil_completo_360) {
+      await updateProfile({ perfil_completo_360: true });
+      await awardProfileXP('profile_360_complete', 1000, false);
+    }
+  };
 
   if (authLoading || !user) {
     return (
@@ -366,20 +495,12 @@ const EditProfile = () => {
               </Button>
               <h1 className="text-xl font-bold">Editar Perfil 360°</h1>
             </div>
-            <div className="flex items-center gap-2">
-              {saving && (
-                <span className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Save className="w-4 h-4 animate-pulse" />
-                  Guardando...
-                </span>
-              )}
-              {!saving && lastSaved && (
-                <span className="text-sm text-muted-foreground flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  Guardado
-                </span>
-              )}
-            </div>
+            {saving && (
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <Save className="w-4 h-4 animate-pulse" />
+                Guardando...
+              </span>
+            )}
           </div>
         </header>
 
@@ -580,6 +701,13 @@ const EditProfile = () => {
                   rows={3}
                 />
               </div>
+              
+              <div className="flex justify-end pt-4">
+                <Button onClick={saveBasicInfo} disabled={saving}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Datos Generales
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -587,30 +715,35 @@ const EditProfile = () => {
           <SocialLinksEditor 
             socialLinks={socialLinks}
             onChange={setSocialLinks}
+            onSave={saveSocialLinks}
           />
 
           {/* Educación Formal */}
           <FormalEducationEditor 
             education={formalEducation}
             onChange={setFormalEducation}
+            onSave={saveFormalEducation}
           />
 
           {/* Formación Complementaria */}
           <EducationEditor 
             education={complementaryEducation}
             onChange={setComplementaryEducation}
+            onSave={saveComplementaryEducation}
           />
 
           {/* Experiencia Laboral */}
           <ExperienceEditor 
             experiences={workExperience}
             onChange={setWorkExperience}
+            onSave={saveWorkExperience}
           />
 
           {/* Habilidades */}
           <SkillsEditor 
             skills={skills}
             onChange={setSkills}
+            onSave={saveSkills}
           />
 
           {/* Proyectos */}
@@ -624,6 +757,12 @@ const EditProfile = () => {
                 projects={projects}
                 onChange={setProjects}
               />
+              <div className="flex justify-end pt-4">
+                <Button onClick={saveProjects} disabled={saving} size="sm">
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Proyectos
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -638,6 +777,12 @@ const EditProfile = () => {
                 awards={awards}
                 onChange={setAwards}
               />
+              <div className="flex justify-end pt-4">
+                <Button onClick={saveAwards} disabled={saving} size="sm">
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Premios
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -852,17 +997,16 @@ const EditProfile = () => {
                   </Select>
                 </div>
               </div>
+              
+              <div className="flex justify-end pt-4">
+                <Button onClick={saveInterests} disabled={saving}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Intereses y Objetivos
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          <div className="flex gap-3 justify-end items-center">
-            <p className="text-sm text-muted-foreground">
-              Los cambios se guardan automáticamente
-            </p>
-            <Button type="button" variant="outline" onClick={() => navigate("/profile")}>
-              Volver al Perfil
-            </Button>
-          </div>
           </div>
         </main>
     </div>

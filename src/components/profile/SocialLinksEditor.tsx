@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Globe } from "lucide-react";
@@ -13,9 +14,10 @@ interface SocialLinksEditorProps {
     github?: string;
   };
   onChange: (socialLinks: any) => void;
+  onSave?: () => void;
 }
 
-export const SocialLinksEditor = ({ socialLinks, onChange }: SocialLinksEditorProps) => {
+export const SocialLinksEditor = ({ socialLinks, onChange, onSave }: SocialLinksEditorProps) => {
   const handleChange = (platform: string, value: string) => {
     onChange({
       ...socialLinks,
@@ -93,6 +95,15 @@ export const SocialLinksEditor = ({ socialLinks, onChange }: SocialLinksEditorPr
             />
           </div>
         </div>
+        
+        {onSave && (
+          <div className="flex justify-end pt-4">
+            <Button onClick={onSave}>
+              <Globe className="w-4 h-4 mr-2" />
+              Guardar Redes Sociales
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

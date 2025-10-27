@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Brain, Plus, Trash2, Code } from "lucide-react";
+import { Brain, Plus, Trash2, Code, Save } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,9 +25,10 @@ interface Skill {
 interface SkillsEditorProps {
   skills: Skill[];
   onChange: (skills: Skill[]) => void;
+  onSave?: () => void;
 }
 
-export const SkillsEditor = ({ skills, onChange }: SkillsEditorProps) => {
+export const SkillsEditor = ({ skills, onChange, onSave }: SkillsEditorProps) => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Skill>({
     name: "",
@@ -203,6 +204,15 @@ export const SkillsEditor = ({ skills, onChange }: SkillsEditorProps) => {
               </div>
             )}
           </>
+        )}
+        
+        {onSave && (
+          <div className="flex justify-end pt-4">
+            <Button onClick={onSave} size="sm">
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Habilidades
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

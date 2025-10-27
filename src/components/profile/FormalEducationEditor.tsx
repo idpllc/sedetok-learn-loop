@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { GraduationCap, Plus, Trash2, Upload, X, FileText } from "lucide-react";
+import { GraduationCap, Plus, Trash2, Upload, X, FileText, Save } from "lucide-react";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -38,9 +38,10 @@ interface FormalEducation {
 interface FormalEducationEditorProps {
   education: FormalEducation[];
   onChange: (education: FormalEducation[]) => void;
+  onSave?: () => void;
 }
 
-export const FormalEducationEditor = ({ education, onChange }: FormalEducationEditorProps) => {
+export const FormalEducationEditor = ({ education, onChange, onSave }: FormalEducationEditorProps) => {
   const [open, setOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const { uploadFile, uploading } = useCloudinary();
@@ -359,6 +360,15 @@ export const FormalEducationEditor = ({ education, onChange }: FormalEducationEd
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {onSave && (
+          <div className="flex justify-end pt-4">
+            <Button onClick={onSave} size="sm">
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Educación
+            </Button>
           </div>
         )}
       </CardContent>
