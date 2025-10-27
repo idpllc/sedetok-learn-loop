@@ -3,6 +3,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useNotifications } from "@/hooks/useNotifications";
+import { PushNotificationSettings } from "./PushNotificationSettings";
 import { Loader2, Mail, Bell } from "lucide-react";
 
 export const NotificationPreferences = () => {
@@ -25,8 +26,9 @@ export const NotificationPreferences = () => {
   };
 
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="space-y-6">
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Mail className="h-5 w-5 text-primary" />
@@ -147,7 +149,10 @@ export const NotificationPreferences = () => {
             </div>
           </>
         )}
-      </div>
-    </Card>
+        </div>
+      </Card>
+
+      <PushNotificationSettings />
+    </div>
   );
 };
