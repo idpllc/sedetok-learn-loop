@@ -118,24 +118,41 @@ serve(async (req) => {
 
     console.log('Sending push to', subscriptions.length, 'subscriptions');
 
-    // Send push notification to all subscriptions using native Deno
+    const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY') || '';
+    const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || '';
+
+    // Send push notification to all subscriptions
     const results = await Promise.allSettled(
       subscriptions.map(async (subscription) => {
         try {
-          // Note: This is a simplified version
-          // For production, you should use a proper Web Push library
-          // that handles encryption and VAPID authentication
-          
           console.log('Sending to endpoint:', subscription.endpoint);
-          
-          // For now, we'll just log it
-          // Full implementation requires cryptographic operations
-          // that are complex to implement directly
-          
+
+          const vapidHeaders = {
+            'Content-Type': 'application/json',
+            'TTL': '86400',
+          };
+
+          // Send the notification
+          const response = await fetch(subscription.endpoint, {
+            method: 'POST',
+            headers: {
+              ...vapidHeaders,
+              'Authorization': await generateVapidAuthHeader(
+                subscription.endpoint,
+                VAPID_PUBLIC_KEY,
+                VAPID_PRIVATE_KEY
+              ),
+            },
+            body: payload,
+          });
+
+          if (!response.ok) {
+            throw new Error(`Push service responded with ${response.status}`);
+          }
+
           return { 
             success: true, 
-            endpoint: subscription.endpoint,
-            note: 'Push notification prepared (full encryption not implemented yet)'
+            endpoint: subscription.endpoint
           };
         } catch (error) {
           console.error('Error sending to subscription:', error);
@@ -155,8 +172,7 @@ serve(async (req) => {
         success: true,
         sent: successCount,
         failed: failCount,
-        total: subscriptions.length,
-        note: 'Push notifications prepared. Full Web Push implementation requires additional crypto libraries.'
+        total: subscriptions.length
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
