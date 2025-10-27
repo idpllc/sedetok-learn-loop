@@ -27,7 +27,7 @@ interface Project {
 interface ProjectsEditorProps {
   projects: Project[];
   onChange: (projects: Project[]) => void;
-  onSave?: () => void;
+  onSave?: (projects: Project[]) => void;
 }
 
 export const ProjectsEditor = ({ projects, onChange, onSave }: ProjectsEditorProps) => {
@@ -61,22 +61,16 @@ export const ProjectsEditor = ({ projects, onChange, onSave }: ProjectsEditorPro
     setOpen(true);
   };
 
-  const handleSave = () => {
-    const updatedProjects = editingIndex !== null
-      ? projects.map((proj, i) => i === editingIndex ? formData : proj)
-      : [...projects, formData];
-    
-    onChange(updatedProjects);
-    setOpen(false);
-    
-    // Guardar con los valores actualizados
-    if (onSave) {
-      // Esperar a que React actualice el estado
-      requestAnimationFrame(() => {
-        onSave();
-      });
-    }
-  };
+const handleSave = () => {
+  const updatedProjects = editingIndex !== null
+    ? projects.map((proj, i) => i === editingIndex ? formData : proj)
+    : [...projects, formData];
+  
+  onChange(updatedProjects);
+  setOpen(false);
+  
+  onSave?.(updatedProjects);
+};
 
   const handleDelete = (index: number) => {
     onChange(projects.filter((_, i) => i !== index));

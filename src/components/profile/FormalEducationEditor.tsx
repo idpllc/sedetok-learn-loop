@@ -38,7 +38,7 @@ interface FormalEducation {
 interface FormalEducationEditorProps {
   education: FormalEducation[];
   onChange: (education: FormalEducation[]) => void;
-  onSave?: () => void;
+  onSave?: (education: FormalEducation[]) => void;
 }
 
 export const FormalEducationEditor = ({ education, onChange, onSave }: FormalEducationEditorProps) => {
@@ -78,22 +78,16 @@ export const FormalEducationEditor = ({ education, onChange, onSave }: FormalEdu
     setOpen(true);
   };
 
-  const handleSave = () => {
-    const updatedEducation = editingIndex !== null
-      ? education.map((edu, i) => i === editingIndex ? formData : edu)
-      : [...education, formData];
-    
-    onChange(updatedEducation);
-    setOpen(false);
-    
-    // Guardar con los valores actualizados
-    if (onSave) {
-      // Esperar a que React actualice el estado
-      requestAnimationFrame(() => {
-        onSave();
-      });
-    }
-  };
+const handleSave = () => {
+  const updatedEducation = editingIndex !== null
+    ? education.map((edu, i) => i === editingIndex ? formData : edu)
+    : [...education, formData];
+  
+  onChange(updatedEducation);
+  setOpen(false);
+  
+  onSave?.(updatedEducation);
+};
 
   const handleDelete = (index: number) => {
     onChange(education.filter((_, i) => i !== index));

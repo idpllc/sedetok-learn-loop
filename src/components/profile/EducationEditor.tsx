@@ -31,7 +31,7 @@ interface Education {
 interface EducationEditorProps {
   education: Education[];
   onChange: (education: Education[]) => void;
-  onSave?: () => void;
+  onSave?: (education: Education[]) => void;
 }
 
 export const EducationEditor = ({ education, onChange, onSave }: EducationEditorProps) => {
@@ -104,22 +104,16 @@ export const EducationEditor = ({ education, onChange, onSave }: EducationEditor
     setOpen(true);
   };
 
-  const handleSave = () => {
-    const updatedEducation = editingIndex !== null
-      ? education.map((edu, i) => i === editingIndex ? formData : edu)
-      : [...education, formData];
-    
-    onChange(updatedEducation);
-    setOpen(false);
-    
-    // Guardar con los valores actualizados
-    if (onSave) {
-      // Esperar a que React actualice el estado
-      requestAnimationFrame(() => {
-        onSave();
-      });
-    }
-  };
+const handleSave = () => {
+  const updatedEducation = editingIndex !== null
+    ? education.map((edu, i) => i === editingIndex ? formData : edu)
+    : [...education, formData];
+  
+  onChange(updatedEducation);
+  setOpen(false);
+  
+  onSave?.(updatedEducation);
+};
 
   const handleDelete = (index: number) => {
     onChange(education.filter((_, i) => i !== index));

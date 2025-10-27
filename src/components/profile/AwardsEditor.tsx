@@ -24,7 +24,7 @@ interface AwardItem {
 interface AwardsEditorProps {
   awards: AwardItem[];
   onChange: (awards: AwardItem[]) => void;
-  onSave?: () => void;
+  onSave?: (awards: AwardItem[]) => void;
 }
 
 export const AwardsEditor = ({ awards, onChange, onSave }: AwardsEditorProps) => {
@@ -54,22 +54,16 @@ export const AwardsEditor = ({ awards, onChange, onSave }: AwardsEditorProps) =>
     setOpen(true);
   };
 
-  const handleSave = () => {
-    const updatedAwards = editingIndex !== null
-      ? awards.map((award, i) => i === editingIndex ? formData : award)
-      : [...awards, formData];
-    
-    onChange(updatedAwards);
-    setOpen(false);
-    
-    // Guardar con los valores actualizados
-    if (onSave) {
-      // Esperar a que React actualice el estado
-      requestAnimationFrame(() => {
-        onSave();
-      });
-    }
-  };
+const handleSave = () => {
+  const updatedAwards = editingIndex !== null
+    ? awards.map((award, i) => i === editingIndex ? formData : award)
+    : [...awards, formData];
+  
+  onChange(updatedAwards);
+  setOpen(false);
+  
+  onSave?.(updatedAwards);
+};
 
   const handleDelete = (index: number) => {
     onChange(awards.filter((_, i) => i !== index));

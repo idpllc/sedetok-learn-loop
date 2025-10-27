@@ -30,7 +30,7 @@ interface Experience {
 interface ExperienceEditorProps {
   experiences: Experience[];
   onChange: (experiences: Experience[]) => void;
-  onSave?: () => void;
+  onSave?: (experiences: Experience[]) => void;
 }
 
 export const ExperienceEditor = ({ experiences, onChange, onSave }: ExperienceEditorProps) => {
@@ -68,22 +68,16 @@ export const ExperienceEditor = ({ experiences, onChange, onSave }: ExperienceEd
     setOpen(true);
   };
 
-  const handleSave = () => {
-    const updatedExperiences = editingIndex !== null
-      ? experiences.map((exp, i) => i === editingIndex ? formData : exp)
-      : [...experiences, formData];
-    
-    onChange(updatedExperiences);
-    setOpen(false);
-    
-    // Guardar con los valores actualizados
-    if (onSave) {
-      // Esperar a que React actualice el estado
-      requestAnimationFrame(() => {
-        onSave();
-      });
-    }
-  };
+const handleSave = () => {
+  const updatedExperiences = editingIndex !== null
+    ? experiences.map((exp, i) => i === editingIndex ? formData : exp)
+    : [...experiences, formData];
+  
+  onChange(updatedExperiences);
+  setOpen(false);
+  
+  onSave?.(updatedExperiences);
+};
 
   const handleDelete = (index: number) => {
     onChange(experiences.filter((_, i) => i !== index));

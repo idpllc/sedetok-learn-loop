@@ -25,7 +25,7 @@ interface Skill {
 interface SkillsEditorProps {
   skills: Skill[];
   onChange: (skills: Skill[]) => void;
-  onSave?: () => void;
+  onSave?: (skills: Skill[]) => void;
 }
 
 export const SkillsEditor = ({ skills, onChange, onSave }: SkillsEditorProps) => {
@@ -36,21 +36,15 @@ export const SkillsEditor = ({ skills, onChange, onSave }: SkillsEditorProps) =>
     type: "technical",
   });
 
-  const handleAdd = () => {
-    if (!formData.name) return;
-    const updatedSkills = [...skills, formData];
-    onChange(updatedSkills);
-    setFormData({ name: "", level: 50, type: "technical" });
-    setOpen(false);
-    
-    // Guardar con los valores actualizados
-    if (onSave) {
-      // Esperar a que React actualice el estado
-      requestAnimationFrame(() => {
-        onSave();
-      });
-    }
-  };
+const handleAdd = () => {
+  if (!formData.name) return;
+  const updatedSkills = [...skills, formData];
+  onChange(updatedSkills);
+  setFormData({ name: "", level: 50, type: "technical" });
+  setOpen(false);
+  
+  onSave?.(updatedSkills);
+};
 
   const handleDelete = (index: number) => {
     onChange(skills.filter((_, i) => i !== index));

@@ -338,165 +338,171 @@ const EditProfile = () => {
     }
   };
 
-  // Función de guardado para educación formal
-  const saveFormalEducation = async () => {
-    setSaving(true);
-    try {
-      const previousEducation = previousStateRef.current?.formalEducation || [];
-      
-      await updateProfile({ education: formalEducation });
-      
-      // Award XP for each new item
-      const newEducationCount = formalEducation.length - (Array.isArray(previousEducation) ? previousEducation.length : 0);
-      for (let i = 0; i < newEducationCount; i++) {
-        await awardProfileXP('formal_education_added', 200, true);
-      }
-      
-      previousStateRef.current = { ...previousStateRef.current, formalEducation: [...formalEducation] };
-      await checkProfile360Complete();
-      toast({ title: "Educación guardada", description: "Educación formal actualizada correctamente" });
-      setLastSaved(new Date());
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo guardar la educación", variant: "destructive" });
-    } finally {
-      setSaving(false);
+// Función de guardado para educación formal
+const saveFormalEducation = async (next?: any[]) => {
+  setSaving(true);
+  try {
+    const previousEducation = previousStateRef.current?.formalEducation || [];
+    const data = Array.isArray(next) ? next : formalEducation;
+    
+    await updateProfile({ education: data });
+    
+    // Award XP for each new item
+    const newEducationCount = data.length - (Array.isArray(previousEducation) ? previousEducation.length : 0);
+    for (let i = 0; i < newEducationCount; i++) {
+      await awardProfileXP('formal_education_added', 200, true);
     }
-  };
+    
+    previousStateRef.current = { ...previousStateRef.current, formalEducation: [...data] };
+    await checkProfile360Complete();
+    toast({ title: "Educación guardada", description: "Educación formal actualizada correctamente" });
+    setLastSaved(new Date());
+  } catch (error) {
+    toast({ title: "Error", description: "No se pudo guardar la educación", variant: "destructive" });
+  } finally {
+    setSaving(false);
+  }
+};
 
-  // Función de guardado para formación complementaria
-  const saveComplementaryEducation = async () => {
-    setSaving(true);
-    try {
-      const previousComplementaryEducation = previousStateRef.current?.complementaryEducation || [];
-      
-      await updateProfile({ complementary_education: complementaryEducation });
-      
-      // Award XP for each new item
-      const newComplementaryCount = complementaryEducation.length - (Array.isArray(previousComplementaryEducation) ? previousComplementaryEducation.length : 0);
-      for (let i = 0; i < newComplementaryCount; i++) {
-        await awardProfileXP('complementary_education_added', 200, true);
-      }
-      
-      previousStateRef.current = { ...previousStateRef.current, complementaryEducation: [...complementaryEducation] };
-      await checkProfile360Complete();
-      toast({ title: "Formación guardada", description: "Certificaciones actualizadas correctamente" });
-      setLastSaved(new Date());
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo guardar la formación", variant: "destructive" });
-    } finally {
-      setSaving(false);
+// Función de guardado para formación complementaria
+const saveComplementaryEducation = async (next?: any[]) => {
+  setSaving(true);
+  try {
+    const previousComplementaryEducation = previousStateRef.current?.complementaryEducation || [];
+    const data = Array.isArray(next) ? next : complementaryEducation;
+    
+    await updateProfile({ complementary_education: data });
+    
+    // Award XP for each new item
+    const newComplementaryCount = data.length - (Array.isArray(previousComplementaryEducation) ? previousComplementaryEducation.length : 0);
+    for (let i = 0; i < newComplementaryCount; i++) {
+      await awardProfileXP('complementary_education_added', 200, true);
     }
-  };
+    
+    previousStateRef.current = { ...previousStateRef.current, complementaryEducation: [...data] };
+    await checkProfile360Complete();
+    toast({ title: "Formación guardada", description: "Certificaciones actualizadas correctamente" });
+    setLastSaved(new Date());
+  } catch (error) {
+    toast({ title: "Error", description: "No se pudo guardar la formación", variant: "destructive" });
+  } finally {
+    setSaving(false);
+  }
+};
 
-  // Función de guardado para experiencia laboral
-  const saveWorkExperience = async () => {
-    setSaving(true);
-    try {
-      const previousWorkExperience = previousStateRef.current?.workExperience || [];
-      
-      await updateProfile({ work_experience: workExperience });
-      
-      // Award XP for each new item
-      const newWorkExpCount = workExperience.length - (Array.isArray(previousWorkExperience) ? previousWorkExperience.length : 0);
-      for (let i = 0; i < newWorkExpCount; i++) {
-        await awardProfileXP('work_experience_added', 200, true);
-      }
-      
-      previousStateRef.current = { ...previousStateRef.current, workExperience: [...workExperience] };
-      await checkProfile360Complete();
-      toast({ title: "Experiencia guardada", description: "Experiencia laboral actualizada correctamente" });
-      setLastSaved(new Date());
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo guardar la experiencia", variant: "destructive" });
-    } finally {
-      setSaving(false);
+// Función de guardado para experiencia laboral
+const saveWorkExperience = async (next?: any[]) => {
+  setSaving(true);
+  try {
+    const previousWorkExperience = previousStateRef.current?.workExperience || [];
+    const data = Array.isArray(next) ? next : workExperience;
+    
+    await updateProfile({ work_experience: data });
+    
+    // Award XP for each new item
+    const newWorkExpCount = data.length - (Array.isArray(previousWorkExperience) ? previousWorkExperience.length : 0);
+    for (let i = 0; i < newWorkExpCount; i++) {
+      await awardProfileXP('work_experience_added', 200, true);
     }
-  };
+    
+    previousStateRef.current = { ...previousStateRef.current, workExperience: [...data] };
+    await checkProfile360Complete();
+    toast({ title: "Experiencia guardada", description: "Experiencia laboral actualizada correctamente" });
+    setLastSaved(new Date());
+  } catch (error) {
+    toast({ title: "Error", description: "No se pudo guardar la experiencia", variant: "destructive" });
+  } finally {
+    setSaving(false);
+  }
+};
 
-  // Función de guardado para habilidades
-  const saveSkills = async () => {
-    setSaving(true);
-    try {
-      const previousSkills = previousStateRef.current?.skills || [];
-      
-      await updateProfile({ skills: skills });
-      
-      // Award XP for each new skill
-      const prevTechnicalSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'technical') : [];
-      const prevSoftSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'soft') : [];
-      const newTechnicalSkills = skills.filter(s => s.type === 'technical');
-      const newSoftSkills = skills.filter(s => s.type === 'soft');
+// Función de guardado para habilidades
+const saveSkills = async (next?: any[]) => {
+  setSaving(true);
+  try {
+    const previousSkills = previousStateRef.current?.skills || [];
+    const data = Array.isArray(next) ? next : skills;
+    
+    await updateProfile({ skills: data });
+    
+    // Award XP for each new skill
+    const prevTechnicalSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'technical') : [];
+    const prevSoftSkills = Array.isArray(previousSkills) ? previousSkills.filter((s: any) => s.type === 'soft') : [];
+    const newTechnicalSkills = data.filter((s: any) => s.type === 'technical');
+    const newSoftSkills = data.filter((s: any) => s.type === 'soft');
 
-      const newTechCount = newTechnicalSkills.length - prevTechnicalSkills.length;
-      const newSoftCount = newSoftSkills.length - prevSoftSkills.length;
+    const newTechCount = newTechnicalSkills.length - prevTechnicalSkills.length;
+    const newSoftCount = newSoftSkills.length - prevSoftSkills.length;
 
-      for (let i = 0; i < newTechCount; i++) {
-        await awardProfileXP('technical_skill_added', 200, true);
-      }
-      for (let i = 0; i < newSoftCount; i++) {
-        await awardProfileXP('soft_skill_added', 200, true);
-      }
-      
-      previousStateRef.current = { ...previousStateRef.current, skills: [...skills] };
-      await checkProfile360Complete();
-      toast({ title: "Habilidades guardadas", description: "Habilidades actualizadas correctamente" });
-      setLastSaved(new Date());
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo guardar las habilidades", variant: "destructive" });
-    } finally {
-      setSaving(false);
+    for (let i = 0; i < newTechCount; i++) {
+      await awardProfileXP('technical_skill_added', 200, true);
     }
-  };
-
-  // Función de guardado para proyectos
-  const saveProjects = async () => {
-    setSaving(true);
-    try {
-      const previousProjects = previousStateRef.current?.projects || [];
-      
-      await updateProfile({ projects: projects });
-      
-      // Award XP for each new project
-      const newProjectsCount = projects.length - (Array.isArray(previousProjects) ? previousProjects.length : 0);
-      for (let i = 0; i < newProjectsCount; i++) {
-        await awardProfileXP('project_added', 200, true);
-      }
-      
-      previousStateRef.current = { ...previousStateRef.current, projects: [...projects] };
-      await checkProfile360Complete();
-      toast({ title: "Proyectos guardados", description: "Proyectos actualizados correctamente" });
-      setLastSaved(new Date());
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo guardar los proyectos", variant: "destructive" });
-    } finally {
-      setSaving(false);
+    for (let i = 0; i < newSoftCount; i++) {
+      await awardProfileXP('soft_skill_added', 200, true);
     }
-  };
+    
+    previousStateRef.current = { ...previousStateRef.current, skills: [...data] };
+    await checkProfile360Complete();
+    toast({ title: "Habilidades guardadas", description: "Habilidades actualizadas correctamente" });
+    setLastSaved(new Date());
+  } catch (error) {
+    toast({ title: "Error", description: "No se pudo guardar las habilidades", variant: "destructive" });
+  } finally {
+    setSaving(false);
+  }
+};
 
-  // Función de guardado para premios
-  const saveAwards = async () => {
-    setSaving(true);
-    try {
-      const previousAwards = previousStateRef.current?.awards || [];
-      
-      await updateProfile({ awards: awards });
-      
-      // Award XP for each new award
-      const newAwardsCount = awards.length - (Array.isArray(previousAwards) ? previousAwards.length : 0);
-      for (let i = 0; i < newAwardsCount; i++) {
-        await awardProfileXP('award_added', 200, true);
-      }
-      
-      previousStateRef.current = { ...previousStateRef.current, awards: [...awards] };
-      await checkProfile360Complete();
-      toast({ title: "Premios guardados", description: "Reconocimientos actualizados correctamente" });
-      setLastSaved(new Date());
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo guardar los premios", variant: "destructive" });
-    } finally {
-      setSaving(false);
+// Función de guardado para proyectos
+const saveProjects = async (next?: any[]) => {
+  setSaving(true);
+  try {
+    const previousProjects = previousStateRef.current?.projects || [];
+    const data = Array.isArray(next) ? next : projects;
+    
+    await updateProfile({ projects: data });
+    
+    // Award XP for each new project
+    const newProjectsCount = data.length - (Array.isArray(previousProjects) ? previousProjects.length : 0);
+    for (let i = 0; i < newProjectsCount; i++) {
+      await awardProfileXP('project_added', 200, true);
     }
-  };
+    
+    previousStateRef.current = { ...previousStateRef.current, projects: [...data] };
+    await checkProfile360Complete();
+    toast({ title: "Proyectos guardados", description: "Proyectos actualizados correctamente" });
+    setLastSaved(new Date());
+  } catch (error) {
+    toast({ title: "Error", description: "No se pudo guardar los proyectos", variant: "destructive" });
+  } finally {
+    setSaving(false);
+  }
+};
+
+// Función de guardado para premios
+const saveAwards = async (next?: any[]) => {
+  setSaving(true);
+  try {
+    const previousAwards = previousStateRef.current?.awards || [];
+    const data = Array.isArray(next) ? next : awards;
+    
+    await updateProfile({ awards: data });
+    
+    // Award XP for each new award
+    const newAwardsCount = data.length - (Array.isArray(previousAwards) ? previousAwards.length : 0);
+    for (let i = 0; i < newAwardsCount; i++) {
+      await awardProfileXP('award_added', 200, true);
+    }
+    
+    previousStateRef.current = { ...previousStateRef.current, awards: [...data] };
+    await checkProfile360Complete();
+    toast({ title: "Premios guardados", description: "Reconocimientos actualizados correctamente" });
+    setLastSaved(new Date());
+  } catch (error) {
+    toast({ title: "Error", description: "No se pudo guardar los premios", variant: "destructive" });
+  } finally {
+    setSaving(false);
+  }
+};
 
   // Verificar si el perfil 360 está completo
   const checkProfile360Complete = async () => {
