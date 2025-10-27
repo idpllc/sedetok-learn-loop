@@ -21,8 +21,9 @@ import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFollow } from "@/hooks/useFollow";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ContentCardProps {
   id: string;
@@ -104,6 +105,23 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const { awardXP } = useXP();
   const { isFollowing, toggleFollow, isProcessing } = useFollow(creatorId);
   const { lastAttempt, hasAttempted } = useQuizAttempts(contentType === 'quiz' ? id : undefined);
+  
+  // Fetch user profile to check if they are a teacher
+  const { data: userProfile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('tipo_usuario')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
@@ -370,7 +388,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       {hasAttempted ? '🔄 Responder nuevamente' : '🎯 Responder Quiz'}
                     </Button>
                     
-                    {user && user.id === creatorId && (
+                    {user && (user.id === creatorId || userProfile?.tipo_usuario === 'Docente') && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -439,7 +457,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       🎯 Jugar Ahora
                     </Button>
                     
-                    {user && user.id === creatorId && (
+                    {user && (user.id === creatorId || userProfile?.tipo_usuario === 'Docente') && (
                       <Button
                         variant="outline"
                         size="sm"
