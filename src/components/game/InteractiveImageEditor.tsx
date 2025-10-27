@@ -32,6 +32,7 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
   const imageRef = useRef<HTMLDivElement>(null);
   const draggingPointRef = useRef<string | null>(null);
   const isDraggingRef = useRef(false);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!draggingPointRef.current || !imageRef.current) return;
@@ -140,7 +141,8 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
           <div className="relative group">
             <div
               ref={imageRef}
-              className="relative w-full min-h-[400px] bg-muted rounded-lg overflow-hidden cursor-crosshair border-2 border-border"
+              className="relative w-full bg-muted rounded-lg overflow-hidden cursor-crosshair border-2 border-border"
+              style={{ aspectRatio: aspectRatio || 16 / 9 }}
               onClick={handleImageClick}
               onMouseMove={handleMouseMove}
               onMouseUp={endDrag}
@@ -150,6 +152,12 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
                 src={value.image_url}
                 alt="Interactive game"
                 className="w-full h-full object-contain"
+                onLoad={(e) => {
+                  const img = e.currentTarget;
+                  if (img.naturalWidth && img.naturalHeight) {
+                    setAspectRatio(img.naturalWidth / img.naturalHeight);
+                  }
+                }}
               />
               {value.points.map((point) => (
                 <button

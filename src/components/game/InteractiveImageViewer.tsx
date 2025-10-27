@@ -33,6 +33,7 @@ export const InteractiveImageViewer = ({
   const [wrongPointClicks, setWrongPointClicks] = useState<string[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const { playCorrect, playLoseLife, playVictory } = useGameSounds();
 
@@ -129,12 +130,19 @@ export const InteractiveImageViewer = ({
 
         <div
           ref={imageRef}
-          className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden"
+          className="relative w-full bg-muted rounded-lg overflow-hidden"
+          style={{ aspectRatio: aspectRatio || 16 / 9 }}
         >
           <img
             src={imageUrl}
             alt="Interactive game"
             className="w-full h-full object-contain pointer-events-none"
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth && img.naturalHeight) {
+                setAspectRatio(img.naturalWidth / img.naturalHeight);
+              }
+            }}
           />
 
           {/* Show all points as clickable buttons */}
