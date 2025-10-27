@@ -201,7 +201,8 @@ const getProfileActionMessage = (actionType: string): string => {
     'work_experience_added': 'Experiencia laboral agregada',
     'technical_skill_added': 'Habilidad técnica agregada',
     'soft_skill_added': 'Habilidad blanda agregada',
-    'cv_variation_created': 'Hoja de vida creada'
+    'cv_variation_created': 'Hoja de vida creada',
+    'game_complete': 'Juego completado'
   };
   return messages[actionType] || 'Acción completada';
 };

@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, LogIn, Crown, ArrowLeft, History, Coins } from "lucide-react";
+import { 
+  Trophy, Star, Eye, Heart, BookmarkCheck, Award, Zap, TrendingUp, 
+  LogIn, Crown, ArrowLeft, History, Coins, Gamepad2, UserCircle, 
+  FileText, Briefcase, GraduationCap, Target, MessageSquare 
+} from "lucide-react";
 import { xpLevels, getUserLevel } from "@/lib/xpLevels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,57 +70,137 @@ const Achievements = () => {
       icon: Eye,
       title: "Ver Contenido Completo",
       xp: 5,
-      description: "Gana 5 XP por cada video o documento que completes",
+      description: "Completa videos o documentos educativos",
       color: "text-blue-500",
+      category: "Aprendizaje"
     },
     {
       icon: Heart,
       title: "Dar Me Gusta",
       xp: 10,
-      description: "Gana 10 XP al dar like a contenido de calidad",
+      description: "Interactúa con contenido de calidad",
       color: "text-red-500",
+      category: "Interacción"
     },
     {
       icon: BookmarkCheck,
       title: "Guardar Contenido",
       xp: 15,
-      description: "Gana 15 XP al guardar contenido para después",
+      description: "Organiza contenido para estudiar después",
       color: "text-yellow-500",
+      category: "Interacción"
+    },
+    {
+      icon: MessageSquare,
+      title: "Comentar",
+      xp: 20,
+      description: "Participa en discusiones educativas",
+      color: "text-pink-500",
+      category: "Interacción"
     },
     {
       icon: Star,
       title: "Completar Quiz",
       xp: 50,
-      description: "Gana 50 XP al completar quizzes educativos",
+      description: "Demuestra tus conocimientos en quizzes",
       color: "text-purple-500",
+      category: "Evaluación"
+    },
+    {
+      icon: Gamepad2,
+      title: "Completar Juego Educativo",
+      xp: 100,
+      description: "Aprende jugando y gana experiencia",
+      color: "text-green-500",
+      category: "Evaluación"
     },
     {
       icon: Trophy,
       title: "Completar Ruta de Aprendizaje",
       xp: 1000,
-      description: "Gana 1000 XP al completar una ruta completa",
-      color: "text-green-500",
+      description: "Finaliza una ruta completa de aprendizaje",
+      color: "text-emerald-500",
+      category: "Logros Mayores"
     },
     {
       icon: Award,
       title: "Crear Contenido",
       xp: 1000,
-      description: "Gana 1000 XP al subir videos o documentos",
+      description: "Comparte videos o documentos educativos",
       color: "text-orange-500",
+      category: "Creación"
     },
     {
       icon: Zap,
       title: "Crear Quiz",
       xp: 1500,
-      description: "Gana 1500 XP al crear un quiz educativo",
+      description: "Crea evaluaciones para otros estudiantes",
       color: "text-cyan-500",
+      category: "Creación"
+    },
+    {
+      icon: FileText,
+      title: "Crear Hoja de Vida",
+      xp: 2000,
+      description: "Genera tu CV profesional personalizado",
+      color: "text-violet-500",
+      category: "Desarrollo Profesional"
     },
     {
       icon: TrendingUp,
       title: "Crear Ruta de Aprendizaje",
       xp: 3000,
-      description: "Gana 3000 XP al crear una ruta completa",
+      description: "Diseña rutas completas de conocimiento",
       color: "text-indigo-500",
+      category: "Creación"
+    },
+    {
+      icon: GraduationCap,
+      title: "Agregar Educación Formal",
+      xp: 50,
+      description: "Completa tu perfil con tu educación",
+      color: "text-blue-600",
+      category: "Perfil"
+    },
+    {
+      icon: Briefcase,
+      title: "Agregar Experiencia Laboral",
+      xp: 50,
+      description: "Documenta tu trayectoria profesional",
+      color: "text-slate-600",
+      category: "Perfil"
+    },
+    {
+      icon: Award,
+      title: "Agregar Habilidades",
+      xp: 50,
+      description: "Destaca tus competencias técnicas y blandas",
+      color: "text-amber-600",
+      category: "Perfil"
+    },
+    {
+      icon: Target,
+      title: "Agregar Formación Complementaria",
+      xp: 50,
+      description: "Registra cursos y certificaciones",
+      color: "text-teal-600",
+      category: "Perfil"
+    },
+    {
+      icon: Trophy,
+      title: "Agregar Proyectos",
+      xp: 50,
+      description: "Muestra tus proyectos destacados",
+      color: "text-rose-600",
+      category: "Perfil"
+    },
+    {
+      icon: UserCircle,
+      title: "Completar Perfil 360°",
+      xp: 500,
+      description: "Completa todas las secciones de tu perfil",
+      color: "text-fuchsia-500",
+      category: "Logros Mayores"
     },
   ];
 
@@ -231,35 +315,59 @@ const Achievements = () => {
                           <DialogTitle>¿Cómo Ganar XP?</DialogTitle>
                         </div>
                         <DialogDescription>
-                          Realiza estas actividades para ganar puntos de experiencia
+                          Realiza estas actividades para ganar puntos de experiencia y subir de nivel
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 mt-4">
-                        {xpActivities.map((activity) => {
-                          const Icon = activity.icon;
-                          return (
-                            <div
-                              key={activity.title}
-                              className="flex items-start gap-4 p-4 rounded-lg bg-card border"
-                            >
-                              <div className={`p-3 rounded-full bg-background ${activity.color}`}>
-                                <Icon className="w-5 h-5" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between mb-1">
-                                  <h3 className="font-semibold">{activity.title}</h3>
-                                  <Badge variant="secondary" className="gap-1">
-                                    <TrendingUp className="w-3 h-3" />
-                                    +{activity.xp} XP
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {activity.description}
-                                </p>
-                              </div>
+                      <div className="space-y-6 mt-4">
+                        {/* Group by category */}
+                        {Object.entries(
+                          xpActivities.reduce((acc, activity) => {
+                            if (!acc[activity.category]) acc[activity.category] = [];
+                            acc[activity.category].push(activity);
+                            return acc;
+                          }, {} as Record<string, typeof xpActivities>)
+                        ).map(([category, activities]) => (
+                          <div key={category} className="space-y-3">
+                            <h3 className="font-semibold text-lg flex items-center gap-2">
+                              <div className="h-px flex-1 bg-border"></div>
+                              <span className="text-primary">{category}</span>
+                              <div className="h-px flex-1 bg-border"></div>
+                            </h3>
+                            <div className="space-y-2">
+                              {activities.map((activity) => {
+                                const Icon = activity.icon;
+                                return (
+                                  <div
+                                    key={activity.title}
+                                    className="flex items-start gap-3 p-3 rounded-lg bg-card border hover:border-primary/50 transition-colors"
+                                  >
+                                    <div className={`p-2 rounded-lg bg-background ${activity.color}`}>
+                                      <Icon className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-2 mb-1">
+                                        <h4 className="font-medium text-sm">{activity.title}</h4>
+                                        <Badge variant="secondary" className="gap-1 shrink-0">
+                                          <TrendingUp className="w-3 h-3" />
+                                          +{activity.xp}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground">
+                                        {activity.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
+                          </div>
+                        ))}
+                        
+                        <div className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+                          <p className="text-sm text-center font-medium">
+                            💡 <strong>Consejo:</strong> Combina diferentes actividades para maximizar tu XP y alcanzar nuevos niveles más rápido
+                          </p>
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -283,35 +391,63 @@ const Achievements = () => {
                           <DialogTitle>¿Cómo Ganar XP?</DialogTitle>
                         </div>
                         <DialogDescription>
-                          Inicia sesión para comenzar a ganar puntos de experiencia
+                          Inicia sesión para comenzar a ganar puntos de experiencia y subir de nivel
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 mt-4">
-                        {xpActivities.map((activity) => {
-                          const Icon = activity.icon;
-                          return (
-                            <div
-                              key={activity.title}
-                              className="flex items-start gap-4 p-4 rounded-lg bg-card border"
-                            >
-                              <div className={`p-3 rounded-full bg-background ${activity.color}`}>
-                                <Icon className="w-5 h-5" />
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between mb-1">
-                                  <h3 className="font-semibold">{activity.title}</h3>
-                                  <Badge variant="secondary" className="gap-1">
-                                    <TrendingUp className="w-3 h-3" />
-                                    +{activity.xp} XP
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {activity.description}
-                                </p>
-                              </div>
+                      <div className="space-y-6 mt-4">
+                        {/* Group by category */}
+                        {Object.entries(
+                          xpActivities.reduce((acc, activity) => {
+                            if (!acc[activity.category]) acc[activity.category] = [];
+                            acc[activity.category].push(activity);
+                            return acc;
+                          }, {} as Record<string, typeof xpActivities>)
+                        ).map(([category, activities]) => (
+                          <div key={category} className="space-y-3">
+                            <h3 className="font-semibold text-lg flex items-center gap-2">
+                              <div className="h-px flex-1 bg-border"></div>
+                              <span className="text-primary">{category}</span>
+                              <div className="h-px flex-1 bg-border"></div>
+                            </h3>
+                            <div className="space-y-2">
+                              {activities.map((activity) => {
+                                const Icon = activity.icon;
+                                return (
+                                  <div
+                                    key={activity.title}
+                                    className="flex items-start gap-3 p-3 rounded-lg bg-card border hover:border-primary/50 transition-colors"
+                                  >
+                                    <div className={`p-2 rounded-lg bg-background ${activity.color}`}>
+                                      <Icon className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-2 mb-1">
+                                        <h4 className="font-medium text-sm">{activity.title}</h4>
+                                        <Badge variant="secondary" className="gap-1 shrink-0">
+                                          <TrendingUp className="w-3 h-3" />
+                                          +{activity.xp}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground">
+                                        {activity.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          );
-                        })}
+                          </div>
+                        ))}
+                        
+                        <div className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+                          <p className="text-sm text-center font-medium">
+                            💡 <strong>Consejo:</strong> Combina diferentes actividades para maximizar tu XP y alcanzar nuevos niveles más rápido
+                          </p>
+                        </div>
+
+                        <Button onClick={() => navigate("/auth")} className="w-full" size="lg">
+                          Crear Cuenta y Empezar a Ganar XP
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
