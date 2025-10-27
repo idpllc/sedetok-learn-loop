@@ -1122,14 +1122,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 onClick={() => {
                   const newStep = gameStep + 1;
                   setGameStep(newStep);
-                  if (newStep === 2) {
-                    const stepTitle = gameType === "word_order" 
-                      ? "Crear Juego - Ordenar Palabras"
-                      : "Crear Juego - Conectar Columnas";
-                    onTitleChange?.(stepTitle);
-                  } else if (newStep === 3) {
-                    onTitleChange?.("Crear Juego - Configuración");
-                  }
+                    if (newStep === 2) {
+                      const stepTitle =
+                        gameType === "word_order"
+                          ? "Crear Juego - Ordenar Palabras"
+                          : gameType === "word_wheel"
+                          ? "Crear Juego - Ruleta de Palabras"
+                          : gameType === "interactive_image"
+                          ? "Crear Juego - Imagen Interactiva"
+                          : "Crear Juego - Conectar Columnas";
+                      onTitleChange?.(stepTitle);
+                    } else if (newStep === 3) {
+                      onTitleChange?.("Crear Juego - Configuración");
+                    }
                 }}
                 disabled={gameStep === 1 && (!formData.title || !formData.description)}
               >

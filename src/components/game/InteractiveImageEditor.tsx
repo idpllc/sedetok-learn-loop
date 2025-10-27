@@ -126,10 +126,10 @@ export const InteractiveImageEditor = ({ value, onChange }: InteractiveImageEdit
               {value.points.map((point) => (
                 <button
                   key={point.id}
-                  className={`absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-3 transition-all flex items-center justify-center font-bold text-sm ${
+                  className={`absolute w-8 h-8 -ml-4 -mt-4 rounded-full border-3 transition-all flex items-center justify-center font-medium text-xs ${
                     selectedPoint === point.id
-                      ? "bg-primary text-primary-foreground border-primary-foreground scale-125 z-10 shadow-lg"
-                      : "bg-green-500 text-white border-white hover:scale-110 shadow-md"
+                      ? "bg-primary text-primary-foreground border-primary-foreground scale-110 z-10 shadow-lg"
+                      : "bg-green-500 text-white border-white hover:scale-105 shadow-md"
                   }`}
                   style={{
                     left: `${point.x}%`,

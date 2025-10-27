@@ -63,10 +63,33 @@ export const GameStep2 = ({ questions, onChange, gameContext }: GameStep2Props) 
             })),
           }}
           onChange={(value) => {
-            // Ensure all points get the same image_url
+            // Preserve image_url even when there are no points yet
+            if (value.points.length === 0) {
+              if (interactiveQuestions.length > 0) {
+                const updated = interactiveQuestions.map((q, idx) =>
+                  idx === 0 ? { ...q, image_url: value.image_url || q.image_url } : q
+                );
+                onChange(updated);
+              } else if (value.image_url) {
+                onChange([
+                  {
+                    image_url: value.image_url,
+                    question_text: "",
+                    correct_sentence: "",
+                    words: [],
+                    points: 10,
+                    order_index: 0,
+                  },
+                ]);
+              } else {
+                onChange([]);
+              }
+              return;
+            }
+            // Map points to questions, sharing the same image
             const updatedQuestions: GameQuestion[] = value.points.map((point, idx) => ({
               id: interactiveQuestions[idx]?.id,
-              image_url: value.image_url || "",
+              image_url: value.image_url || interactiveQuestions[0]?.image_url || "",
               point_x: point.x,
               point_y: point.y,
               question_text: point.question,
