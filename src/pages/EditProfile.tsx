@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Save, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2, User, GraduationCap, Briefcase, Brain, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileUpdate } from "@/hooks/useProfileUpdate";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +35,69 @@ const EditProfile = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
   const previousStateRef = useRef<any>(null);
+  const [activeTab, setActiveTab] = useState("personal");
+
+  // Calcular completitud de cada tab
+  const getPersonalCompletion = () => {
+    let completed = 0;
+    let total = 8;
+    
+    if (formData.full_name) completed++;
+    if (formData.bio) completed++;
+    if (formData.tipo_documento) completed++;
+    if (formData.numero_documento) completed++;
+    if (formData.fecha_nacimiento) completed++;
+    if (formData.pais) completed++;
+    if (formData.phone) completed++;
+    if (Object.values(socialLinks).some(link => link)) completed++;
+    
+    return { completed, total, percentage: Math.round((completed / total) * 100) };
+  };
+
+  const getEducationCompletion = () => {
+    let completed = 0;
+    let total = 2;
+    
+    if (formalEducation.length > 0) completed++;
+    if (complementaryEducation.length > 0) completed++;
+    
+    return { completed, total, percentage: Math.round((completed / total) * 100) };
+  };
+
+  const getProfessionalCompletion = () => {
+    let completed = 0;
+    let total = 3;
+    
+    if (workExperience.length > 0) completed++;
+    if (projects.length > 0) completed++;
+    if (awards.length > 0) completed++;
+    
+    return { completed, total, percentage: Math.round((completed / total) * 100) };
+  };
+
+  const getSkillsCompletion = () => {
+    let completed = 0;
+    let total = 2;
+    
+    if (skills.filter(s => s.type === 'technical').length > 0) completed++;
+    if (skills.filter(s => s.type === 'soft').length > 0) completed++;
+    
+    return { completed, total, percentage: Math.round((completed / total) * 100) };
+  };
+
+  const getLearningCompletion = () => {
+    let completed = 0;
+    let total = 6;
+    
+    if (formData.tipo_aprendizaje) completed++;
+    if (formData.preferencia_duracion_contenido) completed++;
+    if (formData.modo_consumo_preferido) completed++;
+    if (formData.areas_interes.length > 0) completed++;
+    if (formData.temas_favoritos.length > 0) completed++;
+    if (formData.profesiones_de_interes.length > 0) completed++;
+    
+    return { completed, total, percentage: Math.round((completed / total) * 100) };
+  };
 
   const [formData, setFormData] = useState({
     // Datos generales
@@ -504,10 +569,50 @@ const EditProfile = () => {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 py-6">
-          <div className="space-y-6">
-          {/* Datos Generales */}
-          <Card>
+        <main className="max-w-6xl mx-auto px-4 py-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5 mb-8">
+              <TabsTrigger value="personal" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Personal</span>
+                <Badge variant={getPersonalCompletion().percentage === 100 ? "default" : "secondary"} className="ml-1">
+                  {getPersonalCompletion().percentage}%
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="education" className="flex items-center gap-2">
+                <GraduationCap className="w-4 h-4" />
+                <span className="hidden sm:inline">Educación</span>
+                <Badge variant={getEducationCompletion().percentage === 100 ? "default" : "secondary"} className="ml-1">
+                  {getEducationCompletion().percentage}%
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="professional" className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4" />
+                <span className="hidden sm:inline">Profesional</span>
+                <Badge variant={getProfessionalCompletion().percentage === 100 ? "default" : "secondary"} className="ml-1">
+                  {getProfessionalCompletion().percentage}%
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="skills" className="flex items-center gap-2">
+                <Brain className="w-4 h-4" />
+                <span className="hidden sm:inline">Habilidades</span>
+                <Badge variant={getSkillsCompletion().percentage === 100 ? "default" : "secondary"} className="ml-1">
+                  {getSkillsCompletion().percentage}%
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="learning" className="flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                <span className="hidden sm:inline">Aprendizaje</span>
+                <Badge variant={getLearningCompletion().percentage === 100 ? "default" : "secondary"} className="ml-1">
+                  {getLearningCompletion().percentage}%
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* TAB: PERSONAL */}
+            <TabsContent value="personal" className="space-y-6">
+              {/* Datos Generales */}
+              <Card>
             <CardHeader>
               <CardTitle>Datos Generales</CardTitle>
               <CardDescription>Información básica de tu perfil</CardDescription>
@@ -711,82 +816,94 @@ const EditProfile = () => {
             </CardContent>
           </Card>
 
-          {/* Redes Sociales */}
-          <SocialLinksEditor 
-            socialLinks={socialLinks}
-            onChange={setSocialLinks}
-            onSave={saveSocialLinks}
-          />
+              {/* Redes Sociales */}
+              <SocialLinksEditor 
+                socialLinks={socialLinks}
+                onChange={setSocialLinks}
+                onSave={saveSocialLinks}
+              />
+            </TabsContent>
 
-          {/* Educación Formal */}
+            {/* TAB: EDUCACIÓN */}
+            <TabsContent value="education" className="space-y-6">
+              {/* Educación Formal */}
           <FormalEducationEditor 
             education={formalEducation}
             onChange={setFormalEducation}
             onSave={saveFormalEducation}
           />
 
-          {/* Formación Complementaria */}
-          <EducationEditor 
-            education={complementaryEducation}
-            onChange={setComplementaryEducation}
-            onSave={saveComplementaryEducation}
-          />
+              {/* Formación Complementaria */}
+              <EducationEditor 
+                education={complementaryEducation}
+                onChange={setComplementaryEducation}
+                onSave={saveComplementaryEducation}
+              />
+            </TabsContent>
 
-          {/* Experiencia Laboral */}
+            {/* TAB: PROFESIONAL */}
+            <TabsContent value="professional" className="space-y-6">
+              {/* Experiencia Laboral */}
           <ExperienceEditor 
             experiences={workExperience}
             onChange={setWorkExperience}
             onSave={saveWorkExperience}
           />
 
-          {/* Habilidades */}
-          <SkillsEditor 
-            skills={skills}
-            onChange={setSkills}
-            onSave={saveSkills}
-          />
+              {/* Proyectos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Proyectos</CardTitle>
+                  <CardDescription>Agrega los proyectos en los que has trabajado</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProjectsEditor 
+                    projects={projects}
+                    onChange={setProjects}
+                  />
+                  <div className="flex justify-end pt-4">
+                    <Button onClick={saveProjects} disabled={saving} size="sm">
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Proyectos
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Proyectos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Proyectos</CardTitle>
-              <CardDescription>Agrega los proyectos en los que has trabajado</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProjectsEditor 
-                projects={projects}
-                onChange={setProjects}
+              {/* Premios y Reconocimientos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Premios y Reconocimientos</CardTitle>
+                  <CardDescription>Agrega los premios y reconocimientos que has recibido</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AwardsEditor 
+                    awards={awards}
+                    onChange={setAwards}
+                  />
+                  <div className="flex justify-end pt-4">
+                    <Button onClick={saveAwards} disabled={saving} size="sm">
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Premios
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* TAB: HABILIDADES */}
+            <TabsContent value="skills" className="space-y-6">
+              {/* Habilidades */}
+              <SkillsEditor 
+                skills={skills}
+                onChange={setSkills}
+                onSave={saveSkills}
               />
-              <div className="flex justify-end pt-4">
-                <Button onClick={saveProjects} disabled={saving} size="sm">
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Proyectos
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            </TabsContent>
 
-          {/* Premios y Reconocimientos */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Premios y Reconocimientos</CardTitle>
-              <CardDescription>Agrega los premios y reconocimientos que has recibido</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AwardsEditor 
-                awards={awards}
-                onChange={setAwards}
-              />
-              <div className="flex justify-end pt-4">
-                <Button onClick={saveAwards} disabled={saving} size="sm">
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Premios
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Perfil Cognitivo */}
+            {/* TAB: APRENDIZAJE */}
+            <TabsContent value="learning" className="space-y-6">
+              {/* Perfil Cognitivo */}
           <Card>
             <CardHeader>
               <CardTitle>Perfil de Aprendizaje</CardTitle>
@@ -920,8 +1037,8 @@ const EditProfile = () => {
             </CardContent>
           </Card>
 
-          {/* Intereses */}
-          <Card>
+              {/* Intereses */}
+              <Card>
             <CardHeader>
               <CardTitle>Intereses y Objetivos</CardTitle>
               <CardDescription>Define tus metas de aprendizaje</CardDescription>
@@ -1006,8 +1123,8 @@ const EditProfile = () => {
               </div>
             </CardContent>
           </Card>
-
-          </div>
+            </TabsContent>
+          </Tabs>
         </main>
     </div>
     </>
