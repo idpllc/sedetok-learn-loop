@@ -1,4 +1,4 @@
-import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin, ClipboardList } from "lucide-react";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFollow } from "@/hooks/useFollow";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
 
 interface ContentCardProps {
   id: string;
@@ -110,6 +111,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [gameModalOpen, setGameModalOpen] = useState(false);
+  const [showEvaluationModal, setShowEvaluationModal] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPdfContent, setShowPdfContent] = useState(true);
   const [isMuted, setIsMuted] = useState(() => {
@@ -368,15 +370,20 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       {hasAttempted ? '🔄 Responder nuevamente' : '🎯 Responder Quiz'}
                     </Button>
                     
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/quiz-evaluations/${id}`);
-                      }}
-                      className="text-white/80 hover:text-white text-sm underline underline-offset-2 pointer-events-auto transition-colors"
-                    >
-                      📊 Evaluar este quiz
-                    </button>
+                    {user && user.id === creatorId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowEvaluationModal(true);
+                        }}
+                        className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
+                      >
+                        <ClipboardList className="w-4 h-4 mr-2" />
+                        Evaluar este quiz
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -420,7 +427,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   </p>
                   <p className="text-white/80 text-sm mb-2">{questionsCount} preguntas</p>
                   
-                  <div className="mt-8">
+                  <div className="mt-8 flex flex-col gap-3 items-center">
                     <Button
                       size="lg"
                       onClick={(e) => {
@@ -431,6 +438,21 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                     >
                       🎯 Jugar Ahora
                     </Button>
+                    
+                    {user && user.id === creatorId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowEvaluationModal(true);
+                        }}
+                        className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
+                      >
+                        <ClipboardList className="w-4 h-4 mr-2" />
+                        Evaluar este juego
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -723,6 +745,16 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
           </DialogContent>
         </Dialog>
+      )}
+      
+      {/* Evaluation Event Modal */}
+      {(contentType === 'quiz' || contentType === 'game') && user && user.id === creatorId && (
+        <CreateUnifiedEvaluationEvent
+          quizId={contentType === 'quiz' ? id : undefined}
+          gameId={contentType === 'game' ? id : undefined}
+          open={showEvaluationModal}
+          onOpenChange={setShowEvaluationModal}
+        />
       )}
     </div>
   );
