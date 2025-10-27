@@ -43,8 +43,9 @@ export const InteractiveImageViewer = ({
   const { playCorrect, playLoseLife, playVictory } = useGameSounds();
 
   const currentPoint = points[currentQuestionIndex];
-  const score = correctAnswers.length * 100;
-  const maxScore = points.length * 100;
+  // Normalize score to 100 points maximum
+  const score = points.length > 0 ? Math.round((correctAnswers.length / points.length) * 100) : 0;
+  const maxScore = 100;
 
   useEffect(() => {
     if (lives <= 0 || currentQuestionIndex >= points.length) {
@@ -141,18 +142,22 @@ export const InteractiveImageViewer = ({
   };
 
   if (gameOver) {
-    const percentage = (score / maxScore) * 100;
     return (
       <Card className="p-8">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold mb-4">¡Juego Terminado!</h2>
-          <div className="text-6xl font-bold mb-4 text-primary">
-            {score}/{maxScore}
+          <div className="mb-6">
+            <div className="text-7xl font-bold text-primary mb-2">
+              {score}
+            </div>
+            <div className="text-2xl text-muted-foreground">
+              Puntos ganados
+            </div>
           </div>
           <p className="text-xl mb-2">
-            {percentage >= 80
+            {score >= 80
               ? "¡Excelente trabajo!"
-              : percentage >= 60
+              : score >= 60
               ? "¡Buen intento!"
               : "Sigue practicando"}
           </p>
