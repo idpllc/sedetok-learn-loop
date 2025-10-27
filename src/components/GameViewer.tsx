@@ -204,7 +204,10 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   // If it's an interactive image game, delegate to InteractiveImageViewer
   if (!loading && gameData?.game_type === "interactive_image") {
     return (
-      <div className="pt-4 md:pt-6 px-4 md:px-6">
+      <div
+        className="px-4 md:px-6 pt-12 md:pt-8"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)' }}
+      >
         <InteractiveImageViewer 
           imageUrl={questions[0]?.image_url || ""} 
           points={questions.map((q) => ({
