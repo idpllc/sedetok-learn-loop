@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
+import { Heart, CheckCircle2, XCircle, ArrowRight, Clock } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useGameSounds } from "@/hooks/useGameSounds";
 
@@ -18,6 +18,7 @@ interface InteractiveImageViewerProps {
   imageUrl: string;
   points: InteractivePoint[];
   maxLives?: number;
+  timeLimit?: number;
   onComplete: (score: number, maxScore: number) => void;
 }
 
@@ -25,6 +26,7 @@ export const InteractiveImageViewer = ({
   imageUrl,
   points,
   maxLives = 5,
+  timeLimit,
   onComplete,
 }: InteractiveImageViewerProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -36,6 +38,7 @@ export const InteractiveImageViewer = ({
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
   const [zoomedPoint, setZoomedPoint] = useState<string | null>(null);
   const [feedbackHistory, setFeedbackHistory] = useState<Array<{question: string, feedback: string}>>([]);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(timeLimit || null);
   const imageRef = useRef<HTMLDivElement>(null);
   const { playCorrect, playLoseLife, playVictory } = useGameSounds();
 
@@ -50,6 +53,25 @@ export const InteractiveImageViewer = ({
       onComplete(score, maxScore);
     }
   }, [lives, currentQuestionIndex, points.length, score, maxScore, onComplete, playVictory]);
+
+  // Timer effect
+  useEffect(() => {
+    if (timeRemaining !== null && timeRemaining > 0 && !gameOver) {
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev === null || prev <= 1) {
+            setGameOver(true);
+            playVictory();
+            onComplete(score, maxScore);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [timeRemaining, gameOver, score, maxScore, onComplete, playVictory]);
 
   // Early return if no points available
   if (!points || points.length === 0) {
@@ -154,9 +176,15 @@ export const InteractiveImageViewer = ({
     );
   }
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
           {Array.from({ length: maxLives }).map((_, i) => (
             <Heart
@@ -170,6 +198,12 @@ export const InteractiveImageViewer = ({
         <div className="text-lg font-semibold">
           Pregunta {currentQuestionIndex + 1}/{points.length}
         </div>
+        {timeRemaining !== null && (
+          <div className="flex items-center gap-2 text-lg font-semibold">
+            <Clock className="w-5 h-5" />
+            {formatTime(timeRemaining)}
+          </div>
+        )}
         <div className="text-lg font-semibold">Puntos: {score}</div>
       </div>
 
@@ -203,21 +237,25 @@ export const InteractiveImageViewer = ({
             const isWrongClick = wrongPointClicks.includes(point.id);
             const isZoomed = zoomedPoint === point.id;
             
+            // Calculate z-index to prevent overlap (higher index = higher z-index for unclicked points)
+            const baseZIndex = isZoomed ? 50 : isWrongClick ? 40 : isAnswered ? 5 : 10 + index;
+            
             return (
               <button
                 key={point.id}
                 className={`absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-3 flex items-center justify-center font-bold text-sm shadow-lg ${
                   isZoomed
-                    ? "bg-green-500 text-white border-white scale-150 z-20 transition-transform duration-500 ease-out"
+                    ? "bg-green-500 text-white border-white scale-150 transition-transform duration-500 ease-out"
                     : isWrongClick
-                    ? "bg-red-500 text-white border-white scale-110 z-10 transition-all duration-300"
+                    ? "bg-red-500 text-white border-white scale-110 transition-all duration-300"
                     : isAnswered
                     ? "bg-gray-400 text-white border-white opacity-50 cursor-not-allowed transition-all duration-300"
-                    : "bg-blue-500 text-white border-white hover:scale-110 hover:bg-blue-600 cursor-pointer z-10 transition-all duration-300"
+                    : "bg-blue-500 text-white border-white hover:scale-110 hover:bg-blue-600 cursor-pointer transition-all duration-300"
                 }`}
                 style={{
                   left: `${point.x}%`,
                   top: `${point.y}%`,
+                  zIndex: baseZIndex,
                 }}
                 onClick={(e) => !isAnswered && !zoomedPoint && handlePointClick(point.id, e)}
                 disabled={isAnswered || zoomedPoint !== null}

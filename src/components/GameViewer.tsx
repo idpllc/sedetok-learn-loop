@@ -213,6 +213,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
         feedback: q.feedback,
         lives_cost: q.lives_cost || 1,
       }))}
+      timeLimit={gameData.time_limit}
       onComplete={(score, maxScore) => {
         if (user) {
           supabase.from("user_quiz_results").insert({
