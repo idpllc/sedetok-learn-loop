@@ -12,6 +12,7 @@ import { GameColumnMatchEditor } from "@/components/game/GameColumnMatchEditor";
 import { WordOrderEditor } from "@/components/game/WordOrderEditor";
 import { WordWheelEditor } from "@/components/game/WordWheelEditor";
 import { WordWheelQuestionsEditor } from "@/components/game/WordWheelQuestionsEditor";
+import { InteractiveImageEditor } from "@/components/game/InteractiveImageEditor";
 import { useGames, useGameQuestions, GameQuestion } from "@/hooks/useGames";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { toast } from "sonner";
@@ -48,6 +49,15 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
   // Column match specific
   const [leftColumnItems, setLeftColumnItems] = useState(gameData.left_column_items || []);
   const [rightColumnItems, setRightColumnItems] = useState(gameData.right_column_items || []);
+  
+  // Interactive image specific
+  const [interactiveImageData, setInteractiveImageData] = useState<{
+    image_url?: string;
+    points: any[];
+  }>({
+    image_url: gameData.interactive_image_url || undefined,
+    points: gameData.interactive_points || [],
+  });
   
   // New question being added or question being edited
   const [newQuestion, setNewQuestion] = useState<GameQuestion | null>(null);
@@ -87,6 +97,11 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
     if (gameType === "column_match") {
       updates.left_column_items = leftColumnItems;
       updates.right_column_items = rightColumnItems;
+    }
+
+    if (gameType === "interactive_image") {
+      updates.interactive_image_url = interactiveImageData.image_url;
+      updates.interactive_points = interactiveImageData.points;
     }
 
     try {
@@ -181,6 +196,7 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
                   <SelectItem value="word_order">Ordenar Palabras</SelectItem>
                   <SelectItem value="column_match">Conectar Columnas</SelectItem>
                   <SelectItem value="word_wheel">Ruleta de Palabras</SelectItem>
+                  <SelectItem value="interactive_image">Imagen Interactiva</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -484,6 +500,21 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
                 setLeftColumnItems(left);
                 setRightColumnItems(right);
               }}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {gameType === "interactive_image" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuración de Imagen Interactiva</CardTitle>
+            <CardDescription>Sube una imagen y define los puntos interactivos con sus preguntas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InteractiveImageEditor
+              value={interactiveImageData}
+              onChange={setInteractiveImageData}
             />
           </CardContent>
         </Card>
