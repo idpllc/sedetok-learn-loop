@@ -55,17 +55,19 @@ export const AwardsEditor = ({ awards, onChange, onSave }: AwardsEditorProps) =>
   };
 
   const handleSave = () => {
-    if (editingIndex !== null) {
-      const updated = [...awards];
-      updated[editingIndex] = formData;
-      onChange(updated);
-    } else {
-      onChange([...awards, formData]);
-    }
+    const updatedAwards = editingIndex !== null
+      ? awards.map((award, i) => i === editingIndex ? formData : award)
+      : [...awards, formData];
+    
+    onChange(updatedAwards);
     setOpen(false);
-    // Trigger save after modal closes
+    
+    // Guardar con los valores actualizados
     if (onSave) {
-      setTimeout(() => onSave(), 100);
+      // Esperar a que React actualice el estado
+      requestAnimationFrame(() => {
+        onSave();
+      });
     }
   };
 

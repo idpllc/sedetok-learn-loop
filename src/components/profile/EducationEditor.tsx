@@ -105,17 +105,19 @@ export const EducationEditor = ({ education, onChange, onSave }: EducationEditor
   };
 
   const handleSave = () => {
-    if (editingIndex !== null) {
-      const updated = [...education];
-      updated[editingIndex] = formData;
-      onChange(updated);
-    } else {
-      onChange([...education, formData]);
-    }
+    const updatedEducation = editingIndex !== null
+      ? education.map((edu, i) => i === editingIndex ? formData : edu)
+      : [...education, formData];
+    
+    onChange(updatedEducation);
     setOpen(false);
-    // Trigger save after modal closes
+    
+    // Guardar con los valores actualizados
     if (onSave) {
-      setTimeout(() => onSave(), 100);
+      // Esperar a que React actualice el estado
+      requestAnimationFrame(() => {
+        onSave();
+      });
     }
   };
 

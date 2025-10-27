@@ -69,17 +69,19 @@ export const ExperienceEditor = ({ experiences, onChange, onSave }: ExperienceEd
   };
 
   const handleSave = () => {
-    if (editingIndex !== null) {
-      const updated = [...experiences];
-      updated[editingIndex] = formData;
-      onChange(updated);
-    } else {
-      onChange([...experiences, formData]);
-    }
+    const updatedExperiences = editingIndex !== null
+      ? experiences.map((exp, i) => i === editingIndex ? formData : exp)
+      : [...experiences, formData];
+    
+    onChange(updatedExperiences);
     setOpen(false);
-    // Trigger save after modal closes
+    
+    // Guardar con los valores actualizados
     if (onSave) {
-      setTimeout(() => onSave(), 100);
+      // Esperar a que React actualice el estado
+      requestAnimationFrame(() => {
+        onSave();
+      });
     }
   };
 

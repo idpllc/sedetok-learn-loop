@@ -38,12 +38,17 @@ export const SkillsEditor = ({ skills, onChange, onSave }: SkillsEditorProps) =>
 
   const handleAdd = () => {
     if (!formData.name) return;
-    onChange([...skills, formData]);
+    const updatedSkills = [...skills, formData];
+    onChange(updatedSkills);
     setFormData({ name: "", level: 50, type: "technical" });
     setOpen(false);
-    // Trigger save after modal closes
+    
+    // Guardar con los valores actualizados
     if (onSave) {
-      setTimeout(() => onSave(), 100);
+      // Esperar a que React actualice el estado
+      requestAnimationFrame(() => {
+        onSave();
+      });
     }
   };
 
