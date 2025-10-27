@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,23 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
   const [newQuestion, setNewQuestion] = useState<GameQuestion | null>(null);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
 
+  // Hydrate interactive image editor from existing questions
+  useEffect(() => {
+    if (gameType !== "interactive_image") return;
+    const image = (questions || []).find((q: any) => q.image_url)?.image_url || interactiveImageData.image_url;
+    const pts = (questions || []).map((q: any) => ({
+      id: q.id,
+      x: q.point_x ?? 50,
+      y: q.point_y ?? 50,
+      question: q.question_text,
+      feedback: q.feedback,
+      lives_cost: q.lives_cost ?? 1,
+    }));
+    if (image || pts.length) {
+      setInteractiveImageData({ image_url: image, points: pts });
+    }
+  }, [gameType, JSON.stringify(questions)]);
+
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error("El título es requerido");
@@ -98,14 +115,43 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
       updates.left_column_items = leftColumnItems;
       updates.right_column_items = rightColumnItems;
     }
-
-    if (gameType === "interactive_image") {
-      updates.interactive_image_url = interactiveImageData.image_url;
-      updates.interactive_points = interactiveImageData.points;
-    }
-
     try {
+      // First update base game fields
       await updateGame.mutateAsync({ id: gameData.id, updates });
+
+      // If interactive image, sync questions to points
+      if (gameType === "interactive_image") {
+        if (!interactiveImageData.image_url) {
+          toast.error("Sube una imagen para la imagen interactiva");
+          return;
+        }
+
+        // Delete existing questions
+        const existingIds = (questions || []).map((q: any) => q.id);
+        if (existingIds.length) {
+          await Promise.all(existingIds.map((qid: string) => deleteQuestion.mutateAsync(qid)));
+        }
+
+        // Create questions from points
+        await Promise.all(
+          interactiveImageData.points.map((p: any, index: number) =>
+            createQuestion.mutateAsync({
+              game_id: gameData.id,
+              question_text: p.question || `Punto ${index + 1}`,
+              correct_sentence: "N/A",
+              words: [],
+              points: 10,
+              order_index: index,
+              image_url: interactiveImageData.image_url,
+              point_x: p.x,
+              point_y: p.y,
+              lives_cost: p.lives_cost || 1,
+              feedback: p.feedback || "",
+            } as any)
+          )
+        );
+      }
+
       toast.success("Juego actualizado exitosamente");
       navigate("/profile");
     } catch (error) {
@@ -514,7 +560,7 @@ export const EditGameForm = ({ gameData }: EditGameFormProps) => {
           <CardContent>
             <InteractiveImageEditor
               value={interactiveImageData}
-              onChange={setInteractiveImageData}
+              onChange={(v) => setInteractiveImageData(v)}
             />
           </CardContent>
         </Card>
