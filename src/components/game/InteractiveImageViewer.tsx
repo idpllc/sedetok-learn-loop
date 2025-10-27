@@ -30,7 +30,7 @@ export const InteractiveImageViewer = ({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lives, setLives] = useState(maxLives);
   const [correctAnswers, setCorrectAnswers] = useState<string[]>([]);
-  const [incorrectClicks, setIncorrectClicks] = useState<string[]>([]);
+  const [wrongPointClicks, setWrongPointClicks] = useState<string[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
@@ -48,17 +48,11 @@ export const InteractiveImageViewer = ({
     }
   }, [lives, currentQuestionIndex, points.length, score, maxScore, onComplete, playVictory]);
 
-  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current || gameOver || showFeedback) return;
+  const handlePointClick = (clickedPointId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (gameOver || showFeedback) return;
 
-    const rect = imageRef.current.getBoundingClientRect();
-    const clickX = ((e.clientX - rect.left) / rect.width) * 100;
-    const clickY = ((e.clientY - rect.top) / rect.height) * 100;
-
-    const tolerance = 5; // 5% tolerance for clicking near the point
-    const isCorrect =
-      Math.abs(clickX - currentPoint.x) < tolerance &&
-      Math.abs(clickY - currentPoint.y) < tolerance;
+    const isCorrect = clickedPointId === currentPoint.id;
 
     if (isCorrect) {
       playCorrect();
@@ -72,12 +66,17 @@ export const InteractiveImageViewer = ({
     } else {
       playLoseLife();
       setLives(lives - (currentPoint.lives_cost || 1));
-      setIncorrectClicks([...incorrectClicks, `${clickX}-${clickY}`]);
+      setWrongPointClicks([...wrongPointClicks, clickedPointId]);
+      // Remove the wrong indicator after 1 second
+      setTimeout(() => {
+        setWrongPointClicks(prev => prev.filter(id => id !== clickedPointId));
+      }, 1000);
     }
   };
 
   const handleNext = () => {
     setShowFeedback(false);
+    setWrongPointClicks([]);
     setCurrentQuestionIndex(currentQuestionIndex + 1);
   };
 
@@ -130,8 +129,7 @@ export const InteractiveImageViewer = ({
 
         <div
           ref={imageRef}
-          className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden cursor-crosshair"
-          onClick={handleImageClick}
+          className="relative w-full aspect-video bg-muted rounded-lg overflow-hidden"
         >
           <img
             src={imageUrl}
@@ -139,34 +137,39 @@ export const InteractiveImageViewer = ({
             className="w-full h-full object-contain pointer-events-none"
           />
 
-          {/* Show correct point when answer is revealed */}
-          {showFeedback && (
-            <div
-              className="absolute w-12 h-12 -ml-6 -mt-6 rounded-full bg-green-500 border-4 border-white animate-pulse z-20 flex items-center justify-center"
-              style={{
-                left: `${currentPoint.x}%`,
-                top: `${currentPoint.y}%`,
-              }}
-            >
-              <CheckCircle2 className="w-6 h-6 text-white" />
-            </div>
-          )}
-
-          {/* Show incorrect clicks */}
-          {incorrectClicks.map((click, index) => {
-            const [x, y] = click.split("-").map(Number);
+          {/* Show all points as clickable buttons */}
+          {points.map((point, index) => {
+            const isCurrentPoint = point.id === currentPoint.id;
+            const isAnswered = correctAnswers.includes(point.id);
+            const isWrongClick = wrongPointClicks.includes(point.id);
+            
             return (
-              <div
-                key={index}
-                className="absolute w-8 h-8 -ml-4 -mt-4 rounded-full bg-red-500/50 border-2 border-red-500 animate-ping"
+              <button
+                key={point.id}
+                className={`absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-3 transition-all flex items-center justify-center font-bold text-sm shadow-lg ${
+                  showFeedback && isCurrentPoint
+                    ? "bg-green-500 text-white border-white scale-125 z-20"
+                    : isWrongClick
+                    ? "bg-red-500 text-white border-white scale-110 z-10"
+                    : isAnswered
+                    ? "bg-gray-400 text-white border-white opacity-50 cursor-not-allowed"
+                    : "bg-blue-500 text-white border-white hover:scale-110 hover:bg-blue-600 cursor-pointer z-10"
+                }`}
                 style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  animationIterationCount: 1,
+                  left: `${point.x}%`,
+                  top: `${point.y}%`,
                 }}
+                onClick={(e) => !isAnswered && !showFeedback && handlePointClick(point.id, e)}
+                disabled={isAnswered || showFeedback}
               >
-                <XCircle className="w-full h-full text-white" />
-              </div>
+                {showFeedback && isCurrentPoint ? (
+                  <CheckCircle2 className="w-5 h-5" />
+                ) : isWrongClick ? (
+                  <XCircle className="w-5 h-5" />
+                ) : (
+                  index + 1
+                )}
+              </button>
             );
           })}
         </div>
