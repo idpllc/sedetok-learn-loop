@@ -49,6 +49,31 @@ export const InteractiveImageViewer = ({
     }
   }, [lives, currentQuestionIndex, points.length, score, maxScore, onComplete, playVictory]);
 
+  // Early return if no points available
+  if (!points || points.length === 0) {
+    return (
+      <Card className="p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">No hay puntos configurados</h2>
+        <p className="text-muted-foreground">
+          Este juego aún no tiene puntos de interacción configurados.
+        </p>
+      </Card>
+    );
+  }
+
+  // Verify currentQuestionIndex is valid
+  if (!points[currentQuestionIndex]) {
+    return (
+      <Card className="p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">Error en el juego</h2>
+        <p className="text-muted-foreground">
+          No se puede cargar la pregunta actual.
+        </p>
+      </Card>
+    );
+  }
+
+
   const handlePointClick = (clickedPointId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (gameOver || showFeedback) return;
