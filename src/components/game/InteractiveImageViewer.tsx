@@ -194,7 +194,7 @@ export const InteractiveImageViewer = ({
   };
 
   return (
-    <div className="space-y-3 md:space-y-6">
+    <div className="space-y-3 md:space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-2 md:gap-4 pr-12 md:pr-16">
         <div className="flex items-center gap-1 md:gap-2">
           {Array.from({ length: maxLives }).map((_, i) => (
@@ -219,20 +219,25 @@ export const InteractiveImageViewer = ({
       </div>
 
       <Card className="p-3 md:p-6">
-        <h2 className="text-lg md:text-2xl font-bold text-center mb-2 md:mb-3">{currentPoint.question}</h2>
-        {currentPoint.feedback && (
-          <div className="mx-auto max-w-[900px] text-center mb-2 md:mb-4 p-2 md:p-3 bg-muted rounded-md border">
-            <p className="text-xs md:text-sm text-muted-foreground">{currentPoint.feedback}</p>
-          </div>
-        )}
-        <p className="text-center text-xs md:text-base text-muted-foreground mb-3 md:mb-4">
-          Pulsa en el punto que corresponda
-        </p>
+        <div className="space-y-3 md:space-y-4">
+          <h2 className="text-lg md:text-2xl font-bold text-center">{currentPoint.question}</h2>
+          {currentPoint.feedback && (
+            <div className="mx-auto max-w-[900px] text-center p-2 md:p-3 bg-muted rounded-md border">
+              <p className="text-xs md:text-sm text-muted-foreground">{currentPoint.feedback}</p>
+            </div>
+          )}
+          <p className="text-center text-xs md:text-base text-muted-foreground">
+            Pulsa en el punto que corresponda
+          </p>
+        </div>
 
         <div
           ref={imageRef}
-          className="relative w-full bg-muted rounded-lg overflow-hidden"
-          style={{ aspectRatio: aspectRatio || 16 / 9 }}
+          className="relative w-full bg-muted rounded-lg overflow-hidden mt-4 md:mt-6 mx-auto"
+          style={{ 
+            aspectRatio: aspectRatio || 16 / 9,
+            maxHeight: 'min(500px, 50vh)'
+          }}
         >
           <img
             src={imageUrl}
