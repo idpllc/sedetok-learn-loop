@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, X, Clock, RotateCcw, Trophy, Heart } from "lucide-react";
+import { Check, X, Clock, RotateCcw, Trophy, Heart, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,7 @@ import { ColumnMatchViewer } from "./ColumnMatchViewer";
 import { WordWheelViewer } from "./WordWheelViewer";
 import { InteractiveImageViewer } from "./game/InteractiveImageViewer";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
 
 interface GameViewerProps {
   gameId: string;
@@ -60,6 +61,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [lives, setLives] = useState(3);
+  const [showEvaluationModal, setShowEvaluationModal] = useState(false);
 
   // Helper functions defined before useEffects
   const shuffleArray = (array: string[]) => {
@@ -400,8 +402,20 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
               </div>
             )}
           </div>
-          <div className="text-sm font-medium">
-            Puntos: <span className="text-primary font-bold">{score}</span>
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium">
+              Puntos: <span className="text-primary font-bold">{score}</span>
+            </div>
+            {!evaluationEventId && user && gameData && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEvaluationModal(true)}
+              >
+                <ClipboardList className="w-4 h-4 mr-2" />
+                Evaluar este juego
+              </Button>
+            )}
           </div>
         </div>
 
@@ -529,6 +543,14 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
           </CardContent>
         </Card>
       </div>
+      
+      {gameData && (
+        <CreateUnifiedEvaluationEvent
+          gameId={gameId}
+          open={showEvaluationModal}
+          onOpenChange={setShowEvaluationModal}
+        />
+      )}
     </div>
   );
 };
