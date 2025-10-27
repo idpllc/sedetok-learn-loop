@@ -194,38 +194,38 @@ export const InteractiveImageViewer = ({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4 pr-16">
-        <div className="flex items-center gap-2">
+    <div className="space-y-3 md:space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-2 md:gap-4 pr-12 md:pr-16">
+        <div className="flex items-center gap-1 md:gap-2">
           {Array.from({ length: maxLives }).map((_, i) => (
             <Heart
               key={i}
-              className={`w-6 h-6 ${
+              className={`w-4 h-4 md:w-6 md:h-6 ${
                 i < lives ? "text-red-500 fill-red-500" : "text-muted"
               }`}
             />
           ))}
         </div>
-        <div className="text-lg font-semibold">
-          Pregunta {currentQuestionIndex + 1}/{points.length}
+        <div className="text-sm md:text-lg font-semibold">
+          {currentQuestionIndex + 1}/{points.length}
         </div>
         {timeRemaining !== null && (
-          <div className="flex items-center gap-2 text-lg font-semibold">
-            <Clock className="w-5 h-5" />
+          <div className="flex items-center gap-1 md:gap-2 text-sm md:text-lg font-semibold">
+            <Clock className="w-4 h-4 md:w-5 md:h-5" />
             {formatTime(timeRemaining)}
           </div>
         )}
-        <div className="text-lg font-semibold">Puntos: {score}</div>
+        <div className="text-sm md:text-lg font-semibold">Pts: {score}</div>
       </div>
 
-      <Card className="p-6">
-        <h2 className="text-2xl font-bold text-center mb-3">{currentPoint.question}</h2>
+      <Card className="p-3 md:p-6">
+        <h2 className="text-lg md:text-2xl font-bold text-center mb-2 md:mb-3">{currentPoint.question}</h2>
         {currentPoint.feedback && (
-          <div className="mx-auto max-w-[900px] text-center mb-4 p-3 bg-muted rounded-md border">
-            <p className="text-sm text-muted-foreground">{currentPoint.feedback}</p>
+          <div className="mx-auto max-w-[900px] text-center mb-2 md:mb-4 p-2 md:p-3 bg-muted rounded-md border">
+            <p className="text-xs md:text-sm text-muted-foreground">{currentPoint.feedback}</p>
           </div>
         )}
-        <p className="text-center text-muted-foreground mb-4">
+        <p className="text-center text-xs md:text-base text-muted-foreground mb-3 md:mb-4">
           Pulsa en el punto que corresponda
         </p>
 
