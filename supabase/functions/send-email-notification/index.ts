@@ -112,8 +112,8 @@ serve(async (req) => {
           },
         ],
         from: {
-          email: 'notificaciones@sedetok.com',
-          name: 'Sedetok',
+          email: 'info@sedefy.com',
+          name: 'Adriana de SEDEFY',
         },
         content: [
           {
@@ -127,15 +127,15 @@ serve(async (req) => {
                 </head>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
                   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px 10px 0 0;">
-                    <h1 style="color: white; margin: 0; font-size: 24px;">Sedetok</h1>
+                    <h1 style="color: white; margin: 0; font-size: 24px;">SEDEFY</h1>
                   </div>
                   <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
                     <h2 style="color: #667eea; margin-top: 0;">${title}</h2>
                     <p style="font-size: 16px;">${message}</p>
                     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                      <a href="${Deno.env.get('CUSTOM_DOMAIN') || 'https://sedetok.com'}" 
+                      <a href="${Deno.env.get('CUSTOM_DOMAIN') || 'https://sedefy.com'}" 
                          style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                        Ver en Sedetok
+                        Ver en SEDEFY
                       </a>
                     </div>
                     <p style="margin-top: 30px; font-size: 12px; color: #666;">
