@@ -203,31 +203,35 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
 
   // If it's an interactive image game, delegate to InteractiveImageViewer
   if (!loading && gameData?.game_type === "interactive_image") {
-    return <InteractiveImageViewer 
-      imageUrl={questions[0]?.image_url || ""} 
-      points={questions.map((q) => ({
-        id: q.id,
-        x: q.point_x || 50,
-        y: q.point_y || 50,
-        question: q.question_text,
-        feedback: q.feedback,
-        lives_cost: q.lives_cost || 1,
-      }))}
-      timeLimit={gameData.time_limit}
-      onComplete={(score, maxScore) => {
-        if (user) {
-          supabase.from("user_quiz_results").insert({
-            user_id: user.id,
-            game_id: gameId,
-            score,
-            max_score: maxScore,
-            passed: score >= (maxScore * 0.6),
-            evaluation_event_id: evaluationEventId,
-          });
-        }
-        if (onComplete) onComplete();
-      }}
-    />;
+    return (
+      <div className="pt-4 md:pt-6 px-4 md:px-6">
+        <InteractiveImageViewer 
+          imageUrl={questions[0]?.image_url || ""} 
+          points={questions.map((q) => ({
+            id: q.id,
+            x: q.point_x || 50,
+            y: q.point_y || 50,
+            question: q.question_text,
+            feedback: q.feedback,
+            lives_cost: q.lives_cost || 1,
+          }))}
+          timeLimit={gameData.time_limit}
+          onComplete={(score, maxScore) => {
+            if (user) {
+              supabase.from("user_quiz_results").insert({
+                user_id: user.id,
+                game_id: gameId,
+                score,
+                max_score: maxScore,
+                passed: score >= (maxScore * 0.6),
+                evaluation_event_id: evaluationEventId,
+              });
+            }
+            if (onComplete) onComplete();
+          }}
+        />
+      </div>
+    );
   }
 
   // If it's a column match game, delegate to ColumnMatchViewer
