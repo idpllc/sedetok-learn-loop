@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/Sidebar";
 import { ProfessionalProfile as ProfessionalProfileComponent } from "@/components/ProfessionalProfile";
+import { CompleteProfilePrompt } from "@/components/profile/CompleteProfilePrompt";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,6 +115,14 @@ const ProfessionalProfile = () => {
         <main className="max-w-6xl mx-auto px-4 py-6">
           <ProfessionalProfileComponent userId={targetUserId} />
         </main>
+
+        {/* Complete Profile Prompt */}
+        {profileData && (
+          <CompleteProfilePrompt 
+            profile={profileData} 
+            isOwnProfile={isOwnProfile} 
+          />
+        )}
       </div>
     </>
   );

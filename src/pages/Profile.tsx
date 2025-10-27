@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreatorProfileTab } from "@/components/profile/CreatorProfileTab";
 import { ProfessionalProfileTab } from "@/components/profile/ProfessionalProfileTab";
+import { CompleteProfilePrompt } from "@/components/profile/CompleteProfilePrompt";
 import { VocationalProfileTab } from "@/components/profile/VocationalProfileTab";
 import { useAcademicMetrics } from "@/hooks/useAcademicMetrics";
 import {
@@ -970,6 +971,14 @@ const Profile = () => {
         onOpenChange={closeOnboarding}
         initialStep={initialStep}
       />
+
+      {/* Complete Profile Prompt */}
+      {profileData && profileTab === "professional" && (
+        <CompleteProfilePrompt 
+          profile={profileData} 
+          isOwnProfile={isOwnProfile} 
+        />
+      )}
 
       {/* PDF Modal */}
       {selectedPdf && (
