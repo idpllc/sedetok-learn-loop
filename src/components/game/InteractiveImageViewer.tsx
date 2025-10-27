@@ -184,7 +184,7 @@ export const InteractiveImageViewer = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-4 pr-16">
         <div className="flex items-center gap-2">
           {Array.from({ length: maxLives }).map((_, i) => (
             <Heart
@@ -208,7 +208,12 @@ export const InteractiveImageViewer = ({
       </div>
 
       <Card className="p-6">
-        <h2 className="text-2xl font-bold text-center mb-6">{currentPoint.question}</h2>
+        <h2 className="text-2xl font-bold text-center mb-3">{currentPoint.question}</h2>
+        {currentPoint.feedback && (
+          <div className="mx-auto max-w-[900px] text-center mb-4 p-3 bg-muted rounded-md border">
+            <p className="text-sm text-muted-foreground">{currentPoint.feedback}</p>
+          </div>
+        )}
         <p className="text-center text-muted-foreground mb-4">
           Pulsa en el punto que corresponda
         </p>
