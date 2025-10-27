@@ -87,6 +87,10 @@ export const FormalEducationEditor = ({ education, onChange, onSave }: FormalEdu
       onChange([...education, formData]);
     }
     setOpen(false);
+    // Trigger save after modal closes
+    if (onSave) {
+      setTimeout(() => onSave(), 100);
+    }
   };
 
   const handleDelete = (index: number) => {
@@ -360,15 +364,6 @@ export const FormalEducationEditor = ({ education, onChange, onSave }: FormalEdu
                 </div>
               </div>
             ))}
-          </div>
-        )}
-        
-        {onSave && (
-          <div className="flex justify-end pt-4">
-            <Button onClick={onSave} size="sm">
-              <Save className="w-4 h-4 mr-2" />
-              Guardar Educación
-            </Button>
           </div>
         )}
       </CardContent>

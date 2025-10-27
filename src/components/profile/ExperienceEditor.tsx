@@ -77,6 +77,10 @@ export const ExperienceEditor = ({ experiences, onChange, onSave }: ExperienceEd
       onChange([...experiences, formData]);
     }
     setOpen(false);
+    // Trigger save after modal closes
+    if (onSave) {
+      setTimeout(() => onSave(), 100);
+    }
   };
 
   const handleDelete = (index: number) => {
@@ -235,15 +239,6 @@ export const ExperienceEditor = ({ experiences, onChange, onSave }: ExperienceEd
                 )}
               </div>
             ))}
-          </div>
-        )}
-        
-        {onSave && (
-          <div className="flex justify-end pt-4">
-            <Button onClick={onSave} size="sm">
-              <Save className="w-4 h-4 mr-2" />
-              Guardar Experiencia
-            </Button>
           </div>
         )}
       </CardContent>

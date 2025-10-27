@@ -24,9 +24,10 @@ interface AwardItem {
 interface AwardsEditorProps {
   awards: AwardItem[];
   onChange: (awards: AwardItem[]) => void;
+  onSave?: () => void;
 }
 
-export const AwardsEditor = ({ awards, onChange }: AwardsEditorProps) => {
+export const AwardsEditor = ({ awards, onChange, onSave }: AwardsEditorProps) => {
   const [open, setOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<AwardItem>({
@@ -62,6 +63,10 @@ export const AwardsEditor = ({ awards, onChange }: AwardsEditorProps) => {
       onChange([...awards, formData]);
     }
     setOpen(false);
+    // Trigger save after modal closes
+    if (onSave) {
+      setTimeout(() => onSave(), 100);
+    }
   };
 
   const handleDelete = (index: number) => {

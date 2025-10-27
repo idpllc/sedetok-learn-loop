@@ -827,11 +827,11 @@ const EditProfile = () => {
             {/* TAB: EDUCACIÓN */}
             <TabsContent value="education" className="space-y-6">
               {/* Educación Formal */}
-          <FormalEducationEditor 
-            education={formalEducation}
-            onChange={setFormalEducation}
-            onSave={saveFormalEducation}
-          />
+              <FormalEducationEditor 
+                education={formalEducation}
+                onChange={setFormalEducation}
+                onSave={saveFormalEducation}
+              />
 
               {/* Formación Complementaria */}
               <EducationEditor 
@@ -844,11 +844,19 @@ const EditProfile = () => {
             {/* TAB: PROFESIONAL */}
             <TabsContent value="professional" className="space-y-6">
               {/* Experiencia Laboral */}
-          <ExperienceEditor 
-            experiences={workExperience}
-            onChange={setWorkExperience}
-            onSave={saveWorkExperience}
-          />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Experiencia Laboral</CardTitle>
+                  <CardDescription>Agrega tu experiencia profesional</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ExperienceEditor 
+                    experiences={workExperience}
+                    onChange={setWorkExperience}
+                    onSave={saveWorkExperience}
+                  />
+                </CardContent>
+              </Card>
 
               {/* Proyectos */}
               <Card>
@@ -860,13 +868,8 @@ const EditProfile = () => {
                   <ProjectsEditor 
                     projects={projects}
                     onChange={setProjects}
+                    onSave={saveProjects}
                   />
-                  <div className="flex justify-end pt-4">
-                    <Button onClick={saveProjects} disabled={saving} size="sm">
-                      <Save className="w-4 h-4 mr-2" />
-                      Guardar Proyectos
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -880,25 +883,27 @@ const EditProfile = () => {
                   <AwardsEditor 
                     awards={awards}
                     onChange={setAwards}
+                    onSave={saveAwards}
                   />
-                  <div className="flex justify-end pt-4">
-                    <Button onClick={saveAwards} disabled={saving} size="sm">
-                      <Save className="w-4 h-4 mr-2" />
-                      Guardar Premios
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
             {/* TAB: HABILIDADES */}
             <TabsContent value="skills" className="space-y-6">
-              {/* Habilidades */}
-              <SkillsEditor 
-                skills={skills}
-                onChange={setSkills}
-                onSave={saveSkills}
-              />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Habilidades</CardTitle>
+                  <CardDescription>Agrega tus habilidades técnicas y blandas</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SkillsEditor 
+                    skills={skills}
+                    onChange={setSkills}
+                    onSave={saveSkills}
+                  />
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* TAB: APRENDIZAJE */}

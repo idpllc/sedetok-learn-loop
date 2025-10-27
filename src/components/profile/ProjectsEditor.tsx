@@ -27,9 +27,10 @@ interface Project {
 interface ProjectsEditorProps {
   projects: Project[];
   onChange: (projects: Project[]) => void;
+  onSave?: () => void;
 }
 
-export const ProjectsEditor = ({ projects, onChange }: ProjectsEditorProps) => {
+export const ProjectsEditor = ({ projects, onChange, onSave }: ProjectsEditorProps) => {
   const [open, setOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<Project>({
@@ -69,6 +70,10 @@ export const ProjectsEditor = ({ projects, onChange }: ProjectsEditorProps) => {
       onChange([...projects, formData]);
     }
     setOpen(false);
+    // Trigger save after modal closes
+    if (onSave) {
+      setTimeout(() => onSave(), 100);
+    }
   };
 
   const handleDelete = (index: number) => {

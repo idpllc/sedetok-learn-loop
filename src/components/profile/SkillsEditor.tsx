@@ -41,6 +41,10 @@ export const SkillsEditor = ({ skills, onChange, onSave }: SkillsEditorProps) =>
     onChange([...skills, formData]);
     setFormData({ name: "", level: 50, type: "technical" });
     setOpen(false);
+    // Trigger save after modal closes
+    if (onSave) {
+      setTimeout(() => onSave(), 100);
+    }
   };
 
   const handleDelete = (index: number) => {
@@ -204,15 +208,6 @@ export const SkillsEditor = ({ skills, onChange, onSave }: SkillsEditorProps) =>
               </div>
             )}
           </>
-        )}
-        
-        {onSave && (
-          <div className="flex justify-end pt-4">
-            <Button onClick={onSave} size="sm">
-              <Save className="w-4 h-4 mr-2" />
-              Guardar Habilidades
-            </Button>
-          </div>
         )}
       </CardContent>
     </Card>
