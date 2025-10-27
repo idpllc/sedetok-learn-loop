@@ -8,7 +8,7 @@ interface TagInputProps {
   value: string[];
   onChange: (tags: string[]) => void;
   placeholder?: string;
-  fieldName: "areas_interes" | "temas_favoritos" | "profesiones_de_interes" | "habilidades_a_desarrollar";
+  fieldName?: "areas_interes" | "temas_favoritos" | "profesiones_de_interes" | "habilidades_a_desarrollar";
 }
 
 export const TagInput = ({ value, onChange, placeholder, fieldName }: TagInputProps) => {
@@ -18,7 +18,7 @@ export const TagInput = ({ value, onChange, placeholder, fieldName }: TagInputPr
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!inputValue.trim()) {
+      if (!inputValue.trim() || !fieldName) {
         setSuggestions([]);
         return;
       }

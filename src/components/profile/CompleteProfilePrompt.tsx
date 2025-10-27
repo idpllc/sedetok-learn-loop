@@ -36,9 +36,10 @@ export const CompleteProfilePrompt = ({ profile, isOwnProfile }: CompleteProfile
   const hasSkills = profile?.skills && Array.isArray(profile.skills) && profile.skills.length > 0;
   const hasComplementaryEducation = profile?.complementary_education && Array.isArray(profile.complementary_education) && profile.complementary_education.length > 0;
   const hasProjects = profile?.projects && Array.isArray(profile.projects) && profile.projects.length > 0;
+  const hasAwards = profile?.awards && Array.isArray(profile.awards) && profile.awards.length > 0;
   
-  const totalSections = 5;
-  const completedSections = [hasEducation, hasExperience, hasSkills, hasComplementaryEducation, hasProjects].filter(Boolean).length;
+  const totalSections = 6;
+  const completedSections = [hasEducation, hasExperience, hasSkills, hasComplementaryEducation, hasProjects, hasAwards].filter(Boolean).length;
   const completionPercentage = Math.round((completedSections / totalSections) * 100);
   const isIncomplete = completionPercentage < 100;
 
@@ -49,6 +50,7 @@ export const CompleteProfilePrompt = ({ profile, isOwnProfile }: CompleteProfile
     skills: hasSkills ? 0 : 50,
     complementary: hasComplementaryEducation ? 0 : 50,
     projects: hasProjects ? 0 : 50,
+    awards: hasAwards ? 0 : 50,
   };
   
   const totalPotentialXP = Object.values(potentialXP).reduce((sum, xp) => sum + xp, 0);
@@ -167,6 +169,16 @@ export const CompleteProfilePrompt = ({ profile, isOwnProfile }: CompleteProfile
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">Agrega tus Proyectos</p>
                     <p className="text-xs text-muted-foreground">+{potentialXP.projects} XP</p>
+                  </div>
+                </div>
+              )}
+
+              {!hasAwards && (
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <Award className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">Agrega Premios y Reconocimientos</p>
+                    <p className="text-xs text-muted-foreground">+{potentialXP.awards} XP</p>
                   </div>
                 </div>
               )}

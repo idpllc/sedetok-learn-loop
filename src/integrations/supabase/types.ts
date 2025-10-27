@@ -1035,6 +1035,7 @@ export type Database = {
         Row: {
           areas_interes: string[] | null
           avatar_url: string | null
+          awards: Json | null
           bio: string | null
           complementary_education: Json | null
           cover_image_url: string | null
@@ -1117,6 +1118,7 @@ export type Database = {
         Insert: {
           areas_interes?: string[] | null
           avatar_url?: string | null
+          awards?: Json | null
           bio?: string | null
           complementary_education?: Json | null
           cover_image_url?: string | null
@@ -1203,6 +1205,7 @@ export type Database = {
         Update: {
           areas_interes?: string[] | null
           avatar_url?: string | null
+          awards?: Json | null
           bio?: string | null
           complementary_education?: Json | null
           cover_image_url?: string | null

@@ -17,6 +17,8 @@ import { SkillsEditor } from "@/components/profile/SkillsEditor";
 import { EducationEditor } from "@/components/profile/EducationEditor";
 import { FormalEducationEditor } from "@/components/profile/FormalEducationEditor";
 import { SocialLinksEditor } from "@/components/profile/SocialLinksEditor";
+import { ProjectsEditor } from "@/components/profile/ProjectsEditor";
+import { AwardsEditor } from "@/components/profile/AwardsEditor";
 import { TagInput } from "@/components/profile/TagInput";
 import { Sidebar } from "@/components/Sidebar";
 
@@ -76,6 +78,8 @@ const EditProfile = () => {
   const [skills, setSkills] = useState<any[]>([]);
   const [formalEducation, setFormalEducation] = useState<any[]>([]);
   const [complementaryEducation, setComplementaryEducation] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [awards, setAwards] = useState<any[]>([]);
   const [socialLinks, setSocialLinks] = useState<any>({
     linkedin: "",
     instagram: "",
@@ -132,6 +136,8 @@ const EditProfile = () => {
       const skillsData = Array.isArray(profile.skills) ? profile.skills : [];
       const formalEdu = Array.isArray((profile as any).education) ? (profile as any).education : [];
       const complementaryEdu = Array.isArray(profile.complementary_education) ? profile.complementary_education : [];
+      const projectsData = Array.isArray((profile as any).projects) ? (profile as any).projects : [];
+      const awardsData = Array.isArray((profile as any).awards) ? (profile as any).awards : [];
       const social = typeof profile.social_links === 'object' && profile.social_links !== null
           ? profile.social_links
           : { linkedin: "", instagram: "", facebook: "", twitter: "", tiktok: "", github: "" };
@@ -140,6 +146,8 @@ const EditProfile = () => {
       setSkills(skillsData);
       setFormalEducation(formalEdu);
       setComplementaryEducation(complementaryEdu);
+      setProjects(projectsData);
+      setAwards(awardsData);
       setSocialLinks(social);
       
       // Guardar estado inicial
@@ -148,6 +156,8 @@ const EditProfile = () => {
         skills: skillsData,
         formalEducation: formalEdu,
         complementaryEducation: complementaryEdu,
+        projects: projectsData,
+        awards: awardsData,
         socialLinks: social,
       };
     }
@@ -196,6 +206,8 @@ const EditProfile = () => {
       skills: skills,
       education: formalEducation,
       complementary_education: complementaryEducation,
+      projects: projects,
+      awards: awards,
       social_links: socialLinks,
     };
 
@@ -262,7 +274,9 @@ const EditProfile = () => {
         formalEducation.length > 0 &&
         complementaryEducation.length > 0 &&
         workExperience.length > 0 &&
-        skills.length > 0;
+        skills.length > 0 &&
+        projects.length > 0 &&
+        awards.length > 0;
 
       if (isProfile360Complete && !profile?.perfil_completo_360) {
         await updateProfile({ perfil_completo_360: true });
@@ -278,6 +292,8 @@ const EditProfile = () => {
         skills: [...skills],
         formalEducation: [...formalEducation],
         complementaryEducation: [...complementaryEducation],
+        projects: [...projects],
+        awards: [...awards],
         socialLinks: {...socialLinks},
       };
     } catch (error: any) {
@@ -305,7 +321,7 @@ const EditProfile = () => {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [formData, workExperience, skills, formalEducation, complementaryEducation, socialLinks, autoSave, profile]);
+  }, [formData, workExperience, skills, formalEducation, complementaryEducation, projects, awards, socialLinks, autoSave, profile]);
 
   if (authLoading || !user) {
     return (
@@ -596,6 +612,34 @@ const EditProfile = () => {
             skills={skills}
             onChange={setSkills}
           />
+
+          {/* Proyectos */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Proyectos</CardTitle>
+              <CardDescription>Agrega los proyectos en los que has trabajado</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProjectsEditor 
+                projects={projects}
+                onChange={setProjects}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Premios y Reconocimientos */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Premios y Reconocimientos</CardTitle>
+              <CardDescription>Agrega los premios y reconocimientos que has recibido</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AwardsEditor 
+                awards={awards}
+                onChange={setAwards}
+              />
+            </CardContent>
+          </Card>
 
           {/* Perfil Cognitivo */}
           <Card>

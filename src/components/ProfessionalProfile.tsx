@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { WorkExperience } from "@/components/profile/WorkExperience";
 import { ProjectsSection } from "@/components/profile/ProjectsSection";
+import { AwardsSection } from "@/components/profile/AwardsSection";
 import { SkillsSection } from "@/components/profile/SkillsSection";
 import { EducationSection } from "@/components/profile/EducationSection";
 import { CVGenerator } from "@/components/profile/CVGenerator";
@@ -255,6 +256,11 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       {/* Proyectos */}
       {profile?.projects && Array.isArray(profile.projects) && (
         <ProjectsSection projects={profile.projects as any[]} />
+      )}
+
+      {/* Premios y Reconocimientos */}
+      {profile?.awards && Array.isArray(profile.awards) && (
+        <AwardsSection awards={profile.awards as any[]} />
       )}
 
       {/* Formación Complementaria */}

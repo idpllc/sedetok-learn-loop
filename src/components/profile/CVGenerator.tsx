@@ -244,6 +244,19 @@ export const CVGenerator = ({ profile, metrics, isOwnProfile = true }: CVGenerat
               </div>
             ` : ''}
 
+            ${profile?.awards && profile.awards.length > 0 ? `
+              <h2>PREMIOS Y RECONOCIMIENTOS</h2>
+              <div class="section">
+                ${profile.awards.map((award: any) => `
+                  <div class="job-item">
+                    <div class="job-title">${award.title || ''}</div>
+                    <p style="font-size: 10pt; margin-top: 5px;"><strong>${award.issuer || ''}</strong> • ${award.date || ''}</p>
+                    ${award.description ? `<p style="font-size: 10pt; margin-top: 3px;">${award.description}</p>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
             ${profile?.areas_interes && profile.areas_interes.length > 0 ? `
               <h2>INFORMACIÓN ADICIONAL</h2>
               <div class="section">
