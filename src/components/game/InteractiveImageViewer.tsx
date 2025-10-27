@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, CheckCircle2, XCircle, ArrowRight, Clock } from "lucide-react";
+import { Heart, CheckCircle2, XCircle, ArrowRight, Clock, Trophy } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useGameSounds } from "@/hooks/useGameSounds";
 
@@ -42,7 +42,6 @@ export const InteractiveImageViewer = ({
   const imageRef = useRef<HTMLDivElement>(null);
   const { playCorrect, playLoseLife, playVictory } = useGameSounds();
 
-  const currentPoint = points[currentQuestionIndex];
   // Normalize score to 100 points maximum
   const score = points.length > 0 ? Math.round((correctAnswers.length / points.length) * 100) : 0;
   const maxScore = 100;
@@ -86,8 +85,47 @@ export const InteractiveImageViewer = ({
     );
   }
 
-  // Verify currentQuestionIndex is valid
-  if (!points[currentQuestionIndex]) {
+  // Show game over screen
+  if (gameOver) {
+    return (
+      <Card className="p-12 max-w-md mx-auto">
+        <div className="text-center space-y-6">
+          <div className="flex justify-center mb-4">
+            <Trophy className="w-24 h-24 text-yellow-500" />
+          </div>
+          <h2 className="text-4xl font-bold">¡Juego Completado!</h2>
+          <div className="space-y-2">
+            <div className="text-7xl font-bold" style={{ color: 'hsl(var(--primary))' }}>
+              {score}/100
+            </div>
+            <p className="text-2xl text-muted-foreground">
+              {score >= 80
+                ? "¡Excelente!"
+                : score >= 60
+                ? "¡Aprobado!"
+                : "Sigue practicando"}
+            </p>
+          </div>
+          {feedbackHistory.length > 0 && (
+            <div className="space-y-4 mt-8 text-left">
+              <h3 className="text-xl font-semibold text-center">Retroalimentación</h3>
+              {feedbackHistory.map((item, index) => (
+                <div key={index} className="p-4 bg-muted rounded-lg">
+                  <h4 className="font-semibold mb-2">{item.question}</h4>
+                  <p className="text-sm text-muted-foreground">{item.feedback}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  }
+
+  const currentPoint = points[currentQuestionIndex];
+  
+  // Verify currentQuestionIndex is valid only if not game over
+  if (!currentPoint) {
     return (
       <Card className="p-8 text-center">
         <h2 className="text-2xl font-bold mb-4">Error en el juego</h2>
@@ -103,7 +141,7 @@ export const InteractiveImageViewer = ({
     e.stopPropagation();
     if (gameOver || showFeedback || zoomedPoint) return;
 
-    const isCorrect = clickedPointId === currentPoint.id;
+    const isCorrect = clickedPointId === currentPoint?.id;
 
     if (isCorrect) {
       playCorrect();
@@ -132,7 +170,7 @@ export const InteractiveImageViewer = ({
       }, 1500);
     } else {
       playLoseLife();
-      setLives(lives - (currentPoint.lives_cost || 1));
+      setLives(lives - (currentPoint?.lives_cost || 1));
       setWrongPointClicks([...wrongPointClicks, clickedPointId]);
       // Remove the wrong indicator after 1 second
       setTimeout(() => {
@@ -141,45 +179,6 @@ export const InteractiveImageViewer = ({
     }
   };
 
-  if (gameOver) {
-    return (
-      <Card className="p-8">
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold mb-4">¡Juego Terminado!</h2>
-          <div className="mb-6">
-            <div className="text-7xl font-bold text-primary mb-2">
-              {score}
-            </div>
-            <div className="text-2xl text-muted-foreground">
-              Puntos ganados
-            </div>
-          </div>
-          <p className="text-xl mb-2">
-            {score >= 80
-              ? "¡Excelente trabajo!"
-              : score >= 60
-              ? "¡Buen intento!"
-              : "Sigue practicando"}
-          </p>
-          <p className="text-muted-foreground">
-            Respondiste correctamente {correctAnswers.length} de {points.length} preguntas
-          </p>
-        </div>
-
-        {feedbackHistory.length > 0 && (
-          <div className="space-y-4 mt-8">
-            <h3 className="text-xl font-semibold mb-4">Retroalimentación</h3>
-            {feedbackHistory.map((item, index) => (
-              <div key={index} className="p-4 bg-muted rounded-lg">
-                <h4 className="font-semibold mb-2">{item.question}</h4>
-                <p className="text-sm text-muted-foreground">{item.feedback}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    );
-  }
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
