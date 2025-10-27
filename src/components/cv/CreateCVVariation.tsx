@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, FileEdit, Loader2, ArrowLeft } from "lucide-react";
 import { useCVVariations } from "@/hooks/useCVVariations";
@@ -28,9 +29,11 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
     company_name: variation?.company_name || "",
     job_description: variation?.job_description || "",
     custom_bio: variation?.custom_bio || "",
-    highlighted_skills: variation?.highlighted_skills || [] as string[],
-    highlighted_experience: variation?.highlighted_experience || [] as string[],
-    highlighted_projects: variation?.highlighted_projects || [] as string[],
+    highlighted_skills: variation?.highlighted_skills || [] as any[],
+    highlighted_experience: variation?.highlighted_experience || [] as any[],
+    highlighted_education: variation?.highlighted_education || [] as any[],
+    highlighted_complementary: variation?.highlighted_complementary_education || [] as any[],
+    highlighted_projects: variation?.highlighted_projects || [] as any[],
   });
 
   const [aiData, setAiData] = useState<any>(null);
@@ -71,6 +74,8 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
       custom_bio: formData.custom_bio,
       highlighted_skills: formData.highlighted_skills,
       highlighted_experience: formData.highlighted_experience,
+      highlighted_education: formData.highlighted_education,
+      highlighted_complementary_education: formData.highlighted_complementary,
       highlighted_projects: formData.highlighted_projects,
       created_with_ai: mode === "ai",
       ai_prompt: mode === "ai" ? formData.job_description : null,
@@ -284,6 +289,227 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
                   rows={4}
                 />
               </div>
+
+              {/* Skills Selection */}
+              {profile?.skills && Array.isArray(profile.skills) && profile.skills.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Habilidades a Incluir</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-3 border rounded-lg bg-muted/30">
+                    {profile.skills.map((skill: any, index: number) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`skill-${index}`}
+                          checked={formData.highlighted_skills.some((s: any) => 
+                            typeof s === 'string' ? s === skill.name : s.name === skill.name
+                          )}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                highlighted_skills: [...formData.highlighted_skills, skill]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                highlighted_skills: formData.highlighted_skills.filter((s: any) =>
+                                  typeof s === 'string' ? s !== skill.name : s.name !== skill.name
+                                )
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`skill-${index}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {skill.name || skill}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.highlighted_skills.length} de {profile.skills.length} seleccionadas
+                  </p>
+                </div>
+              )}
+
+              {/* Experience Selection */}
+              {profile?.work_experience && Array.isArray(profile.work_experience) && profile.work_experience.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Experiencia Laboral a Incluir</Label>
+                  <div className="space-y-2 max-h-64 overflow-y-auto p-3 border rounded-lg bg-muted/30">
+                    {profile.work_experience.map((exp: any, index: number) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <Checkbox
+                          id={`exp-${index}`}
+                          checked={formData.highlighted_experience.some((e: any) =>
+                            e.company === exp.company && e.position === exp.position
+                          )}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                highlighted_experience: [...formData.highlighted_experience, exp]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                highlighted_experience: formData.highlighted_experience.filter((e: any) =>
+                                  !(e.company === exp.company && e.position === exp.position)
+                                )
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`exp-${index}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          <div className="font-semibold">{exp.position}</div>
+                          <div className="text-muted-foreground">{exp.company}</div>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.highlighted_experience.length} de {profile.work_experience.length} seleccionadas
+                  </p>
+                </div>
+              )}
+
+              {/* Education Selection */}
+              {profile?.education && Array.isArray(profile.education) && profile.education.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Educación Formal a Incluir</Label>
+                  <div className="space-y-2 max-h-64 overflow-y-auto p-3 border rounded-lg bg-muted/30">
+                    {profile.education.map((edu: any, index: number) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <Checkbox
+                          id={`edu-${index}`}
+                          checked={formData.highlighted_education.some((e: any) =>
+                            e.institution === edu.institution && e.degree === edu.degree
+                          )}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                highlighted_education: [...formData.highlighted_education, edu]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                highlighted_education: formData.highlighted_education.filter((e: any) =>
+                                  !(e.institution === edu.institution && e.degree === edu.degree)
+                                )
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`edu-${index}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          <div className="font-semibold">{edu.degree}</div>
+                          <div className="text-muted-foreground">{edu.institution}</div>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.highlighted_education.length} de {profile.education.length} seleccionadas
+                  </p>
+                </div>
+              )}
+
+              {/* Complementary Education Selection */}
+              {profile?.complementary_education && Array.isArray(profile.complementary_education) && profile.complementary_education.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Formación Complementaria a Incluir</Label>
+                  <div className="space-y-2 max-h-64 overflow-y-auto p-3 border rounded-lg bg-muted/30">
+                    {profile.complementary_education.map((comp: any, index: number) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <Checkbox
+                          id={`comp-${index}`}
+                          checked={formData.highlighted_complementary.some((c: any) =>
+                            c.title === comp.title && c.institution === comp.institution
+                          )}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                highlighted_complementary: [...formData.highlighted_complementary, comp]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                highlighted_complementary: formData.highlighted_complementary.filter((c: any) =>
+                                  !(c.title === comp.title && c.institution === comp.institution)
+                                )
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`comp-${index}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          <div className="font-semibold">{comp.title}</div>
+                          <div className="text-muted-foreground">{comp.institution}</div>
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.highlighted_complementary.length} de {profile.complementary_education.length} seleccionadas
+                  </p>
+                </div>
+              )}
+
+              {/* Projects Selection */}
+              {profile?.projects && Array.isArray(profile.projects) && profile.projects.length > 0 && (
+                <div className="space-y-3">
+                  <Label>Proyectos a Incluir</Label>
+                  <div className="space-y-2 max-h-64 overflow-y-auto p-3 border rounded-lg bg-muted/30">
+                    {profile.projects.map((project: any, index: number) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <Checkbox
+                          id={`project-${index}`}
+                          checked={formData.highlighted_projects.some((p: any) =>
+                            p.title === project.title
+                          )}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                highlighted_projects: [...formData.highlighted_projects, project]
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                highlighted_projects: formData.highlighted_projects.filter((p: any) =>
+                                  p.title !== project.title
+                                )
+                              });
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor={`project-${index}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                        >
+                          <div className="font-semibold">{project.title}</div>
+                          {project.description && (
+                            <div className="text-muted-foreground text-xs line-clamp-2">{project.description}</div>
+                          )}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.highlighted_projects.length} de {profile.projects.length} seleccionados
+                  </p>
+                </div>
+              )}
 
               <Button
                 onClick={handleSave}
