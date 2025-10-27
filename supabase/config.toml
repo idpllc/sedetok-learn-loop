@@ -1,5 +1,8 @@
 project_id = "mdvlhfxcllpfnatvltde"
 
+[functions.send-email-notification]
+verify_jwt = true
+
 [functions.generate-quiz-questions]
 verify_jwt = true
 

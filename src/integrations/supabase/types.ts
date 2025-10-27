@@ -1031,6 +1031,90 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          email_enabled: boolean | null
+          email_evaluation_result: boolean | null
+          email_mention: boolean | null
+          email_new_comment: boolean | null
+          email_new_follower: boolean | null
+          email_new_like: boolean | null
+          email_path_update: boolean | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_enabled?: boolean | null
+          email_evaluation_result?: boolean | null
+          email_mention?: boolean | null
+          email_new_comment?: boolean | null
+          email_new_follower?: boolean | null
+          email_new_like?: boolean | null
+          email_path_update?: boolean | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_enabled?: boolean | null
+          email_evaluation_result?: boolean | null
+          email_mention?: boolean | null
+          email_new_comment?: boolean | null
+          email_new_follower?: boolean | null
+          email_new_like?: boolean | null
+          email_path_update?: boolean | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          email_sent: boolean | null
+          email_sent_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          related_id: string | null
+          related_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          related_id?: string | null
+          related_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_sent?: boolean | null
+          email_sent_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          related_id?: string | null
+          related_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           areas_interes: string[] | null
