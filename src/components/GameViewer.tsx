@@ -205,8 +205,8 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   if (!loading && gameData?.game_type === "interactive_image") {
     return (
       <div
-        className="px-4 md:px-6 pt-12 md:pt-8"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)' }}
+        className="h-full flex flex-col justify-center px-4 md:px-6 pt-20 pb-8 md:pt-16 md:pb-12"
+        style={{ paddingTop: 'max(80px, calc(env(safe-area-inset-top, 0px) + 64px))' }}
       >
         <InteractiveImageViewer 
           imageUrl={questions[0]?.image_url || ""} 
@@ -370,8 +370,11 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   const progress = ((currentQuestion + 1) / questions.length) * 100;
 
   return (
-    <div className="h-full overflow-y-auto p-4 md:p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div 
+      className="h-full overflow-y-auto px-4 md:px-6 pt-20 pb-8 md:pt-16 md:pb-12"
+      style={{ paddingTop: 'max(80px, calc(env(safe-area-inset-top, 0px) + 64px))' }}
+    >
+      <div className="max-w-4xl mx-auto space-y-6 flex flex-col justify-center min-h-full">
         {/* Header */}
         <div className="flex items-center justify-between pr-8">
           <div className="flex items-center gap-4">
