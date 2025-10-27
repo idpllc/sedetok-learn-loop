@@ -50,9 +50,9 @@ export const InteractiveImageViewer = ({
     if (lives <= 0 || currentQuestionIndex >= points.length) {
       setGameOver(true);
       playVictory();
-      onComplete(score, maxScore);
+      // Don't call onComplete here - wait for user to close the results screen
     }
-  }, [lives, currentQuestionIndex, points.length, score, maxScore, onComplete, playVictory]);
+  }, [lives, currentQuestionIndex, points.length, playVictory]);
 
   // Timer effect
   useEffect(() => {
@@ -62,7 +62,7 @@ export const InteractiveImageViewer = ({
           if (prev === null || prev <= 1) {
             setGameOver(true);
             playVictory();
-            onComplete(score, maxScore);
+            // Don't call onComplete here - wait for user to close the results screen
             return 0;
           }
           return prev - 1;
@@ -71,7 +71,7 @@ export const InteractiveImageViewer = ({
 
       return () => clearInterval(timer);
     }
-  }, [timeRemaining, gameOver, score, maxScore, onComplete, playVictory]);
+  }, [timeRemaining, gameOver, playVictory]);
 
   // Early return if no points available
   if (!points || points.length === 0) {
@@ -117,6 +117,13 @@ export const InteractiveImageViewer = ({
               ))}
             </div>
           )}
+          <Button 
+            onClick={() => onComplete(score, maxScore)} 
+            size="lg" 
+            className="w-full mt-6"
+          >
+            Cerrar
+          </Button>
         </div>
       </Card>
     );
