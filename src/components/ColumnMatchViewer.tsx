@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -67,6 +67,26 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
   const containerRef = useRef<HTMLDivElement>(null);
   const leftItemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const rightItemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Calculate dynamic gap based on text length
+  const columnGap = useMemo(() => {
+    if (leftItems.length === 0 || rightItems.length === 0) return "gap-2 md:gap-4";
+    
+    const maxLeftLength = Math.max(...leftItems.map(item => item.text.length));
+    const maxRightLength = Math.max(...rightItems.map(item => item.text.length));
+    const avgMaxLength = (maxLeftLength + maxRightLength) / 2;
+    
+    // Short text: large gap for better visual connection effect
+    if (avgMaxLength < 15) {
+      return "gap-8 md:gap-16";
+    }
+    // Medium text: medium gap
+    if (avgMaxLength < 30) {
+      return "gap-4 md:gap-8";
+    }
+    // Long text: small gap
+    return "gap-2 md:gap-4";
+  }, [leftItems, rightItems]);
 
   useEffect(() => {
     fetchGameData();
@@ -460,7 +480,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
           )}
         </svg>
 
-        <div className="grid grid-cols-2 gap-2 md:gap-4 relative">
+        <div className={`grid grid-cols-2 ${columnGap} relative`}>
           {/* Left Column */}
           <div className="space-y-1.5 md:space-y-2">
             {leftItems.map((item) => {
