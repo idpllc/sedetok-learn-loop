@@ -16,10 +16,10 @@ export const useInfiniteContent = (
   return useInfiniteQuery({
     queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
-      // Fetch sufficient items to allow filtering + pagination across types
-      const batchSize = Math.max((pageParam + 1) * ITEMS_PER_PAGE, 30);
+      const startIndex = pageParam * ITEMS_PER_PAGE;
+      const endIndex = startIndex + ITEMS_PER_PAGE - 1;
       
-      // Fetch regular content with pagination
+      // Fetch regular content with pagination using range
       let contentQuery = supabase
         .from("content")
         .select(`
@@ -33,7 +33,8 @@ export const useInfiniteContent = (
           )
         `, { count: 'exact' })
         .eq("is_public", true)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(startIndex, endIndex);
 
       if (contentType && contentType !== "all" && contentType !== "quiz" && contentType !== "game") {
         contentQuery = contentQuery.eq("content_type", contentType as any);
@@ -65,7 +66,7 @@ export const useInfiniteContent = (
         contentQuery = contentQuery.eq("grade_level", gradeLevel as any);
       }
 
-      const { data: contentData, error: contentError, count: contentCount } = await contentQuery.limit(batchSize);
+      const { data: contentData, error: contentError, count: contentCount } = await contentQuery;
 
       if (contentError) throw contentError;
 
@@ -87,7 +88,8 @@ export const useInfiniteContent = (
           `, { count: 'exact' })
           .eq("is_public", true)
           .eq("status", "publicado")
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .range(startIndex, endIndex);
 
         // Apply search filter (title, description, subject)
         if (searchQuery && searchQuery.trim() !== "") {
@@ -115,7 +117,7 @@ export const useInfiniteContent = (
           quizQuery = quizQuery.eq("grade_level", gradeLevel as any);
         }
 
-        const { data: fetchedQuizData, error: quizError, count: fetchedQuizCount } = await quizQuery.limit(batchSize);
+        const { data: fetchedQuizData, error: quizError, count: fetchedQuizCount } = await quizQuery;
 
         if (quizError) throw quizError;
         quizData = fetchedQuizData || [];
@@ -139,7 +141,8 @@ export const useInfiniteContent = (
             )
           `, { count: 'exact' })
           .eq("is_public", true)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .range(startIndex, endIndex);
 
         // Apply search filter (title, description, subject)
         if (searchQuery && searchQuery.trim() !== "") {
@@ -157,7 +160,7 @@ export const useInfiniteContent = (
           gameQuery = gameQuery.eq("grade_level", gradeLevel as any);
         }
 
-        const { data: fetchedGameData, error: gameError, count: fetchedGameCount } = await gameQuery.limit(batchSize);
+        const { data: fetchedGameData, error: gameError, count: fetchedGameCount } = await gameQuery;
 
         if (gameError) throw gameError;
         gameData = fetchedGameData || [];
@@ -285,15 +288,14 @@ export const useInfiniteContent = (
         });
       }
 
-      // Paginate the combined results to ensure exactly ITEMS_PER_PAGE per page
-      const startIndex = pageParam * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE;
-      const paginatedItems = allContent.slice(startIndex, endIndex);
+      // Calculate total count from all sources
+      const totalCount = (contentCount || 0) + (quizCount || 0) + (gameCount || 0);
+      const hasMore = allContent.length === ITEMS_PER_PAGE && (startIndex + allContent.length) < totalCount;
 
       return {
-        items: paginatedItems,
-        nextPage: endIndex < allContent.length ? pageParam + 1 : undefined,
-        totalCount: allContent.length,
+        items: allContent,
+        nextPage: hasMore ? pageParam + 1 : undefined,
+        totalCount: totalCount,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
