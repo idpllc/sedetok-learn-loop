@@ -4,6 +4,7 @@ import { Share2, Link2, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import QRCode from "react-qr-code";
 
 interface ShareSheetProps {
   contentId: string;
@@ -129,6 +130,14 @@ export const ShareSheet = ({ contentId, contentTitle, isQuiz, isGame, sharesCoun
               </div>
             </div>
           </Button>
+        </div>
+
+        {/* QR Code Section */}
+        <div className="border-t pt-4 space-y-2">
+          <p className="text-sm font-medium text-center">Escanea para compartir:</p>
+          <div className="flex justify-center p-4 bg-white rounded-lg">
+            <QRCode value={shareUrl} size={180} />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

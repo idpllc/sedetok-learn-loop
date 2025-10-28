@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Linkedin, Facebook, Twitter } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
+import QRCode from "react-qr-code";
 import {
   Dialog,
   DialogContent,
@@ -152,6 +153,14 @@ export const ShareProfile = ({ profile }: ShareProfileProps) => {
                 <SiWhatsapp className="w-4 h-4 mr-2 text-green-600" />
                 WhatsApp
               </Button>
+            </div>
+          </div>
+
+          {/* QR Code Section */}
+          <div className="pt-4 border-t space-y-2">
+            <p className="text-sm font-medium">Escanea para compartir:</p>
+            <div className="flex justify-center p-4 bg-white rounded-lg">
+              <QRCode value={profileUrl} size={200} />
             </div>
           </div>
 

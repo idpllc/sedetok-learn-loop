@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Share2, Link2, Check } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import QRCode from "react-qr-code";
 
 interface SharePathSheetProps {
   pathId: string;
@@ -146,6 +147,16 @@ export const SharePathSheet = ({ pathId, pathTitle, isPublic, trigger }: SharePa
             </div>
           </Button>
         </div>
+
+        {/* QR Code Section */}
+        {isPublic && (
+          <div className="border-t pt-4 space-y-2">
+            <p className="text-sm font-medium text-center">Escanea para compartir:</p>
+            <div className="flex justify-center p-4 bg-white rounded-lg">
+              <QRCode value={shareUrl} size={180} />
+            </div>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );
