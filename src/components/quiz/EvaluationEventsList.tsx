@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Copy, ExternalLink, Trash2, Users, Clock, BarChart3, Pencil } from "lucide-react";
+import { Calendar, Copy, ExternalLink, Trash2, Users, Clock, BarChart3, Pencil, Share2 } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { ShareEventSheet } from "@/components/ShareEventSheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -137,6 +138,16 @@ export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEvent
                   <Badge variant="outline" className="font-mono">
                     {event.access_code}
                   </Badge>
+                  <ShareEventSheet
+                    accessCode={event.access_code}
+                    eventTitle={event.title}
+                    eventType="quiz"
+                    trigger={
+                      <Button size="sm" variant="ghost">
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
                   <Button
                     size="sm"
                     variant="ghost"

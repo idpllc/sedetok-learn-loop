@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Calendar, Clock, Copy, ExternalLink, Eye, Pencil, Trash2, Users } from "lucide-react";
+import { Calendar, Clock, Copy, ExternalLink, Eye, Pencil, Trash2, Users, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { toast } from "@/hooks/use-toast";
+import { ShareEventSheet } from "@/components/ShareEventSheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -139,6 +140,17 @@ export const GameEvaluationEventsList = ({ gameId, status = "all" }: GameEvaluat
                 </div>
 
                 <div className="flex flex-wrap gap-2">
+                  <ShareEventSheet
+                    accessCode={event.access_code}
+                    eventTitle={event.title}
+                    eventType="game"
+                    trigger={
+                      <Button variant="outline" size="sm">
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Compartir
+                      </Button>
+                    }
+                  />
                   <Button
                     variant="outline"
                     size="sm"
