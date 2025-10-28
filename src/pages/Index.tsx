@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
-import { useContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
+import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { useRelatedContent } from "@/hooks/useRelatedContent";
 import { useTargetItem } from "@/hooks/useTargetItem";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,13 +90,16 @@ const Index = () => {
   const pathIdFromUrl = searchParams.get("path");
   const gameIdFromUrl = searchParams.get("game");
   const { user, loading: authLoading } = useAuth();
-  const { content, isLoading } = useContent();
+  const infiniteQuery = useInfiniteContent();
+  const content = infiniteQuery.data?.pages.flatMap(page => page.items) || [];
+  const isLoading = infiniteQuery.isLoading;
   const { data: targetItem, isLoading: isLoadingTarget } = useTargetItem(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
   const { data: relatedContent, isLoading: isLoadingRelated } = useRelatedContent(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
 
   const currentTab = location.pathname === "/" ? "para-ti" : 
@@ -142,6 +145,24 @@ const Index = () => {
 
     return () => observer.disconnect();
   }, [pauseAllVideos, content]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const loadMore = loadMoreRef.current;
+    if (!loadMore || !infiniteQuery.hasNextPage || infiniteQuery.isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          infiniteQuery.fetchNextPage();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(loadMore);
+    return () => observer.disconnect();
+  }, [infiniteQuery]);
 
   // Scroll to top when specific content is loaded from search
   useEffect(() => {
@@ -281,6 +302,18 @@ const Index = () => {
             />
           );
         })}
+        
+        {/* Infinite scroll trigger */}
+        {!contentIdFromUrl && !quizIdFromUrl && !gameIdFromUrl && infiniteQuery.hasNextPage && (
+          <div 
+            ref={loadMoreRef}
+            className="h-screen w-full snap-start snap-always flex items-center justify-center"
+          >
+            {infiniteQuery.isFetchingNextPage && (
+              <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Onboarding modal */}
