@@ -39,7 +39,9 @@ export const InteractiveImageViewer = ({
   const [zoomedPoint, setZoomedPoint] = useState<string | null>(null);
   const [feedbackHistory, setFeedbackHistory] = useState<Array<{question: string, feedback: string}>>([]);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(timeLimit || null);
-  const imageRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stageSize, setStageSize] = useState<{width: number; height: number}>({ width: 0, height: 0 });
   const { playCorrect, playLoseLife, playVictory } = useGameSounds();
 
   // Normalize score to 100 points maximum
@@ -72,6 +74,31 @@ export const InteractiveImageViewer = ({
       return () => clearInterval(timer);
     }
   }, [timeRemaining, gameOver, playVictory]);
+
+  // Keep stage sized to maintain image ratio without letterboxing
+  useEffect(() => {
+    const compute = () => {
+      if (!containerRef.current) return;
+      const parentWidth = containerRef.current.clientWidth;
+      const ratio = aspectRatio || 16 / 9;
+      const maxHeightPx = Math.min(500, Math.floor(window.innerHeight * 0.5));
+      const widthByParent = parentWidth;
+      const widthByMaxHeight = maxHeightPx * ratio;
+      const width = Math.min(widthByParent, widthByMaxHeight);
+      const height = width / ratio;
+      setStageSize({ width, height });
+    };
+
+    compute();
+
+    const ro = new ResizeObserver(() => compute());
+    if (containerRef.current) ro.observe(containerRef.current);
+    window.addEventListener('resize', compute);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, [aspectRatio]);
 
   // Early return if no points available
   if (!points || points.length === 0) {
@@ -233,24 +260,25 @@ export const InteractiveImageViewer = ({
         </div>
 
         <div
-          ref={imageRef}
-          className="relative w-full bg-muted rounded-lg overflow-hidden mt-4 md:mt-6 mx-auto"
-          style={{ 
-            aspectRatio: aspectRatio || 16 / 9,
-            maxHeight: 'min(500px, 50vh)'
-          }}
+          ref={containerRef}
+          className="w-full mt-4 md:mt-6"
         >
-          <img
-            src={imageUrl}
-            alt="Interactive game"
-            className="w-full h-full object-contain pointer-events-none"
-            onLoad={(e) => {
-              const img = e.currentTarget;
-              if (img.naturalWidth && img.naturalHeight) {
-                setAspectRatio(img.naturalWidth / img.naturalHeight);
-              }
-            }}
-          />
+          <div
+            ref={stageRef}
+            className="relative bg-muted rounded-lg overflow-hidden mx-auto"
+            style={{ width: stageSize.width, height: stageSize.height }}
+          >
+            <img
+              src={imageUrl}
+              alt="Interactive game"
+              className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (img.naturalWidth && img.naturalHeight) {
+                  setAspectRatio(img.naturalWidth / img.naturalHeight);
+                }
+              }}
+            />
 
           {/* Show all points as clickable buttons */}
           {points.map((point, index) => {
@@ -293,6 +321,7 @@ export const InteractiveImageViewer = ({
             );
           })}
         </div>
+      </div>
 
       </Card>
     </div>
