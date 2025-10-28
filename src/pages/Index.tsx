@@ -142,8 +142,9 @@ const Index = () => {
               if (ref) ref.play();
             }, 100);
             
-            // Preload next page when user reaches the 3rd item
-            if (cardIndex === 2 && infiniteQuery.hasNextPage && !infiniteQuery.isFetchingNextPage) {
+            // Preload next page when approaching the end of the loaded list
+            const nearEndIndex = Math.max(0, content.length - 3);
+            if (cardIndex >= nearEndIndex && infiniteQuery.hasNextPage && !infiniteQuery.isFetchingNextPage) {
               infiniteQuery.fetchNextPage();
             }
           } else if (!entry.isIntersecting && cardId) {

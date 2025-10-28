@@ -290,7 +290,15 @@ export const useInfiniteContent = (
 
       // Calculate total count from all sources
       const totalCount = (contentCount || 0) + (quizCount || 0) + (gameCount || 0);
-      const hasMore = allContent.length === ITEMS_PER_PAGE && (startIndex + allContent.length) < totalCount;
+
+      // Determine how many sources are being combined to compute a correct page size
+      const sourcesCount = 1 
+        + ((!contentType || contentType === "all" || contentType === "quiz") ? 1 : 0) 
+        + ((!contentType || contentType === "all" || contentType === "game") ? 1 : 0);
+      const combinedPageSize = ITEMS_PER_PAGE * sourcesCount;
+
+      // There are more pages if we haven't reached the total count yet
+      const hasMore = allContent.length > 0 && (startIndex + combinedPageSize) < totalCount;
 
       return {
         items: allContent,
