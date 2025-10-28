@@ -7,9 +7,12 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVocationalProfile, CareerRecommendation } from '@/hooks/useVocationalProfile';
 import { useEducoins } from '@/hooks/useEducoins';
+import { useXP } from '@/hooks/useXP';
+import { useAuth } from '@/hooks/useAuth';
 import { BuyEducoinsModal } from '@/components/BuyEducoinsModal';
-import { GraduationCap, Briefcase, Sparkles, Globe, MapPin, Brain, Loader2, AlertTriangle, CheckCircle2, Info, Coins } from 'lucide-react';
+import { GraduationCap, Briefcase, Sparkles, Globe, MapPin, Brain, Loader2, AlertTriangle, CheckCircle2, Info, Coins, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VocationalProfileProps {
   areaMetrics: any;
@@ -24,22 +27,68 @@ export const VocationalProfile = ({
 }: VocationalProfileProps) => {
   const { generateVocationalProfile, loadVocationalProfile, isGenerating, isLoading, vocationalProfile } = useVocationalProfile(userProfile?.id);
   const { balance, deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
+  const { deductXP } = useXP();
+  const { user } = useAuth();
   const [selectedType, setSelectedType] = useState<string>('todas');
+  const [userXP, setUserXP] = useState<number>(0);
 
-  const VOCATIONAL_PROFILE_COST = 20;
+  const VOCATIONAL_PROFILE_COST_EDUCOINS = 20;
+  const VOCATIONAL_PROFILE_COST_XP = 2000;
 
-  // Load existing profile on mount
+  // Load existing profile and user XP on mount
   useEffect(() => {
     loadVocationalProfile();
-  }, [userProfile?.id]);
-
-  const handleGenerate = async () => {
-    // Check if user has enough educoins
-    const hasEnough = await deductEducoins(VOCATIONAL_PROFILE_COST, 'Perfil Vocacional');
     
-    if (hasEnough) {
-      await generateVocationalProfile(areaMetrics, intelligenceMetrics, userProfile);
+    const fetchUserXP = async () => {
+      if (user?.id) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('experience_points')
+          .eq('id', user.id)
+          .single();
+        
+        if (data) {
+          setUserXP(data.experience_points || 0);
+        }
+      }
+    };
+    
+    fetchUserXP();
+  }, [userProfile?.id, user?.id]);
+
+  const handleGenerateWithEducoins = async () => {
+    await generateVocationalProfile(
+      areaMetrics, 
+      intelligenceMetrics, 
+      userProfile,
+      'educoins',
+      async () => {
+        const hasEnough = await deductEducoins(VOCATIONAL_PROFILE_COST_EDUCOINS, 'Perfil Vocacional');
+        return hasEnough;
+      }
+    );
+  };
+
+  const handleGenerateWithXP = async () => {
+    if (userXP < VOCATIONAL_PROFILE_COST_XP) {
+      toast.error(`Necesitas al menos ${VOCATIONAL_PROFILE_COST_XP} XP`);
+      return;
     }
+
+    await generateVocationalProfile(
+      areaMetrics, 
+      intelligenceMetrics, 
+      userProfile,
+      'xp',
+      async () => {
+        const success = await deductXP(VOCATIONAL_PROFILE_COST_XP, 'Perfil Vocacional');
+        if (success) {
+          // Update local XP state
+          setUserXP(prev => Math.max(0, prev - VOCATIONAL_PROFILE_COST_XP));
+        }
+        return success;
+      }
+    );
   };
 
   const getTypeIcon = (type: string) => {
@@ -214,30 +263,83 @@ export const VocationalProfile = ({
           </CardHeader>
           <CardContent className="space-y-4">
             <Alert>
-              <Coins className="h-4 w-4" />
+              <Info className="h-4 w-4" />
               <AlertDescription>
-                Generar tu perfil vocacional con IA cuesta <strong>{VOCATIONAL_PROFILE_COST} educoins</strong>. 
-                Tu saldo actual: <strong>{balance} educoins</strong>
+                Elige cómo generar tu perfil vocacional con IA:
               </AlertDescription>
             </Alert>
-            
-            <Button 
-              onClick={handleGenerate} 
-              disabled={isGenerating}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando perfil vocacional...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Generar Perfil Vocacional con IA ({VOCATIONAL_PROFILE_COST} educoins)
-                </>
-              )}
-            </Button>
+
+            <div className="grid gap-3">
+              <Card className="border-2 hover:border-primary/50 transition-colors">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins className="w-5 h-5 text-yellow-500" />
+                      <CardTitle className="text-base">Con Educoins</CardTitle>
+                    </div>
+                    <Badge variant="outline">{balance} disponibles</Badge>
+                  </div>
+                  <CardDescription className="text-xs">
+                    Costo: {VOCATIONAL_PROFILE_COST_EDUCOINS} educoins
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <Button 
+                    onClick={handleGenerateWithEducoins} 
+                    disabled={isGenerating}
+                    className="w-full"
+                    variant={balance >= VOCATIONAL_PROFILE_COST_EDUCOINS ? "default" : "outline"}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generar ({VOCATIONAL_PROFILE_COST_EDUCOINS} educoins)
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-2 hover:border-primary/50 transition-colors">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-blue-500" />
+                      <CardTitle className="text-base">Con Puntos XP</CardTitle>
+                    </div>
+                    <Badge variant="outline">{userXP} disponibles</Badge>
+                  </div>
+                  <CardDescription className="text-xs">
+                    Costo: {VOCATIONAL_PROFILE_COST_XP} XP
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <Button 
+                    onClick={handleGenerateWithXP} 
+                    disabled={isGenerating || userXP < VOCATIONAL_PROFILE_COST_XP}
+                    className="w-full"
+                    variant={userXP >= VOCATIONAL_PROFILE_COST_XP ? "default" : "outline"}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generar ({VOCATIONAL_PROFILE_COST_XP} XP)
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </CardContent>
         </Card>
 
@@ -290,24 +392,44 @@ export const VocationalProfile = ({
             </Alert>
           </div>
 
-          <Button 
-            onClick={handleGenerate} 
-            disabled={isGenerating}
-            variant="outline"
-            size="sm"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Regenerando...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Regenerar Perfil
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleGenerateWithEducoins} 
+              disabled={isGenerating}
+              variant="outline"
+              size="sm"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Regenerando...
+                </>
+              ) : (
+                <>
+                  <Coins className="mr-2 h-4 w-4" />
+                  Regenerar ({VOCATIONAL_PROFILE_COST_EDUCOINS} educoins)
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={handleGenerateWithXP} 
+              disabled={isGenerating || userXP < VOCATIONAL_PROFILE_COST_XP}
+              variant="outline"
+              size="sm"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Regenerando...
+                </>
+              ) : (
+                <>
+                  <Zap className="mr-2 h-4 w-4" />
+                  Regenerar ({VOCATIONAL_PROFILE_COST_XP} XP)
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

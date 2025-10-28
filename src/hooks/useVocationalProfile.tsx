@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useXP } from './useXP';
 
 export interface CareerRecommendation {
   careerName: string;
@@ -30,6 +31,7 @@ export const useVocationalProfile = (userId?: string) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [vocationalProfile, setVocationalProfile] = useState<VocationalProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { deductXP } = useXP();
 
   // Load existing vocational profile
   const loadVocationalProfile = async () => {
@@ -67,11 +69,21 @@ export const useVocationalProfile = (userId?: string) => {
   const generateVocationalProfile = async (
     areaMetrics: any,
     intelligenceMetrics: any,
-    userProfile: any
+    userProfile: any,
+    paymentType: 'educoins' | 'xp' = 'educoins',
+    deductPayment: () => Promise<boolean>
   ) => {
     setIsGenerating(true);
     
     try {
+      // Primero intentar deducir el pago
+      const paymentSuccess = await deductPayment();
+      
+      if (!paymentSuccess) {
+        setIsGenerating(false);
+        return null;
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-vocational-profile', {
         body: {
           areaMetrics,
