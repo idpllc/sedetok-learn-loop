@@ -27,10 +27,31 @@ type SearchContentType = ContentType | "learning_path" | "all";
 const Search = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState<SearchContentType>("all");
-  const [selectedSubject, setSelectedSubject] = useState<string>("all");
-  const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">("all");
+  
+  // Initialize state from sessionStorage or URL
+  const getInitialSearchQuery = () => {
+    const urlQuery = searchParams.get('q');
+    if (urlQuery) return urlQuery;
+    return sessionStorage.getItem('search_query') || '';
+  };
+  
+  const getInitialType = () => {
+    const savedType = sessionStorage.getItem('search_type');
+    return (savedType as SearchContentType) || 'all';
+  };
+  
+  const getInitialSubject = () => {
+    return sessionStorage.getItem('search_subject') || 'all';
+  };
+  
+  const getInitialGrade = () => {
+    return (sessionStorage.getItem('search_grade') as GradeLevel | 'all') || 'all';
+  };
+  
+  const [searchQuery, setSearchQuery] = useState(getInitialSearchQuery);
+  const [selectedType, setSelectedType] = useState<SearchContentType>(getInitialType);
+  const [selectedSubject, setSelectedSubject] = useState<string>(getInitialSubject);
+  const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">(getInitialGrade);
   const subjectsScrollRef = useRef<HTMLDivElement>(null);
   
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: contentLoading } = useInfiniteContent(
@@ -48,10 +69,21 @@ const Search = () => {
 
   const isLoading = contentLoading || pathsLoading;
 
-  // Inicializar el query desde la URL
+  // Save search state to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem('search_query', searchQuery);
+    sessionStorage.setItem('search_type', selectedType);
+    sessionStorage.setItem('search_subject', selectedSubject);
+    sessionStorage.setItem('search_grade', selectedGrade);
+  }, [searchQuery, selectedType, selectedSubject, selectedGrade]);
+
+  // Inicializar el query desde la URL solo si no hay estado guardado
   useEffect(() => {
     const queryFromUrl = searchParams.get('q');
-    if (queryFromUrl) {
+    const savedQuery = sessionStorage.getItem('search_query');
+    
+    // Only use URL param if there's no saved state
+    if (queryFromUrl && !savedQuery) {
       setSearchQuery(queryFromUrl);
     }
   }, [searchParams]);
@@ -268,7 +300,10 @@ const Search = () => {
                 <Button
                   variant={selectedSubject === "all" ? "default" : "outline"}
                   className="rounded-full whitespace-nowrap"
-                  onClick={() => setSelectedSubject("all")}
+                  onClick={() => {
+                    setSelectedSubject("all");
+                    sessionStorage.setItem('search_subject', 'all');
+                  }}
                 >
                   Todos
                 </Button>
@@ -277,7 +312,10 @@ const Search = () => {
                     key={subject.value}
                     variant={selectedSubject === subject.value ? "default" : "outline"}
                     className="rounded-full whitespace-nowrap"
-                    onClick={() => setSelectedSubject(subject.value)}
+                    onClick={() => {
+                      setSelectedSubject(subject.value);
+                      sessionStorage.setItem('search_subject', subject.value);
+                    }}
                   >
                     {subject.label}
                   </Button>
@@ -304,7 +342,10 @@ const Search = () => {
                 variant={selectedGrade === level.value ? "default" : "outline"}
                 size="sm"
                 className="whitespace-nowrap rounded-full"
-                onClick={() => setSelectedGrade(level.value as GradeLevel | "all")}
+                onClick={() => {
+                  setSelectedGrade(level.value as GradeLevel | "all");
+                  sessionStorage.setItem('search_grade', level.value);
+                }}
               >
                 {level.label}
               </Button>
@@ -318,7 +359,10 @@ const Search = () => {
                 key={type.id}
                 variant={selectedType === type.id ? "default" : "outline"}
                 className="cursor-pointer whitespace-nowrap py-1.5"
-                onClick={() => setSelectedType(type.id)}
+                onClick={() => {
+                  setSelectedType(type.id);
+                  sessionStorage.setItem('search_type', type.id);
+                }}
               >
                 <span className="mr-1">{type.icon}</span>
                 {type.label}
