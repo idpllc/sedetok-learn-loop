@@ -264,14 +264,14 @@ export const InteractiveImageViewer = ({
             return (
               <button
                 key={point.id}
-                className={`absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-3 flex items-center justify-center font-bold text-sm shadow-lg ${
+                className={`absolute w-7 h-7 -ml-3.5 -mt-3.5 rounded-full border-2 flex items-center justify-center font-semibold text-xs shadow-lg ${
                   isZoomed
                     ? "bg-green-500 text-white border-white scale-150 transition-transform duration-500 ease-out"
                     : isWrongClick
                     ? "bg-red-500 text-white border-white scale-110 transition-all duration-300"
                     : isAnswered
                     ? "bg-gray-400 text-white border-white opacity-50 cursor-not-allowed transition-all duration-300"
-                    : "bg-blue-500 text-white border-white hover:scale-110 hover:bg-blue-600 cursor-pointer transition-all duration-300"
+                    : "bg-blue-500/70 text-white border-white hover:scale-110 hover:bg-blue-600/80 cursor-pointer transition-all duration-300 backdrop-blur-sm"
                 }`}
                 style={{
                   left: `${point.x}%`,
@@ -282,9 +282,9 @@ export const InteractiveImageViewer = ({
                 disabled={isAnswered || zoomedPoint !== null}
               >
                 {isZoomed ? (
-                  <CheckCircle2 className="w-5 h-5" />
+                  <CheckCircle2 className="w-4 h-4" />
                 ) : isWrongClick ? (
-                  <XCircle className="w-5 h-5" />
+                  <XCircle className="w-4 h-4" />
                 ) : (
                   index + 1
                 )}
