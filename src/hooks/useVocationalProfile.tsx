@@ -98,14 +98,18 @@ export const useVocationalProfile = (userId?: string) => {
         return null;
       }
 
-      // Save to database
+      // Save to database - upsert will replace all content
       const { error: saveError } = await supabase
         .from('vocational_profiles')
         .upsert({
           user_id: userProfile.id,
           recommendations: data.recommendations,
           summary: data.summary,
-          confidence: data.confidence
+          confidence: data.confidence,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         });
 
       if (saveError) {
