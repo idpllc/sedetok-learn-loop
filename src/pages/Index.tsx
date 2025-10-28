@@ -123,6 +123,7 @@ const Index = () => {
         entries.forEach((entry) => {
           const cardElement = entry.target as HTMLElement;
           const cardId = cardElement.dataset.contentId;
+          const cardIndex = parseInt(cardElement.dataset.contentIndex || '0');
           
           if (entry.isIntersecting && cardId) {
             pauseAllVideos(cardId);
@@ -131,6 +132,11 @@ const Index = () => {
               const ref = videoRefs.current[cardId];
               if (ref) ref.play();
             }, 100);
+            
+            // Preload next page when user reaches the 3rd item
+            if (cardIndex === 2 && infiniteQuery.hasNextPage && !infiniteQuery.isFetchingNextPage) {
+              infiniteQuery.fetchNextPage();
+            }
           } else if (!entry.isIntersecting && cardId) {
             const ref = videoRefs.current[cardId];
             if (ref) ref.pause();
@@ -144,25 +150,8 @@ const Index = () => {
     cards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [pauseAllVideos, content]);
+  }, [pauseAllVideos, content, infiniteQuery]);
 
-  // Infinite scroll observer
-  useEffect(() => {
-    const loadMore = loadMoreRef.current;
-    if (!loadMore || !infiniteQuery.hasNextPage || infiniteQuery.isFetchingNextPage) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          infiniteQuery.fetchNextPage();
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    observer.observe(loadMore);
-    return () => observer.disconnect();
-  }, [infiniteQuery]);
 
   // Scroll to top when specific content is loaded from search
   useEffect(() => {
@@ -256,7 +245,10 @@ const Index = () => {
               key={item.id}
               data-content-id={item.id}
               ref={(el) => {
-                if (el) el.dataset.contentId = item.id;
+                if (el) {
+                  el.dataset.contentId = item.id;
+                  el.dataset.contentIndex = index.toString();
+                }
               }}
               id={item.id}
               videoRef={videoRef}
@@ -303,15 +295,10 @@ const Index = () => {
           );
         })}
         
-        {/* Infinite scroll trigger */}
-        {!contentIdFromUrl && !quizIdFromUrl && !gameIdFromUrl && infiniteQuery.hasNextPage && (
-          <div 
-            ref={loadMoreRef}
-            className="h-screen w-full snap-start snap-always flex items-center justify-center"
-          >
-            {infiniteQuery.isFetchingNextPage && (
-              <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
-            )}
+        {/* Loading indicator for next page */}
+        {!contentIdFromUrl && !quizIdFromUrl && !gameIdFromUrl && infiniteQuery.isFetchingNextPage && (
+          <div className="h-screen w-full snap-start snap-always flex items-center justify-center">
+            <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
           </div>
         )}
       </div>
