@@ -39,7 +39,7 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showResultsImmediately = true }: WordWheelViewerProps) => {
   const { user } = useAuth();
-  const { awardXP } = useXP();
+  const { awardProfileXP } = useXP();
   const { playLoseLife, playTimeWarning, playClick, playVictory, playCorrect } = useGameSounds();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [questions, setQuestions] = useState<WheelQuestion[]>([]);
@@ -162,7 +162,8 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
       await supabase.from("user_quiz_results").insert(payload);
 
-      awardXP(gameId, 'view_complete', false);
+      // Award 100 XP for game completion
+      await awardProfileXP('game_complete', 100);
       
       if (showResultsImmediately) {
         toast.success(`¡Juego completado! Puntuación: ${normalizedScore}/100`);

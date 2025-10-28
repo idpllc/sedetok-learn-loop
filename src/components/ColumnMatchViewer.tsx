@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { useXP } from "@/hooks/useXP";
 
 interface ColumnMatchViewerProps {
   gameId: string;
@@ -46,6 +47,7 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { playLoseLife, playTimeWarning, playClick, playVictory } = useGameSounds();
+  const { awardProfileXP } = useXP();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [leftItems, setLeftItems] = useState<ColumnItem[]>([]);
   const [rightItems, setRightItems] = useState<ColumnItem[]>([]);
@@ -306,19 +308,8 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
 
       await supabase.from("user_quiz_results").insert(payload);
 
-      // Award XP
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("experience_points")
-        .eq("id", user.id)
-        .single();
-      
-      if (profile) {
-        await supabase
-          .from("profiles")
-          .update({ experience_points: (profile.experience_points || 0) + normalizedScore })
-          .eq("id", user.id);
-      }
+      // Award 100 XP for game completion
+      await awardProfileXP('game_complete', 100);
     }
 
     if (showResultsImmediately) {

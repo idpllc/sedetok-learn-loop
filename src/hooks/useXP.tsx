@@ -202,7 +202,9 @@ const getProfileActionMessage = (actionType: string): string => {
     'technical_skill_added': 'Habilidad técnica agregada',
     'soft_skill_added': 'Habilidad blanda agregada',
     'cv_variation_created': 'Hoja de vida creada',
-    'game_complete': 'Juego completado'
+    'game_complete': 'Juego completado',
+    'project_added': 'Proyecto agregado',
+    'award_added': 'Premio agregado'
   };
   return messages[actionType] || 'Acción completada';
 };

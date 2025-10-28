@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Heart, CheckCircle2, XCircle, ArrowRight, Clock, Trophy } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { useXP } from "@/hooks/useXP";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InteractivePoint {
   id: string;
@@ -43,6 +45,7 @@ export const InteractiveImageViewer = ({
   const stageRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState<{width: number; height: number}>({ width: 0, height: 0 });
   const { playCorrect, playLoseLife, playVictory } = useGameSounds();
+  const { awardProfileXP } = useXP();
 
   // Normalize score to 100 points maximum
   const score = points.length > 0 ? Math.round((correctAnswers.length / points.length) * 100) : 0;
@@ -145,7 +148,11 @@ export const InteractiveImageViewer = ({
             </div>
           )}
           <Button 
-            onClick={() => onComplete(score, maxScore)} 
+            onClick={async () => {
+              // Award 100 XP for game completion
+              await awardProfileXP('game_complete', 100);
+              onComplete(score, maxScore);
+            }} 
             size="lg" 
             className="w-full mt-6"
           >
