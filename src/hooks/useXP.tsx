@@ -116,7 +116,7 @@ export const useXP = () => {
     }
   };
 
-  const awardProfileXP = async (actionType: string, xpAmount: number, allowMultiple: boolean = true) => {
+  const awardProfileXP = async (actionType: string, xpAmount: number, allowMultiple: boolean = true, gameId?: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) return false;
@@ -124,11 +124,20 @@ export const useXP = () => {
     try {
       // For profile_360_complete and cv_variation_created, only award once
       if (!allowMultiple) {
+        // Check if already awarded, including game_id for game completions
+        const baseQuery = {
+          user_id: user.id,
+          action_type: actionType
+        };
+        
+        const searchQuery = gameId && actionType === 'game_complete' 
+          ? { ...baseQuery, game_id: gameId }
+          : baseQuery;
+        
         const { data: existing } = await supabase
           .from('user_xp_log')
           .select('id')
-          .eq('user_id', user.id)
-          .eq('action_type', actionType)
+          .match(searchQuery)
           .maybeSingle();
 
         if (existing) {
@@ -136,14 +145,20 @@ export const useXP = () => {
         }
       }
 
-      // Log the XP award
+      // Log the XP award with game_id if provided
+      const logData: any = {
+        user_id: user.id,
+        action_type: actionType,
+        xp_amount: xpAmount
+      };
+      
+      if (gameId) {
+        logData.game_id = gameId;
+      }
+
       const { error: logError } = await supabase
         .from('user_xp_log')
-        .insert({
-          user_id: user.id,
-          action_type: actionType,
-          xp_amount: xpAmount
-        });
+        .insert(logData);
 
       if (logError) throw logError;
 

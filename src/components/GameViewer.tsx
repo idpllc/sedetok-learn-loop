@@ -105,7 +105,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
       await supabase.from("user_quiz_results").insert(payload);
 
       // Award 100 XP for game completion
-      awardProfileXP('game_complete', 100);
+      await awardProfileXP('game_complete', 100, false, gameId);
 
       if (showResultsImmediately) {
         toast.success(`¡Juego completado! Puntuación: ${normalizedScore}/100`);
@@ -234,7 +234,7 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
               });
               
               // Award 100 XP
-              awardProfileXP('game_complete', 100);
+              awardProfileXP('game_complete', 100, false, gameId);
             }
             if (onComplete) onComplete();
           }}
