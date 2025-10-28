@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Book, Video, FileText, Brain, Star, Lock, CheckCircle2, Play, Flag } from "lucide-react";
+import { Book, Video, FileText, Brain, Star, Lock, CheckCircle2, Play, Flag, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -20,13 +20,20 @@ const getContentIcon = (contentType: string, isCompleted: boolean) => {
   
   switch (contentType) {
     case "Video":
+    case "video":
       return <Video className={iconClass} />;
     case "Documento":
+    case "documento":
       return <FileText className={iconClass} />;
     case "Lectura":
+    case "lectura":
       return <Book className={iconClass} />;
     case "Quiz":
+    case "quiz":
       return <Brain className={iconClass} />;
+    case "Juego":
+    case "game":
+      return <Gamepad2 className={iconClass} />;
     default:
       return <FileText className={iconClass} />;
   }

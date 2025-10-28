@@ -818,6 +818,7 @@ export type Database = {
           content_id: string | null
           created_at: string | null
           estimated_time_minutes: number | null
+          game_id: string | null
           id: string
           is_required: boolean | null
           order_index: number
@@ -831,6 +832,7 @@ export type Database = {
           content_id?: string | null
           created_at?: string | null
           estimated_time_minutes?: number | null
+          game_id?: string | null
           id?: string
           is_required?: boolean | null
           order_index: number
@@ -844,6 +846,7 @@ export type Database = {
           content_id?: string | null
           created_at?: string | null
           estimated_time_minutes?: number | null
+          game_id?: string | null
           id?: string
           is_required?: boolean | null
           order_index?: number
@@ -859,6 +862,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_path_content_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
           {

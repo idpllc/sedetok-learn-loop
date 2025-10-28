@@ -331,7 +331,8 @@ export const usePathContent = (pathId?: string) => {
         .select(`
           *,
           content(*),
-          quiz:quizzes(*)
+          quiz:quizzes(*),
+          game:games(*)
         `)
         .eq("path_id", pathId)
         .order("order_index", { ascending: true });

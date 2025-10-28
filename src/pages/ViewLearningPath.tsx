@@ -145,6 +145,7 @@ const ViewLearningPath = () => {
     .sort((a, b) => a.order_index - b.order_index)
     .map((item) => {
       const isQuiz = !!item.quiz_id;
+      const isGame = !!item.game_id;
       
       if (isQuiz && item.quiz) {
         const quiz = item.quiz;
@@ -172,6 +173,34 @@ const ViewLearningPath = () => {
           profiles: profile,
           questions_count: undefined,
           difficulty: quiz.difficulty,
+        };
+      } else if (isGame && item.game) {
+        const game = item.game;
+        const profile = profileMap[game.creator_id];
+        
+        return {
+          id: item.game_id!,
+          title: game.title || "",
+          description: game.description || "",
+          creator_id: game.creator_id,
+          creator: profile?.username || "",
+          institution: profile?.institution || "",
+          creatorAvatar: profile?.avatar_url,
+          tags: game.tags || [],
+          category: game.category,
+          thumbnail_url: game.thumbnail_url,
+          video_url: undefined,
+          documento_url: undefined,
+          rich_text: undefined,
+          content_type: 'game' as const,
+          likes_count: game.likes_count || 0,
+          comments_count: game.comments_count || 0,
+          shares_count: game.shares_count || 0,
+          grade_level: game.grade_level,
+          profiles: profile,
+          questions_count: undefined,
+          difficulty: undefined,
+          game_type: game.game_type,
         };
       } else if (item.content) {
         const content = item.content;

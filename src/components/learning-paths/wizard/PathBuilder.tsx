@@ -51,12 +51,25 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
 
       if (quizError) throw quizError;
 
+      const { data: gameData, error: gameError } = await supabase
+        .from("games")
+        .select("*")
+        .eq("creator_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (gameError) throw gameError;
+
       const quizzes = (quizData || []).map(quiz => ({
         ...quiz,
         content_type: 'quiz' as const,
       }));
 
-      return [...(contentData || []), ...quizzes].sort(
+      const games = (gameData || []).map(game => ({
+        ...game,
+        content_type: 'game' as const,
+      }));
+
+      return [...(contentData || []), ...quizzes, ...games].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
     },
@@ -88,12 +101,27 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
 
       if (quizError) throw quizError;
 
+      const { data: gameData, error: gameError } = await supabase
+        .from("games")
+        .select("*")
+        .eq("is_public", true)
+        .neq("creator_id", user?.id || "")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (gameError) throw gameError;
+
       const quizzes = (quizData || []).map(quiz => ({
         ...quiz,
         content_type: 'quiz' as const,
       }));
 
-      return [...(contentData || []), ...quizzes]
+      const games = (gameData || []).map(game => ({
+        ...game,
+        content_type: 'game' as const,
+      }));
+
+      return [...(contentData || []), ...quizzes, ...games]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 50);
     },
@@ -121,6 +149,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
     }
 
     const isQuiz = item.content_type === 'quiz';
+    const isGame = item.content_type === 'game';
     
     try {
       const maxOrder = contents?.reduce((max, item) => 
@@ -132,9 +161,11 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
         is_required: false,
       };
 
-      // Usar content_id o quiz_id según el tipo
+      // Usar content_id, quiz_id o game_id según el tipo
       if (isQuiz) {
         insertData.quiz_id = contentId;
+      } else if (isGame) {
+        insertData.game_id = contentId;
       } else {
         insertData.content_id = contentId;
       }
@@ -240,7 +271,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
       });
       return;
     }
-    if (contents?.some((c: any) => c.content_id === droppedId || c.quiz_id === droppedId)) {
+    if (contents?.some((c: any) => c.content_id === droppedId || c.quiz_id === droppedId || c.game_id === droppedId)) {
       toast({
         title: "Ya agregado",
         description: "Esta cápsula ya está en la ruta",
@@ -291,7 +322,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
             null;
 
           const isAdded = contents?.some((c: any) => 
-            c.content_id === item.id || c.quiz_id === item.id
+            c.content_id === item.id || c.quiz_id === item.id || c.game_id === item.id
           );
 
           return (
@@ -322,7 +353,8 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                         {item.content_type === 'video' ? '🎥' : 
                          item.content_type === 'lectura' ? '📖' :
                          item.content_type === 'documento' ? '📄' :
-                         item.content_type === 'quiz' ? '📝' : '❓'}
+                         item.content_type === 'quiz' ? '📝' :
+                         item.content_type === 'game' ? '🎮' : '❓'}
                       </span>
                       <h4 className="font-medium text-sm truncate">{item.title}</h4>
                     </div>
@@ -331,7 +363,8 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                         {item.content_type === 'video' ? 'Video' : 
                          item.content_type === 'lectura' ? 'Lectura' :
                          item.content_type === 'documento' ? 'Documento' :
-                         item.content_type === 'quiz' ? 'Quiz' : 'Contenido'}
+                         item.content_type === 'quiz' ? 'Quiz' :
+                         item.content_type === 'game' ? 'Juego' : 'Contenido'}
                       </Badge>
                       <Badge variant="secondary" className="text-xs">
                         {item.category}
@@ -445,9 +478,10 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
               onDrop={handleDrop}
             >
               {contents.map((item: any, index) => {
-                // Determinar si es contenido regular o quiz
-                const itemData = item.content || item.quiz;
+                // Determinar si es contenido regular, quiz o game
+                const itemData = item.content || item.quiz || item.game;
                 const isQuiz = !!item.quiz;
+                const isGame = !!item.game;
                 
                 const thumbnail = itemData?.thumbnail_url || 
                   (itemData?.content_type === 'video' && itemData?.video_url ? 
@@ -490,6 +524,7 @@ export const PathBuilder = ({ data, pathId }: PathBuilderProps) => {
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-2xl">
                             {isQuiz ? '📝' :
+                             isGame ? '🎮' :
                              itemData?.content_type === 'video' ? '🎥' : 
                              itemData?.content_type === 'lectura' ? '📖' :
                              itemData?.content_type === 'documento' ? '📄' : '❓'}
