@@ -152,16 +152,7 @@ export const InteractiveImageViewer = ({
 
     if (isCorrect) {
       playCorrect();
-      setCorrectAnswers([...correctAnswers, currentPoint.id]);
       setZoomedPoint(clickedPointId);
-      
-      // Save feedback for later
-      if (currentPoint.feedback) {
-        setFeedbackHistory([...feedbackHistory, {
-          question: currentPoint.question,
-          feedback: currentPoint.feedback
-        }]);
-      }
       
       confetti({
         particleCount: 100,
@@ -171,6 +162,16 @@ export const InteractiveImageViewer = ({
 
       // Auto advance after zoom animation
       setTimeout(() => {
+        setCorrectAnswers([...correctAnswers, currentPoint.id]);
+        
+        // Save feedback for later
+        if (currentPoint.feedback) {
+          setFeedbackHistory([...feedbackHistory, {
+            question: currentPoint.question,
+            feedback: currentPoint.feedback
+          }]);
+        }
+        
         setZoomedPoint(null);
         setWrongPointClicks([]);
         setCurrentQuestionIndex(currentQuestionIndex + 1);
