@@ -360,14 +360,22 @@ const Search = () => {
                     key={item.id} 
                     className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() => {
+                      // Pass search results to maintain carousel order
+                      const searchResults = filteredContent.map(c => c.id);
+                      const searchResultsType = filteredContent.map(c => 
+                        c.itemType === "learning_path" ? "path" : 
+                        c.content_type === 'quiz' ? 'quiz' : 
+                        c.content_type === 'game' ? 'game' : 'content'
+                      );
+                      
                       if (isLearningPath) {
                         navigate(`/learning-paths/${item.id}`);
                       } else if (isQuiz) {
-                        navigate(`/?quiz=${item.id}`);
+                        navigate(`/?quiz=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
                       } else if (item.content_type === 'game') {
-                        navigate(`/?game=${item.id}`);
+                        navigate(`/?game=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
                       } else {
-                        navigate(`/?content=${item.id}`);
+                        navigate(`/?content=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
                       }
                     }}
                   >

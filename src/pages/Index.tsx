@@ -9,6 +9,7 @@ import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { useRelatedContent } from "@/hooks/useRelatedContent";
 import { useTargetItem } from "@/hooks/useTargetItem";
+import { useSearchResults } from "@/hooks/useSearchResults";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 
@@ -89,12 +90,20 @@ const Index = () => {
   const quizIdFromUrl = searchParams.get("quiz");
   const pathIdFromUrl = searchParams.get("path");
   const gameIdFromUrl = searchParams.get("game");
+  const searchResultsParam = searchParams.get("searchResults");
+  const searchTypesParam = searchParams.get("searchTypes");
+  
+  // Parse search results from URL
+  const searchResultIds = searchResultsParam ? searchResultsParam.split(',') : undefined;
+  const searchResultTypes = searchTypesParam ? searchTypesParam.split(',') : undefined;
+  
   const { user, loading: authLoading } = useAuth();
   const infiniteQuery = useInfiniteContent();
   const content = infiniteQuery.data?.pages.flatMap(page => page.items) || [];
   const isLoading = infiniteQuery.isLoading;
   const { data: targetItem, isLoading: isLoadingTarget } = useTargetItem(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
   const { data: relatedContent, isLoading: isLoadingRelated } = useRelatedContent(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
+  const { data: searchResults, isLoading: isLoadingSearch } = useSearchResults(searchResultIds, searchResultTypes);
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
@@ -173,8 +182,8 @@ const Index = () => {
     }
   }, [pathIdFromUrl, navigate]);
 
-  // Show loading for related content when coming from search
-  if ((contentIdFromUrl || quizIdFromUrl || gameIdFromUrl) && isLoadingTarget) {
+  // Show loading for search results or related content when coming from search
+  if ((contentIdFromUrl || quizIdFromUrl || gameIdFromUrl) && (isLoadingTarget || (searchResultIds ? isLoadingSearch : isLoadingRelated))) {
     return (
       <div className="relative h-screen">
         <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
@@ -202,7 +211,7 @@ const Index = () => {
     );
   }
 
-  // Use related content if available (from search), otherwise use regular content feed
+  // Use search results if available, otherwise use related content or regular feed
   const baseFallback = content || mockContent.map(item => ({
     ...item,
     profiles: {
@@ -215,12 +224,14 @@ const Index = () => {
   }));
 
   const contentData = (contentIdFromUrl || quizIdFromUrl || gameIdFromUrl)
-    ? (targetItem
-        ? [
-            targetItem as any,
-            ...(((relatedContent as any[]) || []).filter((i: any) => i.id !== (targetItem as any).id)),
-          ]
-        : baseFallback)
+    ? (searchResults && searchResultIds
+        ? searchResults  // Use search results in original order
+        : (targetItem
+            ? [
+                targetItem as any,
+                ...(((relatedContent as any[]) || []).filter((i: any) => i.id !== (targetItem as any).id)),
+              ]
+            : baseFallback))
     : baseFallback;
 
   return (
