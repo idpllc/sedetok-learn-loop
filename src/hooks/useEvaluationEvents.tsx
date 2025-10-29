@@ -7,6 +7,7 @@ interface EvaluationEvent {
   id: string;
   quiz_id?: string;
   game_id?: string;
+  path_id?: string;
   creator_id: string;
   title: string;
   description?: string;
@@ -23,6 +24,7 @@ interface EvaluationEvent {
 interface CreateEvaluationEventInput {
   quiz_id?: string;
   game_id?: string;
+  path_id?: string;
   title: string;
   description?: string;
   start_date: string;
@@ -32,19 +34,19 @@ interface CreateEvaluationEventInput {
   show_results_immediately?: boolean;
 }
 
-export const useEvaluationEvents = (quizId?: string, gameId?: string, eventId?: string) => {
+export const useEvaluationEvents = (quizId?: string, gameId?: string, pathId?: string, eventId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   // Fetch events created by the user
   const { data: events, isLoading } = useQuery({
-    queryKey: ["evaluation-events", user?.id, quizId, gameId],
+    queryKey: ["evaluation-events", user?.id, quizId, gameId, pathId],
     queryFn: async () => {
       if (!user) return [];
 
       let query = supabase
         .from("quiz_evaluation_events")
-        .select("*, quizzes(title), games(title)")
+        .select("*, quizzes(title), games(title), learning_paths(title)")
         .eq("creator_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -54,6 +56,10 @@ export const useEvaluationEvents = (quizId?: string, gameId?: string, eventId?: 
 
       if (gameId) {
         query = query.eq("game_id", gameId);
+      }
+
+      if (pathId) {
+        query = query.eq("path_id", pathId);
       }
 
       const { data, error } = await query;
@@ -201,12 +207,11 @@ export const useEvaluationEvents = (quizId?: string, gameId?: string, eventId?: 
   return {
     events,
     isLoading,
-    createEvent: createEvent.mutate,
-    updateEvent: updateEvent.mutate,
-    deleteEvent: deleteEvent.mutate,
+    createEvent,
+    updateEvent,
+    deleteEvent,
     getEventByAccessCode,
     eventResults,
     resultsLoading,
-    isCreating: createEvent.isPending,
   };
 };

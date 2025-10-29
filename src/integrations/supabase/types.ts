@@ -1470,6 +1470,7 @@ export type Database = {
           end_date: string
           game_id: string | null
           id: string
+          path_id: string | null
           quiz_id: string | null
           require_authentication: boolean | null
           show_results_immediately: boolean | null
@@ -1486,6 +1487,7 @@ export type Database = {
           end_date: string
           game_id?: string | null
           id?: string
+          path_id?: string | null
           quiz_id?: string | null
           require_authentication?: boolean | null
           show_results_immediately?: boolean | null
@@ -1502,6 +1504,7 @@ export type Database = {
           end_date?: string
           game_id?: string | null
           id?: string
+          path_id?: string | null
           quiz_id?: string | null
           require_authentication?: boolean | null
           show_results_immediately?: boolean | null
@@ -1515,6 +1518,13 @@ export type Database = {
             columns: ["game_id"]
             isOneToOne: false
             referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_evaluation_events_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
             referencedColumns: ["id"]
           },
           {
@@ -1867,6 +1877,66 @@ export type Database = {
             columns: ["quiz_id"]
             isOneToOne: false
             referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_path_results: {
+        Row: {
+          completed_at: string | null
+          completed_items: number
+          completion_percentage: number
+          created_at: string | null
+          evaluation_event_id: string | null
+          id: string
+          passed: boolean | null
+          path_id: string
+          started_at: string | null
+          total_items: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_items?: number
+          completion_percentage?: number
+          created_at?: string | null
+          evaluation_event_id?: string | null
+          id?: string
+          passed?: boolean | null
+          path_id: string
+          started_at?: string | null
+          total_items?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_items?: number
+          completion_percentage?: number
+          created_at?: string | null
+          evaluation_event_id?: string | null
+          id?: string
+          passed?: boolean | null
+          path_id?: string
+          started_at?: string | null
+          total_items?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_path_results_evaluation_event_id_fkey"
+            columns: ["evaluation_event_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_evaluation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_path_results_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
             referencedColumns: ["id"]
           },
         ]
@@ -2243,6 +2313,7 @@ export type Database = {
           end_date: string
           game_id: string
           id: string
+          path_id: string
           quiz_id: string
           require_authentication: boolean
           show_results_immediately: boolean
