@@ -24,7 +24,7 @@ interface CreateUnifiedEvaluationEventProps {
 }
 
 export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChange }: CreateUnifiedEvaluationEventProps) => {
-  const { createEvent, isCreating } = useEvaluationEvents();
+  const { createEvent } = useEvaluationEvents();
   const { quizzes, isLoading: loadingQuizzes } = useQuizzes();
   const [games, setGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
@@ -93,7 +93,7 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
     const startDate = new Date(formData.start_date).toISOString();
     const endDate = new Date(formData.end_date).toISOString();
 
-    createEvent({
+    createEvent.mutate({
       quiz_id: selectedType === "quiz" ? selectedQuizId : undefined,
       game_id: selectedType === "game" ? selectedGameId : undefined,
       ...formData,
@@ -387,8 +387,8 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Creando..." : "Crear Evento"}
+            <Button type="submit" disabled={createEvent.isPending}>
+              {createEvent.isPending ? "Creando..." : "Crear Evento"}
             </Button>
           </div>
         </form>

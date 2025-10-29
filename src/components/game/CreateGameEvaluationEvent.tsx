@@ -54,7 +54,7 @@ interface CreateGameEvaluationEventProps {
 
 export const CreateGameEvaluationEvent = ({ gameId, gameTitle }: CreateGameEvaluationEventProps) => {
   const [open, setOpen] = useState(false);
-  const { createEvent, isCreating } = useEvaluationEvents(undefined, gameId);
+  const { createEvent } = useEvaluationEvents(undefined, gameId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,7 +68,7 @@ export const CreateGameEvaluationEvent = ({ gameId, gameTitle }: CreateGameEvalu
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    createEvent({
+    createEvent.mutate({
       game_id: gameId,
       title: values.title,
       description: values.description,
@@ -271,8 +271,8 @@ export const CreateGameEvaluationEvent = ({ gameId, gameTitle }: CreateGameEvalu
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isCreating}>
-                {isCreating ? "Creando..." : "Crear Evento"}
+              <Button type="submit" disabled={createEvent.isPending}>
+                {createEvent.isPending ? "Creando..." : "Crear Evento"}
               </Button>
             </div>
           </form>

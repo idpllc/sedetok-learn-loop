@@ -215,7 +215,7 @@ export const GameEvaluationEventsList = ({ gameId, status = "all" }: GameEvaluat
             <AlertDialogAction
               onClick={() => {
                 if (eventToDelete) {
-                  deleteEvent(eventToDelete);
+                  deleteEvent.mutate(eventToDelete);
                   setEventToDelete(null);
                 }
               }}

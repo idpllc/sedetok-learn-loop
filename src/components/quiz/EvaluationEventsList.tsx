@@ -218,7 +218,7 @@ export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEvent
             <AlertDialogAction
               onClick={() => {
                 if (deleteEventId) {
-                  deleteEvent(deleteEventId);
+                  deleteEvent.mutate(deleteEventId);
                   setDeleteEventId(null);
                 }
               }}

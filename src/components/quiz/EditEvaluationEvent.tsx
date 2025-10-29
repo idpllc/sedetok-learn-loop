@@ -54,7 +54,7 @@ export const EditEvaluationEvent = ({ event, open, onOpenChange }: EditEvaluatio
     const startDate = formData.start_date ? new Date(formData.start_date).toISOString() : undefined;
     const endDate = formData.end_date ? new Date(formData.end_date).toISOString() : undefined;
 
-    updateEvent({
+    updateEvent.mutate({
       id: event.id,
       quiz_id: formData.quiz_id,
       title: formData.title,

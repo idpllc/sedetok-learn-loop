@@ -21,7 +21,7 @@ interface CreateEvaluationEventProps {
 }
 
 export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEvaluationEventProps) => {
-  const { createEvent, isCreating } = useEvaluationEvents();
+  const { createEvent } = useEvaluationEvents();
   const { quizzes, isLoading: loadingQuizzes } = useQuizzes();
   const [selectedQuizId, setSelectedQuizId] = useState(quizId || "");
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -50,7 +50,7 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
     const startDate = new Date(formData.start_date).toISOString();
     const endDate = new Date(formData.end_date).toISOString();
 
-    createEvent({
+    createEvent.mutate({
       quiz_id: selectedQuizId,
       ...formData,
       start_date: startDate,
@@ -274,8 +274,8 @@ export const CreateEvaluationEvent = ({ quizId, open, onOpenChange }: CreateEval
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isCreating}>
-              {isCreating ? "Creando..." : "Crear Evento"}
+            <Button type="submit" disabled={createEvent.isPending}>
+              {createEvent.isPending ? "Creando..." : "Crear Evento"}
             </Button>
           </div>
         </form>
