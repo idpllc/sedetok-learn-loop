@@ -382,17 +382,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
             )}
           </div>
 
-          {/* Estadísticas rápidas */}
-          <div className="flex gap-3 md:gap-6 pt-2 md:pt-4">
-            <div>
-              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.experience_points || 0}</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground">XP</div>
-            </div>
-            <div>
-              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.following_count || 0}</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground">Siguiendo</div>
-            </div>
-          </div>
+          {/* Se removieron las estadísticas debajo de "Mi Perfil" a solicitud del usuario */}
         </div>
       </div>
     </div>
