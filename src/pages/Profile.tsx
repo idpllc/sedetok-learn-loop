@@ -560,16 +560,6 @@ const Profile = () => {
           </Button>
           <div className="flex-1">
             <h1 className="text-xl font-bold">{isOwnProfile ? "Mi Perfil" : profileData?.username || "Perfil"}</h1>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Eye className="w-4 h-4" />
-                <span>{userContent?.reduce((sum, c) => sum + (c.views_count || 0), 0) || 0}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                <span>{profileData?.followers_count || 0}</span>
-              </div>
-            </div>
           </div>
           <div className="flex items-center gap-2">
             {isOwnProfile ? (
