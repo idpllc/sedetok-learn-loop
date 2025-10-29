@@ -389,16 +389,8 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
               <div className="text-[10px] md:text-xs text-muted-foreground">XP</div>
             </div>
             <div>
-              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.followers_count || 0}</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground">Seguidores</div>
-            </div>
-            <div>
               <div className="text-lg md:text-2xl font-bold text-primary">{profile?.following_count || 0}</div>
               <div className="text-[10px] md:text-xs text-muted-foreground">Siguiendo</div>
-            </div>
-            <div>
-              <div className="text-lg md:text-2xl font-bold text-primary">{profile?.profile_views || 0}</div>
-              <div className="text-[10px] md:text-xs text-muted-foreground">Visitas</div>
             </div>
           </div>
         </div>
