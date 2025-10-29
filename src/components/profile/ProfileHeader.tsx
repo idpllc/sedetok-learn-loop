@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRef, useState } from "react";
 import { FaTiktok } from "react-icons/fa";
 import { SiWhatsapp } from "react-icons/si";
+import { RequestVerification } from "@/components/profile/RequestVerification";
 import {
   Dialog,
   DialogContent,
@@ -328,18 +329,23 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
 
         {/* Nombre y título */}
         <div className="space-y-1 md:space-y-2">
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1">
               <h1 className="text-xl md:text-3xl font-bold">{profile?.full_name || profile?.username}</h1>
               {profile?.bio && (
                 <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{profile.bio}</p>
               )}
             </div>
-            {profile?.is_verified && (
-              <Badge variant="default" className="ml-2 text-xs">
-                ✓ Verificado
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {isOwnProfile && (
+                <RequestVerification isVerified={profile?.is_verified || false} />
+              )}
+              {!isOwnProfile && profile?.is_verified && (
+                <Badge variant="default" className="text-xs">
+                  ✓ Verificado
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Información básica */}
