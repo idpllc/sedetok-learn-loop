@@ -425,7 +425,6 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           evaluation_criteria: question.evaluation_criteria,
           points: pointsPerQuestion,
           order_index: i,
-          correct_answer: 0,
           options: question.options.map((opt, idx) => ({
             option_text: opt.option_text,
             is_correct: opt.is_correct,
