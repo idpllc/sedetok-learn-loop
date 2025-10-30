@@ -100,8 +100,25 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   }, [currentPlayer?.characters_collected, opponent?.characters_collected]);
 
   const handleCategorySelected = async (category: any) => {
+    console.log('🎯 Categoría seleccionada:', {
+      id: category.id,
+      name: category.name,
+      icon: category.icon
+    });
+    
     setCurrentCategory(category);
     const qs = await fetchQuestions(category.id, match?.level || 'libre');
+    
+    console.log('📝 Preguntas obtenidas:', {
+      cantidad: qs.length,
+      categoryId: category.id,
+      primerasPreguntasCategoryIds: qs.slice(0, 3).map(q => ({ 
+        id: q.id, 
+        category_id: q.category_id,
+        question: q.question_text.substring(0, 50) 
+      }))
+    });
+    
     setQuestions(qs);
     setCurrentQuestionIndex(0);
     setTimeLeft(20);
