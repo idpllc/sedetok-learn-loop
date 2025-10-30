@@ -163,12 +163,12 @@ export default function TriviaGame() {
                   <Button
                     key={level.value}
                     variant={selectedLevel === level.value ? "default" : "outline"}
-                    className="h-auto py-6 flex flex-col gap-2"
+                    className="h-auto py-4 px-3 flex flex-col gap-1.5 text-center"
                     onClick={() => setSelectedLevel(level.value)}
                   >
                     <span className="text-3xl">{level.label.split(" ")[0]}</span>
-                    <span className="text-sm font-semibold">{level.label.split(" ").slice(1).join(" ")}</span>
-                    <span className="text-xs text-muted-foreground">{level.description}</span>
+                    <span className="text-xs font-semibold leading-tight">{level.label.split(" ").slice(1).join(" ")}</span>
+                    <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{level.description}</span>
                   </Button>
                 ))}
               </div>
