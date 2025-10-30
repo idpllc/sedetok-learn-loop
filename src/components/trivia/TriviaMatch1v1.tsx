@@ -256,6 +256,32 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       winner_id: user!.id,
       finished_at: new Date().toISOString()
     });
+    
+    // Update user stats
+    if (currentPlayer) {
+      const { data: stats } = await supabase
+        .from('trivia_user_stats')
+        .select('*')
+        .eq('user_id', user!.id)
+        .single();
+      
+      if (stats) {
+        await supabase
+          .from('trivia_user_stats')
+          .update({
+            total_matches: (stats.total_matches || 0) + 1
+          })
+          .eq('user_id', user!.id);
+      } else {
+        await supabase
+          .from('trivia_user_stats')
+          .insert({
+            user_id: user!.id,
+            total_matches: 1
+          });
+      }
+    }
+    
     setPhase('finished');
     
     confetti({
@@ -265,7 +291,32 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     });
   };
 
-  const handleLoss = () => {
+  const handleLoss = async () => {
+    // Update user stats for loss
+    if (currentPlayer) {
+      const { data: stats } = await supabase
+        .from('trivia_user_stats')
+        .select('*')
+        .eq('user_id', user!.id)
+        .single();
+      
+      if (stats) {
+        await supabase
+          .from('trivia_user_stats')
+          .update({
+            total_matches: (stats.total_matches || 0) + 1
+          })
+          .eq('user_id', user!.id);
+      } else {
+        await supabase
+          .from('trivia_user_stats')
+          .insert({
+            user_id: user!.id,
+            total_matches: 1
+          });
+      }
+    }
+    
     setPhase('finished');
   };
 

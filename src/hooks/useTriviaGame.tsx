@@ -234,7 +234,10 @@ export const useTriviaGame = () => {
 
 // Hook for rankings
 export const useTriviaRankings = () => {
-  const { data: globalRanking, isLoading } = useQuery({
+  const { user } = useAuth();
+
+  // Global Ranking
+  const { data: globalRanking, isLoading: loadingGlobal } = useQuery({
     queryKey: ["trivia-rankings", "global"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -244,7 +247,8 @@ export const useTriviaRankings = () => {
           profiles:user_id (
             username,
             full_name,
-            avatar_url
+            avatar_url,
+            institution
           )
         `)
         .order("total_points", { ascending: false })
@@ -255,7 +259,102 @@ export const useTriviaRankings = () => {
     },
   });
 
-  return { globalRanking, isLoading };
+  // Institutional Ranking - Get stats for users in the same institution
+  const { data: institutionalRanking, isLoading: loadingInstitutional } = useQuery({
+    queryKey: ["trivia-rankings", "institutional", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+
+      // First get current user's institution
+      const { data: userProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("institution")
+        .eq("id", user.id)
+        .single();
+      
+      if (profileError || !userProfile?.institution) return null;
+
+      // Then get all users from the same institution
+      const { data: institutionUsers, error: usersError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("institution", userProfile.institution);
+
+      if (usersError || !institutionUsers) return null;
+
+      const userIds = institutionUsers.map(u => u.id);
+
+      // Get stats for those users
+      const { data, error } = await supabase
+        .from("trivia_user_stats")
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            full_name,
+            avatar_url,
+            institution
+          )
+        `)
+        .in("user_id", userIds)
+        .order("total_points", { ascending: false })
+        .limit(100);
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  // 1v1 Ranking - based on wins
+  const { data: matchRanking, isLoading: loadingMatches } = useQuery({
+    queryKey: ["trivia-rankings", "1v1"],
+    queryFn: async () => {
+      // Get win counts per user
+      const { data, error } = await supabase
+        .from("trivia_1v1_matches")
+        .select(`
+          winner_id,
+          profiles:winner_id (
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq("status", "finished")
+        .not("winner_id", "is", null);
+      
+      if (error) throw error;
+
+      // Count wins per user
+      const winCounts = data.reduce((acc: any, match) => {
+        const winnerId = match.winner_id;
+        if (!acc[winnerId]) {
+          acc[winnerId] = {
+            user_id: winnerId,
+            wins: 0,
+            profiles: match.profiles
+          };
+        }
+        acc[winnerId].wins += 1;
+        return acc;
+      }, {});
+
+      // Convert to array and sort by wins
+      const ranking = Object.values(winCounts)
+        .sort((a: any, b: any) => b.wins - a.wins)
+        .slice(0, 100);
+      
+      return ranking;
+    },
+  });
+
+  return { 
+    globalRanking, 
+    institutionalRanking,
+    matchRanking,
+    isLoading: loadingGlobal || loadingInstitutional || loadingMatches 
+  };
 };
 
 // Hook for user achievements
