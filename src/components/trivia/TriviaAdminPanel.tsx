@@ -17,6 +17,17 @@ export const TriviaAdminPanel = () => {
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedLevel, setSelectedLevel] = useState<string>("all");
+  
+  const levels = [
+    { value: "preescolar", label: "Preescolar" },
+    { value: "primaria", label: "Primaria" },
+    { value: "secundaria", label: "Secundaria" },
+    { value: "universidad", label: "Universidad" },
+    { value: "libre", label: "Libre" },
+  ];
+
   const [newQuestion, setNewQuestion] = useState({
     category_id: "",
     question_text: "",
@@ -24,6 +35,7 @@ export const TriviaAdminPanel = () => {
     correct_answer: 0,
     difficulty: "medium",
     points: 100,
+    level: "libre",
   });
 
   // Fetch categories
@@ -41,9 +53,9 @@ export const TriviaAdminPanel = () => {
 
   // Fetch questions
   const { data: questions, isLoading } = useQuery({
-    queryKey: ["trivia-admin-questions"],
+    queryKey: ["trivia-admin-questions", selectedCategory, selectedLevel],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("trivia_questions")
         .select(`
           *,
@@ -54,6 +66,16 @@ export const TriviaAdminPanel = () => {
           )
         `)
         .order("created_at", { ascending: false });
+
+      if (selectedCategory !== "all") {
+        query = query.eq("category_id", selectedCategory);
+      }
+
+      if (selectedLevel !== "all") {
+        query = query.eq("level", selectedLevel);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -101,6 +123,8 @@ export const TriviaAdminPanel = () => {
   });
 
   // Generate questions with AI
+  const [aiLevel, setAiLevel] = useState("libre");
+
   const generateQuestionsWithAI = async () => {
     if (!aiPrompt.trim() || !newQuestion.category_id) {
       toast({ title: "Error", description: "Selecciona una categoría y describe el tema", variant: "destructive" });
@@ -114,6 +138,7 @@ export const TriviaAdminPanel = () => {
           category_id: newQuestion.category_id,
           prompt: aiPrompt,
           count: 5,
+          level: aiLevel,
         },
       });
 
@@ -126,6 +151,7 @@ export const TriviaAdminPanel = () => {
           ...q,
           category_id: newQuestion.category_id,
           created_by: user?.id,
+          level: aiLevel,
         }));
 
         const { error: insertError } = await supabase
@@ -160,11 +186,56 @@ export const TriviaAdminPanel = () => {
       correct_answer: 0,
       difficulty: "medium",
       points: 100,
+      level: "libre",
     });
   };
 
   return (
     <div className="space-y-6">
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filtros</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Categoría</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas las categorías" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.icon} {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>Nivel</Label>
+              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los niveles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {levels.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>
+                      {level.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* AI Generator */}
       <Card>
         <CardHeader>
@@ -187,6 +258,22 @@ export const TriviaAdminPanel = () => {
                 {categories?.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.icon} {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Nivel Educativo</Label>
+            <Select value={aiLevel} onValueChange={setAiLevel}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {levels.map((level) => (
+                  <SelectItem key={level.value} value={level.value}>
+                    {level.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -245,9 +332,9 @@ export const TriviaAdminPanel = () => {
                       <span style={{ color: category?.color }}>
                         {category?.icon} {category?.name}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        • {q.difficulty} • {q.points} pts
-                      </span>
+                    <span className="text-xs text-muted-foreground">
+                      • {q.difficulty} • {q.points} pts • {levels.find(l => l.value === q.level)?.label || q.level}
+                    </span>
                     </div>
                     <p className="font-medium">{q.question_text}</p>
                     <div className="mt-2 grid grid-cols-2 gap-2 text-sm">

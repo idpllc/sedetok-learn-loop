@@ -1915,6 +1915,7 @@ export type Database = {
           difficulty: string
           id: string
           is_active: boolean | null
+          level: string
           options: Json
           points: number
           question_text: string
@@ -1928,6 +1929,7 @@ export type Database = {
           difficulty?: string
           id?: string
           is_active?: boolean | null
+          level?: string
           options: Json
           points?: number
           question_text: string
@@ -1941,6 +1943,7 @@ export type Database = {
           difficulty?: string
           id?: string
           is_active?: boolean | null
+          level?: string
           options?: Json
           points?: number
           question_text?: string

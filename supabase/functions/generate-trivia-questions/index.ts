@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { category_id, prompt, count = 5 } = await req.json();
+    const { category_id, prompt, count = 5, level = "libre" } = await req.json();
 
     if (!category_id || !prompt) {
       return new Response(
@@ -20,6 +20,14 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const levelDescriptions: Record<string, string> = {
+      preescolar: "nivel preescolar (3-5 años), preguntas muy simples y con vocabulario básico",
+      primaria: "nivel primaria (6-11 años), preguntas apropiadas para niños con conceptos básicos",
+      secundaria: "nivel secundaria (12-17 años), preguntas de dificultad media con conceptos más complejos",
+      universidad: "nivel universitario (18+ años), preguntas avanzadas que requieren conocimiento profundo",
+      libre: "nivel mixto, variedad de dificultades para todos los públicos"
+    };
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -49,14 +57,21 @@ serve(async (req) => {
 
     const systemPrompt = `Eres un experto en crear preguntas de trivia educativas y entretenidas.
 Categoría: ${category.name} (${category.description})
+Nivel educativo: ${levelDescriptions[level]}
 
 INSTRUCCIONES ESTRICTAS:
 - Genera EXACTAMENTE ${count} preguntas sobre: ${prompt}
+- Las preguntas deben estar adaptadas al ${levelDescriptions[level]}
 - Cada pregunta debe tener EXACTAMENTE 4 opciones de respuesta
 - Solo UNA opción debe ser correcta
-- Las preguntas deben ser claras, precisas y apropiadas para la categoría
-- Incluye una mezcla de dificultades (fácil, medio, difícil)
-- Las respuestas incorrectas deben ser plausibles pero claramente distinguibles`;
+- Las preguntas deben ser claras, precisas y apropiadas para la categoría Y el nivel educativo
+- Ajusta el vocabulario, complejidad y profundidad según el nivel
+- Las respuestas incorrectas deben ser plausibles pero claramente distinguibles
+- Para nivel preescolar: usa vocabulario simple, conceptos básicos, ejemplos cotidianos
+- Para nivel primaria: conceptos fundamentales, lenguaje claro y directo
+- Para nivel secundaria: mayor profundidad, conceptos más abstractos
+- Para nivel universidad: conocimiento especializado, terminología técnica
+- Para nivel libre: variedad de dificultades mezcladas`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

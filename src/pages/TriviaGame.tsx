@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useTriviaGame, TriviaCategory, TriviaQuestion } from "@/hooks/useTriviaGame";
 import { TriviaWheel } from "@/components/trivia/TriviaWheel";
 import { TriviaGameplay } from "@/components/trivia/TriviaGameplay";
@@ -23,8 +23,17 @@ export default function TriviaGame() {
   const { isSuperAdmin } = useSuperAdmin();
   const [screen, setScreen] = useState<GameScreen>("menu");
   const [selectedCategory, setSelectedCategory] = useState<TriviaCategory | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<string>("libre");
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [gameResult, setGameResult] = useState<any>(null);
+
+  const levels = [
+    { value: "preescolar", label: "🎨 Preescolar", description: "Preguntas básicas y divertidas" },
+    { value: "primaria", label: "📚 Primaria", description: "Conocimientos elementales" },
+    { value: "secundaria", label: "🎓 Secundaria", description: "Retos para estudiantes" },
+    { value: "universidad", label: "🏛️ Universidad", description: "Desafíos avanzados" },
+    { value: "libre", label: "🌟 Libre", description: "Todos los niveles" },
+  ];
   
   const { categories, loadingCategories, userStats, loadingStats, fetchQuestionsByCategory, saveMatch } = useTriviaGame();
 
@@ -35,9 +44,9 @@ export default function TriviaGame() {
   const handleCategorySelected = async (category: TriviaCategory) => {
     setSelectedCategory(category);
     try {
-      const qs = await fetchQuestionsByCategory(category.id, 10);
+      const qs = await fetchQuestionsByCategory(category.id, selectedLevel);
       if (qs.length === 0) {
-        alert("No hay preguntas disponibles en esta categoría");
+        alert("No hay preguntas disponibles en esta categoría para este nivel");
         setScreen("menu");
         return;
       }
@@ -139,6 +148,32 @@ export default function TriviaGame() {
               ¡Pon a prueba tus conocimientos!
             </p>
           </motion.div>
+
+          {/* Level Selection */}
+          <Card className="bg-card/50 backdrop-blur">
+            <CardHeader>
+              <div className="text-center">
+                <h3 className="text-2xl font-bold">Selecciona tu Nivel</h3>
+                <p className="text-muted-foreground">Elige el nivel de dificultad de las preguntas</p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {levels.map((level) => (
+                  <Button
+                    key={level.value}
+                    variant={selectedLevel === level.value ? "default" : "outline"}
+                    className="h-auto py-6 flex flex-col gap-2"
+                    onClick={() => setSelectedLevel(level.value)}
+                  >
+                    <span className="text-3xl">{level.label.split(" ")[0]}</span>
+                    <span className="text-sm font-semibold">{level.label.split(" ").slice(1).join(" ")}</span>
+                    <span className="text-xs text-muted-foreground">{level.description}</span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* User Stats Card */}
           {userStats && (

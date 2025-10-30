@@ -82,19 +82,26 @@ export const useTriviaGame = () => {
   });
 
   // Fetch questions by category
-  const fetchQuestionsByCategory = async (categoryId: string, limit: number = 10) => {
-    const { data, error } = await supabase
+  const fetchQuestionsByCategory = async (categoryId: string, level: string = "libre") => {
+    let query = supabase
       .from("trivia_questions")
       .select("*")
       .eq("category_id", categoryId)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+      .eq("is_active", true);
+
+    if (level !== "libre") {
+      query = query.eq("level", level);
+    }
+
+    const { data, error } = await query
+      .order("created_at", { ascending: false })
+      .limit(10);
     
     if (error) throw error;
     
-    // Shuffle and limit questions
+    // Shuffle questions
     const shuffled = (data as TriviaQuestion[]).sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, limit);
+    return shuffled;
   };
 
   // Save match result
