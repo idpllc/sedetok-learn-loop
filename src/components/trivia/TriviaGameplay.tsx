@@ -203,14 +203,16 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
                       key={index}
                       onClick={() => handleAnswer(index)}
                       disabled={showFeedback || selectedAnswer !== null}
-                      variant={showCorrect ? "default" : showIncorrect ? "destructive" : "secondary"}
-                      className={`h-auto min-h-[80px] text-base font-medium whitespace-normal p-4 transition-all ${
-                        showCorrect ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' : 
-                        showIncorrect ? 'bg-red-500 hover:bg-red-600 text-white border-red-600' : 
-                        'hover:scale-105'
+                      variant="outline"
+                      className={`h-auto min-h-[80px] text-base font-semibold whitespace-normal p-4 transition-all ${
+                        showCorrect ? '!bg-green-500 hover:!bg-green-600 !text-white !border-green-600' : 
+                        showIncorrect ? '!bg-red-500 hover:!bg-red-600 !text-white !border-red-600' : 
+                        'bg-card text-foreground border-2 hover:scale-105'
                       }`}
                     >
-                      {option.option_text}
+                      <span className="block w-full text-center">
+                        {option.option_text || `Opción ${index + 1}`}
+                      </span>
                     </Button>
                   );
                 })}

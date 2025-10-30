@@ -344,7 +344,8 @@ export function useTriviaMatch(matchId?: string) {
     let query = supabase
       .from('trivia_questions')
       .select('*')
-      .eq('category_id', categoryId);
+      .eq('category_id', categoryId)
+      .eq('is_active', true);
 
     if (level !== 'libre') {
       query = query.eq('level', level);
@@ -353,10 +354,17 @@ export function useTriviaMatch(matchId?: string) {
     const { data, error } = await query.limit(10);
     
     if (error) throw error;
-    return (data || []).map(q => ({
-      ...q,
-      options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options
-    })) as TriviaQuestion[];
+    
+    console.log('Trivia questions fetched:', data);
+    
+    return (data || []).map(q => {
+      const options = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+      console.log('Question options:', q.question_text, options);
+      return {
+        ...q,
+        options: options
+      };
+    }) as TriviaQuestion[];
   };
 
   return {

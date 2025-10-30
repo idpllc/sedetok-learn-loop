@@ -199,23 +199,18 @@ export function TriviaCharacterRound({
                     <Button
                       key={index}
                       size="lg"
-                      variant={
-                        selectedAnswer === null
-                          ? "secondary"
-                          : showCorrect
-                          ? "default"
-                          : showIncorrect
-                          ? "destructive"
-                          : "secondary"
-                      }
+                      variant="outline"
                       onClick={() => handleAnswer(index)}
                       disabled={selectedAnswer !== null}
-                      className={`h-auto py-4 px-6 text-lg whitespace-normal ${
-                        showCorrect ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' : 
-                        showIncorrect ? 'bg-red-500 hover:bg-red-600 text-white border-red-600' : ''
+                      className={`h-auto py-4 px-6 text-lg whitespace-normal font-semibold ${
+                        showCorrect ? '!bg-green-500 hover:!bg-green-600 !text-white !border-green-600' : 
+                        showIncorrect ? '!bg-red-500 hover:!bg-red-600 !text-white !border-red-600' : 
+                        'bg-card text-foreground border-2'
                       }`}
                     >
-                      {option.option_text}
+                      <span className="block w-full text-center">
+                        {option.option_text || `Opción ${index + 1}`}
+                      </span>
                     </Button>
                   );
                 })}
