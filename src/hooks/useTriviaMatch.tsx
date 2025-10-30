@@ -192,93 +192,19 @@ export function useTriviaMatch(matchId?: string) {
     }
   });
 
-  // Join random match
+  // Join random match via backend function to avoid RLS issues
   const joinRandomMatch = useMutation({
     mutationFn: async (level: string) => {
       if (!user) throw new Error("User not authenticated");
-      
-      // First, try to find matches with status 'waiting' (waiting for second player)
-      const { data: waitingMatches, error: waitingError } = await supabase
-        .from('trivia_1v1_matches')
-        .select('id, match_code, level, status')
-        .eq('status', 'waiting')
-        .eq('level', level)
-        .order('created_at', { ascending: true })
-        .limit(10);
-      
-      if (waitingError) throw waitingError;
 
-      // Try to join a waiting match
-      if (waitingMatches && waitingMatches.length > 0) {
-        for (const match of waitingMatches) {
-          const { data: players } = await supabase
-            .from('trivia_1v1_players')
-            .select('user_id')
-            .eq('match_id', match.id);
+      const { data, error } = await supabase.functions.invoke('join-random-1v1', {
+        body: { level }
+      });
+      if (error) throw error;
 
-          // Found a match with only 1 player that's not us
-          if (players && players.length === 1 && players[0].user_id !== user.id) {
-            // Join this match
-            const { error: playerError } = await supabase
-              .from('trivia_1v1_players')
-              .insert({
-                match_id: match.id,
-                user_id: user.id,
-                player_number: 2
-              });
-            
-            if (playerError) {
-              console.error('Error joining match:', playerError);
-              continue; // Try next match if this one fails
-            }
-
-            // Get first player ID
-            const firstPlayer = players[0];
-
-            // Update match to active and set first player's turn
-            await supabase
-              .from('trivia_1v1_matches')
-              .update({
-                status: 'active',
-                started_at: new Date().toISOString(),
-                current_player_id: firstPlayer?.user_id || null
-              })
-              .eq('id', match.id);
-
-            return { id: match.id, match_code: match.match_code, status: 'active' } as TriviaMatch;
-          }
-        }
-      }
-
-      // No available match found, create a new one with 'waiting' status
-      const matchCode = generateMatchCode();
-      
-      const { data: newMatch, error: matchError } = await supabase
-        .from('trivia_1v1_matches')
-        .insert({
-          match_code: matchCode,
-          level,
-          status: 'waiting',
-          current_player_id: user.id
-        })
-        .select()
-        .single();
-      
-      if (matchError) throw matchError;
-
-      // Add player 1
-      const { error: playerError } = await supabase
-        .from('trivia_1v1_players')
-        .insert({
-          match_id: newMatch.id,
-          user_id: user.id,
-          player_number: 1
-        });
-      
-      if (playerError) throw playerError;
-
-      // Return match in waiting status
-      return newMatch as TriviaMatch;
+      const match = data?.match;
+      if (!match?.id) throw new Error('No se pudo iniciar la partida');
+      return match as TriviaMatch;
     }
   });
 
