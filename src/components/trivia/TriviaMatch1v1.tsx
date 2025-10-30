@@ -36,6 +36,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const [timeLeft, setTimeLeft] = useState(20);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [turnEnded, setTurnEnded] = useState(false);
 
   const { data: categories } = useQuery({
     queryKey: ['trivia-categories'],
@@ -51,9 +52,16 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
 
   const currentPlayer = players?.find(p => p.user_id === user?.id);
   const opponent = players?.find(p => p.user_id !== user?.id);
-  const isMyTurn = match?.current_player_id === user?.id;
+  const isMyTurn = match?.current_player_id === user?.id && !turnEnded;
   const currentQuestion = questions[currentQuestionIndex];
   const waitingForOpponent = !opponent;
+
+  // Reset turnEnded when it actually becomes our turn
+  useEffect(() => {
+    if (match?.current_player_id === user?.id) {
+      setTurnEnded(false);
+    }
+  }, [match?.current_player_id, user?.id]);
 
   // Timer
   useEffect(() => {
@@ -121,6 +129,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         setCurrentQuestionIndex(0);
         setQuestions([]);
         setCurrentCategory(null);
+        setTurnEnded(true); // Block interaction immediately
         changeTurn();
       } else if (newStreak === 3) {
         // Won the right to character round after 3 correct answers (global streak)
@@ -143,6 +152,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     setCurrentQuestionIndex(0);
     setQuestions([]);
     setCurrentCategory(null);
+    setTurnEnded(true); // Block interaction immediately
     changeTurn();
   };
 
