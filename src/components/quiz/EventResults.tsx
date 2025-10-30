@@ -16,6 +16,41 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Conversion functions
+const convertTo5Scale = (percentage: number): string => {
+  if (percentage < 20) return "0.0";
+  if (percentage < 40) return "1.0 - 2.0";
+  if (percentage < 60) return "2.0 - 3.0";
+  if (percentage < 80) return "3.0 - 4.0";
+  return "4.0 - 5.0";
+};
+
+const convertTo10Scale = (percentage: number): string => {
+  return (percentage / 10).toFixed(1);
+};
+
+const convertToQualitative = (percentage: number): string => {
+  if (percentage < 20) return "Deficiente";
+  if (percentage < 40) return "Insuficiente";
+  if (percentage < 60) return "Aceptable";
+  if (percentage < 80) return "Sobresaliente";
+  return "Excelente";
+};
+
+const convertToPerformance = (percentage: number): string => {
+  if (percentage < 20) return "Sin nivel";
+  if (percentage < 40) return "Bajo";
+  if (percentage < 60) return "Básico";
+  if (percentage < 80) return "Alto";
+  return "Superior";
+};
+
+const getQualitativeBadgeVariant = (percentage: number): "default" | "destructive" | "secondary" => {
+  if (percentage < 40) return "destructive";
+  if (percentage < 70) return "secondary";
+  return "default";
+};
+
 interface EventResultsProps {
   results: any[];
   eventTitle: string;
@@ -99,18 +134,23 @@ export const EventResults = ({ results, eventTitle, loading, quizId, gameId, eve
       </div>
 
       <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Documento</TableHead>
-              <TableHead className="text-center">Puntaje</TableHead>
-              <TableHead className="text-center">Estado</TableHead>
-              <TableHead className="text-center">Tiempo</TableHead>
-              <TableHead>Fecha</TableHead>
-              <TableHead className="text-center">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Documento</TableHead>
+                <TableHead className="text-center">Puntaje (0-100)</TableHead>
+                <TableHead className="text-center">Escala 0-5</TableHead>
+                <TableHead className="text-center">Escala 0-10</TableHead>
+                <TableHead className="text-center">Cualitativa</TableHead>
+                <TableHead className="text-center">Desempeño</TableHead>
+                <TableHead className="text-center">Estado</TableHead>
+                <TableHead className="text-center">Tiempo</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead className="text-center">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {results.map((result) => {
               const percentage = (result.score / result.max_score) * 100;
@@ -142,6 +182,22 @@ export const EventResults = ({ results, eventTitle, loading, quizId, gameId, eve
                         {percentage.toFixed(0)}%
                       </Badge>
                     </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-medium">{convertTo5Scale(percentage)}</span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="font-medium">{convertTo10Scale(percentage)}</span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={getQualitativeBadgeVariant(percentage)}>
+                      {convertToQualitative(percentage)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant={getQualitativeBadgeVariant(percentage)}>
+                      {convertToPerformance(percentage)}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-center">
                     {result.passed ? (
@@ -186,6 +242,7 @@ export const EventResults = ({ results, eventTitle, loading, quizId, gameId, eve
             })}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       {selectedUserId && (

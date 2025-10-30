@@ -31,8 +31,8 @@ const QuizEvaluations = () => {
   // Mostrar resultados si hay eventId
   if (eventId) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <div className="container mx-auto py-8 px-4 max-w-full">
+        <div className="space-y-6">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
