@@ -55,16 +55,8 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
     setSearchingRandom(true);
     try {
       const match = await joinRandomMatch.mutateAsync(selectedLevel);
-      
-      // If match is waiting, set it as created match and wait for opponent
-      if (match.status === 'waiting') {
-        setCreatedMatch(match);
-        toast.success("Esperando oponente...");
-      } else {
-        // If match is active, start immediately
-        toast.success("¡Partida encontrada!");
-        onMatchStart(match.id);
-      }
+      toast.success("¡Comenzando partida!");
+      onMatchStart(match.id);
     } catch (error: any) {
       toast.error(error.message || "Error al buscar partida");
       setSearchingRandom(false);

@@ -50,6 +50,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const opponent = players?.find(p => p.user_id !== user?.id);
   const isMyTurn = match?.current_player_id === user?.id;
   const currentQuestion = questions[currentQuestionIndex];
+  const waitingForOpponent = !opponent;
 
   // Timer
   useEffect(() => {
@@ -133,7 +134,8 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   };
 
   const changeTurn = async () => {
-    const nextPlayerId = opponent?.user_id;
+    // If there's no opponent yet, stay on current player's turn
+    const nextPlayerId = opponent?.user_id || user?.id;
     await updateMatch.mutateAsync({
       current_player_id: nextPlayerId,
       current_question_number: 0
@@ -365,19 +367,31 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     );
   }
 
-  // Waiting for turn
+  // Waiting for turn or opponent
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <PlayerStats 
-        currentPlayer={currentPlayer!} 
-        opponent={opponent!} 
-        categories={categories}
-      />
+      {currentPlayer && opponent && (
+        <PlayerStats 
+          currentPlayer={currentPlayer} 
+          opponent={opponent} 
+          categories={categories}
+        />
+      )}
       <Card className="max-w-md w-full">
         <CardContent className="pt-8 text-center space-y-4">
-          <div className="text-6xl mb-4">⏳</div>
-          <h2 className="text-2xl font-bold">Turno de {opponent?.profiles?.username}</h2>
-          <p className="text-muted-foreground">Espera tu turno...</p>
+          <div className="text-6xl mb-4">
+            {waitingForOpponent ? "🔍" : "⏳"}
+          </div>
+          <h2 className="text-2xl font-bold">
+            {waitingForOpponent 
+              ? "Buscando oponente..." 
+              : `Turno de ${opponent?.profiles?.username}`}
+          </h2>
+          <p className="text-muted-foreground">
+            {waitingForOpponent 
+              ? "Otro jugador se unirá pronto" 
+              : "Espera tu turno..."}
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -390,7 +404,7 @@ function PlayerStats({
   categories 
 }: { 
   currentPlayer: TriviaMatchPlayer; 
-  opponent: TriviaMatchPlayer;
+  opponent: TriviaMatchPlayer | undefined;
   categories: any[];
 }) {
   return (
@@ -432,33 +446,43 @@ function PlayerStats({
         {/* Opponent */}
         <Card className="bg-secondary/5">
           <CardContent className="pt-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar>
-                <AvatarImage src={opponent.profiles?.avatar_url || undefined} />
-                <AvatarFallback>
-                  {opponent.profiles?.username?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold">{opponent.profiles?.username}</p>
-                <p className="text-sm text-muted-foreground">Oponente</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {categories?.map(cat => (
-                <div
-                  key={cat.id}
-                  className={`text-2xl ${
-                    opponent.characters_collected.includes(cat.id)
-                      ? 'opacity-100'
-                      : 'opacity-20 grayscale'
-                  }`}
-                  title={cat.name}
-                >
-                  {cat.icon}
+            {opponent ? (
+              <>
+                <div className="flex items-center gap-3 mb-3">
+                  <Avatar>
+                    <AvatarImage src={opponent.profiles?.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {opponent.profiles?.username?.[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">{opponent.profiles?.username}</p>
+                    <p className="text-sm text-muted-foreground">Oponente</p>
+                  </div>
                 </div>
-              ))}
-            </div>
+                <div className="flex flex-wrap gap-1">
+                  {categories?.map(cat => (
+                    <div
+                      key={cat.id}
+                      className={`text-2xl ${
+                        opponent.characters_collected.includes(cat.id)
+                          ? 'opacity-100'
+                          : 'opacity-20 grayscale'
+                      }`}
+                      title={cat.name}
+                    >
+                      {cat.icon}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-sm text-muted-foreground text-center">
+                  Esperando oponente...
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

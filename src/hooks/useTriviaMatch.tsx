@@ -187,11 +187,11 @@ export function useTriviaMatch(matchId?: string) {
     mutationFn: async (level: string) => {
       if (!user) throw new Error("User not authenticated");
       
-      // Find available matches
+      // Find available matches (both waiting and active with 1 player)
       const { data: availableMatches, error: searchError } = await supabase
         .from('trivia_1v1_matches')
-        .select('id, match_code, level')
-        .eq('status', 'waiting')
+        .select('id, match_code, level, status')
+        .in('status', ['waiting', 'active'])
         .eq('level', level)
         .order('created_at', { ascending: true });
       
@@ -218,7 +218,7 @@ export function useTriviaMatch(matchId?: string) {
             
             if (playerError) continue; // Try next match if this one fails
 
-            // Start the match
+            // Make sure match is active
             await supabase
               .from('trivia_1v1_matches')
               .update({
@@ -227,19 +227,21 @@ export function useTriviaMatch(matchId?: string) {
               })
               .eq('id', match.id);
 
-            return { id: match.id, match_code: match.match_code } as TriviaMatch;
+            return { id: match.id, match_code: match.match_code, status: 'active' } as TriviaMatch;
           }
         }
       }
 
-      // No available match found, create a new one
+      // No available match found, create a new one and start it immediately
       const matchCode = generateMatchCode();
       
       const { data: newMatch, error: matchError } = await supabase
         .from('trivia_1v1_matches')
         .insert({
           match_code: matchCode,
-          level
+          level,
+          status: 'active',
+          started_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -255,6 +257,14 @@ export function useTriviaMatch(matchId?: string) {
         });
       
       if (playerError) throw playerError;
+
+      // Set the first player as the current player
+      await supabase
+        .from('trivia_1v1_matches')
+        .update({
+          current_player_id: user.id
+        })
+        .eq('id', newMatch.id);
 
       return newMatch as TriviaMatch;
     }
