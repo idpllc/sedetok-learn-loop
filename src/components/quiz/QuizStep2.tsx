@@ -12,7 +12,7 @@ import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
 
 export interface QuizQuestion {
   id: string;
-  question_type: "multiple_choice" | "true_false" | "short_answer";
+  question_type: "multiple_choice" | "true_false" | "short_answer" | "open_ended";
   question_text: string;
   image_url?: string;
   video_url?: string;
@@ -21,6 +21,8 @@ export interface QuizQuestion {
   feedback_correct?: string;
   feedback_incorrect?: string;
   comparison_mode?: "exact" | "flexible";
+  expected_answer?: string;
+  evaluation_criteria?: string;
   points: number;
   options: Array<{
     id: string;

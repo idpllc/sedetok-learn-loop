@@ -419,6 +419,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           feedback_correct: question.feedback_correct,
           feedback_incorrect: question.feedback_incorrect,
           comparison_mode: question.comparison_mode || 'exact',
+          expected_answer: question.expected_answer,
+          evaluation_criteria: question.evaluation_criteria,
           points: pointsPerQuestion,
           order_index: i,
           correct_answer: 0,

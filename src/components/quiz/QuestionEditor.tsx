@@ -81,6 +81,8 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
         newOptions = [
           { id: "answer-1", option_text: "", is_correct: true, order_index: 0 },
         ];
+      } else if (value === "open_ended") {
+        newOptions = []; // No options needed for open-ended
       } else if (value === "multiple_choice") {
         newOptions = [
           { id: `opt-1`, option_text: "", is_correct: false, order_index: 0 },
@@ -170,6 +172,7 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
             <SelectItem value="multiple_choice">Selección múltiple</SelectItem>
             <SelectItem value="true_false">Verdadero / Falso</SelectItem>
             <SelectItem value="short_answer">Respuesta corta</SelectItem>
+            <SelectItem value="open_ended">Pregunta abierta</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -388,6 +391,55 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
               className="bg-background"
             />
           </Card>
+        </div>
+      )}
+
+      {question.question_type === "open_ended" && (
+        <div className="space-y-4">
+          <div>
+            <Label>Respuesta esperada (opcional pero recomendada para evaluación con IA)</Label>
+            <Textarea
+              value={question.expected_answer || ""}
+              onChange={(e) => updateField("expected_answer", e.target.value)}
+              placeholder="Escribe una respuesta modelo o los puntos clave que debería incluir la respuesta del estudiante"
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Esta respuesta ayudará a la IA a evaluar las respuestas de los estudiantes
+            </p>
+          </div>
+
+          <div>
+            <Label>Criterios de evaluación (opcional)</Label>
+            <Textarea
+              value={question.evaluation_criteria || ""}
+              onChange={(e) => updateField("evaluation_criteria", e.target.value)}
+              placeholder="Especifica criterios adicionales para la evaluación. Ejemplo: 'Debe mencionar al menos 3 causas principales'"
+              rows={3}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Criterios específicos que la IA considerará al evaluar
+            </p>
+          </div>
+
+          {/* Vista previa */}
+          <Card className="p-4 border-dashed">
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Vista previa:</p>
+            <p className="text-sm mb-3">{question.question_text || "Texto de la pregunta..."}</p>
+            <Textarea 
+              placeholder="El estudiante escribirá su respuesta aquí..." 
+              disabled 
+              className="bg-background"
+              rows={4}
+            />
+          </Card>
+          
+          <div className="flex items-start gap-2 p-3 bg-muted rounded-lg text-sm">
+            <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+            <p className="text-muted-foreground">
+              Las respuestas abiertas serán evaluadas automáticamente por IA. También podrás revisarlas y ajustar la calificación manualmente.
+            </p>
+          </div>
         </div>
       )}
 

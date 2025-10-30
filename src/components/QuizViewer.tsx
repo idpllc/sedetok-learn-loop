@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Check, X, Clock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,6 +36,8 @@ interface Question {
   feedback_correct?: string;
   feedback_incorrect?: string;
   comparison_mode?: string;
+  expected_answer?: string;
+  evaluation_criteria?: string;
   points: number;
   quiz_options: Array<{
     id: string;
@@ -62,6 +65,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const [isCompleted, setIsCompleted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [openEndedResponses, setOpenEndedResponses] = useState<Record<string, string>>({}); // questionId -> response
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
   const [showCorrectAnswers, setShowCorrectAnswers] = useState<Record<number, boolean>>({});
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -269,6 +273,18 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     if (showFeedback || !shortAnswerText.trim()) return;
 
     const currentQ = questions[currentQuestion];
+    
+    // Handle open-ended questions differently
+    if (currentQ.question_type === "open_ended") {
+      setShowFeedback(true);
+      setIsAnswerCorrect(true); // Always mark as "answered" for open-ended
+      setOpenEndedResponses({ ...openEndedResponses, [currentQ.id]: shortAnswerText });
+      setUserAnswers({ ...userAnswers, [currentQuestion]: shortAnswerText });
+      // Don't add to score yet - will be evaluated later
+      return;
+    }
+
+    // Handle short answer questions
     const correctAnswers = currentQ.quiz_options.map(opt => opt.option_text);
     const isCorrect = validateShortAnswer(
       shortAnswerText, 
@@ -461,6 +477,31 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
       }
 
       console.log("Quiz result saved successfully:", insertData);
+
+      // Save open-ended responses
+      if (Object.keys(openEndedResponses).length > 0) {
+        const openEndedPromises = Object.entries(openEndedResponses).map(async ([questionId, responseText]) => {
+          const { error: openError } = await supabase
+            .from("user_open_responses")
+            .upsert({
+              user_id: user.id,
+              quiz_id: quizId,
+              question_id: questionId,
+              evaluation_event_id: evaluationEventId || null,
+              response_text: responseText,
+              max_score: 100,
+            }, {
+              onConflict: 'user_id,question_id,evaluation_event_id'
+            });
+
+          if (openError) {
+            console.error("Error saving open response:", openError);
+          }
+        });
+
+        await Promise.all(openEndedPromises);
+        console.log("Open-ended responses saved");
+      }
 
       if (passed) {
         toast.success("¡Felicitaciones! Has aprobado el quiz");
@@ -777,10 +818,43 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                           <p className="text-xs md:text-sm break-words">{currentQ.quiz_options[0]?.option_text}</p>
                         </div>
                       )}
-                    </div>
+                     </div>
                    )}
 
-                  {/* Feedback */}
+                   {/* Textarea for open-ended questions */}
+                   {currentQ.question_type === "open_ended" && (
+                     <div className="space-y-3 w-full">
+                       <Textarea
+                         value={shortAnswerText}
+                         onChange={(e) => setShortAnswerText(e.target.value)}
+                         placeholder="Escribe tu respuesta aquí... Sé específico y detallado en tu respuesta."
+                         className="text-sm md:text-base w-full min-h-[150px]"
+                         disabled={showFeedback}
+                         rows={6}
+                       />
+                       
+                       {!showFeedback && (
+                         <Button 
+                           onClick={handleShortAnswer}
+                           disabled={!shortAnswerText.trim() || shortAnswerText.trim().length < 10}
+                           className="w-full"
+                         >
+                           Enviar respuesta
+                         </Button>
+                       )}
+
+                       {showFeedback && (
+                         <div className="p-4 bg-muted rounded-lg w-full space-y-2">
+                           <p className="text-sm font-semibold">Respuesta guardada</p>
+                           <p className="text-xs text-muted-foreground">
+                             Tu respuesta será evaluada por el profesor. También puedes solicitar una evaluación automática por IA al finalizar el quiz.
+                           </p>
+                         </div>
+                       )}
+                     </div>
+                   )}
+
+                   {/* Feedback */}
                   {showFeedback && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}

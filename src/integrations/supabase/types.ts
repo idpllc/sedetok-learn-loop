@@ -1584,6 +1584,8 @@ export type Database = {
           content_id: string
           correct_answer: number
           created_at: string | null
+          evaluation_criteria: string | null
+          expected_answer: string | null
           feedback: string | null
           feedback_correct: string | null
           feedback_incorrect: string | null
@@ -1602,6 +1604,8 @@ export type Database = {
           content_id: string
           correct_answer: number
           created_at?: string | null
+          evaluation_criteria?: string | null
+          expected_answer?: string | null
           feedback?: string | null
           feedback_correct?: string | null
           feedback_incorrect?: string | null
@@ -1620,6 +1624,8 @@ export type Database = {
           content_id?: string
           correct_answer?: number
           created_at?: string | null
+          evaluation_criteria?: string | null
+          expected_answer?: string | null
           feedback?: string | null
           feedback_correct?: string | null
           feedback_incorrect?: string | null
@@ -1819,6 +1825,82 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_open_responses: {
+        Row: {
+          ai_feedback: string | null
+          ai_score: number | null
+          created_at: string | null
+          evaluated_at: string | null
+          evaluation_event_id: string | null
+          id: string
+          max_score: number
+          question_id: string
+          quiz_id: string
+          response_text: string
+          teacher_feedback: string | null
+          teacher_reviewed_at: string | null
+          teacher_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          created_at?: string | null
+          evaluated_at?: string | null
+          evaluation_event_id?: string | null
+          id?: string
+          max_score?: number
+          question_id: string
+          quiz_id: string
+          response_text: string
+          teacher_feedback?: string | null
+          teacher_reviewed_at?: string | null
+          teacher_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_feedback?: string | null
+          ai_score?: number | null
+          created_at?: string | null
+          evaluated_at?: string | null
+          evaluation_event_id?: string | null
+          id?: string
+          max_score?: number
+          question_id?: string
+          quiz_id?: string
+          response_text?: string
+          teacher_feedback?: string | null
+          teacher_reviewed_at?: string | null
+          teacher_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_open_responses_evaluation_event_id_fkey"
+            columns: ["evaluation_event_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_evaluation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_open_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_open_responses_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
         ]
@@ -2440,6 +2522,7 @@ export type Database = {
         | "short_answer"
         | "matching"
         | "ordering"
+        | "open_ended"
       quiz_difficulty: "basico" | "intermedio" | "avanzado"
       quiz_status: "borrador" | "publicado"
       tipo_aprendizaje:
@@ -2647,6 +2730,7 @@ export const Constants = {
         "short_answer",
         "matching",
         "ordering",
+        "open_ended",
       ],
       quiz_difficulty: ["basico", "intermedio", "avanzado"],
       quiz_status: ["borrador", "publicado"],
