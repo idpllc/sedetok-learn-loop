@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { TriviaWheel } from "./TriviaWheel";
 import { TriviaCharacterRound } from "./TriviaCharacterRound";
+import { StreakIndicator } from "./StreakIndicator";
 import { Trophy, Clock, Target } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useAuth } from "@/hooks/useAuth";
@@ -114,13 +115,14 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       setSelectedAnswer(null);
       
       if (!isCorrect) {
-        // Lost turn - reset state and change turn
+        // Lost turn - reset streak and change turn
+        setCurrentStreak(0);
         setCurrentQuestionIndex(0);
         setQuestions([]);
         setCurrentCategory(null);
         changeTurn();
       } else if (newStreak === 3) {
-        // Won the right to character round after 3 correct answers
+        // Won the right to character round after 3 correct answers (global streak)
         setPhase('character-round');
       } else {
         // Correct answer - return to wheel to select new category
@@ -269,6 +271,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           opponent={opponent!} 
           categories={categories}
         />
+        <StreakIndicator streak={currentStreak} />
         <TriviaWheel
           categories={categories}
           onCategorySelected={handleCategorySelected}
@@ -286,6 +289,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           opponent={opponent!} 
           categories={categories}
         />
+        <StreakIndicator streak={3} />
         <TriviaCharacterRound
           categories={categories}
           currentPlayerCharacters={currentPlayer?.characters_collected || []}
@@ -308,6 +312,8 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           categories={categories}
         />
 
+        <StreakIndicator streak={currentStreak} />
+
         <Card className="max-w-3xl mx-auto">
           <CardContent className="pt-6 space-y-6">
             {/* Category and timer */}
@@ -321,15 +327,6 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
               </div>
             </div>
 
-            {/* Streak indicator */}
-            <div className="flex items-center justify-center gap-2">
-              <Target className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium">
-                Racha: {currentStreak}/3
-              </span>
-            </div>
-
-            <Progress value={(currentStreak / 3) * 100} className="h-2" />
 
             {/* Question */}
             <div className="text-center space-y-6">
