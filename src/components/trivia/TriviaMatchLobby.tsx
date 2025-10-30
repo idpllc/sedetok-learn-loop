@@ -6,6 +6,7 @@ import { useTriviaMatch } from "@/hooks/useTriviaMatch";
 import { Loader2, Copy, Users } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { ActiveMatches } from "./ActiveMatches";
 
 interface TriviaMatchLobbyProps {
   onMatchStart: (matchId: string) => void;
@@ -120,6 +121,9 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
       animate={{ scale: 1, opacity: 1 }}
       className="max-w-md mx-auto space-y-6"
     >
+      {/* Active matches */}
+      <ActiveMatches onMatchSelect={onMatchStart} />
+
       <Card>
         <CardHeader>
           <CardTitle className="text-center">Jugar Aleatorio</CardTitle>
