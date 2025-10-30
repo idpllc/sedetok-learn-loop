@@ -19,40 +19,51 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
     queryFn: async () => {
       if (!user) return [];
 
-      const { data, error } = await supabase
+      // First get the player records for this user
+      const { data: playerData, error: playerError } = await supabase
         .from('trivia_1v1_players')
-        .select(`
-          *,
-          matches:trivia_1v1_matches!inner(
-            id,
-            match_code,
-            status,
-            current_player_id,
-            level,
-            created_at
-          )
-        `)
-        .eq('user_id', user.id)
-        .in('matches.status', ['waiting', 'active'])
-        .order('matches.created_at', { ascending: false });
+        .select('match_id')
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (playerError) {
+        console.error('Error fetching player matches:', playerError);
+        throw playerError;
+      }
+
+      if (!playerData || playerData.length === 0) return [];
+
+      const matchIds = playerData.map(p => p.match_id);
+
+      // Get the match details
+      const { data: matches, error: matchError } = await supabase
+        .from('trivia_1v1_matches')
+        .select('*')
+        .in('id', matchIds)
+        .in('status', ['waiting', 'active'])
+        .order('created_at', { ascending: false });
+
+      if (matchError) {
+        console.error('Error fetching matches:', matchError);
+        throw matchError;
+      }
+
+      if (!matches || matches.length === 0) return [];
 
       // Get player counts for each match
-      const matchIds = data.map(p => p.match_id);
       const { data: playerCounts } = await supabase
         .from('trivia_1v1_players')
         .select('match_id')
-        .in('match_id', matchIds);
+        .in('match_id', matches.map(m => m.id));
 
       const countsMap = playerCounts?.reduce((acc, p) => {
         acc[p.match_id] = (acc[p.match_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
 
-      return data.map(player => ({
-        ...player,
-        playerCount: countsMap[player.match_id] || 0
+      return matches.map(match => ({
+        match_id: match.id,
+        matches: match,
+        playerCount: countsMap[match.id] || 0
       }));
     },
     enabled: !!user,
