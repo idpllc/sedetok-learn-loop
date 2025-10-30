@@ -187,11 +187,11 @@ export function useTriviaMatch(matchId?: string) {
     mutationFn: async (level: string) => {
       if (!user) throw new Error("User not authenticated");
       
-      // Find available matches (both waiting and active with 1 player)
+      // Find available matches in waiting status
       const { data: availableMatches, error: searchError } = await supabase
         .from('trivia_1v1_matches')
         .select('id, match_code, level, status')
-        .in('status', ['waiting', 'active'])
+        .eq('status', 'waiting')
         .eq('level', level)
         .order('created_at', { ascending: true });
       
@@ -235,7 +235,7 @@ export function useTriviaMatch(matchId?: string) {
       // No available match found, create a new one
       const matchCode = generateMatchCode();
       
-      // Create match in 'waiting' status first so we can read it back
+      // Create match in 'waiting' status
       const { data: newMatch, error: matchError } = await supabase
         .from('trivia_1v1_matches')
         .insert({
@@ -259,19 +259,8 @@ export function useTriviaMatch(matchId?: string) {
       
       if (playerError) throw playerError;
 
-      // Now activate the match and set current player
-      const { data: activeMatch } = await supabase
-        .from('trivia_1v1_matches')
-        .update({
-          status: 'active',
-          started_at: new Date().toISOString(),
-          current_player_id: user.id
-        })
-        .eq('id', newMatch.id)
-        .select()
-        .single();
-
-      return (activeMatch || newMatch) as TriviaMatch;
+      // Return match in waiting status for other players to join
+      return newMatch as TriviaMatch;
     }
   });
 
