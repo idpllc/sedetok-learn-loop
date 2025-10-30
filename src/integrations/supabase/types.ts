@@ -1579,6 +1579,7 @@ export type Database = {
       }
       quiz_questions: {
         Row: {
+          audio_url: string | null
           comparison_mode: string | null
           content_id: string
           correct_answer: number
@@ -1596,6 +1597,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          audio_url?: string | null
           comparison_mode?: string | null
           content_id: string
           correct_answer: number
@@ -1613,6 +1615,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          audio_url?: string | null
           comparison_mode?: string | null
           content_id?: string
           correct_answer?: number

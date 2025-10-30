@@ -29,6 +29,7 @@ interface Question {
   question_type: string;
   image_url?: string;
   video_url?: string;
+  audio_url?: string;
   feedback?: string;
   feedback_correct?: string;
   feedback_incorrect?: string;
@@ -640,6 +641,17 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                         className="w-full h-full rounded-lg"
                         allowFullScreen
                       />
+                    </div>
+                  )}
+
+                  {currentQ.audio_url && (
+                    <div className="w-full">
+                      <audio controls className="w-full">
+                        <source src={currentQ.audio_url} type="audio/webm" />
+                        <source src={currentQ.audio_url} type="audio/mpeg" />
+                        <source src={currentQ.audio_url} type="audio/wav" />
+                        Tu navegador no soporta el elemento de audio.
+                      </audio>
                     </div>
                   )}
 

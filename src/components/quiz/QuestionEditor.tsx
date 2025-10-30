@@ -5,13 +5,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Info, Image, Video } from "lucide-react";
+import { Plus, Trash2, Info, Image, Video, Mic } from "lucide-react";
 import { QuizQuestion } from "./QuizStep2";
 import { Card } from "@/components/ui/card";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor } from "./RichTextEditor";
+import { AudioRecorder } from "./AudioRecorder";
 
 interface QuestionEditorProps {
   question: QuizQuestion;
@@ -20,6 +21,7 @@ interface QuestionEditorProps {
 
 export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
   const [showQuestionVideo, setShowQuestionVideo] = useState(false);
+  const [showQuestionAudio, setShowQuestionAudio] = useState(false);
   const { uploadFile, uploading } = useCloudinary();
   const { toast } = useToast();
 
@@ -184,8 +186,8 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
           Puedes usar texto enriquecido, listas y agregar imágenes directamente desde el editor
         </p>
         
-        {/* Sección de video opcional */}
-        <div className="mt-3">
+        {/* Sección de video y audio opcional */}
+        <div className="mt-3 flex gap-2">
           <Button
             type="button"
             size="sm"
@@ -194,6 +196,16 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
           >
             <Video className="h-4 w-4 mr-1" />
             {showQuestionVideo ? "Ocultar video" : "Agregar video"}
+          </Button>
+          
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setShowQuestionAudio(!showQuestionAudio)}
+          >
+            <Mic className="h-4 w-4 mr-1" />
+            {showQuestionAudio ? "Ocultar audio" : "Agregar audio"}
           </Button>
         </div>
 
@@ -204,6 +216,16 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
               value={question.video_url || ""}
               onChange={(e) => updateField("video_url", e.target.value)}
               placeholder="https://youtube.com/watch?v=..."
+            />
+          </div>
+        )}
+        
+        {showQuestionAudio && (
+          <div className="mt-3">
+            <AudioRecorder
+              value={question.audio_url}
+              onChange={(url) => updateField("audio_url", url)}
+              onClose={() => setShowQuestionAudio(false)}
             />
           </div>
         )}

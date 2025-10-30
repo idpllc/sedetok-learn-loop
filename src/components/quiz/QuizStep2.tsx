@@ -16,6 +16,7 @@ export interface QuizQuestion {
   question_text: string;
   image_url?: string;
   video_url?: string;
+  audio_url?: string;
   feedback?: string;
   feedback_correct?: string;
   feedback_incorrect?: string;
