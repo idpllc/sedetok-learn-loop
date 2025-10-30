@@ -13,6 +13,7 @@ import { useXP } from "@/hooks/useXP";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CustomAudioPlayer } from "@/components/quiz/CustomAudioPlayer";
 
 interface QuizViewerProps {
   quizId: string;
@@ -645,14 +646,10 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                   )}
 
                   {currentQ.audio_url && (
-                    <div className="w-full">
-                      <audio controls className="w-full">
-                        <source src={currentQ.audio_url} type="audio/webm" />
-                        <source src={currentQ.audio_url} type="audio/mpeg" />
-                        <source src={currentQ.audio_url} type="audio/wav" />
-                        Tu navegador no soporta el elemento de audio.
-                      </audio>
-                    </div>
+                    <CustomAudioPlayer 
+                      audioUrl={currentQ.audio_url}
+                      title={quizSubject || "Audio de la pregunta"}
+                    />
                   )}
 
                    {/* Options for multiple choice and true/false */}
