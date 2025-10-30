@@ -500,7 +500,7 @@ function PlayerStats({
 }) {
   return (
     <div className="container max-w-4xl mx-auto mb-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Current Player */}
         <Card className="bg-primary/5">
           <CardContent className="pt-4">
