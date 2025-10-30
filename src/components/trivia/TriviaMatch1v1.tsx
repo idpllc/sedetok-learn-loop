@@ -196,8 +196,13 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       origin: { y: 0.6 }
     });
 
-    await changeTurn();
     setCurrentStreak(0);
+    await changeTurn();
+  };
+
+  const handleCharacterRoundFailed = async () => {
+    setCurrentStreak(0);
+    await changeTurn();
   };
 
   const handleWin = async () => {
@@ -294,7 +299,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           opponentCharacters={opponent?.characters_collected || []}
           level={match.level}
           onCharacterWon={handleCharacterWon}
-          onSkip={changeTurn}
+          onSkip={handleCharacterRoundFailed}
         />
       </div>
     );
