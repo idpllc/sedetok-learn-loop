@@ -355,14 +355,19 @@ export function useTriviaMatch(matchId?: string) {
     
     if (error) throw error;
     
-    console.log('Trivia questions fetched:', data);
-    
     return (data || []).map(q => {
-      const options = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
-      console.log('Question options:', q.question_text, options);
+      // Parse options if they're a string
+      const optionsArray = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+      
+      // Transform options array into the expected format with option_text and is_correct
+      const transformedOptions = optionsArray.map((optionText: string, index: number) => ({
+        option_text: optionText,
+        is_correct: index === q.correct_answer
+      }));
+      
       return {
         ...q,
-        options: options
+        options: transformedOptions
       };
     }) as TriviaQuestion[];
   };

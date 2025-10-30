@@ -100,11 +100,21 @@ export const useTriviaGame = () => {
     
     if (error) throw error;
     
-    // Parse options from JSON and shuffle questions
-    const questions = (data || []).map(q => ({
-      ...q,
-      options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options
-    })) as TriviaQuestion[];
+    // Parse options from JSON and transform to expected format
+    const questions = (data || []).map(q => {
+      const optionsArray = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+      
+      // Transform options array into the expected format with option_text and is_correct
+      const transformedOptions = optionsArray.map((optionText: string, index: number) => ({
+        option_text: optionText,
+        is_correct: index === q.correct_answer
+      }));
+      
+      return {
+        ...q,
+        options: transformedOptions
+      };
+    }) as TriviaQuestion[];
     
     const shuffled = questions.sort(() => Math.random() - 0.5);
     return shuffled;

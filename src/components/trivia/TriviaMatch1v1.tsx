@@ -110,8 +110,14 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     setShowFeedback(true);
 
     setTimeout(() => {
+      setShowFeedback(false);
+      setSelectedAnswer(null);
+      
       if (!isCorrect) {
-        // Lost turn
+        // Lost turn - reset state and change turn
+        setCurrentQuestionIndex(0);
+        setQuestions([]);
+        setCurrentCategory(null);
         changeTurn();
       } else if (newStreak === 3) {
         // Won the right to character round
@@ -119,17 +125,24 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       } else if (currentQuestionIndex < questions.length - 1) {
         // Next question
         setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setSelectedAnswer(null);
         setTimeLeft(20);
-        setShowFeedback(false);
       } else {
         // No more questions but didn't get 3 streak
+        setCurrentQuestionIndex(0);
+        setQuestions([]);
+        setCurrentCategory(null);
         changeTurn();
       }
     }, 2000);
   };
 
   const handleTimeout = () => {
+    // Reset state when timeout occurs
+    setSelectedAnswer(null);
+    setShowFeedback(false);
+    setCurrentQuestionIndex(0);
+    setQuestions([]);
+    setCurrentCategory(null);
     changeTurn();
   };
 
@@ -342,8 +355,6 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
                   const showCorrect = showFeedback && option.is_correct;
                   const showIncorrect = showFeedback && isSelected && !option.is_correct;
                   
-                  console.log('Rendering option:', index, option);
-                  
                   return (
                     <Button
                       key={index}
@@ -358,7 +369,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
                       }`}
                     >
                       <span className="block w-full text-center">
-                        {option.option_text || `Opción ${index + 1}`}
+                        {option.option_text}
                       </span>
                     </Button>
                   );
