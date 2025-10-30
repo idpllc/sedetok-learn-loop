@@ -115,7 +115,10 @@ export function useTriviaMatch(matchId?: string) {
         .from('trivia_1v1_matches')
         .insert({
           match_code: matchCode,
-          level
+          level,
+          status: 'active',
+          started_at: new Date().toISOString(),
+          current_player_id: user.id
         })
         .select()
         .single();
@@ -255,20 +258,22 @@ export function useTriviaMatch(matchId?: string) {
       // No available match found, create a new one
       const matchCode = generateMatchCode();
       
-      // Create match in 'waiting' status
+      // Create match already active so player 1 can start immediately
       const { data: newMatch, error: matchError } = await supabase
         .from('trivia_1v1_matches')
         .insert({
           match_code: matchCode,
           level,
-          status: 'waiting'
+          status: 'active',
+          started_at: new Date().toISOString(),
+          current_player_id: user.id
         })
         .select()
         .single();
       
       if (matchError) throw matchError;
 
-      // Add player
+      // Add player 1
       const { error: playerError } = await supabase
         .from('trivia_1v1_players')
         .insert({
@@ -279,7 +284,7 @@ export function useTriviaMatch(matchId?: string) {
       
       if (playerError) throw playerError;
 
-      // Return match in waiting status for other players to join
+      // Return active match
       return newMatch as TriviaMatch;
     }
   });
