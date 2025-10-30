@@ -397,28 +397,34 @@ export const QuestionEditor = ({ question, onChange }: QuestionEditorProps) => {
       {question.question_type === "open_ended" && (
         <div className="space-y-4">
           <div>
-            <Label>Respuesta esperada (opcional pero recomendada para evaluación con IA)</Label>
+            <Label className="flex items-center gap-2">
+              <span>Contenido de referencia para la IA</span>
+              <span className="text-xs font-normal text-muted-foreground">(Recomendado)</span>
+            </Label>
             <Textarea
               value={question.expected_answer || ""}
               onChange={(e) => updateField("expected_answer", e.target.value)}
-              placeholder="Escribe una respuesta modelo o los puntos clave que debería incluir la respuesta del estudiante"
-              rows={4}
+              placeholder="Ejemplo: 'La Revolución Francesa fue un periodo de cambio social y político en Francia entre 1789 y 1799. Causas principales: crisis económica, desigualdad social, influencia de la Ilustración...'"
+              rows={5}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Esta respuesta ayudará a la IA a evaluar las respuestas de los estudiantes
+              📖 Proporciona el contenido de referencia o respuesta modelo que la IA usará como base para evaluar
             </p>
           </div>
 
           <div>
-            <Label>Criterios de evaluación (opcional)</Label>
+            <Label className="flex items-center gap-2">
+              <span>Directrices de evaluación para la IA</span>
+              <span className="text-xs font-normal text-muted-foreground">(Opcional)</span>
+            </Label>
             <Textarea
               value={question.evaluation_criteria || ""}
               onChange={(e) => updateField("evaluation_criteria", e.target.value)}
-              placeholder="Especifica criterios adicionales para la evaluación. Ejemplo: 'Debe mencionar al menos 3 causas principales'"
-              rows={3}
+              placeholder="Ejemplo: 'Debe mencionar al menos 3 causas principales de la Revolución Francesa. Valorar positivamente si explica la relación entre ellas. Penalizar respuestas sin contexto histórico.'"
+              rows={4}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Criterios específicos que la IA considerará al evaluar
+              🎯 Define criterios específicos sobre qué aspectos priorizar, qué penalizar, nivel de profundidad requerido, etc.
             </p>
           </div>
 
