@@ -540,6 +540,29 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
       // Open-ended responses are already saved and evaluated in handleShortAnswer
       console.log("Open-ended responses already saved and evaluated");
 
+      // Automatically post a comment with the score
+      try {
+        const commentText = passed 
+          ? `✅ Quiz completado con ${normalizedScore}/100 puntos - ¡Aprobado!`
+          : `📊 Quiz completado con ${normalizedScore}/100 puntos - Necesita mejorar`;
+
+        const { error: commentError } = await supabase
+          .from("comments")
+          .insert({
+            user_id: user.id,
+            quiz_id: quizId,
+            comment_text: commentText,
+          });
+
+        if (commentError) {
+          console.error("Error posting automatic comment:", commentError);
+        } else {
+          console.log("Automatic comment posted successfully");
+        }
+      } catch (commentErr) {
+        console.error("Failed to post automatic comment:", commentErr);
+      }
+
       if (passed) {
         toast.success("¡Felicitaciones! Has aprobado el quiz");
         // Notify quiz completion
