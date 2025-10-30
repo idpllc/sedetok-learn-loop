@@ -49,25 +49,27 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
 
       if (!matches || matches.length === 0) return [];
 
-      // Get player counts for each match
-      const { data: playerCounts } = await supabase
+      // Get player info for each match
+      const { data: allPlayers } = await supabase
         .from('trivia_1v1_players')
-        .select('match_id')
+        .select('match_id, user_id, profiles(username)')
         .in('match_id', matches.map(m => m.id));
 
-      const countsMap = playerCounts?.reduce((acc, p) => {
-        acc[p.match_id] = (acc[p.match_id] || 0) + 1;
+      const playersMap = allPlayers?.reduce((acc, p) => {
+        if (!acc[p.match_id]) acc[p.match_id] = [];
+        acc[p.match_id].push(p);
         return acc;
-      }, {} as Record<string, number>) || {};
+      }, {} as Record<string, any[]>) || {};
 
       return matches.map(match => ({
         match_id: match.id,
         matches: match,
-        playerCount: countsMap[match.id] || 0
+        playerCount: playersMap[match.id]?.length || 0,
+        players: playersMap[match.id] || []
       }));
     },
     enabled: !!user,
-    refetchInterval: 5000 // Refetch every 5 seconds to check for updates
+    refetchInterval: 3000 // Refetch every 3 seconds to check for updates
   });
 
   if (isLoading) {
@@ -102,6 +104,8 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
             const matchData = match.matches as any;
             const isMyTurn = matchData.current_player_id === user?.id;
             const isWaiting = matchData.status === 'waiting' || match.playerCount < 2;
+            const creator = match.players?.find((p: any) => p.user_id !== user?.id);
+            const creatorName = creator?.profiles?.username || 'Jugador';
             
             return (
               <motion.div
@@ -135,6 +139,12 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
                       <Users className="w-3 h-3" />
                       {match.playerCount}/2 jugadores
                     </span>
+                    {isWaiting && match.playerCount === 1 && (
+                      <>
+                        <span>•</span>
+                        <span>Creada por: {match.players[0]?.user_id === user?.id ? 'Ti' : creatorName}</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 
