@@ -120,18 +120,15 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         setCurrentCategory(null);
         changeTurn();
       } else if (newStreak === 3) {
-        // Won the right to character round
+        // Won the right to character round after 3 correct answers
         setPhase('character-round');
-      } else if (currentQuestionIndex < questions.length - 1) {
-        // Next question
-        setCurrentQuestionIndex(currentQuestionIndex + 1);
-        setTimeLeft(20);
       } else {
-        // No more questions but didn't get 3 streak
+        // Correct answer - return to wheel to select new category
         setCurrentQuestionIndex(0);
         setQuestions([]);
         setCurrentCategory(null);
-        changeTurn();
+        setTimeLeft(20);
+        setPhase('wheel');
       }
     }, 2000);
   };
