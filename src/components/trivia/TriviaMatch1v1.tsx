@@ -78,7 +78,6 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     const qs = await fetchQuestions(category.id, match?.level || 'libre');
     setQuestions(qs);
     setCurrentQuestionIndex(0);
-    setCurrentStreak(0);
     setTimeLeft(20);
     
     await updateMatch.mutateAsync({
@@ -154,7 +153,6 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     });
     setPhase('wheel');
     setSelectedAnswer(null);
-    setCurrentStreak(0);
     setTimeLeft(20);
     setShowFeedback(false);
   };
@@ -198,8 +196,8 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       origin: { y: 0.6 }
     });
 
+    await changeTurn();
     setCurrentStreak(0);
-    changeTurn();
   };
 
   const handleWin = async () => {
