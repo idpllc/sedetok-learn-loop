@@ -10,11 +10,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { TriviaWheel } from "./TriviaWheel";
 import { TriviaCharacterRound } from "./TriviaCharacterRound";
 import { StreakIndicator } from "./StreakIndicator";
-import { Trophy, Clock, Target } from "lucide-react";
+import { Trophy, Clock, Target, LogOut } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface TriviaMatch1v1Props {
   matchId: string;
@@ -24,6 +25,7 @@ type GamePhase = 'wheel' | 'questions' | 'character-round' | 'finished';
 
 export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { match, players, updatePlayer, recordTurn, updateMatch, fetchQuestions } = useTriviaMatch(matchId);
   
   const [phase, setPhase] = useState<GamePhase>('wheel');
@@ -269,6 +271,17 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   if (phase === 'wheel' && isMyTurn) {
     return (
       <div className="min-h-screen">
+        <div className="container max-w-4xl mx-auto pt-4 px-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/trivia-game')}
+            className="mb-4"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Salir
+          </Button>
+        </div>
         <PlayerStats 
           currentPlayer={currentPlayer!} 
           opponent={opponent!} 
