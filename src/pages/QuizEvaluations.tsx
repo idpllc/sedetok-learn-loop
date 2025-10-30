@@ -49,6 +49,9 @@ const QuizEvaluations = () => {
             results={eventResults || []}
             eventTitle="Evento de Evaluación"
             loading={resultsLoading}
+            eventId={eventId}
+            quizId={eventResults?.[0]?.quiz_id}
+            gameId={eventResults?.[0]?.game_id}
           />
         </div>
       </div>

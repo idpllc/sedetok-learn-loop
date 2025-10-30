@@ -2,7 +2,9 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Download, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { useState } from "react";
+import { UserResponsesDialog } from "./UserResponsesDialog";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -18,9 +20,13 @@ interface EventResultsProps {
   results: any[];
   eventTitle: string;
   loading?: boolean;
+  quizId?: string;
+  gameId?: string;
+  eventId: string;
 }
 
-export const EventResults = ({ results, eventTitle, loading }: EventResultsProps) => {
+export const EventResults = ({ results, eventTitle, loading, quizId, gameId, eventId }: EventResultsProps) => {
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const exportToCSV = () => {
     const headers = ["Usuario", "Nombre", "Documento", "Puntaje", "Puntaje Máximo", "Aprobado", "Tiempo (min)", "Fecha"];
     const rows = results.map((result) => [
@@ -102,6 +108,7 @@ export const EventResults = ({ results, eventTitle, loading }: EventResultsProps
               <TableHead className="text-center">Estado</TableHead>
               <TableHead className="text-center">Tiempo</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead className="text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -162,12 +169,35 @@ export const EventResults = ({ results, eventTitle, loading }: EventResultsProps
                   <TableCell>
                     {format(new Date(result.completed_at), "dd MMM yyyy, HH:mm", { locale: es })}
                   </TableCell>
+                  <TableCell className="text-center">
+                    {quizId && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedUserId(result.user_id)}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Ver respuestas
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
       </Card>
+
+      {selectedUserId && (
+        <UserResponsesDialog
+          open={!!selectedUserId}
+          onOpenChange={(open) => !open && setSelectedUserId(null)}
+          userId={selectedUserId}
+          quizId={quizId}
+          gameId={gameId}
+          eventId={eventId}
+        />
+      )}
     </div>
   );
 };

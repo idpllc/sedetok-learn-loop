@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Download, Users, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Download, Users, CheckCircle2, Clock, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,10 +11,13 @@ import { usePathEvaluationResults } from "@/hooks/usePathEvaluationResults";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useState } from "react";
+import { PathProgressDialog } from "@/components/learning-paths/PathProgressDialog";
 
 export default function PathEvaluationResults() {
   const { accessCode } = useParams();
   const navigate = useNavigate();
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const { data: event, isLoading: eventLoading } = useQuery({
     queryKey: ["evaluation-event-by-code", accessCode],
@@ -216,6 +219,7 @@ export default function PathEvaluationResults() {
                     <TableHead>Estado</TableHead>
                     <TableHead>Fecha Inicio</TableHead>
                     <TableHead>Fecha Completado</TableHead>
+                    <TableHead className="text-center">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -260,6 +264,16 @@ export default function PathEvaluationResults() {
                             })
                           : "-"}
                       </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedUserId(result.user_id)}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver progreso
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -267,6 +281,15 @@ export default function PathEvaluationResults() {
             )}
           </CardContent>
         </Card>
+
+        {selectedUserId && event?.path_id && (
+          <PathProgressDialog
+            open={!!selectedUserId}
+            onOpenChange={(open) => !open && setSelectedUserId(null)}
+            userId={selectedUserId}
+            pathId={event.path_id}
+          />
+        )}
       </div>
     </div>
   );
