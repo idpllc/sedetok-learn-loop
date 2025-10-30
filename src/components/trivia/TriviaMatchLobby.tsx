@@ -15,7 +15,8 @@ interface TriviaMatchLobbyProps {
 export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLobbyProps) {
   const [matchCode, setMatchCode] = useState("");
   const [createdMatch, setCreatedMatch] = useState<any>(null);
-  const { createMatch, joinMatch } = useTriviaMatch();
+  const [searchingRandom, setSearchingRandom] = useState(false);
+  const { createMatch, joinMatch, joinRandomMatch } = useTriviaMatch();
 
   const handleCreateMatch = async () => {
     try {
@@ -47,6 +48,26 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
       onMatchStart(match.id);
     } catch (error: any) {
       toast.error(error.message || "Error al unirse a la partida");
+    }
+  };
+
+  const handleJoinRandom = async () => {
+    setSearchingRandom(true);
+    try {
+      const match = await joinRandomMatch.mutateAsync(selectedLevel);
+      
+      // If match is waiting, set it as created match and wait for opponent
+      if (match.status === 'waiting') {
+        setCreatedMatch(match);
+        toast.success("Esperando oponente...");
+      } else {
+        // If match is active, start immediately
+        toast.success("¡Partida encontrada!");
+        onMatchStart(match.id);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Error al buscar partida");
+      setSearchingRandom(false);
     }
   };
 
@@ -109,11 +130,49 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
     >
       <Card>
         <CardHeader>
-          <CardTitle className="text-center">Crear Partida</CardTitle>
+          <CardTitle className="text-center">Jugar Aleatorio</CardTitle>
         </CardHeader>
         <CardContent>
           <Button
             size="lg"
+            className="w-full"
+            onClick={handleJoinRandom}
+            disabled={joinRandomMatch.isPending || searchingRandom}
+          >
+            {joinRandomMatch.isPending || searchingRandom ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Buscando oponente...
+              </>
+            ) : (
+              <>
+                <Users className="w-5 h-5 mr-2" />
+                Buscar Oponente
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            O
+          </span>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center">Crear Partida Privada</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Button
+            size="lg"
+            variant="outline"
             className="w-full"
             onClick={handleCreateMatch}
             disabled={createMatch.isPending}
@@ -124,7 +183,7 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
                 Creando...
               </>
             ) : (
-              "Crear Nueva Partida"
+              "Crear con Código"
             )}
           </Button>
         </CardContent>

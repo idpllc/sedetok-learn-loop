@@ -182,6 +182,84 @@ export function useTriviaMatch(matchId?: string) {
     }
   });
 
+  // Join random match
+  const joinRandomMatch = useMutation({
+    mutationFn: async (level: string) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      // Find available matches
+      const { data: availableMatches, error: searchError } = await supabase
+        .from('trivia_1v1_matches')
+        .select('id, match_code, level')
+        .eq('status', 'waiting')
+        .eq('level', level)
+        .order('created_at', { ascending: true });
+      
+      if (searchError) throw searchError;
+
+      // Check each match to see if it has only 1 player
+      if (availableMatches && availableMatches.length > 0) {
+        for (const match of availableMatches) {
+          const { data: players } = await supabase
+            .from('trivia_1v1_players')
+            .select('user_id')
+            .eq('match_id', match.id);
+
+          // Skip if match is full or if the user is already in it
+          if (players && players.length === 1 && players[0].user_id !== user.id) {
+            // Join this match
+            const { error: playerError } = await supabase
+              .from('trivia_1v1_players')
+              .insert({
+                match_id: match.id,
+                user_id: user.id,
+                player_number: 2
+              });
+            
+            if (playerError) continue; // Try next match if this one fails
+
+            // Start the match
+            await supabase
+              .from('trivia_1v1_matches')
+              .update({
+                status: 'active',
+                started_at: new Date().toISOString()
+              })
+              .eq('id', match.id);
+
+            return { id: match.id, match_code: match.match_code } as TriviaMatch;
+          }
+        }
+      }
+
+      // No available match found, create a new one
+      const matchCode = generateMatchCode();
+      
+      const { data: newMatch, error: matchError } = await supabase
+        .from('trivia_1v1_matches')
+        .insert({
+          match_code: matchCode,
+          level
+        })
+        .select()
+        .single();
+      
+      if (matchError) throw matchError;
+
+      const { error: playerError } = await supabase
+        .from('trivia_1v1_players')
+        .insert({
+          match_id: newMatch.id,
+          user_id: user.id,
+          player_number: 1
+        });
+      
+      if (playerError) throw playerError;
+
+      return newMatch as TriviaMatch;
+    }
+  });
+
   // Update player streak and characters
   const updatePlayer = useMutation({
     mutationFn: async ({ 
@@ -273,6 +351,7 @@ export function useTriviaMatch(matchId?: string) {
     loadingPlayers,
     createMatch,
     joinMatch,
+    joinRandomMatch,
     updatePlayer,
     recordTurn,
     updateMatch,
