@@ -248,6 +248,7 @@ const QuizEvaluation = () => {
           quizId={event.quiz_id} 
           evaluationEventId={event.id}
           showResultsImmediately={event.show_results_immediately}
+          onComplete={() => navigate("/quiz-evaluation")}
         />
       </div>
     );

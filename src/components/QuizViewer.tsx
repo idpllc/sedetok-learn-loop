@@ -492,6 +492,25 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
       // Calculate time taken in seconds
       const timeTaken = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
 
+      // Prepare all answers for saving
+      const allAnswers: Record<string, any> = {};
+      questions.forEach((q, index) => {
+        if (userAnswers[index] !== undefined) {
+          allAnswers[q.id] = {
+            answer: userAnswers[index],
+            correct: questionResults[index] || false,
+            points: questionResults[index] ? q.points : 0,
+          };
+        }
+      });
+
+      // Include open-ended evaluations
+      Object.keys(openEndedEvaluations).forEach(questionId => {
+        if (allAnswers[questionId]) {
+          allAnswers[questionId].ai_evaluation = openEndedEvaluations[questionId];
+        }
+      });
+
       const payload: any = {
         user_id: user.id,
         quiz_id: quizId,
@@ -499,6 +518,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
         max_score: 100,
         passed,
         time_taken: timeTaken,
+        answers: allAnswers, // Save all answers as JSON
       };
 
       // Add evaluation event ID if present
@@ -535,7 +555,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
         return;
       }
 
-      console.log("Quiz result saved successfully:", insertData);
+      console.log("Quiz result saved successfully with answers:", insertData);
 
       // Open-ended responses are already saved and evaluated in handleShortAnswer
       console.log("Open-ended responses already saved and evaluated");

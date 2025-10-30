@@ -74,24 +74,49 @@ export const useEvaluationEvents = (quizId?: string, gameId?: string, pathId?: s
   const { data: eventResults, isLoading: resultsLoading } = useQuery({
     queryKey: ["evaluation-event-results", eventId],
     queryFn: async () => {
-      if (!eventId) return [];
+      if (!eventId) return null;
       
-      const { data, error } = await supabase
-        .from("user_quiz_results")
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            full_name,
-            avatar_url,
-            numero_documento
-          )
-        `)
-        .eq("evaluation_event_id", eventId)
-        .order("completed_at", { ascending: false });
+      // First get the event to know if it's quiz or game
+      const { data: eventData, error: eventError } = await supabase
+        .from("quiz_evaluation_events")
+        .select("quiz_id, game_id, path_id")
+        .eq("id", eventId)
+        .single();
 
-      if (error) throw error;
-      return data;
+      if (eventError) throw eventError;
+
+      // Fetch results based on content type
+      if (eventData.quiz_id) {
+        const { data, error } = await supabase
+          .from("user_quiz_results")
+          .select(`
+            *,
+            profiles:user_id (
+              username,
+              full_name,
+              avatar_url,
+              numero_documento
+            )
+          `)
+          .eq("evaluation_event_id", eventId)
+          .order("completed_at", { ascending: false });
+
+        if (error) throw error;
+        return { 
+          results: data || [], 
+          quiz_id: eventData.quiz_id, 
+          game_id: null 
+        };
+      } else if (eventData.game_id) {
+        // For games, we'll handle separately in useGameAttempts
+        return { 
+          results: [], 
+          quiz_id: null, 
+          game_id: eventData.game_id 
+        };
+      }
+      
+      return { results: [], quiz_id: null, game_id: null };
     },
     enabled: !!eventId,
   });

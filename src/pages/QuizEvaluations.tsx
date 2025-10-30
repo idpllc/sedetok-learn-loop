@@ -16,7 +16,7 @@ const QuizEvaluations = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const { eventResults, resultsLoading } = useEvaluationEvents(undefined, undefined, eventId);
+  const { eventResults, resultsLoading } = useEvaluationEvents(undefined, undefined, undefined, eventId);
 
   if (!user) {
     return (
@@ -46,12 +46,12 @@ const QuizEvaluations = () => {
           </div>
 
           <EventResults
-            results={eventResults || []}
+            results={eventResults?.results || []}
             eventTitle="Evento de Evaluación"
             loading={resultsLoading}
             eventId={eventId}
-            quizId={eventResults?.[0]?.quiz_id}
-            gameId={eventResults?.[0]?.game_id}
+            quizId={eventResults?.quiz_id || undefined}
+            gameId={eventResults?.game_id || undefined}
           />
         </div>
       </div>
