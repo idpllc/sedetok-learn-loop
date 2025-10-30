@@ -210,7 +210,7 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
                         'hover:scale-105'
                       }`}
                     >
-                      {option}
+                      {option.option_text}
                     </Button>
                   );
                 })}
@@ -237,7 +237,7 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
                   ) : (
                     <>
                       <div className="text-4xl mb-2">😞</div>
-                      <div>Incorrecto. La respuesta correcta era: {currentQuestion.options[currentQuestion.correct_answer]}</div>
+                      <div>Incorrecto. La respuesta correcta era: {currentQuestion.options[currentQuestion.correct_answer].option_text}</div>
                     </>
                   )}
                 </motion.div>

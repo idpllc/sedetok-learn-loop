@@ -17,10 +17,11 @@ export interface TriviaQuestion {
   id: string;
   category_id: string;
   question_text: string;
-  options: string[];
+  options: Array<{option_text: string; is_correct: boolean}>;
   correct_answer: number;
   difficulty: string;
   points: number;
+  image_url?: string;
 }
 
 export interface TriviaUserStats {
@@ -99,8 +100,13 @@ export const useTriviaGame = () => {
     
     if (error) throw error;
     
-    // Shuffle questions
-    const shuffled = (data as TriviaQuestion[]).sort(() => Math.random() - 0.5);
+    // Parse options from JSON and shuffle questions
+    const questions = (data || []).map(q => ({
+      ...q,
+      options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options
+    })) as TriviaQuestion[];
+    
+    const shuffled = questions.sort(() => Math.random() - 0.5);
     return shuffled;
   };
 
@@ -116,15 +122,8 @@ export const useTriviaGame = () => {
     }) => {
       if (!user) throw new Error("Usuario no autenticado");
 
-      // Save match
-      const { error: matchError } = await supabase
-        .from("trivia_matches")
-        .insert([{
-          user_id: user.id,
-          ...matchData,
-        }]);
-      
-      if (matchError) throw matchError;
+      // Match data is saved in trivia_user_stats, not separate matches table
+      // Stats will be updated below
 
       // Update user stats
       const currentStats = userStats || {

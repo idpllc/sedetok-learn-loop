@@ -1885,6 +1885,13 @@ export type Database = {
             referencedRelation: "trivia_1v1_matches"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "trivia_1v1_players_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       trivia_1v1_turns: {

@@ -1,18 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { TriviaQuestion } from "./useTriviaGame";
 import { useEffect } from "react";
-
-export interface TriviaQuestion {
-  id: string;
-  category_id: string;
-  question_text: string;
-  options: Array<{option_text: string; is_correct: boolean}>;
-  correct_answer: number;
-  difficulty: string;
-  points: number;
-  image_url?: string;
-}
 
 export interface TriviaMatch {
   id: string;
@@ -49,14 +39,14 @@ export function useTriviaMatch(matchId?: string) {
   useEffect(() => {
     if (!matchId) return;
 
-    const channel = supabase
+      const channel = supabase
       .channel(`match-${matchId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'trivia_matches',
+          table: 'trivia_1v1_matches',
           filter: `id=eq.${matchId}`
         },
         () => {
@@ -68,7 +58,7 @@ export function useTriviaMatch(matchId?: string) {
         {
           event: '*',
           schema: 'public',
-          table: 'trivia_match_players',
+          table: 'trivia_1v1_players',
           filter: `match_id=eq.${matchId}`
         },
         () => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,14 +32,14 @@ export function TriviaCharacterRound({
   const [showFeedback, setShowFeedback] = useState(false);
 
   // Timer
-  useState(() => {
+  useEffect(() => {
     if (question && timeLeft > 0 && selectedAnswer === null) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !selectedAnswer) {
       handleTimeout();
     }
-  });
+  }, [question, timeLeft, selectedAnswer]);
 
   const handleCategorySelect = async (category: any) => {
     setSelectedCategory(category);
