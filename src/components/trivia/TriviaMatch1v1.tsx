@@ -55,6 +55,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const isMyTurn = match?.current_player_id === user?.id && !turnEnded;
   const currentQuestion = questions[currentQuestionIndex];
   const waitingForOpponent = !opponent;
+  const matchIsWaiting = match?.status === 'waiting';
 
   // Reset turnEnded when it actually becomes our turn
   useEffect(() => {
@@ -62,6 +63,21 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       setTurnEnded(false);
     }
   }, [match?.current_player_id, user?.id]);
+
+  // Activate match when second player joins
+  useEffect(() => {
+    const activateMatch = async () => {
+      if (matchIsWaiting && opponent && match) {
+        // Update match to active status
+        await updateMatch.mutateAsync({
+          status: 'active',
+          started_at: new Date().toISOString(),
+          current_player_id: currentPlayer?.user_id || user?.id
+        });
+      }
+    };
+    activateMatch();
+  }, [matchIsWaiting, opponent, match?.id]);
 
   // Timer
   useEffect(() => {
