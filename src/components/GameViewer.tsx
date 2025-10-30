@@ -433,7 +433,12 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
 
         {/* Question */}
         <Card>
-          <CardContent className="p-6 space-y-6">
+          <CardContent 
+            className="p-6 space-y-6 select-none"
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
             <div className="text-center">
               <h3 className="text-xl font-bold mb-2">{currentQ.question_text}</h3>
               <p className="text-sm text-muted-foreground">

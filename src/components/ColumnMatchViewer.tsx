@@ -417,10 +417,13 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
       {/* Game Board with SVG overlay */}
       <div 
         ref={containerRef}
-        className="relative bg-white/10 backdrop-blur-sm rounded-xl p-2 md:p-4"
+        className="relative bg-white/10 backdrop-blur-sm rounded-xl p-2 md:p-4 select-none"
         onMouseMove={handleMouseMove}
         onMouseUp={() => handleMouseUp()}
         onMouseLeave={() => handleMouseUp()}
+        onCopy={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
       >
         {/* SVG for drawing lines */}
         <svg 

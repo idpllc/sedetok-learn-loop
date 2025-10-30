@@ -372,7 +372,12 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
 
         {/* Question */}
         <Card className="mb-1 md:mb-2 mx-2 flex-shrink-0">
-          <CardContent className="p-2 md:p-3">
+          <CardContent 
+            className="p-2 md:p-3 select-none"
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
             <p className="text-sm md:text-base text-center font-medium">{currentQuestion.question_text}</p>
           </CardContent>
         </Card>
@@ -438,6 +443,9 @@ export const WordWheelViewer = ({ gameId, onComplete, evaluationEventId, showRes
                     placeholder="Tu respuesta..."
                     className="text-center text-xs md:text-sm font-medium mb-1.5 md:mb-2 h-7 md:h-8"
                     autoFocus
+                    onPaste={(e) => e.preventDefault()}
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
                   />
 
                   <div className="flex gap-1.5 md:gap-2">

@@ -246,7 +246,12 @@ export const InteractiveImageViewer = ({
         <div className="text-sm md:text-lg font-semibold">Pts: {score}</div>
       </div>
 
-      <Card className="p-3 md:p-6">
+      <Card 
+        className="p-3 md:p-6 select-none"
+        onCopy={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
+      >
         <div className="space-y-3 md:space-y-4">
           <h2 className="text-lg md:text-2xl font-bold text-center">{currentPoint.question}</h2>
           {currentPoint.feedback && (

@@ -742,7 +742,12 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
 
               {/* Question */}
               <Card>
-                <CardContent className="p-3 md:p-6 space-y-4 md:space-y-6">
+                <CardContent 
+                  className="p-3 md:p-6 space-y-4 md:space-y-6 select-none"
+                  onCopy={(e) => e.preventDefault()}
+                  onCut={(e) => e.preventDefault()}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
                   <div 
                     className="prose prose-sm max-w-none text-base md:text-xl font-bold leading-tight break-words"
                     dangerouslySetInnerHTML={{ __html: currentQ.question_text }}
@@ -865,6 +870,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                               : ""
                           }`}
                           disabled={showFeedback}
+                          onPaste={(e) => e.preventDefault()}
+                          onCopy={(e) => e.preventDefault()}
+                          onCut={(e) => e.preventDefault()}
                           onKeyPress={(e) => {
                             if (e.key === 'Enter' && !showFeedback) {
                               handleShortAnswer();
@@ -910,6 +918,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                          placeholder="Escribe tu respuesta aquí... Sé específico y detallado en tu respuesta."
                          className="text-sm md:text-base w-full min-h-[150px]"
                          disabled={showFeedback}
+                         onPaste={(e) => e.preventDefault()}
+                         onCopy={(e) => e.preventDefault()}
+                         onCut={(e) => e.preventDefault()}
                          rows={6}
                        />
                        
