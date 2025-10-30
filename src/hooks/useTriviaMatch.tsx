@@ -191,7 +191,7 @@ export function useTriviaMatch(matchId?: string) {
       const { data: availableMatches, error: searchError } = await supabase
         .from('trivia_1v1_matches')
         .select('id, match_code, level, status')
-        .eq('status', 'waiting')
+        .in('status', ['waiting', 'active'])
         .eq('level', level)
         .order('created_at', { ascending: true });
       
