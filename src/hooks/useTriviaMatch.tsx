@@ -365,25 +365,31 @@ export function useTriviaMatch(matchId?: string) {
       query = query.eq('level', level);
     }
 
-    const { data, error } = await query.limit(10);
+    const { data, error } = await query.limit(50); // Get more questions to randomize
     
     if (error) throw error;
     
-    return (data || []).map(q => {
-      // Parse options if they're a string
-      const optionsArray = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
-      
-      // Transform options array into the expected format with option_text and is_correct
-      const transformedOptions = optionsArray.map((optionText: string, index: number) => ({
-        option_text: optionText,
-        is_correct: index === q.correct_answer
-      }));
-      
-      return {
-        ...q,
-        options: transformedOptions
-      };
-    }) as TriviaQuestion[];
+    // Shuffle and take only 10 questions
+    const shuffled = (data || [])
+      .map(q => {
+        // Parse options if they're a string
+        const optionsArray = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+        
+        // Transform options array into the expected format with option_text and is_correct
+        const transformedOptions = optionsArray.map((optionText: string, index: number) => ({
+          option_text: optionText,
+          is_correct: index === q.correct_answer
+        }));
+        
+        return {
+          ...q,
+          options: transformedOptions
+        };
+      })
+      .sort(() => Math.random() - 0.5) // Randomize order
+      .slice(0, 10); // Take only 10
+    
+    return shuffled as TriviaQuestion[];
   };
 
   return {
