@@ -150,6 +150,7 @@ export const useQuizQuestions = (quizId?: string) => {
         question_text: question.question_text,
         image_url: question.image_url,
         video_url: question.video_url,
+        audio_url: question.audio_url,
         feedback: question.feedback,
         feedback_correct: question.feedback_correct,
         feedback_incorrect: question.feedback_incorrect,

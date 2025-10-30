@@ -414,6 +414,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           question_type: question.question_type,
           image_url: question.image_url,
           video_url: question.video_url,
+          audio_url: question.audio_url,
           feedback: question.feedback,
           feedback_correct: question.feedback_correct,
           feedback_incorrect: question.feedback_incorrect,
