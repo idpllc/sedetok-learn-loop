@@ -354,9 +354,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     }
 
     // Si está publicando, validar que todas las preguntas tengan al menos una opción correcta
+    // (excepto las preguntas abiertas que no tienen opciones fijas)
     if (status === "publicado") {
       const invalidQuestions = quizQuestions.filter(q => 
-        !q.options || q.options.length === 0 || !q.options.some(o => o.is_correct)
+        q.question_type !== "open_ended" && 
+        (!q.options || q.options.length === 0 || !q.options.some(o => o.is_correct))
       );
       if (invalidQuestions.length > 0) {
         toast.error("Todas las preguntas deben tener al menos una opción correcta para publicar el quiz");
