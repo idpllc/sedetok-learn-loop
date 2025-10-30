@@ -1,0 +1,467 @@
+import { useState, useEffect } from "react";
+import { useTriviaMatch, TriviaMatchPlayer } from "@/hooks/useTriviaMatch";
+import { TriviaQuestion } from "@/hooks/useTriviaGame";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
+import { TriviaWheel } from "./TriviaWheel";
+import { TriviaCharacterRound } from "./TriviaCharacterRound";
+import { Trophy, Clock, Target } from "lucide-react";
+import confetti from "canvas-confetti";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface TriviaMatch1v1Props {
+  matchId: string;
+}
+
+type GamePhase = 'wheel' | 'questions' | 'character-round' | 'finished';
+
+export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
+  const { user } = useAuth();
+  const { match, players, updatePlayer, recordTurn, updateMatch, fetchQuestions } = useTriviaMatch(matchId);
+  
+  const [phase, setPhase] = useState<GamePhase>('wheel');
+  const [currentCategory, setCurrentCategory] = useState<any>(null);
+  const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState(20);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  const { data: categories } = useQuery({
+    queryKey: ['trivia-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('trivia_categories')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const currentPlayer = players?.find(p => p.user_id === user?.id);
+  const opponent = players?.find(p => p.user_id !== user?.id);
+  const isMyTurn = match?.current_player_id === user?.id;
+  const currentQuestion = questions[currentQuestionIndex];
+
+  // Timer
+  useEffect(() => {
+    if (phase === 'questions' && isMyTurn && timeLeft > 0 && !selectedAnswer) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && phase === 'questions' && !selectedAnswer) {
+      handleTimeout();
+    }
+  }, [timeLeft, phase, isMyTurn, selectedAnswer]);
+
+  // Check for winner
+  useEffect(() => {
+    if (currentPlayer && currentPlayer.characters_collected.length === 6) {
+      handleWin();
+    }
+    if (opponent && opponent.characters_collected.length === 6) {
+      handleLoss();
+    }
+  }, [currentPlayer?.characters_collected, opponent?.characters_collected]);
+
+  const handleCategorySelected = async (category: any) => {
+    setCurrentCategory(category);
+    const qs = await fetchQuestions(category.id, match?.level || 'libre');
+    setQuestions(qs);
+    setCurrentQuestionIndex(0);
+    setCurrentStreak(0);
+    setTimeLeft(20);
+    
+    await updateMatch.mutateAsync({
+      current_category_id: category.id,
+      current_question_number: 0
+    });
+
+    setTimeout(() => setPhase('questions'), 1500);
+  };
+
+  const handleAnswer = async (optionIndex: number) => {
+    if (!isMyTurn || selectedAnswer !== null) return;
+
+    setSelectedAnswer(optionIndex);
+    const isCorrect = currentQuestion.options[optionIndex]?.is_correct || false;
+    const newStreak = isCorrect ? currentStreak + 1 : 0;
+    setCurrentStreak(newStreak);
+
+    // Record turn
+    await recordTurn.mutateAsync({
+      match_id: matchId,
+      player_id: user!.id,
+      category_id: currentCategory.id,
+      question_id: currentQuestion.id,
+      answer_correct: isCorrect,
+      time_taken: 20 - timeLeft,
+      streak_at_answer: newStreak
+    });
+
+    setShowFeedback(true);
+
+    setTimeout(() => {
+      if (!isCorrect) {
+        // Lost turn
+        changeTurn();
+      } else if (newStreak === 3) {
+        // Won the right to character round
+        setPhase('character-round');
+      } else if (currentQuestionIndex < questions.length - 1) {
+        // Next question
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+        setSelectedAnswer(null);
+        setTimeLeft(20);
+        setShowFeedback(false);
+      } else {
+        // No more questions but didn't get 3 streak
+        changeTurn();
+      }
+    }, 2000);
+  };
+
+  const handleTimeout = () => {
+    changeTurn();
+  };
+
+  const changeTurn = async () => {
+    const nextPlayerId = opponent?.user_id;
+    await updateMatch.mutateAsync({
+      current_player_id: nextPlayerId,
+      current_question_number: 0
+    });
+    setPhase('wheel');
+    setSelectedAnswer(null);
+    setCurrentStreak(0);
+    setTimeLeft(20);
+    setShowFeedback(false);
+  };
+
+  const handleCharacterWon = async (categoryId: string, stolen: boolean = false) => {
+    let newCharacters = [...(currentPlayer?.characters_collected || [])];
+    
+    if (stolen && opponent) {
+      // Remove from opponent
+      const opponentChars = opponent.characters_collected.filter(c => c !== categoryId);
+      await updatePlayer.mutateAsync({
+        playerId: opponent.id,
+        characters: opponentChars
+      });
+    }
+    
+    if (!newCharacters.includes(categoryId)) {
+      newCharacters.push(categoryId);
+    }
+
+    await updatePlayer.mutateAsync({
+      playerId: currentPlayer!.id,
+      characters: newCharacters,
+      streak: 0
+    });
+
+    await recordTurn.mutateAsync({
+      match_id: matchId,
+      player_id: user!.id,
+      category_id: currentCategory.id,
+      question_id: currentQuestion.id,
+      answer_correct: true,
+      time_taken: 20 - timeLeft,
+      streak_at_answer: 3,
+      character_won: categoryId
+    });
+
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+
+    setCurrentStreak(0);
+    changeTurn();
+  };
+
+  const handleWin = async () => {
+    await updateMatch.mutateAsync({
+      status: 'finished',
+      winner_id: user!.id,
+      finished_at: new Date().toISOString()
+    });
+    setPhase('finished');
+    
+    confetti({
+      particleCount: 200,
+      spread: 100,
+      origin: { y: 0.5 }
+    });
+  };
+
+  const handleLoss = () => {
+    setPhase('finished');
+  };
+
+  if (!match || !players || !categories) {
+    return <div>Cargando...</div>;
+  }
+
+  // Finished screen
+  if (phase === 'finished') {
+    const winner = players.find(p => p.user_id === match.winner_id);
+    const isWinner = winner?.user_id === user?.id;
+
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+        >
+          <Card className="max-w-2xl w-full text-center">
+            <CardContent className="pt-8 space-y-6">
+              <div className="text-8xl mb-4">
+                {isWinner ? "🏆" : "😔"}
+              </div>
+              
+              <h2 className="text-4xl font-bold">
+                {isWinner ? "¡Victoria!" : "Derrota"}
+              </h2>
+
+              <p className="text-xl text-muted-foreground">
+                {isWinner 
+                  ? "¡Completaste todos los personajes!" 
+                  : `${winner?.profiles?.username} completó todos los personajes`}
+              </p>
+
+              <Button size="lg" onClick={() => window.location.reload()}>
+                Volver al Menú
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Wheel phase
+  if (phase === 'wheel' && isMyTurn) {
+    return (
+      <div className="min-h-screen">
+        <PlayerStats 
+          currentPlayer={currentPlayer!} 
+          opponent={opponent!} 
+          categories={categories}
+        />
+        <TriviaWheel
+          categories={categories}
+          onCategorySelected={handleCategorySelected}
+        />
+      </div>
+    );
+  }
+
+  // Character round
+  if (phase === 'character-round' && isMyTurn) {
+    return (
+      <div className="min-h-screen p-4">
+        <PlayerStats 
+          currentPlayer={currentPlayer!} 
+          opponent={opponent!} 
+          categories={categories}
+        />
+        <TriviaCharacterRound
+          categories={categories}
+          currentPlayerCharacters={currentPlayer?.characters_collected || []}
+          opponentCharacters={opponent?.characters_collected || []}
+          level={match.level}
+          onCharacterWon={handleCharacterWon}
+          onSkip={changeTurn}
+        />
+      </div>
+    );
+  }
+
+  // Questions phase
+  if (phase === 'questions' && currentQuestion) {
+    return (
+      <div className="min-h-screen p-4 space-y-4">
+        <PlayerStats 
+          currentPlayer={currentPlayer!} 
+          opponent={opponent!} 
+          categories={categories}
+        />
+
+        <Card className="max-w-3xl mx-auto">
+          <CardContent className="pt-6 space-y-6">
+            {/* Category and timer */}
+            <div className="flex items-center justify-between">
+              <Badge variant="secondary" className="text-lg px-4 py-2">
+                {currentCategory?.icon} {currentCategory?.name}
+              </Badge>
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                <span className="text-2xl font-bold">{timeLeft}s</span>
+              </div>
+            </div>
+
+            {/* Streak indicator */}
+            <div className="flex items-center justify-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium">
+                Racha: {currentStreak}/3
+              </span>
+            </div>
+
+            <Progress value={(currentStreak / 3) * 100} className="h-2" />
+
+            {/* Question */}
+            <div className="text-center space-y-6">
+              <h3 className="text-2xl font-bold">
+                {currentQuestion.question_text}
+              </h3>
+
+              {currentQuestion.image_url && (
+                <img
+                  src={currentQuestion.image_url}
+                  alt="Question"
+                  className="max-w-md mx-auto rounded-lg"
+                />
+              )}
+
+              {/* Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {currentQuestion.options?.map((option, index) => (
+                  <Button
+                    key={index}
+                    size="lg"
+                    variant={
+                      selectedAnswer === null
+                        ? "outline"
+                        : selectedAnswer === index
+                        ? option.is_correct
+                          ? "default"
+                          : "destructive"
+                        : option.is_correct && showFeedback
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => handleAnswer(index)}
+                    disabled={!isMyTurn || selectedAnswer !== null}
+                    className="h-auto py-4 px-6 text-lg whitespace-normal"
+                  >
+                    {option.option_text}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Waiting for turn
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <PlayerStats 
+        currentPlayer={currentPlayer!} 
+        opponent={opponent!} 
+        categories={categories}
+      />
+      <Card className="max-w-md w-full">
+        <CardContent className="pt-8 text-center space-y-4">
+          <div className="text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold">Turno de {opponent?.profiles?.username}</h2>
+          <p className="text-muted-foreground">Espera tu turno...</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function PlayerStats({ 
+  currentPlayer, 
+  opponent, 
+  categories 
+}: { 
+  currentPlayer: TriviaMatchPlayer; 
+  opponent: TriviaMatchPlayer;
+  categories: any[];
+}) {
+  return (
+    <div className="container max-w-4xl mx-auto mb-6">
+      <div className="grid grid-cols-2 gap-4">
+        {/* Current Player */}
+        <Card className="bg-primary/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar>
+                <AvatarImage src={currentPlayer.profiles?.avatar_url || undefined} />
+                <AvatarFallback>
+                  {currentPlayer.profiles?.username?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold">{currentPlayer.profiles?.username}</p>
+                <p className="text-sm text-muted-foreground">Tú</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {categories?.map(cat => (
+                <div
+                  key={cat.id}
+                  className={`text-2xl ${
+                    currentPlayer.characters_collected.includes(cat.id)
+                      ? 'opacity-100'
+                      : 'opacity-20 grayscale'
+                  }`}
+                  title={cat.name}
+                >
+                  {cat.icon}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Opponent */}
+        <Card className="bg-secondary/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar>
+                <AvatarImage src={opponent.profiles?.avatar_url || undefined} />
+                <AvatarFallback>
+                  {opponent.profiles?.username?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold">{opponent.profiles?.username}</p>
+                <p className="text-sm text-muted-foreground">Oponente</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {categories?.map(cat => (
+                <div
+                  key={cat.id}
+                  className={`text-2xl ${
+                    opponent.characters_collected.includes(cat.id)
+                      ? 'opacity-100'
+                      : 'opacity-20 grayscale'
+                  }`}
+                  title={cat.name}
+                >
+                  {cat.icon}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

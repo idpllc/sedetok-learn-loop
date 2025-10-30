@@ -1796,6 +1796,165 @@ export type Database = {
         }
         Relationships: []
       }
+      trivia_1v1_matches: {
+        Row: {
+          created_at: string | null
+          current_category_id: string | null
+          current_player_id: string | null
+          current_question_number: number | null
+          finished_at: string | null
+          id: string
+          level: string
+          match_code: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_category_id?: string | null
+          current_player_id?: string | null
+          current_question_number?: number | null
+          finished_at?: string | null
+          id?: string
+          level?: string
+          match_code: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_category_id?: string | null
+          current_player_id?: string | null
+          current_question_number?: number | null
+          finished_at?: string | null
+          id?: string
+          level?: string
+          match_code?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trivia_1v1_matches_current_category_id_fkey"
+            columns: ["current_category_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trivia_1v1_players: {
+        Row: {
+          characters_collected: Json | null
+          current_streak: number | null
+          id: string
+          joined_at: string | null
+          match_id: string
+          player_number: number
+          user_id: string
+        }
+        Insert: {
+          characters_collected?: Json | null
+          current_streak?: number | null
+          id?: string
+          joined_at?: string | null
+          match_id: string
+          player_number: number
+          user_id: string
+        }
+        Update: {
+          characters_collected?: Json | null
+          current_streak?: number | null
+          id?: string
+          joined_at?: string | null
+          match_id?: string
+          player_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trivia_1v1_players_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_1v1_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trivia_1v1_turns: {
+        Row: {
+          answer_correct: boolean
+          category_id: string
+          character_won: string | null
+          created_at: string | null
+          id: string
+          match_id: string
+          player_id: string
+          question_id: string
+          streak_at_answer: number | null
+          time_taken: number | null
+        }
+        Insert: {
+          answer_correct: boolean
+          category_id: string
+          character_won?: string | null
+          created_at?: string | null
+          id?: string
+          match_id: string
+          player_id: string
+          question_id: string
+          streak_at_answer?: number | null
+          time_taken?: number | null
+        }
+        Update: {
+          answer_correct?: boolean
+          category_id?: string
+          character_won?: string | null
+          created_at?: string | null
+          id?: string
+          match_id?: string
+          player_id?: string
+          question_id?: string
+          streak_at_answer?: number | null
+          time_taken?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trivia_1v1_turns_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trivia_1v1_turns_character_won_fkey"
+            columns: ["character_won"]
+            isOneToOne: false
+            referencedRelation: "trivia_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trivia_1v1_turns_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_1v1_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trivia_1v1_turns_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trivia_achievements: {
         Row: {
           category_id: string | null
@@ -1864,45 +2023,6 @@ export type Database = {
           id?: string
           intelligence_type?: string
           name?: string
-        }
-        Relationships: []
-      }
-      trivia_matches: {
-        Row: {
-          best_streak: number
-          completed_at: string | null
-          correct_answers: number
-          created_at: string | null
-          duration_seconds: number | null
-          id: string
-          incorrect_answers: number
-          points_earned: number
-          questions_answered: number
-          user_id: string | null
-        }
-        Insert: {
-          best_streak?: number
-          completed_at?: string | null
-          correct_answers?: number
-          created_at?: string | null
-          duration_seconds?: number | null
-          id?: string
-          incorrect_answers?: number
-          points_earned?: number
-          questions_answered?: number
-          user_id?: string | null
-        }
-        Update: {
-          best_streak?: number
-          completed_at?: string | null
-          correct_answers?: number
-          created_at?: string | null
-          duration_seconds?: number | null
-          id?: string
-          incorrect_answers?: number
-          points_earned?: number
-          questions_answered?: number
-          user_id?: string | null
         }
         Relationships: []
       }

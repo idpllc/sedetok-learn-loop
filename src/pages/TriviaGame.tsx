@@ -7,15 +7,17 @@ import { TriviaWheel } from "@/components/trivia/TriviaWheel";
 import { TriviaGameplay } from "@/components/trivia/TriviaGameplay";
 import { TriviaRanking } from "@/components/trivia/TriviaRanking";
 import { TriviaAdminPanel } from "@/components/trivia/TriviaAdminPanel";
+import { TriviaMatchLobby } from "@/components/trivia/TriviaMatchLobby";
+import { TriviaMatch1v1 } from "@/components/trivia/TriviaMatch1v1";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
-import { Loader2, Trophy, User, Play, Crown, ArrowLeft } from "lucide-react";
+import { Loader2, Trophy, User, Play, Crown, ArrowLeft, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
-type GameScreen = "menu" | "wheel" | "gameplay" | "results" | "ranking" | "admin";
+type GameScreen = "menu" | "wheel" | "gameplay" | "results" | "ranking" | "admin" | "lobby-1v1" | "match-1v1";
 
 export default function TriviaGame() {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ export default function TriviaGame() {
   const [selectedLevel, setSelectedLevel] = useState<string>("libre");
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [gameResult, setGameResult] = useState<any>(null);
+  const [matchId, setMatchId] = useState<string | null>(null);
 
   const levels = [
     { value: "primaria", label: "📚 Primaria", description: "Conocimientos elementales" },
@@ -208,16 +211,28 @@ export default function TriviaGame() {
               className="h-32 text-2xl font-bold"
             >
               <Play className="w-8 h-8 mr-2" />
-              Jugar Ahora
+              Jugar Solo
             </Button>
 
             <Button
               size="lg"
-              variant="outline"
-              onClick={() => setScreen("ranking")}
+              variant="secondary"
+              onClick={() => setScreen("lobby-1v1")}
               className="h-32 text-2xl font-bold"
             >
-              <Trophy className="w-8 h-8 mr-2" />
+              <Users className="w-8 h-8 mr-2" />
+              Jugar 1 vs 1
+            </Button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setScreen("ranking")}
+              className="h-20 text-xl font-bold"
+            >
+              <Trophy className="w-6 h-6 mr-2" />
               Ver Ranking
             </Button>
           </div>
@@ -335,6 +350,44 @@ export default function TriviaGame() {
           </Button>
           <TriviaRanking />
         </div>
+      </div>
+    );
+  }
+
+  // 1v1 Lobby
+  if (screen === "lobby-1v1") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
+        <div className="container max-w-4xl mx-auto py-8 space-y-6">
+          <Button variant="ghost" onClick={() => setScreen("menu")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver al Menú
+          </Button>
+          
+          <div className="text-center space-y-2 mb-8">
+            <h1 className="text-4xl font-bold">Modo 1 vs 1</h1>
+            <p className="text-muted-foreground">
+              Compite contra otro jugador y colecciona todos los personajes
+            </p>
+          </div>
+
+          <TriviaMatchLobby
+            onMatchStart={(id) => {
+              setMatchId(id);
+              setScreen("match-1v1");
+            }}
+            selectedLevel={selectedLevel}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 1v1 Match
+  if (screen === "match-1v1" && matchId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10">
+        <TriviaMatch1v1 matchId={matchId} />
       </div>
     );
   }
