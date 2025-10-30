@@ -160,7 +160,7 @@ export default function TriviaGame() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {levels.map((level) => (
                   <Button
                     key={level.value}
@@ -225,17 +225,15 @@ export default function TriviaGame() {
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => setScreen("ranking")}
-              className="h-20 text-xl font-bold"
-            >
-              <Trophy className="w-6 h-6 mr-2" />
-              Ver Ranking
-            </Button>
-          </div>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => setScreen("ranking")}
+            className="h-20 text-xl font-bold w-full max-w-md mx-auto"
+          >
+            <Trophy className="w-6 h-6 mr-2" />
+            Ver Ranking
+          </Button>
 
           {isSuperAdmin && (
             <Button
