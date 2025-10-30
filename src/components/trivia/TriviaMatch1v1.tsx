@@ -314,7 +314,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   );
 
   // Wheel phase
-  if (phase === 'wheel' && isMyTurn) {
+  if (phase === 'wheel') {
     return (
       <div className="min-h-screen">
         <ExitButton />
@@ -324,9 +324,24 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           categories={categories}
         />
         <StreakIndicator streak={currentStreak} />
+        {!isMyTurn && opponent && (
+          <div className="container max-w-4xl mx-auto text-center mb-4">
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-xl font-semibold text-muted-foreground">
+                  Turno de {opponent.profiles?.username}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Espera a que termine su turno...
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         <TriviaWheel
           categories={categories}
           onCategorySelected={handleCategorySelected}
+          disabled={!isMyTurn}
         />
       </div>
     );

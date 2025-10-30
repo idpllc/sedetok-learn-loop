@@ -7,15 +7,16 @@ import { motion } from "framer-motion";
 interface TriviaWheelProps {
   categories: TriviaCategory[];
   onCategorySelected: (category: TriviaCategory) => void;
+  disabled?: boolean;
 }
 
-export const TriviaWheel = ({ categories, onCategorySelected }: TriviaWheelProps) => {
+export const TriviaWheel = ({ categories, onCategorySelected, disabled = false }: TriviaWheelProps) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<TriviaCategory | null>(null);
 
   const spinWheel = () => {
-    if (isSpinning || categories.length === 0) return;
+    if (isSpinning || categories.length === 0 || disabled) return;
 
     setIsSpinning(true);
     setSelectedCategory(null);
@@ -122,10 +123,10 @@ export const TriviaWheel = ({ categories, onCategorySelected }: TriviaWheelProps
       <Button
         size="lg"
         onClick={spinWheel}
-        disabled={isSpinning}
+        disabled={isSpinning || disabled}
         className="text-lg font-bold px-8 py-6 rounded-full shadow-lg hover:scale-105 transition-transform"
       >
-        {isSpinning ? "Girando..." : "¡Girar Ruleta!"}
+        {isSpinning ? "Girando..." : disabled ? "Esperando turno..." : "¡Girar Ruleta!"}
       </Button>
     </div>
   );
