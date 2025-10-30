@@ -274,8 +274,9 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         variant="outline"
         size="sm"
         onClick={() => {
-          if (window.confirm('¿Estás seguro de que quieres salir de la partida?')) {
-            navigate('/trivia-game');
+          const confirmExit = window.confirm('¿Estás seguro de que quieres salir de la partida?');
+          if (confirmExit) {
+            window.location.href = '/trivia-game';
           }
         }}
         className="mb-4"
@@ -432,8 +433,9 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           <Button 
             variant="outline" 
             onClick={() => {
-              if (window.confirm('¿Estás seguro de que quieres salir de la partida?')) {
-                navigate('/trivia-game');
+              const confirmExit = window.confirm('¿Estás seguro de que quieres salir de la partida?');
+              if (confirmExit) {
+                window.location.href = '/trivia-game';
               }
             }}
           >
