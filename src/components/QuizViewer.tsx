@@ -66,7 +66,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const [loading, setLoading] = useState(true);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [openEndedResponses, setOpenEndedResponses] = useState<Record<string, string>>({}); // questionId -> response
+  const [openEndedEvaluations, setOpenEndedEvaluations] = useState<Record<string, { score: number; feedback: string }>>({}); // questionId -> AI evaluation
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false);
+  const [isEvaluatingAI, setIsEvaluatingAI] = useState(false);
   const [showCorrectAnswers, setShowCorrectAnswers] = useState<Record<number, boolean>>({});
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: 'previous' | 'showAnswers' | 'extendTime', educoinCost: number, xpCost: number } | null>(null);
@@ -269,18 +271,75 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     }
   };
 
-  const handleShortAnswer = () => {
+  const handleShortAnswer = async () => {
     if (showFeedback || !shortAnswerText.trim()) return;
 
     const currentQ = questions[currentQuestion];
     
     // Handle open-ended questions differently
     if (currentQ.question_type === "open_ended") {
+      if (!user) {
+        toast.error("Debes iniciar sesión para enviar respuestas");
+        return;
+      }
+
+      setIsEvaluatingAI(true);
       setShowFeedback(true);
-      setIsAnswerCorrect(true); // Always mark as "answered" for open-ended
       setOpenEndedResponses({ ...openEndedResponses, [currentQ.id]: shortAnswerText });
       setUserAnswers({ ...userAnswers, [currentQuestion]: shortAnswerText });
-      // Don't add to score yet - will be evaluated later
+
+      try {
+        // Save the response first
+        const { data: savedResponse, error: saveError } = await supabase
+          .from("user_open_responses")
+          .insert({
+            user_id: user.id,
+            quiz_id: quizId,
+            question_id: currentQ.id,
+            evaluation_event_id: evaluationEventId || null,
+            response_text: shortAnswerText,
+            max_score: 100,
+          })
+          .select()
+          .single();
+
+        if (saveError) throw saveError;
+
+        // Call AI evaluation
+        const { data: evalData, error: evalError } = await supabase.functions.invoke(
+          'evaluate-open-response',
+          {
+            body: {
+              responseId: savedResponse.id,
+              questionText: currentQ.question_text,
+              expectedAnswer: currentQ.expected_answer || '',
+              evaluationCriteria: currentQ.evaluation_criteria || '',
+              userResponse: shortAnswerText,
+            },
+          }
+        );
+
+        if (evalError) throw evalError;
+
+        // Store evaluation result
+        const evaluation = { score: evalData.score, feedback: evalData.feedback };
+        setOpenEndedEvaluations({ ...openEndedEvaluations, [currentQ.id]: evaluation });
+        
+        // Add to score based on AI evaluation (normalize from 0-100 to question points)
+        const earnedPoints = (evalData.score / 100) * currentQ.points;
+        setScore(score + earnedPoints);
+        setQuestionResults({ ...questionResults, [currentQuestion]: evalData.score >= 60 });
+        setIsAnswerCorrect(evalData.score >= 60);
+
+        toast.success("Respuesta evaluada por IA");
+      } catch (error) {
+        console.error("Error evaluating open response:", error);
+        toast.error("Error al evaluar la respuesta. Se guardará para revisión manual.");
+        // Still allow to continue even if AI fails
+        setIsAnswerCorrect(true);
+      } finally {
+        setIsEvaluatingAI(false);
+      }
       return;
     }
 
@@ -478,30 +537,8 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
 
       console.log("Quiz result saved successfully:", insertData);
 
-      // Save open-ended responses
-      if (Object.keys(openEndedResponses).length > 0) {
-        const openEndedPromises = Object.entries(openEndedResponses).map(async ([questionId, responseText]) => {
-          const { error: openError } = await supabase
-            .from("user_open_responses")
-            .upsert({
-              user_id: user.id,
-              quiz_id: quizId,
-              question_id: questionId,
-              evaluation_event_id: evaluationEventId || null,
-              response_text: responseText,
-              max_score: 100,
-            }, {
-              onConflict: 'user_id,question_id,evaluation_event_id'
-            });
-
-          if (openError) {
-            console.error("Error saving open response:", openError);
-          }
-        });
-
-        await Promise.all(openEndedPromises);
-        console.log("Open-ended responses saved");
-      }
+      // Open-ended responses are already saved and evaluated in handleShortAnswer
+      console.log("Open-ended responses already saved and evaluated");
 
       if (passed) {
         toast.success("¡Felicitaciones! Has aprobado el quiz");
@@ -833,29 +870,47 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                          rows={6}
                        />
                        
-                       {!showFeedback && (
-                         <Button 
-                           onClick={handleShortAnswer}
-                           disabled={!shortAnswerText.trim() || shortAnswerText.trim().length < 10}
-                           className="w-full"
-                         >
-                           Enviar respuesta
-                         </Button>
-                       )}
+                        {!showFeedback && (
+                          <Button 
+                            onClick={handleShortAnswer}
+                            disabled={!shortAnswerText.trim() || shortAnswerText.trim().length < 10 || isEvaluatingAI}
+                            className="w-full"
+                          >
+                            {isEvaluatingAI ? "Evaluando con IA..." : "Enviar respuesta"}
+                          </Button>
+                        )}
 
-                       {showFeedback && (
-                         <div className="p-4 bg-muted rounded-lg w-full space-y-2">
-                           <p className="text-sm font-semibold">Respuesta guardada</p>
-                           <p className="text-xs text-muted-foreground">
-                             Tu respuesta será evaluada por el profesor. También puedes solicitar una evaluación automática por IA al finalizar el quiz.
-                           </p>
-                         </div>
-                       )}
+                        {showFeedback && !isEvaluatingAI && openEndedEvaluations[currentQ.id] && (
+                          <div className={`p-4 rounded-lg w-full space-y-3 ${
+                            openEndedEvaluations[currentQ.id].score >= 60 
+                              ? "bg-green-100 dark:bg-green-900/20" 
+                              : "bg-yellow-100 dark:bg-yellow-900/20"
+                          }`}>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold">🤖 Evaluación de IA</p>
+                              <span className="text-2xl font-bold">
+                                {openEndedEvaluations[currentQ.id].score}/100
+                              </span>
+                            </div>
+                            <p className="text-sm">
+                              {openEndedEvaluations[currentQ.id].feedback}
+                            </p>
+                          </div>
+                        )}
+
+                        {showFeedback && isEvaluatingAI && (
+                          <div className="p-4 bg-muted rounded-lg w-full space-y-2">
+                            <p className="text-sm font-semibold">⏳ Evaluando tu respuesta con IA...</p>
+                            <p className="text-xs text-muted-foreground">
+                              Por favor espera mientras la IA analiza tu respuesta.
+                            </p>
+                          </div>
+                        )}
                      </div>
                    )}
 
                    {/* Feedback */}
-                  {showFeedback && (
+                  {showFeedback && currentQ.question_type !== "open_ended" && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -914,7 +969,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                 <Button 
                   size="sm"
                   onClick={handleNext} 
-                  disabled={!showFeedback}
+                  disabled={!showFeedback || isEvaluatingAI}
                   className="text-xs md:text-sm flex-shrink-0"
                 >
                   {currentQuestion === questions.length - 1 ? "Finalizar" : "Siguiente"}
