@@ -1651,6 +1651,7 @@ export type Database = {
       quizzes: {
         Row: {
           category: Database["public"]["Enums"]["category_type"]
+          comments_count: number | null
           created_at: string | null
           creator_id: string
           description: string | null
@@ -1670,6 +1671,7 @@ export type Database = {
         }
         Insert: {
           category: Database["public"]["Enums"]["category_type"]
+          comments_count?: number | null
           created_at?: string | null
           creator_id: string
           description?: string | null
@@ -1689,6 +1691,7 @@ export type Database = {
         }
         Update: {
           category?: Database["public"]["Enums"]["category_type"]
+          comments_count?: number | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
