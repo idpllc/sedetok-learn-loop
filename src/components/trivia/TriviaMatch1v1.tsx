@@ -267,21 +267,30 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     );
   }
 
+  // Exit button component (always visible)
+  const ExitButton = () => (
+    <div className="container max-w-4xl mx-auto pt-4 px-4">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => {
+          if (window.confirm('¿Estás seguro de que quieres salir de la partida?')) {
+            navigate('/trivia-game');
+          }
+        }}
+        className="mb-4"
+      >
+        <LogOut className="w-4 h-4 mr-2" />
+        Salir
+      </Button>
+    </div>
+  );
+
   // Wheel phase
   if (phase === 'wheel' && isMyTurn) {
     return (
       <div className="min-h-screen">
-        <div className="container max-w-4xl mx-auto pt-4 px-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/trivia-game')}
-            className="mb-4"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Salir
-          </Button>
-        </div>
+        <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
           opponent={opponent!} 
@@ -300,6 +309,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   if (phase === 'character-round' && isMyTurn) {
     return (
       <div className="min-h-screen p-4">
+        <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
           opponent={opponent!} 
@@ -322,6 +332,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   if (phase === 'questions' && currentQuestion) {
     return (
       <div className="min-h-screen p-4 space-y-4">
+        <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
           opponent={opponent!} 
@@ -395,6 +406,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   // Waiting for turn or opponent
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      <ExitButton />
       {currentPlayer && opponent && (
         <PlayerStats 
           currentPlayer={currentPlayer} 
@@ -417,6 +429,17 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
               ? "Otro jugador se unirá pronto" 
               : "Espera tu turno..."}
           </p>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              if (window.confirm('¿Estás seguro de que quieres salir de la partida?')) {
+                navigate('/trivia-game');
+              }
+            }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Salir de la partida
+          </Button>
         </CardContent>
       </Card>
     </div>

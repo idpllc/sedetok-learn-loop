@@ -145,7 +145,7 @@ export function useTriviaMatch(matchId?: string) {
         .from('trivia_1v1_matches')
         .select('*')
         .eq('match_code', matchCode.toUpperCase())
-        .eq('status', 'waiting')
+        .in('status', ['waiting', 'active'])
         .single();
       
       if (matchError) throw new Error("No se encontró la partida");
@@ -159,6 +159,11 @@ export function useTriviaMatch(matchId?: string) {
         throw new Error("La partida está llena");
       }
 
+      // Check if user is already in this match
+      if (existingPlayers?.some(p => p.user_id === user.id)) {
+        return match as TriviaMatch;
+      }
+
       const { error: playerError } = await supabase
         .from('trivia_1v1_players')
         .insert({
@@ -169,12 +174,16 @@ export function useTriviaMatch(matchId?: string) {
       
       if (playerError) throw playerError;
 
-      // Start the match
+      // Get first player ID
+      const firstPlayer = existingPlayers?.[0];
+
+      // Start the match and set first player's turn
       await supabase
         .from('trivia_1v1_matches')
         .update({
           status: 'active',
-          started_at: new Date().toISOString()
+          started_at: new Date().toISOString(),
+          current_player_id: firstPlayer?.user_id || null
         })
         .eq('id', match.id);
 
