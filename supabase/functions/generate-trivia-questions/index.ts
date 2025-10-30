@@ -22,7 +22,6 @@ serve(async (req) => {
     }
 
     const levelDescriptions: Record<string, string> = {
-      preescolar: "nivel preescolar (3-5 años), preguntas muy simples y con vocabulario básico",
       primaria: "nivel primaria (6-11 años), preguntas apropiadas para niños con conceptos básicos",
       secundaria: "nivel secundaria (12-17 años), preguntas de dificultad media con conceptos más complejos",
       universidad: "nivel universitario (18+ años), preguntas avanzadas que requieren conocimiento profundo",
@@ -67,7 +66,6 @@ INSTRUCCIONES ESTRICTAS:
 - Las preguntas deben ser claras, precisas y apropiadas para la categoría Y el nivel educativo
 - Ajusta el vocabulario, complejidad y profundidad según el nivel
 - Las respuestas incorrectas deben ser plausibles pero claramente distinguibles
-- Para nivel preescolar: usa vocabulario simple, conceptos básicos, ejemplos cotidianos
 - Para nivel primaria: conceptos fundamentales, lenguaje claro y directo
 - Para nivel secundaria: mayor profundidad, conceptos más abstractos
 - Para nivel universidad: conocimiento especializado, terminología técnica

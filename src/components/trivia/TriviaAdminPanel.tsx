@@ -21,7 +21,6 @@ export const TriviaAdminPanel = () => {
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
   
   const levels = [
-    { value: "preescolar", label: "Preescolar" },
     { value: "primaria", label: "Primaria" },
     { value: "secundaria", label: "Secundaria" },
     { value: "universidad", label: "Universidad" },

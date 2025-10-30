@@ -28,7 +28,6 @@ export default function TriviaGame() {
   const [gameResult, setGameResult] = useState<any>(null);
 
   const levels = [
-    { value: "preescolar", label: "🎨 Preescolar", description: "Preguntas básicas y divertidas" },
     { value: "primaria", label: "📚 Primaria", description: "Conocimientos elementales" },
     { value: "secundaria", label: "🎓 Secundaria", description: "Retos para estudiantes" },
     { value: "universidad", label: "🏛️ Universidad", description: "Desafíos avanzados" },
