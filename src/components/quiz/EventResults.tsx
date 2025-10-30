@@ -18,11 +18,7 @@ import {
 
 // Conversion functions
 const convertTo5Scale = (percentage: number): string => {
-  if (percentage < 20) return "0.0";
-  if (percentage < 40) return "1.0 - 2.0";
-  if (percentage < 60) return "2.0 - 3.0";
-  if (percentage < 80) return "3.0 - 4.0";
-  return "4.0 - 5.0";
+  return (percentage / 20).toFixed(1);
 };
 
 const convertTo10Scale = (percentage: number): string => {
