@@ -48,3 +48,19 @@ verify_jwt = false
 [functions.create-users-bulk]
 verify_jwt = false
 timeout = 300
+
+[functions.generate-trivia-questions]
+verify_jwt = true
+timeout = 300
+
+[functions.evaluate-open-response]
+verify_jwt = true
+timeout = 300
+
+[functions.generate-game-questions]
+verify_jwt = true
+timeout = 300
+
+[functions.sync-sede-academico]
+verify_jwt = false
+timeout = 300

@@ -1796,6 +1796,234 @@ export type Database = {
         }
         Relationships: []
       }
+      trivia_achievements: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trivia_achievements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trivia_categories: {
+        Row: {
+          color: string
+          created_at: string | null
+          description: string | null
+          icon: string
+          id: string
+          intelligence_type: string
+          name: string
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          description?: string | null
+          icon: string
+          id?: string
+          intelligence_type: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          icon?: string
+          id?: string
+          intelligence_type?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      trivia_matches: {
+        Row: {
+          best_streak: number
+          completed_at: string | null
+          correct_answers: number
+          created_at: string | null
+          duration_seconds: number | null
+          id: string
+          incorrect_answers: number
+          points_earned: number
+          questions_answered: number
+          user_id: string | null
+        }
+        Insert: {
+          best_streak?: number
+          completed_at?: string | null
+          correct_answers?: number
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          incorrect_answers?: number
+          points_earned?: number
+          questions_answered?: number
+          user_id?: string | null
+        }
+        Update: {
+          best_streak?: number
+          completed_at?: string | null
+          correct_answers?: number
+          created_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          incorrect_answers?: number
+          points_earned?: number
+          questions_answered?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      trivia_questions: {
+        Row: {
+          category_id: string | null
+          correct_answer: number
+          created_at: string | null
+          created_by: string | null
+          difficulty: string
+          id: string
+          is_active: boolean | null
+          options: Json
+          points: number
+          question_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          correct_answer: number
+          created_at?: string | null
+          created_by?: string | null
+          difficulty?: string
+          id?: string
+          is_active?: boolean | null
+          options: Json
+          points?: number
+          question_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          correct_answer?: number
+          created_at?: string | null
+          created_by?: string | null
+          difficulty?: string
+          id?: string
+          is_active?: boolean | null
+          options?: Json
+          points?: number
+          question_text?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trivia_questions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trivia_user_achievements: {
+        Row: {
+          achievement_id: string | null
+          earned_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          achievement_id?: string | null
+          earned_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          achievement_id?: string | null
+          earned_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trivia_user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trivia_user_stats: {
+        Row: {
+          best_streak: number | null
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          total_correct: number | null
+          total_incorrect: number | null
+          total_matches: number | null
+          total_points: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          best_streak?: number | null
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          total_correct?: number | null
+          total_incorrect?: number | null
+          total_matches?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          best_streak?: number | null
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          total_correct?: number | null
+          total_incorrect?: number | null
+          total_matches?: number | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
