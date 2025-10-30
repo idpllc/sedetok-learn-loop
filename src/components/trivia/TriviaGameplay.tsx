@@ -203,10 +203,10 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
                       key={index}
                       onClick={() => handleAnswer(index)}
                       disabled={showFeedback || selectedAnswer !== null}
-                      variant={showCorrect ? "default" : showIncorrect ? "destructive" : "outline"}
+                      variant={showCorrect ? "default" : showIncorrect ? "destructive" : "secondary"}
                       className={`h-auto min-h-[80px] text-base font-medium whitespace-normal p-4 transition-all ${
-                        showCorrect ? 'bg-green-500 border-green-600' : 
-                        showIncorrect ? 'bg-red-500 border-red-600' : 
+                        showCorrect ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' : 
+                        showIncorrect ? 'bg-red-500 hover:bg-red-600 text-white border-red-600' : 
                         'hover:scale-105'
                       }`}
                     >

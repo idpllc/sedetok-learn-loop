@@ -190,28 +190,35 @@ export function TriviaCharacterRound({
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {question.options?.map((option, index) => (
-                  <Button
-                    key={index}
-                    size="lg"
-                    variant={
-                      selectedAnswer === null
-                        ? "outline"
-                        : selectedAnswer === index
-                        ? option.is_correct
+                {question.options?.map((option, index) => {
+                  const isSelected = selectedAnswer === index;
+                  const showCorrect = showFeedback && option.is_correct;
+                  const showIncorrect = showFeedback && isSelected && !option.is_correct;
+                  
+                  return (
+                    <Button
+                      key={index}
+                      size="lg"
+                      variant={
+                        selectedAnswer === null
+                          ? "secondary"
+                          : showCorrect
                           ? "default"
-                          : "destructive"
-                        : option.is_correct && showFeedback
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={() => handleAnswer(index)}
-                    disabled={selectedAnswer !== null}
-                    className="h-auto py-4 px-6 text-lg whitespace-normal"
-                  >
-                    {option.option_text}
-                  </Button>
-                ))}
+                          : showIncorrect
+                          ? "destructive"
+                          : "secondary"
+                      }
+                      onClick={() => handleAnswer(index)}
+                      disabled={selectedAnswer !== null}
+                      className={`h-auto py-4 px-6 text-lg whitespace-normal ${
+                        showCorrect ? 'bg-green-500 hover:bg-green-600 text-white border-green-600' : 
+                        showIncorrect ? 'bg-red-500 hover:bg-red-600 text-white border-red-600' : ''
+                      }`}
+                    >
+                      {option.option_text}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
