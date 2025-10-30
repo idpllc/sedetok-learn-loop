@@ -15,7 +15,7 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
   const { user } = useAuth();
 
   // User's active matches
-  const { data: activeMatches, isLoading: loadingActive } = useQuery({
+  const { data: activeMatches, isLoading } = useQuery({
     queryKey: ['user-active-matches', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -60,54 +60,6 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
     refetchInterval: 3000
   });
 
-  // Available matches from other players
-  const { data: availableMatches, isLoading: loadingAvailable } = useQuery({
-    queryKey: ['available-matches', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-
-      // Get all waiting/active matches
-      const { data: matches } = await supabase
-        .from('trivia_1v1_matches')
-        .select('*')
-        .in('status', ['waiting', 'active'])
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (!matches || matches.length === 0) return [];
-
-      // Get player info for these matches
-      const { data: allPlayers } = await supabase
-        .from('trivia_1v1_players')
-        .select('match_id, user_id, profiles(username)')
-        .in('match_id', matches.map(m => m.id));
-
-      const playersMap = allPlayers?.reduce((acc, p) => {
-        if (!acc[p.match_id]) acc[p.match_id] = [];
-        acc[p.match_id].push(p);
-        return acc;
-      }, {} as Record<string, any[]>) || {};
-
-      // Filter: only matches where user is NOT a player AND has only 1 player
-      return matches
-        .filter(match => {
-          const players = playersMap[match.id] || [];
-          const isUserInMatch = players.some(p => p.user_id === user.id);
-          return !isUserInMatch && players.length === 1;
-        })
-        .map(match => ({
-          match_id: match.id,
-          matches: match,
-          playerCount: playersMap[match.id]?.length || 0,
-          players: playersMap[match.id] || []
-        }));
-    },
-    enabled: !!user,
-    refetchInterval: 3000
-  });
-
-  const isLoading = loadingActive || loadingAvailable;
-
   if (isLoading) {
     return (
       <Card>
@@ -118,10 +70,7 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
     );
   }
 
-  const hasMyMatches = activeMatches && activeMatches.length > 0;
-  const hasAvailableMatches = availableMatches && availableMatches.length > 0;
-
-  if (!hasMyMatches && !hasAvailableMatches) {
+  if (!activeMatches || activeMatches.length === 0) {
     return null;
   }
 
@@ -131,15 +80,14 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4"
     >
-      {hasMyMatches && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Mis Partidas en Curso
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Partidas en Curso
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
           {activeMatches.map((match) => {
             const matchData = match.matches as any;
             const isMyTurn = matchData.current_player_id === user?.id;
@@ -201,65 +149,6 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
           })}
         </CardContent>
       </Card>
-      )}
-
-      {hasAvailableMatches && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Partidas Disponibles
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {availableMatches!.map((match) => {
-              const matchData = match.matches as any;
-              const creator = match.players?.[0];
-              const creatorName = creator?.profiles?.username || 'Jugador';
-              
-              return (
-                <motion.div
-                  key={match.match_id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-lg font-bold">
-                        {matchData.match_code}
-                      </span>
-                      <Badge variant="secondary">
-                        <Users className="w-3 h-3 mr-1" />
-                        Esperando oponente
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <span className="capitalize">Nivel: {matchData.level}</span>
-                      <span>•</span>
-                      <span>Creada por: {creatorName}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />
-                        {match.playerCount}/2 jugadores
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => onMatchSelect(match.match_id)}
-                    variant="default"
-                    size="sm"
-                  >
-                    <Play className="w-4 h-4 mr-1" />
-                    Unirse
-                  </Button>
-                </motion.div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
     </motion.div>
   );
 }
