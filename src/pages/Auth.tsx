@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import sedefyLogo from "@/assets/sedefy-logo.png";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -121,8 +122,9 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="text-5xl mb-4">📚</div>
-          <CardTitle className="text-3xl font-bold">SEDETOK</CardTitle>
+          <div className="flex justify-center mb-6">
+            <img src={sedefyLogo} alt="Sedefy" className="h-16 w-auto" />
+          </div>
           <CardDescription>Plataforma educativa interactiva</CardDescription>
         </CardHeader>
         <CardContent>
