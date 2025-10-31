@@ -25,10 +25,12 @@ export const TriviaWheel = ({ categories, onCategorySelected, disabled = false }
     const randomIndex = Math.floor(Math.random() * categories.length);
     const selected = categories[randomIndex];
 
-    // Calculate rotation (multiple full spins + position)
+    // Calculate rotation so the center of the selected segment lands under the top pointer
     const spins = 5 + Math.random() * 3; // 5-8 full rotations
     const segmentAngle = 360 / categories.length;
-    const targetAngle = randomIndex * segmentAngle;
+    const centerOffset = segmentAngle / 2;
+    // We rotate to 360 - (index*segment + centerOffset) so the selected segment's center aligns with the top pointer
+    const targetAngle = 360 - (randomIndex * segmentAngle + centerOffset);
     const totalRotation = spins * 360 + targetAngle;
 
     setRotation(totalRotation);
