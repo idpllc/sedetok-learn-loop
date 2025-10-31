@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import sedefyLogo from "@/assets/sedefy-logo.png";
 
 interface AuthModalProps {
   open: boolean;
@@ -111,8 +112,11 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Accede a tu cuenta</DialogTitle>
-          <DialogDescription>
+          <div className="flex justify-center mb-6">
+            <img src={sedefyLogo} alt="Sedefy" className="h-12 w-auto" />
+          </div>
+          <DialogTitle className="text-center">Accede a tu cuenta</DialogTitle>
+          <DialogDescription className="text-center">
             Inicia sesión o crea una cuenta para continuar
           </DialogDescription>
         </DialogHeader>
