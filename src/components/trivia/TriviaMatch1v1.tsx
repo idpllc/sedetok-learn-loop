@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface TriviaMatch1v1Props {
   matchId: string;
@@ -27,6 +28,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { match, players, updatePlayer, recordTurn, updateMatch, fetchQuestions } = useTriviaMatch(matchId);
+  const { playCorrect, playWrong, playQuestionAppear, playTimeWarning } = useGameSounds();
   
   const [phase, setPhase] = useState<GamePhase>('wheel');
   const [currentCategory, setCurrentCategory] = useState<any>(null);
@@ -83,6 +85,10 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   useEffect(() => {
     if (phase === 'questions' && isMyTurn && timeLeft > 0 && !selectedAnswer) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      // Play warning sound at 5 seconds
+      if (timeLeft === 5) {
+        playTimeWarning();
+      }
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && phase === 'questions' && !selectedAnswer) {
       handleTimeout();
@@ -128,7 +134,10 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       current_question_number: 0
     });
 
-    setTimeout(() => setPhase('questions'), 1500);
+    setTimeout(() => {
+      setPhase('questions');
+      playQuestionAppear();
+    }, 1500);
   };
 
   const handleAnswer = async (optionIndex: number) => {
@@ -138,6 +147,13 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     const isCorrect = currentQuestion.options[optionIndex]?.is_correct || false;
     const newStreak = isCorrect ? currentStreak + 1 : 0;
     setCurrentStreak(newStreak);
+
+    // Play sound based on answer
+    if (isCorrect) {
+      playCorrect();
+    } else {
+      playWrong();
+    }
 
     // Record turn
     await recordTurn.mutateAsync({

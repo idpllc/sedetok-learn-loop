@@ -6,6 +6,8 @@ export const useGameSounds = () => {
   const clickSound = useRef<HTMLAudioElement | null>(null);
   const victorySound = useRef<HTMLAudioElement | null>(null);
   const correctSound = useRef<HTMLAudioElement | null>(null);
+  const wheelSpinSound = useRef<HTMLAudioElement | null>(null);
+  const questionAppearSound = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     // Create audio elements with working URLs
@@ -21,6 +23,8 @@ export const useGameSounds = () => {
     if (clickSound.current) clickSound.current.volume = 0.2;
     if (victorySound.current) victorySound.current.volume = 0.4;
     if (correctSound.current) correctSound.current.volume = 0.4;
+    if (wheelSpinSound.current) wheelSpinSound.current.volume = 0.3;
+    if (questionAppearSound.current) questionAppearSound.current.volume = 0.3;
 
     return () => {
       // Cleanup
@@ -29,6 +33,8 @@ export const useGameSounds = () => {
       clickSound.current = null;
       victorySound.current = null;
       correctSound.current = null;
+      wheelSpinSound.current = null;
+      questionAppearSound.current = null;
     };
   }, []);
 
@@ -84,11 +90,87 @@ export const useGameSounds = () => {
     }
   };
 
+  const playWrong = () => {
+    // Create an error sound using Web Audio API
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Error sound: descending frequency
+      oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.3);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {
+      console.log('Error playing sound:', e);
+    }
+  };
+
+  const playWheelSpin = () => {
+    // Create a wheel spinning sound using Web Audio API
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Spinning sound: rapid frequency changes
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.5);
+      
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+      console.log('Error playing sound:', e);
+    }
+  };
+
+  const playQuestionAppear = () => {
+    // Create a question appear sound using Web Audio API
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Question appear: rising tone
+      oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(550, audioContext.currentTime + 0.1);
+      
+      gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (e) {
+      console.log('Error playing sound:', e);
+    }
+  };
+
   return {
     playLoseLife,
     playTimeWarning,
     playClick,
     playVictory,
     playCorrect,
+    playWrong,
+    playWheelSpin,
+    playQuestionAppear,
   };
 };

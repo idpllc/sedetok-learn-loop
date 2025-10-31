@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TriviaCategory } from "@/hooks/useTriviaGame";
 import { motion } from "framer-motion";
+import { useGameSounds } from "@/hooks/useGameSounds";
 
 interface TriviaWheelProps {
   categories: TriviaCategory[];
@@ -14,12 +15,14 @@ export const TriviaWheel = ({ categories, onCategorySelected, disabled = false }
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<TriviaCategory | null>(null);
+  const { playWheelSpin } = useGameSounds();
 
   const spinWheel = () => {
     if (isSpinning || categories.length === 0 || disabled) return;
 
     setIsSpinning(true);
     setSelectedCategory(null);
+    playWheelSpin();
 
     // Random category
     const randomIndex = Math.floor(Math.random() * categories.length);
