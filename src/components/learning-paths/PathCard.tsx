@@ -100,20 +100,12 @@ export const PathCard = ({ path }: PathCardProps) => {
           )}
           
           {/* Creator info */}
-          <div className="flex flex-col gap-2 mb-3">
-            {path.profiles && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <User className="w-3 h-3" />
-                <span>Ruta por: {path.profiles.full_name || path.profiles.username}</span>
-              </div>
-            )}
-            {path.course_routes?.[0]?.courses?.profiles && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <User className="w-3 h-3" />
-                <span>Curso por: {path.course_routes[0].courses.profiles.full_name || path.course_routes[0].courses.profiles.username}</span>
-              </div>
-            )}
-          </div>
+          {path.profiles && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+              <User className="w-3 h-3" />
+              <span>Por: {path.profiles.full_name || path.profiles.username}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>⚡ {path.total_xp} XP</span>
