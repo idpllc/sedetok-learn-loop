@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useGameSounds } from "@/hooks/useGameSounds";
+import { useToast } from "@/hooks/use-toast";
 
 interface TriviaMatch1v1Props {
   matchId: string;
@@ -27,6 +28,7 @@ type GamePhase = 'wheel' | 'questions' | 'character-round' | 'finished';
 export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { match, players, updatePlayer, recordTurn, updateMatch, fetchQuestions } = useTriviaMatch(matchId);
   const { playCorrect, playWrong, playQuestionAppear, playTimeWarning } = useGameSounds();
   
@@ -59,12 +61,64 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const waitingForOpponent = !opponent;
   const matchIsWaiting = match?.status === 'waiting';
 
-  // Reset turnEnded when it actually becomes our turn
+  // Reset turnEnded when it actually becomes our turn and send notification
   useEffect(() => {
     if (match?.current_player_id === user?.id) {
       setTurnEnded(false);
+      
+      // Send push notification when it becomes my turn
+      const sendTurnNotification = async () => {
+        try {
+          // Create notification in database
+          const { error: notifError } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: user.id,
+              type: 'trivia_turn',
+              title: '¡Es tu turno!',
+              message: 'Es tu turno en la partida de trivia',
+              related_id: matchId,
+              related_type: 'trivia_match',
+              read: false
+            });
+
+          if (notifError) {
+            console.error('Error creating notification:', notifError);
+          }
+
+          // Send push notification
+          const { error: pushError } = await supabase.functions.invoke('send-push-notification', {
+            body: {
+              userId: user.id,
+              title: '¡Es tu turno!',
+              message: 'Es tu turno en la partida de trivia',
+              url: `/trivia-game?match=${matchId}`,
+              notificationId: matchId,
+              relatedId: matchId,
+              relatedType: 'trivia_match'
+            }
+          });
+
+          if (pushError) {
+            console.error('Error sending push notification:', pushError);
+          }
+
+          // Show toast notification
+          toast({
+            title: "¡Es tu turno!",
+            description: "Es tu turno en la partida de trivia",
+          });
+        } catch (error) {
+          console.error('Error sending turn notification:', error);
+        }
+      };
+
+      // Only send notification if we're not in the initial state
+      if (match?.started_at) {
+        sendTurnNotification();
+      }
     }
-  }, [match?.current_player_id, user?.id]);
+  }, [match?.current_player_id, user?.id, matchId, toast]);
 
   // Activate match when second player joins
   useEffect(() => {
