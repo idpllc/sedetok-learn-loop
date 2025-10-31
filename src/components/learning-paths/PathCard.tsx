@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MoreVertical, Edit, Copy, Share2, Eye, EyeOff, Trash2 } from "lucide-react";
+import { MoreVertical, Edit, Copy, Share2, Eye, EyeOff, Trash2, User } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,6 +98,23 @@ export const PathCard = ({ path }: PathCardProps) => {
               {path.description}
             </p>
           )}
+          
+          {/* Creator info */}
+          <div className="flex flex-col gap-2 mb-3">
+            {path.profiles && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <User className="w-3 h-3" />
+                <span>Ruta por: {path.profiles.full_name || path.profiles.username}</span>
+              </div>
+            )}
+            {path.course_routes?.[0]?.courses?.profiles && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <User className="w-3 h-3" />
+                <span>Curso por: {path.course_routes[0].courses.profiles.full_name || path.course_routes[0].courses.profiles.username}</span>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>⚡ {path.total_xp} XP</span>
             <span>⏱️ {path.estimated_duration} min</span>
