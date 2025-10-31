@@ -80,7 +80,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
       )}
 
       {/* Main content container */}
-      <div className="relative z-10 max-w-2xl w-full mx-auto px-4 py-8 md:px-6 md:py-12 flex flex-col items-center justify-center">
+      <div className="relative z-10 max-w-4xl w-full mx-auto px-6 py-8 md:px-12 md:py-16 lg:px-16 flex flex-col items-center justify-center">
         {/* Icon/Badge section */}
         <div className="mb-4 md:mb-8 flex flex-wrap items-center justify-center gap-2">
           <Badge className="bg-primary text-primary-foreground text-xs md:text-sm px-2 py-1 md:px-4 md:py-2">
@@ -96,7 +96,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-center mb-3 md:mb-4 text-foreground">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-3 md:mb-6 text-foreground leading-tight">
           {title}
         </h1>
 
