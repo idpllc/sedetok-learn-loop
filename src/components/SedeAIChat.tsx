@@ -110,11 +110,11 @@ export const SedeAIChat = () => {
       {/* Sidebar */}
       <div
         className={cn(
-          "w-80 border-r bg-card transition-all duration-300 z-10",
+          "w-80 border-r bg-card transition-all duration-300 relative",
           showSidebar ? "translate-x-0" : "-translate-x-full absolute lg:relative"
         )}
       >
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b flex items-center justify-between bg-card relative z-10">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <h2 className="font-bold text-lg">SEDE AI</h2>
@@ -138,44 +138,47 @@ export const SedeAIChat = () => {
                 ¡Inicia una nueva!
               </div>
             ) : (
-              conversations.map((conv) => (
-                <Card
+              conversations.map((conv, index) => (
+                <div
                   key={conv.id}
-                  className={cn(
-                    "p-3 cursor-pointer hover:bg-accent transition-colors group relative",
-                    currentConversationId === conv.id && "bg-accent"
-                  )}
+                  className="relative"
+                  style={{ zIndex: conversations.length - index }}
                 >
-                  <div 
-                    className="flex items-start justify-between gap-2"
+                  <Card
+                    className={cn(
+                      "p-3 cursor-pointer hover:bg-accent transition-colors group",
+                      currentConversationId === conv.id && "bg-accent border-primary"
+                    )}
                     onClick={() => selectConversation(conv.id)}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {conv.title || "Nueva conversación"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(conv.updated_at).toLocaleDateString("es", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </p>
+                    <div className="flex items-start justify-between gap-2 pr-8">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {conv.title || "Nueva conversación"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(conv.updated_at).toLocaleDateString("es", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm("¿Eliminar esta conversación?")) {
+                            deleteConversation(conv.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                      </Button>
                     </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm("¿Eliminar esta conversación?")) {
-                        deleteConversation(conv.id);
-                      }
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                  </Button>
-                </Card>
+                  </Card>
+                </div>
               ))
             )}
           </div>
@@ -183,9 +186,9 @@ export const SedeAIChat = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative z-0">
+      <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b bg-card flex items-center gap-3 relative z-20">
+        <div className="p-4 border-b bg-card flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
