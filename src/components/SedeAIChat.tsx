@@ -10,6 +10,62 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
+interface PathData {
+  id: string;
+  title: string;
+  description: string;
+  category?: string;
+  subject?: string;
+  creator?: string;
+  cover_url?: string;
+}
+
+const PathCards = ({ paths }: { paths: PathData[] }) => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      {paths.map((path) => (
+        <Card
+          key={path.id}
+          className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+          onClick={() => navigate(`/learning-paths/${path.id}`)}
+        >
+          {path.cover_url && (
+            <div className="aspect-video w-full overflow-hidden bg-muted">
+              <img
+                src={path.cover_url}
+                alt={path.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="p-4">
+            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{path.title}</h3>
+            {path.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                {path.description}
+              </p>
+            )}
+            <div className="flex gap-2 flex-wrap">
+              {path.category && (
+                <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
+                  {path.category}
+                </span>
+              )}
+              {path.subject && (
+                <span className="text-xs px-2 py-1 bg-secondary/10 text-secondary-foreground rounded-full">
+                  {path.subject}
+                </span>
+              )}
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
 export const SedeAIChat = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -207,43 +263,62 @@ export const SedeAIChat = () => {
                 </div>
               </div>
             ) : (
-              messages.map((message, idx) => (
-                <div
-                  key={idx}
-                  className={cn(
-                    "flex gap-3",
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  {message.role === "assistant" && (
-                    <Avatar className="w-8 h-8 mt-1">
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600">
-                        <Sparkles className="w-4 h-4 text-white" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <Card
+              messages.map((message, idx) => {
+                // Check if message contains path data
+                const pathsMatch = message.content.match(/\|\|\|PATHS_DATA:(.*?)\|\|\|/);
+                let messageContent = message.content;
+                let pathsData: PathData[] = [];
+
+                if (pathsMatch) {
+                  try {
+                    pathsData = JSON.parse(pathsMatch[1]);
+                    messageContent = message.content.replace(/\|\|\|PATHS_DATA:.*?\|\|\|/, '').trim();
+                  } catch (e) {
+                    console.error('Error parsing paths data:', e);
+                  }
+                }
+
+                return (
+                  <div
+                    key={idx}
                     className={cn(
-                      "p-3 max-w-[80%]",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card"
+                      "flex gap-3",
+                      message.role === "user" ? "justify-end" : "justify-start"
                     )}
                   >
-                    <p className="text-sm whitespace-pre-wrap">
-                      {message.content}
-                    </p>
-                  </Card>
-                  {message.role === "user" && (
-                    <Avatar className="w-8 h-8 mt-1">
-                      <AvatarImage src={user?.user_metadata?.avatar_url} />
-                      <AvatarFallback>
-                        {user?.user_metadata?.full_name?.[0] || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))
+                    {message.role === "assistant" && (
+                      <Avatar className="w-8 h-8 mt-1">
+                        <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600">
+                          <Sparkles className="w-4 h-4 text-white" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className="max-w-[80%]">
+                      <Card
+                        className={cn(
+                          "p-3",
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-card"
+                        )}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">
+                          {messageContent}
+                        </p>
+                      </Card>
+                      {pathsData.length > 0 && <PathCards paths={pathsData} />}
+                    </div>
+                    {message.role === "user" && (
+                      <Avatar className="w-8 h-8 mt-1">
+                        <AvatarImage src={user?.user_metadata?.avatar_url} />
+                        <AvatarFallback>
+                          {user?.user_metadata?.full_name?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                );
+              })
             )}
             {isStreaming && (
               <div className="flex gap-3 justify-start">
