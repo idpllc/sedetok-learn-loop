@@ -110,7 +110,7 @@ export const SedeAIChat = () => {
       {/* Sidebar */}
       <div
         className={cn(
-          "w-80 border-r bg-card transition-all duration-300 relative",
+          "w-80 border-r bg-card transition-all duration-300 relative z-30",
           showSidebar ? "translate-x-0" : "-translate-x-full absolute lg:relative"
         )}
       >
@@ -146,7 +146,7 @@ export const SedeAIChat = () => {
                 >
                   <Card
                     className={cn(
-                      "p-3 cursor-pointer hover:bg-accent transition-colors group",
+                      "p-3 cursor-pointer hover:bg-accent transition-colors group relative",
                       currentConversationId === conv.id && "bg-accent border-primary"
                     )}
                     onClick={() => selectConversation(conv.id)}
@@ -166,7 +166,7 @@ export const SedeAIChat = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 z-10"
+                        className="h-7 w-7 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 z-20"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (window.confirm("¿Eliminar esta conversación?")) {
@@ -186,7 +186,7 @@ export const SedeAIChat = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative z-0">
         {/* Header */}
         <div className="p-4 border-b bg-card flex items-center gap-3">
           <Button
