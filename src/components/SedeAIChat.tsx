@@ -4,13 +4,15 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 export const SedeAIChat = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const {
     conversations,
     messages,
@@ -124,8 +126,16 @@ export const SedeAIChat = () => {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => navigate(-1)}
+            className="flex-shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setShowSidebar(!showSidebar)}
-            className="lg:hidden"
+            className="lg:hidden flex-shrink-0"
           >
             <MessageSquare className="w-5 h-5" />
           </Button>
