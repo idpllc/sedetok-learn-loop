@@ -151,7 +151,7 @@ export const SedeAIChat = () => {
                     )}
                     onClick={() => selectConversation(conv.id)}
                   >
-                    <div className="flex items-start justify-between gap-2 pr-8">
+                    <div className="flex items-start justify-between gap-2 pl-3 pr-16">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">
                           {conv.title || "Nueva conversación"}
@@ -162,11 +162,14 @@ export const SedeAIChat = () => {
                             month: "short",
                           })}
                         </p>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                          {String(((conv as any)?.last_message?.content) || (conv as any)?.last_message || (conv as any)?.preview || "").slice(0, 80)}
+                        </p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 z-20"
+                        className="h-7 w-7 absolute top-2 right-3 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 z-20"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (window.confirm("¿Eliminar esta conversación?")) {
