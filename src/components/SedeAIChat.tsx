@@ -110,8 +110,8 @@ export const SedeAIChat = () => {
       {/* Sidebar */}
       <div
         className={cn(
-          "w-80 border-r bg-card transition-all duration-300",
-          showSidebar ? "translate-x-0" : "-translate-x-full absolute"
+          "w-80 border-r bg-card transition-all duration-300 z-10",
+          showSidebar ? "translate-x-0" : "-translate-x-full absolute lg:relative"
         )}
       >
         <div className="p-4 border-b flex items-center justify-between">
@@ -142,32 +142,39 @@ export const SedeAIChat = () => {
                 <Card
                   key={conv.id}
                   className={cn(
-                    "p-3 cursor-pointer hover:bg-accent transition-colors group",
+                    "p-3 cursor-pointer hover:bg-accent transition-colors group relative",
                     currentConversationId === conv.id && "bg-accent"
                   )}
-                  onClick={() => selectConversation(conv.id)}
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div 
+                    className="flex items-start justify-between gap-2"
+                    onClick={() => selectConversation(conv.id)}
+                  >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
                         {conv.title || "Nueva conversación"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(conv.updated_at).toLocaleDateString()}
+                        {new Date(conv.updated_at).toLocaleDateString("es", {
+                          day: "numeric",
+                          month: "short",
+                        })}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteConversation(conv.id);
-                      }}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm("¿Eliminar esta conversación?")) {
+                        deleteConversation(conv.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                  </Button>
                 </Card>
               ))
             )}
@@ -176,9 +183,9 @@ export const SedeAIChat = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative z-0">
         {/* Header */}
-        <div className="p-4 border-b bg-card flex items-center gap-3">
+        <div className="p-4 border-b bg-card flex items-center gap-3 relative z-20">
           <Button
             variant="ghost"
             size="icon"
