@@ -16,7 +16,7 @@ type Conversation = {
 };
 
 export const useSedeAIChat = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -133,12 +133,21 @@ export const useSedeAIChat = () => {
     setIsLoading(true);
 
     try {
+      if (!session?.access_token) {
+        toast({
+          title: "Sesión requerida",
+          description: "Inicia sesión para usar SEDE AI",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sede-ai-chat`;
       const response = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           message,
