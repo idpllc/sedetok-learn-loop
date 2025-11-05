@@ -20,6 +20,7 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import LearningPaths from "./pages/LearningPaths";
+import SedeAI from "./pages/SedeAI";
 import CreateLearningPath from "./pages/CreateLearningPath";
 import ViewLearningPath from "./pages/ViewLearningPath";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -103,6 +104,7 @@ const App = () => (
           <Route path="/game-evaluations/results/:eventId" element={<QuizEvaluations />} />
           <Route path="/game-evaluations" element={<QuizEvaluations />} />
           <Route path="/trivia-game" element={<TriviaGame />} />
+          <Route path="/sede-ai" element={<SedeAI />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
