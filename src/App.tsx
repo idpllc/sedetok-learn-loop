@@ -45,6 +45,7 @@ import Courses from "./pages/Courses";
 import ViewCourse from "./pages/ViewCourse";
 import EditGame from "./pages/EditGame";
 import TriviaGame from "./pages/TriviaGame";
+import SedeTok from "./pages/SedeTok";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
         <OpenGraphHandler />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/sedetok" element={<SedeTok />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/auto-login" element={<AutoLogin />} />
           <Route path="/search" element={<Search />} />

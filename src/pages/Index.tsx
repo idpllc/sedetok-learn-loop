@@ -56,9 +56,6 @@ const Index = () => {
   // Combine content from all pages
   const allContent = data?.pages.flatMap(page => page.items) || [];
   
-  // Combine content and paths for Sede Tok carousel
-  const sedeTokContent = allContent.slice(0, 10); // Top 10 for carousel
-  
   // Combine all content and paths for main grid
   const combinedContent = [
     ...allContent.map(item => ({ ...item, itemType: 'content' })),
@@ -326,88 +323,6 @@ const Index = () => {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
-          {/* Sede Tok Carousel */}
-          <section>
-            <h2 className="text-2xl font-bold mb-4">Sede tok</h2>
-            {isLoading ? (
-              <div className="flex gap-4">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-[300px] w-[250px] rounded-xl flex-shrink-0" />
-                ))}
-              </div>
-            ) : (
-              <Carousel className="w-full">
-                <CarouselContent className="-ml-4">
-                  {sedeTokContent.map((item) => {
-                    const isQuiz = item.content_type === 'quiz';
-                    const isLiked = likes.has(item.id);
-                    const isSaved = saves.has(item.id);
-                    const profile = item.profiles as any;
-                    const scientist = isQuiz ? getQuizScientistIcon(item.category) : null;
-                    
-                    return (
-                      <CarouselItem key={item.id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
-                        <Card 
-                          className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full"
-                          onClick={() => {
-                            if (isQuiz) {
-                              navigate(`/?quiz=${item.id}`);
-                            } else if (item.content_type === 'game') {
-                              navigate(`/?game=${item.id}`);
-                            } else {
-                              navigate(`/?content=${item.id}`);
-                            }
-                          }}
-                        >
-                          <CardContent className="p-0">
-                            <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-secondary/20">
-                              {(item.thumbnail_url) ? (
-                                <img 
-                                  src={item.thumbnail_url} 
-                                  alt={item.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : scientist ? (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <img src={scientist.icon} alt={scientist.name} className="w-32 h-32 object-contain" />
-                                </div>
-                              ) : (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  {getContentIcon(item.content_type)}
-                                </div>
-                              )}
-                              <div className="absolute top-2 right-2">
-                                <Badge variant="secondary" className="backdrop-blur-sm bg-background/70">
-                                  {getContentIcon(item.content_type)}
-                                  <span className="ml-1 capitalize">{item.content_type}</span>
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="p-4 space-y-2">
-                              <h3 className="font-semibold line-clamp-2 text-sm">{item.title}</h3>
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                                  {item.likes_count || 0}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Eye className="w-4 h-4" />
-                                  {item.views_count || 0}
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </CarouselItem>
-                    );
-                  })}
-                </CarouselContent>
-                <CarouselPrevious className="left-0" />
-                <CarouselNext className="right-0" />
-              </Carousel>
-            )}
-          </section>
-
           {/* Main Content Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
