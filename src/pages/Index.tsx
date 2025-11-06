@@ -384,7 +384,7 @@ const Index = () => {
                             </div>
                           )}
                           <div className="absolute top-2 right-2">
-                            <Badge variant="secondary" className="backdrop-blur-sm bg-background/70">
+                            <Badge variant="secondary" className="backdrop-blur-sm shadow-sm">
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
                               <span className="ml-1 capitalize">
                                 {isLearningPath ? "Ruta" : item.content_type}
