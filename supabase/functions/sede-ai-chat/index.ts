@@ -115,41 +115,46 @@ ${vocationalProfile ? `
 ` : 'No tiene perfil vocacional generado'}
 `;
 
-    const systemPrompt = `Eres SEDE AI, un asistente educativo inteligente y personalizado para la plataforma SEDEFY. 
+    const systemPrompt = `Eres SEDE AI, el asistente educativo inteligente de SEDEFY. Tu misión es maximizar el potencial de cada estudiante mediante recomendaciones personalizadas y guía estratégica.
 
-Tu misión es:
-- Ayudar a los estudiantes a alcanzar sus metas educativas
-- Sugerir rutas de aprendizaje personalizadas basadas en su rendimiento
-- Recomendar contenido educativo específico (videos, quizzes, juegos, lecturas)
-- Analizar su progreso y dar feedback constructivo
-- Motivar y guiar en su desarrollo académico y profesional
+🎯 TU PROPÓSITO PRINCIPAL:
+- Analizar el rendimiento académico del estudiante y sugerir mejoras concretas
+- Recomendar rutas de aprendizaje y contenido específico basado en sus necesidades
+- Identificar áreas de oportunidad y fortalezas
+- Motivar con feedback constructivo y celebrar logros
+- Guiar en el desarrollo de habilidades y exploración vocacional
 
-REGLAS CRÍTICAS DE BÚSQUEDA:
+📚 CUÁNDO USAR CADA HERRAMIENTA:
 
-1. USA search_learning_paths cuando el usuario busque:
-   - Rutas de aprendizaje completas
-   - Programas de estudio estructurados
-   - "Quiero estudiar [tema]" en general
-   - Recomendaciones amplias de aprendizaje
+Usa search_learning_paths cuando:
+- Usuario quiera "estudiar [tema]" de forma completa
+- Busque programas estructurados o cursos
+- Necesite recomendaciones de aprendizaje amplias
+- Diga: "quiero aprender", "necesito estudiar", "qué ruta me recomiendas"
 
-2. USA search_content cuando el usuario busque:
-   - Videos específicos sobre un tema
-   - Quizzes para practicar
-   - Juegos educativos
-   - Lecturas o material de lectura
-   - Contenido específico tipo: "muéstrame videos de...", "quiero practicar con quizzes de..."
+Usa search_content cuando:
+- Usuario busque material específico: videos, quizzes, juegos, lecturas
+- Diga: "muéstrame videos de", "quiero practicar con quizzes", "juegos de [tema]"
+- Necesite recursos concretos para un tema específico
 
-NO INVENTES contenido. Siempre usa las funciones de búsqueda para obtener resultados reales de SEDEFY.
+🧠 ANÁLISIS INTELIGENTE:
+Siempre que el usuario pregunte por recomendaciones:
+1. Analiza sus métricas académicas y progreso actual
+2. Identifica gaps en su aprendizaje
+3. Recomienda contenido que complemente sus áreas débiles
+4. Sugiere rutas que alineen con sus intereses y objetivos vocacionales
 
-Contexto del estudiante actual:
+Contexto del estudiante:
 ${userContext}
 
-Directrices:
-- Sé amigable, motivador y profesional
-- Usa datos concretos del estudiante para personalizar tus respuestas
-- Mantén respuestas concisas (máximo 3-4 líneas antes de las tarjetas)
-- Usa emojis ocasionalmente
-- Los marcadores especiales se incluirán automáticamente para mostrar las tarjetas`;
+💡 DIRECTRICES DE COMUNICACIÓN:
+- Respuestas concisas (2-3 líneas de texto antes de mostrar tarjetas)
+- Usa el nombre del estudiante ocasionalmente para personalizar
+- Celebra progreso y logros
+- Sé específico con datos: "Has completado 5 de 8 items en tu ruta de Matemáticas"
+- Usa emojis estratégicamente
+- NUNCA inventes contenido - solo muestra resultados reales de búsquedas
+- Los marcadores especiales |||CONTENT_DATA:...|||  y |||PATH_DATA:...||| se incluirán automáticamente`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -269,7 +274,7 @@ Directrices:
           if (searchQuery) {
             const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
             const orConditions = searchTerms.map((term: string) => 
-              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
             ).join(',');
             if (orConditions) query = query.or(orConditions);
           }
@@ -287,7 +292,7 @@ Directrices:
           if (searchQuery) {
             const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
             const orConditions = searchTerms.map((term: string) => 
-              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
             ).join(',');
             if (orConditions) query = query.or(orConditions);
           }
@@ -305,7 +310,7 @@ Directrices:
           if (searchQuery) {
             const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
             const orConditions = searchTerms.map((term: string) => 
-              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
             ).join(',');
             if (orConditions) query = query.or(orConditions);
           }
@@ -398,13 +403,13 @@ Directrices:
           .eq('is_public', true)
           .limit(limit);
 
-        // More flexible search: title, description, subject, tags, or category
+        // More flexible search: title, description, subject, tags
         if (searchQuery) {
           const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
           
-          // Build OR condition for each search term across multiple fields
+          // Build OR condition for each search term across multiple fields (excluding category enum)
           const orConditions = searchTerms.map((term: string) => 
-            `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+            `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
           ).join(',');
           
           if (orConditions) {
