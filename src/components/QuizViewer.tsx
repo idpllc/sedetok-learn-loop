@@ -514,6 +514,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
       const payload: any = {
         user_id: user.id,
         quiz_id: quizId,
+        game_id: null, // Explicitly set to null for quiz results
         score: normalizedScore,
         max_score: 100,
         passed,
