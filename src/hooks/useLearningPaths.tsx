@@ -15,7 +15,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           .from("learning_paths")
           .select(`
             *,
-            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+            profiles:creator_id(username, avatar_url, full_name)
           `)
           .eq("is_public", true)
           .order("created_at", { ascending: false });
@@ -30,10 +30,10 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           .from("learning_paths")
           .select(`
             *,
-            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+            profiles:creator_id(username, avatar_url, full_name)
           `)
           .eq("creator_id", userId)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false});
         
         if (error) throw error;
         return (data || []) as any[];
@@ -54,7 +54,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           .from("learning_paths")
           .select(`
             *,
-            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+            profiles:creator_id(username, avatar_url, full_name)
           `)
           .in("id", pathIds)
           .order("created_at", { ascending: false });
@@ -67,7 +67,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           .from("learning_paths")
           .select(`
             *,
-            profiles!learning_paths_creator_id_fkey(username, avatar_url, full_name)
+            profiles:creator_id(username, avatar_url, full_name)
           `)
           .order("created_at", { ascending: false });
         if (userId) {

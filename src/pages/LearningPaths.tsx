@@ -27,7 +27,7 @@ const LearningPaths = () => {
     visibility: "",
   });
 
-  const filteredPaths = paths?.filter((path) => {
+  const filteredPaths = (paths || []).filter((path) => {
     const matchesSearch = path.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       path.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
