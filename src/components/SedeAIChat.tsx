@@ -9,6 +9,7 @@ import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface PathData {
   id: string;
@@ -24,44 +25,57 @@ const PathCards = ({ paths }: { paths: PathData[] }) => {
   const navigate = useNavigate();
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-      {paths.map((path) => (
-        <Card
-          key={path.id}
-          className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-          onClick={() => navigate(`/learning-paths/${path.id}`)}
-        >
-          {path.cover_url && (
-            <div className="aspect-video w-full overflow-hidden bg-muted">
-              <img
-                src={path.cover_url}
-                alt={path.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="p-4">
-            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{path.title}</h3>
-            {path.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                {path.description}
-              </p>
-            )}
-            <div className="flex gap-2 flex-wrap">
-              {path.category && (
-                <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
-                  {path.category}
-                </span>
-              )}
-              {path.subject && (
-                <span className="text-xs px-2 py-1 bg-secondary/10 text-secondary-foreground rounded-full">
-                  {path.subject}
-                </span>
-              )}
-            </div>
-          </div>
-        </Card>
-      ))}
+    <div className="mt-4 w-full">
+      <Carousel
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2">
+          {paths.map((path) => (
+            <CarouselItem key={path.id} className="pl-2 basis-[280px]">
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden h-full"
+                onClick={() => navigate(`/learning-paths/${path.id}`)}
+              >
+                {path.cover_url && (
+                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                    <img
+                      src={path.cover_url}
+                      alt={path.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{path.title}</h3>
+                  {path.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                      {path.description}
+                    </p>
+                  )}
+                  <div className="flex gap-1 flex-wrap">
+                    {path.category && (
+                      <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                        {path.category}
+                      </span>
+                    )}
+                    {path.subject && (
+                      <span className="text-xs px-2 py-0.5 bg-secondary/10 text-secondary-foreground rounded-full">
+                        {path.subject}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
     </div>
   );
 };
