@@ -130,6 +130,79 @@ export const TriviaAdminPanel = () => {
       return;
     }
 
+    // Check user's balance before generating
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Error", description: "Debes iniciar sesión", variant: "destructive" });
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('educoins, experience_points')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile) {
+      toast({ title: "Error", description: "No se pudo obtener tu perfil", variant: "destructive" });
+      return;
+    }
+
+    const costEducoins = 2;
+    const costXP = 10000;
+    const hasEducoins = (profile.educoins || 0) >= costEducoins;
+    const hasXP = (profile.experience_points || 0) >= costXP;
+
+    if (!hasEducoins && !hasXP) {
+      toast({ 
+        title: "Saldo insuficiente", 
+        description: `Necesitas ${costEducoins} Educoins o ${costXP} XP para generar preguntas con IA.`,
+        variant: "destructive",
+        duration: 4000
+      });
+      return;
+    }
+
+    // Deduct cost (prefer educoins)
+    let paymentSuccess = false;
+    if (hasEducoins) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ educoins: (profile.educoins || 0) - costEducoins })
+        .eq('id', user.id);
+      
+      if (!error) {
+        paymentSuccess = true;
+        toast({ title: `-${costEducoins} Educoins`, description: "Generación de preguntas con IA" });
+      }
+    } else if (hasXP) {
+      const newXP = (profile.experience_points || 0) - costXP;
+      
+      // Log XP deduction
+      await supabase
+        .from('user_xp_log')
+        .insert({
+          user_id: user.id,
+          action_type: "Generación de preguntas de trivia con IA",
+          xp_amount: -costXP
+        });
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ experience_points: newXP })
+        .eq('id', user.id);
+      
+      if (!error) {
+        paymentSuccess = true;
+        toast({ title: `-${costXP} XP`, description: "Generación de preguntas con IA" });
+      }
+    }
+
+    if (!paymentSuccess) {
+      toast({ title: "Error", description: "No se pudo procesar el pago", variant: "destructive" });
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-trivia-questions", {
@@ -145,7 +218,6 @@ export const TriviaAdminPanel = () => {
 
       if (data?.questions) {
         // Insert all generated questions
-        const { data: { user } } = await supabase.auth.getUser();
         const questionsToInsert = data.questions.map((q: any) => ({
           ...q,
           category_id: newQuestion.category_id,
@@ -160,6 +232,7 @@ export const TriviaAdminPanel = () => {
         if (insertError) throw insertError;
 
         queryClient.invalidateQueries({ queryKey: ["trivia-admin-questions"] });
+        queryClient.invalidateQueries({ queryKey: ["educoin-balance"] });
         toast({ 
           title: "¡Preguntas generadas!", 
           description: `Se crearon ${data.questions.length} preguntas con IA` 
@@ -167,7 +240,7 @@ export const TriviaAdminPanel = () => {
         setAiPrompt("");
       }
     } catch (error: any) {
-      toast({ 
+      toast({
         title: "Error al generar preguntas", 
         description: error.message, 
         variant: "destructive" 

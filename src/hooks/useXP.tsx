@@ -20,7 +20,17 @@ export const useXP = () => {
       if (!profile) return false;
 
       const currentXP = profile.experience_points || 0;
-      const newXP = Math.max(0, currentXP - amount); // No bajar de 0
+      
+      // Validate sufficient XP before deducting
+      if (currentXP < amount) {
+        toast.error("XP insuficiente", {
+          description: `Necesitas ${amount} XP. Tienes ${currentXP} XP.`,
+          duration: 3000
+        });
+        return false;
+      }
+
+      const newXP = currentXP - amount;
 
       // Log the XP deduction
       const { error: logError } = await supabase
