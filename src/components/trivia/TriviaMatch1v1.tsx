@@ -233,6 +233,20 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         setQuestions([]);
         setCurrentCategory(null);
         setTurnEnded(true); // Block interaction immediately
+        
+        // Send email notification to opponent
+        if (opponent?.user_id) {
+          supabase.functions.invoke('send-trivia-turn-email', {
+            body: {
+              opponentId: opponent.user_id,
+              failedPlayerUsername: currentPlayer?.profiles?.username || 'Un jugador',
+              matchId: matchId
+            }
+          }).catch(error => {
+            console.error('Error sending email notification:', error);
+          });
+        }
+        
         changeTurn();
       } else if (newStreak === 3) {
         // Won the right to character round after 3 correct answers (global streak)
