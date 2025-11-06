@@ -46,17 +46,25 @@ serve(async (req) => {
     });
 
     console.log('Authenticated user:', user.id);
+    const startTime = Date.now();
 
-    // Get user context
-    const [profileData, metricsData, pathProgressData, coursesData, vocationalData] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.rpc('get_user_academic_metrics', { user_uuid: user.id }),
+    // Get user context - optimized queries with limits
+    const [profileData, pathProgressData, vocationalData] = await Promise.all([
+      supabase.from('profiles')
+        .select('full_name, experience_points, educoins, areas_interes')
+        .eq('id', user.id)
+        .single(),
       supabase.from('user_path_progress')
-        .select('path_id, completed, learning_paths(title, description)')
-        .eq('user_id', user.id),
-      supabase.from('user_courses').select('*, courses(*)').eq('user_id', user.id),
-      supabase.from('vocational_profiles').select('*').eq('user_id', user.id).single()
+        .select('path_id, completed, learning_paths(title)')
+        .eq('user_id', user.id)
+        .limit(10), // Solo las últimas 10 rutas
+      supabase.from('vocational_profiles')
+        .select('summary')
+        .eq('user_id', user.id)
+        .single()
     ]);
+
+    console.log(`Context loaded in ${Date.now() - startTime}ms`);
 
     // Get conversation history
     let messages: Array<{ role: string; content: string }> = [];
@@ -70,11 +78,9 @@ serve(async (req) => {
       messages = historyData || [];
     }
 
-    // Build user context
+    // Build user context (lightweight)
     const profile = profileData.data;
-    const metrics = metricsData.data || [];
     const pathProgress = pathProgressData.data || [];
-    const courses = coursesData.data || [];
     const vocationalProfile = vocationalData.data;
 
     // Group progress by path
@@ -94,25 +100,19 @@ serve(async (req) => {
       return acc;
     }, {});
 
+    const activePathsCount = Object.keys(pathsWithProgress).length;
+    const pathsSummary = Object.values(pathsWithProgress).slice(0, 3).map((p: any) => 
+      `${p.title} (${p.completed}/${p.total})`
+    ).join(', ');
+
     const userContext = `
 Estudiante: ${profile?.full_name || 'Usuario'}
 Nivel XP: ${profile?.experience_points || 0} puntos
-Educoins: ${profile?.educoins || 0}
+Áreas de interés: ${profile?.areas_interes?.join(', ') || 'No especificadas'}
 
-Métricas Académicas:
-${metrics.map((m: any) => `- ${m.area}: ${m.total_score}% (${m.quiz_count} quizzes, ${m.video_count} videos)`).join('\n')}
+Rutas activas: ${activePathsCount > 0 ? `${activePathsCount} rutas - ${pathsSummary}${activePathsCount > 3 ? '...' : ''}` : 'Ninguna ruta activa'}
 
-Rutas de Aprendizaje en Progreso:
-${Object.keys(pathsWithProgress).length > 0 ? Object.values(pathsWithProgress).map((p: any) => `- ${p.title}: ${p.completed}/${p.total} completados`).join('\n') : 'No tiene rutas activas'}
-
-Cursos:
-${courses.length > 0 ? courses.map((c: any) => `- ${c.courses?.title}`).join('\n') : 'No está inscrito en cursos'}
-
-Perfil Vocacional:
-${vocationalProfile ? `
-- Resumen: ${vocationalProfile.summary}
-- Recomendaciones: ${JSON.stringify(vocationalProfile.recommendations).slice(0, 200)}...
-` : 'No tiene perfil vocacional generado'}
+${vocationalProfile ? `Perfil Vocacional: ${vocationalProfile.summary.slice(0, 150)}...` : 'Sin perfil vocacional'}
 `;
 
     const systemPrompt = `Eres SEDE AI, el asistente educativo inteligente de SEDEFY. Tu misión es maximizar el potencial de cada estudiante mediante recomendaciones personalizadas y guía estratégica.
@@ -217,6 +217,7 @@ ${userContext}
     ];
 
     // First call to AI with tools
+    const aiStartTime = Date.now();
     const initialResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -234,6 +235,8 @@ ${userContext}
         temperature: 0.8,
       }),
     });
+
+    console.log(`AI initial response in ${Date.now() - aiStartTime}ms`);
 
     if (!initialResponse.ok) {
       throw new Error(`AI gateway error: ${initialResponse.status}`);
