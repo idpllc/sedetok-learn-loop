@@ -105,7 +105,22 @@ Tu misión es:
 - Analizar su progreso y dar feedback constructivo
 - Motivar y guiar en su desarrollo académico y profesional
 
-IMPORTANTE: Cuando el usuario pregunte sobre rutas de aprendizaje, cursos o temas específicos, DEBES usar la función search_learning_paths para buscar rutas reales en SEDEFY. NO inventes rutas.
+REGLA CRÍTICA - BÚSQUEDA DE RUTAS:
+Cuando el usuario mencione CUALQUIERA de estos temas, DEBES usar search_learning_paths:
+- Pida recomendaciones de rutas
+- Mencione un tema específico (inglés, matemáticas, programación, etc.)
+- Pregunte qué estudiar o qué aprender
+- Pida cursos o contenido educativo
+- Hable sobre desarrollo profesional o académico
+- Pregunte "qué debo estudiar" o similar
+
+Ejemplos que REQUIEREN search_learning_paths:
+✅ "soy principiante, quiero estudiar puedo dedicarle 20 minutos al día"
+✅ "qué rutas me recomiendas"
+✅ "quiero aprender inglés"
+✅ "qué cursos de matemáticas hay"
+
+NO INVENTES RUTAS. Siempre usa la función para obtener rutas reales de SEDEFY.
 
 Contexto del estudiante actual:
 ${userContext}
@@ -115,10 +130,9 @@ Directrices:
 - Usa datos concretos del estudiante para personalizar tus respuestas
 - Sugiere acciones específicas y alcanzables
 - Si recomiendas algo, explica por qué es relevante para este estudiante
-- Mantén respuestas concisas pero informativas
+- Mantén respuestas concisas pero informativas (máximo 3-4 líneas antes de las tarjetas)
 - Usa emojis ocasionalmente para hacer la conversación más amena
-- Si el estudiante no tiene suficientes datos, sugiere actividades para empezar
-- Cuando busques rutas, usa la función search_learning_paths y asegúrate de incluir el marcador especial en tu respuesta para que se muestren las tarjetas`;
+- Cuando uses search_learning_paths, el marcador especial se incluirá automáticamente para mostrar las tarjetas`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -131,13 +145,13 @@ Directrices:
         type: "function",
         function: {
           name: "search_learning_paths",
-          description: "Busca rutas de aprendizaje en SEDEFY. Usa esta función cuando el usuario pregunte sobre rutas, cursos, o temas específicos de aprendizaje.",
+          description: "Busca rutas de aprendizaje reales en SEDEFY. USA ESTA FUNCIÓN SIEMPRE que el usuario mencione: temas de estudio, recomendaciones de aprendizaje, qué estudiar, cursos, desarrollo profesional, o cualquier pregunta sobre qué aprender. NO inventes rutas, SIEMPRE busca las reales.",
           parameters: {
             type: "object",
             properties: {
               query: {
                 type: "string",
-                description: "Términos de búsqueda o tema de la ruta"
+                description: "Términos de búsqueda amplios. Si el usuario dice 'soy principiante' o 'puedo dedicar 20 minutos', busca términos generales como 'inglés', 'principiantes', 'básico', etc."
               },
               category: {
                 type: "string",
@@ -145,7 +159,7 @@ Directrices:
               },
               limit: {
                 type: "number",
-                description: "Número máximo de resultados (default: 5)"
+                description: "Número máximo de resultados. Default 5, usa 8-10 para búsquedas amplias"
               }
             },
             required: ["query"]
@@ -187,18 +201,29 @@ Directrices:
       if (toolCall.function.name === "search_learning_paths") {
         const args = JSON.parse(toolCall.function.arguments);
         const searchQuery = args.query || "";
-        const limit = args.limit || 5;
+        const limit = args.limit || 8;
 
-        // Search for learning paths
+        console.log('Searching learning paths with query:', searchQuery, 'limit:', limit);
+
+        // Search for learning paths with more flexible matching
         let query = supabase
           .from('learning_paths')
           .select('id, title, description, cover_url, thumbnail_url, category, subject, tags, creator_id, profiles!learning_paths_creator_id_fkey(full_name, avatar_url)')
           .eq('is_public', true)
           .limit(limit);
 
-        // Search in title, description, subject, or tags
+        // More flexible search: title, description, subject, tags, or category
         if (searchQuery) {
-          query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%,tags.cs.{${searchQuery}}`);
+          const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
+          
+          // Build OR condition for each search term across multiple fields
+          const orConditions = searchTerms.map((term: string) => 
+            `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+          ).join(',');
+          
+          if (orConditions) {
+            query = query.or(orConditions);
+          }
         }
 
         if (args.category) {
@@ -210,6 +235,8 @@ Directrices:
         if (pathsError) {
           console.error('Error searching paths:', pathsError);
         }
+
+        console.log('Found paths:', paths?.length || 0);
 
         // Format paths for AI response
         const pathsInfo = paths?.map(p => {
