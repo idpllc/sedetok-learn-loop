@@ -178,12 +178,20 @@ export const useQuizQuestions = (quizId?: string) => {
   const createQuestion = useMutation({
     mutationFn: async (question: QuestionInsert & { options?: QuizOptionInsert[] }) => {
       const { options, ...questionData } = question;
+
+      // Compute a valid correct_answer index to satisfy NOT NULL constraint
+      let correctIndex = 0;
+      if (options && options.length > 0) {
+        const idx = options.findIndex((o: any) => o.is_correct);
+        correctIndex = idx >= 0 ? idx : 0;
+      }
       
       const { data: newQuestion, error: questionError } = await supabase
         .from("quiz_questions")
         .insert({
           ...questionData,
-          options: {} as any, // Required field but will use quiz_options table
+          options: {} as any, // Legacy jsonb field kept minimal
+          correct_answer: correctIndex,
           feedback_correct: questionData.feedback_correct,
           feedback_incorrect: questionData.feedback_incorrect,
           comparison_mode: questionData.comparison_mode,
