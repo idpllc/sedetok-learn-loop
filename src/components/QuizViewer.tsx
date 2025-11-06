@@ -518,7 +518,6 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
         max_score: 100,
         passed,
         time_taken: timeTaken,
-        answers: allAnswers, // Save all answers as JSON
       };
 
       // Add evaluation event ID if present
