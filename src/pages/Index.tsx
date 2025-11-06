@@ -1,333 +1,557 @@
-import { useEffect, useRef, useCallback } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { ContentCard } from "@/components/ContentCard";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
-import { useRelatedContent } from "@/hooks/useRelatedContent";
-import { useTargetItem } from "@/hooks/useTargetItem";
-import { useSearchResults } from "@/hooks/useSearchResults";
+import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VideoPlayerRef } from "@/components/VideoPlayer";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { subjects } from "@/lib/subjects";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getQuizScientistIcon } from "@/lib/quizScientists";
 
-
-const mockContent = [
-  {
-    id: "1",
-    title: "Ecuaciones Cuadráticas: Método de Factorización",
-    description: "Aprende a resolver ecuaciones cuadráticas usando el método de factorización paso a paso. En esta lección veremos ejemplos prácticos y ejercicios resueltos para dominar esta técnica fundamental del álgebra.",
-    creator: "Prof. María González",
-    institution: "Instituto San Martín",
-    tags: ["matemáticas", "álgebra", "ecuaciones"],
-    category: "Matemáticas",
-    grade: "Secundaria",
-    likes: 1240,
-    comments: 89,
-    thumbnail: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop"
-  },
-  {
-    id: "2",
-    title: "Fotosíntesis: El proceso que da vida al planeta",
-    description: "Descubre cómo las plantas convierten la luz solar en energía mediante la fotosíntesis. Exploraremos las fases luminosa y oscura, los cloroplastos y la importancia de este proceso para la vida en la Tierra.",
-    creator: "Dr. Carlos Méndez",
-    institution: "Colegio Nacional",
-    tags: ["biología", "plantas", "ciencia"],
-    category: "Ciencias",
-    grade: "Primaria",
-    likes: 2150,
-    comments: 143,
-    thumbnail: "https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=800&auto=format&fit=crop"
-  },
-  {
-    id: "3",
-    title: "Verbos Irregulares en Inglés: Tips para Memorizar",
-    description: "Aprende los verbos irregulares más comunes en inglés con técnicas efectivas de memorización. Incluye ejemplos prácticos, frases útiles y trucos para recordar las formas en pasado y participio.",
-    creator: "Teacher Ana Smith",
-    institution: "English Academy",
-    tags: ["inglés", "gramática", "verbos"],
-    category: "Lenguaje",
-    grade: "Secundaria",
-    likes: 980,
-    comments: 67,
-    thumbnail: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=800&auto=format&fit=crop"
-  },
-  {
-    id: "4",
-    title: "La Revolución Francesa: Causas y Consecuencias",
-    description: "Un análisis completo de la Revolución Francesa de 1789, sus causas sociales y económicas, los principales eventos y personajes, y su impacto en la historia moderna de Europa y el mundo.",
-    creator: "Prof. Roberto Díaz",
-    institution: "Liceo Histórico",
-    tags: ["historia", "francia", "revolución"],
-    category: "Historia",
-    grade: "Secundaria",
-    likes: 1530,
-    comments: 102,
-    thumbnail: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=800&auto=format&fit=crop"
-  },
-  {
-    id: "5",
-    title: "Introducción a la Programación con Python",
-    description: "Da tus primeros pasos en el mundo de la programación con Python. Aprenderás los conceptos básicos: variables, tipos de datos, estructuras de control, funciones y mucho más con ejemplos prácticos.",
-    creator: "Dev. Laura Rodríguez",
-    institution: "TechEdu",
-    tags: ["programación", "python", "código"],
-    category: "Tecnología",
-    grade: "Preparatoria",
-    likes: 3200,
-    comments: 215,
-    thumbnail: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop"
-  },
-];
+type ContentType = Database["public"]["Enums"]["content_type"];
+type GradeLevel = Database["public"]["Enums"]["grade_level"];
+type SearchContentType = ContentType | "learning_path" | "all";
 
 const Index = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const contentIdFromUrl = searchParams.get("content");
-  const quizIdFromUrl = searchParams.get("quiz");
-  const pathIdFromUrl = searchParams.get("path");
-  const gameIdFromUrl = searchParams.get("game");
-  const searchResultsParam = searchParams.get("searchResults");
-  const searchTypesParam = searchParams.get("searchTypes");
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const subjectsScrollRef = useRef<HTMLDivElement>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
   
-  // Parse search results from URL
-  const searchResultIds = searchResultsParam ? searchResultsParam.split(',') : undefined;
-  const searchResultTypes = searchTypesParam ? searchTypesParam.split(',') : undefined;
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<SearchContentType>('all');
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">('all');
   
-  const { user, loading: authLoading } = useAuth();
-  const infiniteQuery = useInfiniteContent();
-  const content = infiniteQuery.data?.pages.flatMap(page => page.items) || [];
-  const isLoading = infiniteQuery.isLoading;
-  const { data: targetItem, isLoading: isLoadingTarget } = useTargetItem(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
-  const { data: relatedContent, isLoading: isLoadingRelated } = useRelatedContent(contentIdFromUrl || undefined, quizIdFromUrl || undefined, gameIdFromUrl || undefined);
-  const { data: searchResults, isLoading: isLoadingSearch } = useSearchResults(searchResultIds, searchResultTypes);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: contentLoading } = useInfiniteContent(
+    selectedType === "all" ? undefined : selectedType === "learning_path" ? undefined : selectedType,
+    searchQuery,
+    selectedSubject !== "all" ? selectedSubject : undefined,
+    selectedGrade !== "all" ? selectedGrade : undefined
+  );
+  const { paths, isLoading: pathsLoading } = useLearningPaths();
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
-  const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
-  const containerRef = useRef<HTMLDivElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
+  
+  const isLoading = contentLoading || pathsLoading;
 
-  const currentTab = location.pathname === "/" ? "para-ti" : 
-                     location.pathname === "/search" ? "explorar" : 
-                     location.pathname === "/learning-paths" ? "rutas" : "para-ti";
+  // Combine content from all pages
+  const allContent = data?.pages.flatMap(page => page.items) || [];
+  
+  // Combine content and paths for Sede Tok carousel
+  const sedeTokContent = allContent.slice(0, 10); // Top 10 for carousel
+  
+  // Combine all content and paths for main grid
+  const combinedContent = [
+    ...allContent.map(item => ({ ...item, itemType: 'content' })),
+    ...(paths?.filter(p => p.is_public).map(p => ({ ...p, itemType: 'learning_path' })) || [])
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-  const pauseAllVideos = useCallback((exceptId?: string) => {
-    Object.entries(videoRefs.current).forEach(([id, ref]) => {
-      if (id !== exceptId && ref) {
-        ref.pause();
-      }
-    });
-  }, []);
-
+  // Infinite scroll observer
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
     const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const cardElement = entry.target as HTMLElement;
-          const cardId = cardElement.dataset.contentId;
-          const cardIndex = parseInt(cardElement.dataset.contentIndex || '0');
-          
-          if (entry.isIntersecting && cardId) {
-            pauseAllVideos(cardId);
-            // Auto-play the video after a short delay
-            setTimeout(() => {
-              const ref = videoRefs.current[cardId];
-              if (ref) ref.play();
-            }, 100);
-            
-            // Preload next page when approaching the end of the loaded list
-            const nearEndIndex = Math.max(0, content.length - 3);
-            if (cardIndex >= nearEndIndex && infiniteQuery.hasNextPage && !infiniteQuery.isFetchingNextPage) {
-              infiniteQuery.fetchNextPage();
-            }
-          } else if (!entry.isIntersecting && cardId) {
-            const ref = videoRefs.current[cardId];
-            if (ref) ref.pause();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    const cards = container.querySelectorAll('[data-content-id]');
-    cards.forEach((card) => observer.observe(card));
-
-    return () => observer.disconnect();
-  }, [pauseAllVideos, content, infiniteQuery]);
-
-
-  // Scroll to top when specific content is loaded from search
-  useEffect(() => {
-    const targetId = contentIdFromUrl || quizIdFromUrl;
-    if (targetId && relatedContent && containerRef.current) {
-      setTimeout(() => {
-        const container = containerRef.current;
-        if (container) {
-          container.scrollTo({ top: 0, behavior: 'smooth' });
+      entries => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
         }
-      }, 100);
-    }
-  }, [contentIdFromUrl, quizIdFromUrl, relatedContent]);
-
-  // Redirect to learning path when pathId is in URL
-  useEffect(() => {
-    if (pathIdFromUrl) {
-      navigate(`/learning-paths/${pathIdFromUrl}`);
-    }
-  }, [pathIdFromUrl, navigate]);
-
-  // Show loading for search results or related content when coming from search
-  if ((contentIdFromUrl || quizIdFromUrl || gameIdFromUrl) && (isLoadingTarget || (searchResultIds ? isLoadingSearch : isLoadingRelated))) {
-    return (
-      <div className="relative h-screen">
-        <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-screen w-full snap-start snap-always flex items-center justify-center bg-muted/50">
-              <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
-            </div>
-          ))}
-        </div>
-      </div>
+      },
+      { threshold: 0.1 }
     );
-  }
 
-  if (!contentIdFromUrl && !quizIdFromUrl && isLoading) {
-    return (
-      <div className="relative h-screen">
-        <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-screen w-full snap-start snap-always flex items-center justify-center bg-muted/50">
-              <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Use search results if available, otherwise use related content or regular feed
-  const baseFallback = content || mockContent.map(item => ({
-    ...item,
-    profiles: {
-      username: item.creator,
-      full_name: item.creator,
-      avatar_url: null,
-      institution: item.institution,
-      is_verified: false
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
-  }));
 
-  const contentData = (contentIdFromUrl || quizIdFromUrl || gameIdFromUrl)
-    ? (searchResults && searchResultIds
-        ? searchResults  // Use search results in original order
-        : (targetItem
-            ? [
-                targetItem as any,
-                ...(((relatedContent as any[]) || []).filter((i: any) => i.id !== (targetItem as any).id)),
-              ]
-            : baseFallback))
-    : baseFallback;
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const contentTypes = [
+    { id: "all" as const, label: "Todo", icon: "🎯" },
+    { id: "video" as ContentType, label: "Videos", icon: "🎥" },
+    { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
+    { id: "document" as ContentType, label: "Documentos", icon: "📄" },
+    { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
+    { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
+    { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
+  ];
+
+  const gradeLevels = [
+    { value: "all", label: "Todos" },
+    { value: "preescolar", label: "Preescolar" },
+    { value: "primaria", label: "Primaria" },
+    { value: "secundaria", label: "Secundaria" },
+    { value: "preparatoria", label: "Preparatoria" },
+    { value: "universidad", label: "Universidad" },
+    { value: "libre", label: "Libre" },
+  ];
+
+  // Filter content
+  const filteredContent = combinedContent?.filter((item) => {
+    if (item.itemType === "learning_path") {
+      const matchesSearch = !searchQuery || searchQuery.trim() === "" ||
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        item.subject?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesType = selectedType === "all" || selectedType === "learning_path";
+      const matchesSubject = selectedSubject === "all" || item.subject?.toLowerCase() === selectedSubject.toLowerCase();
+      const matchesGrade = selectedGrade === "all" || item.grade_level === selectedGrade;
+      
+      return matchesSearch && matchesType && matchesSubject && matchesGrade;
+    }
+    
+    const matchesType = selectedType === "all" || selectedType === item.content_type || (selectedType === "quiz" && item.content_type === "quiz");
+    return matchesType;
+  });
+
+  const getContentIcon = (type: ContentType | "learning_path") => {
+    switch (type) {
+      case "video":
+        return <Play className="w-5 h-5" />;
+      case "lectura":
+        return <BookOpen className="w-5 h-5" />;
+      case "document":
+        return <FileText className="w-5 h-5" />;
+      case "quiz":
+        return <ClipboardCheck className="w-5 h-5" />;
+      case "game":
+        return <span className="text-base">🎮</span>;
+      case "learning_path":
+        return <Map className="w-5 h-5" />;
+    }
+  };
+
+  const likeMutation = useMutation({
+    mutationFn: async ({ contentId, isLiked, isQuiz, isGame }: { contentId: string; isLiked: boolean; isQuiz?: boolean; isGame?: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
+      
+      if (isLiked) {
+        const { error } = await supabase
+          .from("likes")
+          .delete()
+          .eq(idField, contentId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("likes")
+          .insert([{ [idField]: contentId, user_id: user.id }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
+      queryClient.invalidateQueries({ queryKey: ["likes"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async ({ contentId, isSaved, isQuiz, isGame }: { contentId: string; isSaved: boolean; isQuiz?: boolean; isGame?: boolean }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuario no autenticado");
+
+      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
+      
+      if (isSaved) {
+        const { error } = await supabase
+          .from("saves")
+          .delete()
+          .eq(idField, contentId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("saves")
+          .insert([{ [idField]: contentId, user_id: user.id }]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["saves"] });
+      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLike = (contentId: string, isLiked: boolean, isQuiz?: boolean, isGame?: boolean) => {
+    likeMutation.mutate({ contentId, isLiked, isQuiz, isGame });
+  };
+
+  const handleSave = (contentId: string, isSaved: boolean, isQuiz?: boolean, isGame?: boolean) => {
+    saveMutation.mutate({ contentId, isSaved, isQuiz, isGame });
+  };
+
+  const scrollSubjects = (direction: 'left' | 'right') => {
+    if (subjectsScrollRef.current) {
+      const scrollAmount = 300;
+      subjectsScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   return (
-    <div className="relative">
-      {/* Sidebar para desktop */}
+    <>
       <Sidebar />
-      
-      {/* Main content con margen para el sidebar en desktop */}
-      <div className="md:ml-64">
+      <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
+        <header className="sticky top-0 z-10 bg-card border-b border-border">
+          <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar contenido..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-      {/* Feed container with snap scroll */}
-      <div ref={containerRef} className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth">
-        {contentData.map((item: any, index: number) => {
-          const videoRef = (ref: VideoPlayerRef | null) => {
-            if (ref) {
-              videoRefs.current[item.id] = ref;
-            }
-          };
-          
-          return (
-            <ContentCard
-              key={item.id}
-              data-content-id={item.id}
-              ref={(el) => {
-                if (el) {
-                  el.dataset.contentId = item.id;
-                  el.dataset.contentIndex = index.toString();
-                }
-              }}
-              id={item.id}
-              videoRef={videoRef}
-              title={item.title}
-              description={item.description}
-              creator={item.profiles?.username || item.creator}
-              creatorId={item.creator_id || item.id}
-              institution={item.profiles?.institution || item.institution}
-              creatorAvatar={item.profiles?.avatar_url}
-              tags={Array.isArray(item.tags) ? item.tags : []}
-              category={item.category}
-              subject={item.subject}
-              thumbnail={item.thumbnail_url || item.thumbnail}
-              videoUrl={item.video_url}
-              documentUrl={item.document_url}
-              richText={item.rich_text}
-              contentType={item.content_type}
-              likes={item.likes_count || item.likes}
-              comments={item.comments_count || item.comments}
-              shares={item.shares_count || 0}
-              grade={item.grade_level || item.grade}
-              isLiked={likes.has(item.id)}
-              isSaved={saves.has(item.id)}
-              questionsCount={item.questions_count}
-              difficulty={item.difficulty}
-              gameType={item.game_type}
-              onPrevious={() => {
-                pauseAllVideos();
-                const container = document.querySelector('.snap-y');
-                if (container && index > 0) {
-                  container.children[index - 1]?.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              onNext={() => {
-                pauseAllVideos();
-                const container = document.querySelector('.snap-y');
-                if (container && index < contentData.length - 1) {
-                  container.children[index + 1]?.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              hasPrevious={index > 0}
-              hasNext={index < contentData.length - 1}
-            />
-          );
-        })}
-        
-        {/* Loading indicator for next page */}
-        {!contentIdFromUrl && !quizIdFromUrl && !gameIdFromUrl && infiniteQuery.isFetchingNextPage && (
-          <div className="h-screen w-full snap-start snap-always flex items-center justify-center">
-            <Skeleton className="w-full max-w-md h-[85vh] rounded-3xl" />
+            {/* Subjects Carousel */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                onClick={() => scrollSubjects('left')}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              
+              <ScrollArea className="w-full whitespace-nowrap" ref={subjectsScrollRef}>
+                <div className="flex gap-2 px-8">
+                  <Button
+                    variant={selectedSubject === "all" ? "default" : "outline"}
+                    className="rounded-full whitespace-nowrap"
+                    onClick={() => setSelectedSubject("all")}
+                  >
+                    Todos
+                  </Button>
+                  {subjects.map((subject) => (
+                    <Button
+                      key={subject.value}
+                      variant={selectedSubject === subject.value ? "default" : "outline"}
+                      className="rounded-full whitespace-nowrap"
+                      onClick={() => setSelectedSubject(subject.value)}
+                    >
+                      {subject.label}
+                    </Button>
+                  ))}
+                </div>
+                <ScrollBar orientation="horizontal" className="invisible" />
+              </ScrollArea>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                onClick={() => scrollSubjects('right')}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Grade Levels */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {gradeLevels.map((level) => (
+                <Button
+                  key={level.value}
+                  variant={selectedGrade === level.value ? "default" : "outline"}
+                  size="sm"
+                  className="whitespace-nowrap rounded-full"
+                  onClick={() => setSelectedGrade(level.value as GradeLevel | "all")}
+                >
+                  {level.label}
+                </Button>
+              ))}
+            </div>
+
+            {/* Content Types */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {contentTypes.map((type) => (
+                <Badge
+                  key={type.id}
+                  variant={selectedType === type.id ? "default" : "outline"}
+                  className="cursor-pointer whitespace-nowrap py-1.5"
+                  onClick={() => setSelectedType(type.id)}
+                >
+                  <span className="mr-1">{type.icon}</span>
+                  {type.label}
+                </Badge>
+              ))}
+            </div>
           </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+          {/* Sede Tok Carousel */}
+          <section>
+            <h2 className="text-2xl font-bold mb-4">Sede tok</h2>
+            {isLoading ? (
+              <div className="flex gap-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-[300px] w-[250px] rounded-xl flex-shrink-0" />
+                ))}
+              </div>
+            ) : (
+              <Carousel className="w-full">
+                <CarouselContent className="-ml-4">
+                  {sedeTokContent.map((item) => {
+                    const isQuiz = item.content_type === 'quiz';
+                    const isLiked = likes.has(item.id);
+                    const isSaved = saves.has(item.id);
+                    const profile = item.profiles as any;
+                    const scientist = isQuiz ? getQuizScientistIcon(item.category) : null;
+                    
+                    return (
+                      <CarouselItem key={item.id} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                        <Card 
+                          className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full"
+                          onClick={() => {
+                            if (isQuiz) {
+                              navigate(`/?quiz=${item.id}`);
+                            } else if (item.content_type === 'game') {
+                              navigate(`/?game=${item.id}`);
+                            } else {
+                              navigate(`/?content=${item.id}`);
+                            }
+                          }}
+                        >
+                          <CardContent className="p-0">
+                            <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-secondary/20">
+                              {(item.thumbnail_url) ? (
+                                <img 
+                                  src={item.thumbnail_url} 
+                                  alt={item.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : scientist ? (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <img src={scientist.icon} alt={scientist.name} className="w-32 h-32 object-contain" />
+                                </div>
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  {getContentIcon(item.content_type)}
+                                </div>
+                              )}
+                              <div className="absolute top-2 right-2">
+                                <Badge variant="secondary" className="backdrop-blur-sm bg-background/70">
+                                  {getContentIcon(item.content_type)}
+                                  <span className="ml-1 capitalize">{item.content_type}</span>
+                                </Badge>
+                              </div>
+                            </div>
+                            <div className="p-4 space-y-2">
+                              <h3 className="font-semibold line-clamp-2 text-sm">{item.title}</h3>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                                  {item.likes_count || 0}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Eye className="w-4 h-4" />
+                                  {item.views_count || 0}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </CarouselItem>
+                    );
+                  })}
+                </CarouselContent>
+                <CarouselPrevious className="left-0" />
+                <CarouselNext className="right-0" />
+              </Carousel>
+            )}
+          </section>
+
+          {/* Main Content Grid */}
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="h-[200px] w-full rounded-xl" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : filteredContent && filteredContent.length > 0 ? (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-muted-foreground">
+                  {filteredContent.length} {filteredContent.length === 1 ? "resultado" : "resultados"}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredContent.map((item) => {
+                  const isLearningPath = item.itemType === "learning_path";
+                  const isQuiz = !isLearningPath && item.content_type === 'quiz';
+                  const isLiked = !isLearningPath && likes.has(item.id);
+                  const isSaved = !isLearningPath && saves.has(item.id);
+                  const profile = item.profiles as any;
+                  const scientist = isQuiz ? getQuizScientistIcon(item.category) : null;
+                  
+                  return (
+                    <Card 
+                      key={item.id} 
+                      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => {
+                        if (isLearningPath) {
+                          navigate(`/learning-paths/${item.id}`);
+                        } else if (isQuiz) {
+                          navigate(`/?quiz=${item.id}`);
+                        } else if (item.content_type === 'game') {
+                          navigate(`/?game=${item.id}`);
+                        } else {
+                          navigate(`/?content=${item.id}`);
+                        }
+                      }}
+                    >
+                      <CardContent className="p-0">
+                        <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-secondary/20">
+                          {(item.cover_url || item.thumbnail_url) ? (
+                            <img 
+                              src={item.cover_url || item.thumbnail_url} 
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : scientist ? (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <img src={scientist.icon} alt={scientist.name} className="w-32 h-32 object-contain" />
+                            </div>
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
+                            </div>
+                          )}
+                          <div className="absolute top-2 right-2">
+                            <Badge variant="secondary" className="backdrop-blur-sm bg-background/70">
+                              {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
+                              <span className="ml-1 capitalize">
+                                {isLearningPath ? "Ruta" : item.content_type}
+                              </span>
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="p-4 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-semibold line-clamp-2">{item.title}</h3>
+                          </div>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                          )}
+                          <div className="flex items-center justify-between pt-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              {profile?.username || item.creator}
+                            </div>
+                            {!isLearningPath && (
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLike(item.id, isLiked, isQuiz, item.content_type === 'game');
+                                  }}
+                                  className="flex items-center gap-1 hover:text-red-500 transition-colors"
+                                >
+                                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                                  {item.likes_count || 0}
+                                </button>
+                                <span className="flex items-center gap-1">
+                                  <MessageCircle className="w-4 h-4" />
+                                  {item.comments_count || 0}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSave(item.id, isSaved, isQuiz, item.content_type === 'game');
+                                  }}
+                                  className="hover:text-primary transition-colors"
+                                >
+                                  <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-primary' : ''}`} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              
+              {/* Observer target for infinite scroll */}
+              <div ref={observerTarget} className="h-10" />
+              
+              {isFetchingNextPage && (
+                <div className="flex justify-center py-8">
+                  <Skeleton className="h-[200px] w-full max-w-md rounded-xl" />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No se encontraron resultados</p>
+            </div>
+          )}
+        </main>
+
+        {/* Onboarding modal */}
+        {user && (
+          <>
+            <OnboardingModal
+              open={shouldShowOnboarding}
+              onOpenChange={closeOnboarding}
+              initialStep={initialStep}
+            />
+            <OnboardingTeaser onOpenOnboarding={openOnboarding} />
+          </>
         )}
       </div>
-
-      {/* Onboarding modal */}
-      {user && (
-        <>
-          <OnboardingModal
-            open={shouldShowOnboarding}
-            onOpenChange={closeOnboarding}
-            initialStep={initialStep}
-          />
-          <OnboardingTeaser onOpenOnboarding={openOnboarding} />
-        </>
-      )}
-      </div>
-    </div>
+    </>
   );
 };
 
