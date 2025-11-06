@@ -48,10 +48,12 @@ serve(async (req) => {
     console.log('Authenticated user:', user.id);
 
     // Get user context
-    const [profileData, metricsData, pathsData, coursesData, vocationalData] = await Promise.all([
+    const [profileData, metricsData, pathProgressData, coursesData, vocationalData] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.rpc('get_user_academic_metrics', { user_uuid: user.id }),
-      supabase.from('learning_paths').select('*, path_progress(*)').eq('created_by', user.id),
+      supabase.from('user_path_progress')
+        .select('path_id, completed, learning_paths(title, description)')
+        .eq('user_id', user.id),
       supabase.from('user_courses').select('*, courses(*)').eq('user_id', user.id),
       supabase.from('vocational_profiles').select('*').eq('user_id', user.id).single()
     ]);
@@ -71,28 +73,45 @@ serve(async (req) => {
     // Build user context
     const profile = profileData.data;
     const metrics = metricsData.data || [];
-    const paths = pathsData.data || [];
+    const pathProgress = pathProgressData.data || [];
     const courses = coursesData.data || [];
     const vocationalProfile = vocationalData.data;
 
+    // Group progress by path
+    const pathsWithProgress = pathProgress.reduce((acc: any, progress: any) => {
+      const pathId = progress.path_id;
+      if (!acc[pathId]) {
+        acc[pathId] = {
+          title: progress.learning_paths?.title || 'Sin título',
+          total: 0,
+          completed: 0
+        };
+      }
+      acc[pathId].total++;
+      if (progress.completed) {
+        acc[pathId].completed++;
+      }
+      return acc;
+    }, {});
+
     const userContext = `
 Estudiante: ${profile?.full_name || 'Usuario'}
-Nivel XP: ${profile?.xp_level || 0} (${profile?.xp_points || 0} puntos)
+Nivel XP: ${profile?.experience_points || 0} puntos
 Educoins: ${profile?.educoins || 0}
 
 Métricas Académicas:
 ${metrics.map((m: any) => `- ${m.area}: ${m.total_score}% (${m.quiz_count} quizzes, ${m.video_count} videos)`).join('\n')}
 
-Rutas de Aprendizaje:
-${paths.length > 0 ? paths.map((p: any) => `- ${p.title}: ${p.path_progress?.length || 0} en progreso`).join('\n') : 'No tiene rutas activas'}
+Rutas de Aprendizaje en Progreso:
+${Object.keys(pathsWithProgress).length > 0 ? Object.values(pathsWithProgress).map((p: any) => `- ${p.title}: ${p.completed}/${p.total} completados`).join('\n') : 'No tiene rutas activas'}
 
 Cursos:
 ${courses.length > 0 ? courses.map((c: any) => `- ${c.courses?.title}`).join('\n') : 'No está inscrito en cursos'}
 
 Perfil Vocacional:
 ${vocationalProfile ? `
-- Confianza: ${vocationalProfile.confidence_level}
-- Top 3 Carreras: ${vocationalProfile.recommendations?.slice(0, 3).map((r: any) => r.career_name).join(', ')}
+- Resumen: ${vocationalProfile.summary}
+- Recomendaciones: ${JSON.stringify(vocationalProfile.recommendations).slice(0, 200)}...
 ` : 'No tiene perfil vocacional generado'}
 `;
 
