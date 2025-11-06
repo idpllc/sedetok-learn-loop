@@ -21,6 +21,102 @@ interface PathData {
   cover_url?: string;
 }
 
+interface ContentData {
+  id: string;
+  title: string;
+  description: string;
+  category?: string;
+  subject?: string;
+  creator?: string;
+  cover_url?: string;
+  type: 'video' | 'quiz' | 'game' | 'reading';
+}
+
+const ContentCards = ({ content }: { content: ContentData[] }) => {
+  const navigate = useNavigate();
+  
+  const getContentRoute = (item: ContentData) => {
+    // Determinar la ruta basada en el tipo de contenido
+    if (item.type === 'quiz') {
+      return `/?quiz=${item.id}`;
+    } else if (item.type === 'game') {
+      return `/?game=${item.id}`;
+    } else {
+      return `/?content=${item.id}`;
+    }
+  };
+
+  const getContentTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      video: '📹 Video',
+      quiz: '📝 Quiz',
+      game: '🎮 Juego',
+      reading: '📖 Lectura'
+    };
+    return labels[type] || type;
+  };
+  
+  return (
+    <div className="mt-4 w-full">
+      <Carousel
+        opts={{
+          align: "start",
+          loop: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2">
+          {content.map((item) => (
+            <CarouselItem key={item.id} className="pl-2 basis-[280px]">
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden h-full"
+                onClick={() => navigate(getContentRoute(item))}
+              >
+                {item.cover_url && (
+                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                    <img
+                      src={item.cover_url}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-medium text-primary">
+                      {getContentTypeLabel(item.type)}
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{item.title}</h3>
+                  {item.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                      {item.description}
+                    </p>
+                  )}
+                  <div className="flex gap-1 flex-wrap">
+                    {item.category && (
+                      <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                        {item.category}
+                      </span>
+                    )}
+                    {item.subject && (
+                      <span className="text-xs px-2 py-0.5 bg-secondary/10 text-secondary-foreground rounded-full">
+                        {item.subject}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
+    </div>
+  );
+};
+
 const PathCards = ({ paths }: { paths: PathData[] }) => {
   const navigate = useNavigate();
   
@@ -291,10 +387,12 @@ export const SedeAIChat = () => {
               </div>
             ) : (
               messages.map((message, idx) => {
-                // Check if message contains path data
+                // Check if message contains path or content data
                 const pathsMatch = message.content.match(/\|\|\|PATHS_DATA:(.*?)\|\|\|/);
+                const contentMatch = message.content.match(/\|\|\|CONTENT_DATA:(.*?)\|\|\|/);
                 let messageContent = message.content;
                 let pathsData: PathData[] = [];
+                let contentData: ContentData[] = [];
 
                 if (pathsMatch) {
                   try {
@@ -302,6 +400,15 @@ export const SedeAIChat = () => {
                     messageContent = message.content.replace(/\|\|\|PATHS_DATA:.*?\|\|\|/, '').trim();
                   } catch (e) {
                     console.error('Error parsing paths data:', e);
+                  }
+                }
+
+                if (contentMatch) {
+                  try {
+                    contentData = JSON.parse(contentMatch[1]);
+                    messageContent = message.content.replace(/\|\|\|CONTENT_DATA:.*?\|\|\|/, '').trim();
+                  } catch (e) {
+                    console.error('Error parsing content data:', e);
                   }
                 }
 
@@ -334,6 +441,7 @@ export const SedeAIChat = () => {
                         </p>
                       </Card>
                       {pathsData.length > 0 && <PathCards paths={pathsData} />}
+                      {contentData.length > 0 && <ContentCards content={contentData} />}
                     </div>
                     {message.role === "user" && (
                       <Avatar className="w-8 h-8 mt-1">

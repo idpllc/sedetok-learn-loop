@@ -101,26 +101,26 @@ ${vocationalProfile ? `
 Tu misión es:
 - Ayudar a los estudiantes a alcanzar sus metas educativas
 - Sugerir rutas de aprendizaje personalizadas basadas en su rendimiento
-- Recomendar cursos y contenido relevante
+- Recomendar contenido educativo específico (videos, quizzes, juegos, lecturas)
 - Analizar su progreso y dar feedback constructivo
 - Motivar y guiar en su desarrollo académico y profesional
 
-REGLA CRÍTICA - BÚSQUEDA DE RUTAS:
-Cuando el usuario mencione CUALQUIERA de estos temas, DEBES usar search_learning_paths:
-- Pida recomendaciones de rutas
-- Mencione un tema específico (inglés, matemáticas, programación, etc.)
-- Pregunte qué estudiar o qué aprender
-- Pida cursos o contenido educativo
-- Hable sobre desarrollo profesional o académico
-- Pregunte "qué debo estudiar" o similar
+REGLAS CRÍTICAS DE BÚSQUEDA:
 
-Ejemplos que REQUIEREN search_learning_paths:
-✅ "soy principiante, quiero estudiar puedo dedicarle 20 minutos al día"
-✅ "qué rutas me recomiendas"
-✅ "quiero aprender inglés"
-✅ "qué cursos de matemáticas hay"
+1. USA search_learning_paths cuando el usuario busque:
+   - Rutas de aprendizaje completas
+   - Programas de estudio estructurados
+   - "Quiero estudiar [tema]" en general
+   - Recomendaciones amplias de aprendizaje
 
-NO INVENTES RUTAS. Siempre usa la función para obtener rutas reales de SEDEFY.
+2. USA search_content cuando el usuario busque:
+   - Videos específicos sobre un tema
+   - Quizzes para practicar
+   - Juegos educativos
+   - Lecturas o material de lectura
+   - Contenido específico tipo: "muéstrame videos de...", "quiero practicar con quizzes de..."
+
+NO INVENTES contenido. Siempre usa las funciones de búsqueda para obtener resultados reales de SEDEFY.
 
 Contexto del estudiante actual:
 ${userContext}
@@ -128,11 +128,9 @@ ${userContext}
 Directrices:
 - Sé amigable, motivador y profesional
 - Usa datos concretos del estudiante para personalizar tus respuestas
-- Sugiere acciones específicas y alcanzables
-- Si recomiendas algo, explica por qué es relevante para este estudiante
-- Mantén respuestas concisas pero informativas (máximo 3-4 líneas antes de las tarjetas)
-- Usa emojis ocasionalmente para hacer la conversación más amena
-- Cuando uses search_learning_paths, el marcador especial se incluirá automáticamente para mostrar las tarjetas`;
+- Mantén respuestas concisas (máximo 3-4 líneas antes de las tarjetas)
+- Usa emojis ocasionalmente
+- Los marcadores especiales se incluirán automáticamente para mostrar las tarjetas`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -145,13 +143,13 @@ Directrices:
         type: "function",
         function: {
           name: "search_learning_paths",
-          description: "Busca rutas de aprendizaje reales en SEDEFY. USA ESTA FUNCIÓN SIEMPRE que el usuario mencione: temas de estudio, recomendaciones de aprendizaje, qué estudiar, cursos, desarrollo profesional, o cualquier pregunta sobre qué aprender. NO inventes rutas, SIEMPRE busca las reales.",
+          description: "Busca rutas de aprendizaje completas en SEDEFY. Usa cuando el usuario busque programas estructurados o recomendaciones generales de estudio.",
           parameters: {
             type: "object",
             properties: {
               query: {
                 type: "string",
-                description: "Términos de búsqueda amplios. Si el usuario dice 'soy principiante' o 'puedo dedicar 20 minutos', busca términos generales como 'inglés', 'principiantes', 'básico', etc."
+                description: "Términos de búsqueda para rutas"
               },
               category: {
                 type: "string",
@@ -159,7 +157,33 @@ Directrices:
               },
               limit: {
                 type: "number",
-                description: "Número máximo de resultados. Default 5, usa 8-10 para búsquedas amplias"
+                description: "Número máximo de resultados (default: 8)"
+              }
+            },
+            required: ["query"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "search_content",
+          description: "Busca contenido educativo específico (videos, quizzes, juegos, lecturas) en SEDEFY. USA cuando el usuario busque material educativo concreto como 'videos de', 'quizzes de', 'juegos de', 'lecturas sobre'.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Términos de búsqueda para contenido"
+              },
+              content_type: {
+                type: "string",
+                description: "Tipo de contenido: 'video', 'quiz', 'game', 'reading', o null para todos",
+                enum: ["video", "quiz", "game", "reading", null]
+              },
+              limit: {
+                type: "number",
+                description: "Número máximo de resultados (default: 8)"
               }
             },
             required: ["query"]
@@ -197,6 +221,149 @@ Directrices:
     // Check if AI wants to use a tool
     if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
       const toolCall = choice.message.tool_calls[0];
+      
+      if (toolCall.function.name === "search_content") {
+        const args = JSON.parse(toolCall.function.arguments);
+        const searchQuery = args.query || "";
+        const contentType = args.content_type;
+        const limit = args.limit || 8;
+
+        console.log('Searching content with query:', searchQuery, 'type:', contentType, 'limit:', limit);
+
+        let results: any[] = [];
+
+        // Search in different tables based on content type
+        if (!contentType || contentType === 'video' || contentType === 'reading') {
+          const typeFilter = contentType === 'video' ? 'video' : contentType === 'reading' ? 'reading' : null;
+          
+          let query = supabase
+            .from('content')
+            .select('id, title, description, thumbnail_url, type, category, subject, creator_id, profiles!content_creator_id_fkey(full_name, avatar_url)')
+            .eq('is_public', true);
+
+          if (typeFilter) {
+            query = query.eq('type', typeFilter);
+          } else if (!contentType) {
+            query = query.in('type', ['video', 'reading']);
+          }
+
+          if (searchQuery) {
+            const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
+            const orConditions = searchTerms.map((term: string) => 
+              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+            ).join(',');
+            if (orConditions) query = query.or(orConditions);
+          }
+
+          const { data } = await query.limit(limit);
+          if (data) results.push(...data.map(c => ({ ...c, content_type: c.type })));
+        }
+
+        if (!contentType || contentType === 'quiz') {
+          let query = supabase
+            .from('quizzes')
+            .select('id, title, description, thumbnail_url, category, subject, creator_id, profiles!quizzes_creator_id_fkey(full_name, avatar_url)')
+            .eq('is_public', true);
+
+          if (searchQuery) {
+            const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
+            const orConditions = searchTerms.map((term: string) => 
+              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+            ).join(',');
+            if (orConditions) query = query.or(orConditions);
+          }
+
+          const { data } = await query.limit(limit);
+          if (data) results.push(...data.map(q => ({ ...q, content_type: 'quiz' })));
+        }
+
+        if (!contentType || contentType === 'game') {
+          let query = supabase
+            .from('games')
+            .select('id, title, description, thumbnail_url, category, subject, creator_id, profiles!games_creator_id_fkey(full_name, avatar_url)')
+            .eq('is_public', true);
+
+          if (searchQuery) {
+            const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
+            const orConditions = searchTerms.map((term: string) => 
+              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%,category.ilike.%${term}%`
+            ).join(',');
+            if (orConditions) query = query.or(orConditions);
+          }
+
+          const { data } = await query.limit(limit);
+          if (data) results.push(...data.map(g => ({ ...g, content_type: 'game' })));
+        }
+
+        // Limit total results
+        results = results.slice(0, limit);
+
+        console.log('Found content:', results.length);
+
+        // Format content for AI response
+        const contentInfo = results.map(c => {
+          const profile = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
+          return {
+            id: c.id,
+            title: c.title,
+            description: c.description,
+            category: c.category,
+            subject: c.subject,
+            creator: profile?.full_name,
+            cover_url: c.thumbnail_url,
+            type: c.content_type
+          };
+        });
+
+        // Second call to AI with tool results
+        const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...messages,
+              { role: "user", content: message },
+              choice.message,
+              {
+                role: "tool",
+                tool_call_id: toolCall.id,
+                name: toolCall.function.name,
+                content: JSON.stringify({
+                  content: contentInfo,
+                  message: `Encontré ${contentInfo.length} contenidos. IMPORTANTE: Debes incluir en tu respuesta el siguiente bloque especial al final para mostrar las tarjetas: |||CONTENT_DATA:${JSON.stringify(contentInfo)}|||`
+                })
+              }
+            ],
+            stream: true,
+            temperature: 0.8,
+          }),
+        });
+
+        if (!finalResponse.ok) {
+          if (finalResponse.status === 429) {
+            return new Response(JSON.stringify({ error: "Límite de solicitudes excedido, intenta más tarde." }), {
+              status: 429,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (finalResponse.status === 402) {
+            return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
+              status: 402,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          throw new Error(`AI gateway error: ${finalResponse.status}`);
+        }
+
+        return new Response(finalResponse.body, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      }
       
       if (toolCall.function.name === "search_learning_paths") {
         const args = JSON.parse(toolCall.function.arguments);
