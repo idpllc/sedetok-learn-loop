@@ -146,14 +146,14 @@ export const SedeAIChat = () => {
                 >
                   <Card
                     className={cn(
-                      "p-3 cursor-pointer hover:bg-accent transition-colors group relative",
+                      "p-3 cursor-pointer hover:bg-accent transition-colors group relative overflow-visible",
                       currentConversationId === conv.id && "bg-accent border-primary"
                     )}
                     onClick={() => selectConversation(conv.id)}
                   >
-                    <div className="flex items-start justify-between gap-2 pl-3 pr-16">
+                    <div className="flex items-start justify-between gap-2 px-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
+                        <p className="text-sm font-medium leading-snug line-clamp-2">
                           {conv.title || "Nueva conversación"}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -163,13 +163,13 @@ export const SedeAIChat = () => {
                           })}
                         </p>
                         <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                          {String(((conv as any)?.last_message?.content) || (conv as any)?.last_message || (conv as any)?.preview || "").slice(0, 80)}
+                          {String(((conv as any)?.last_message?.content) || (conv as any)?.last_message || (conv as any)?.preview || "").slice(0, 120)}
                         </p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 absolute top-2 right-3 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 z-20"
+                        className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (window.confirm("¿Eliminar esta conversación?")) {
