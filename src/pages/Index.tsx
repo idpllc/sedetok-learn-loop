@@ -352,17 +352,17 @@ const Index = () => {
                   
                   return (
                     <Card 
-                      key={item.id} 
+                      key={item.id}
                       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => {
                         if (isLearningPath) {
                           navigate(`/learning-paths/${item.id}`);
                         } else if (isQuiz) {
-                          navigate(`/?quiz=${item.id}`);
+                          navigate(`/sedetok?quiz=${item.id}`);
                         } else if (item.content_type === 'game') {
-                          navigate(`/?game=${item.id}`);
+                          navigate(`/sedetok?game=${item.id}`);
                         } else {
-                          navigate(`/?content=${item.id}`);
+                          navigate(`/sedetok?content=${item.id}`);
                         }
                       }}
                     >

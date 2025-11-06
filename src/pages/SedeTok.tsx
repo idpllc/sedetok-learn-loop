@@ -1,27 +1,29 @@
-import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
-import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
+import { useInfiniteContent } from "@/hooks/useContent";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, MessageCircle, Bookmark, Share2, Eye } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getQuizScientistIcon } from "@/lib/quizScientists";
+import { ContentCard } from "@/components/ContentCard";
+import { VideoPlayerRef } from "@/components/VideoPlayer";
 
 const SedeTok = () => {
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<Map<string, VideoPlayerRef | null>>(new Map());
   
   const { data, fetchNextPage, hasNextPage, isLoading } = useInfiniteContent();
-  const { likes } = useUserLikes();
-  const { saves } = useUserSaves();
 
   const allContent = data?.pages.flatMap(page => page.items) || [];
+
+  // Get current content from URL
+  const contentId = searchParams.get('content');
+  const quizId = searchParams.get('quiz');
+  const gameId = searchParams.get('game');
+  
+  const currentId = contentId || quizId || gameId;
+  const currentIndex = currentId ? allContent.findIndex(c => c.id === currentId) : 0;
 
   // Infinite scroll - load more when near bottom
   useEffect(() => {
@@ -29,7 +31,7 @@ const SedeTok = () => {
       if (!containerRef.current) return;
       
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-      if (scrollHeight - scrollTop - clientHeight < 500 && hasNextPage) {
+      if (scrollHeight - scrollTop - clientHeight < 1000 && hasNextPage) {
         fetchNextPage();
       }
     };
@@ -41,98 +43,59 @@ const SedeTok = () => {
     }
   }, [hasNextPage, fetchNextPage]);
 
-  const likeMutation = useMutation({
-    mutationFn: async ({ contentId, isLiked, isQuiz, isGame }: { contentId: string; isLiked: boolean; isQuiz?: boolean; isGame?: boolean }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuario no autenticado");
+  // Handle video control when scrolling (pause videos not in view)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const contentId = entry.target.getAttribute('data-content-id');
+          if (!contentId) return;
 
-      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
-      
-      if (isLiked) {
-        const { error } = await supabase
-          .from("likes")
-          .delete()
-          .eq(idField, contentId)
-          .eq("user_id", user.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("likes")
-          .insert([{ [idField]: contentId, user_id: user.id }]);
-        if (error) throw error;
+          const videoRef = videoRefs.current.get(contentId);
+          if (!videoRef) return;
+
+          if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+            // Auto-play when in view
+            videoRef.play();
+          } else if (entry.intersectionRatio < 0.4) {
+            // Pause when out of view
+            videoRef.pause();
+          }
+        });
+      },
+      { threshold: [0.4, 0.6, 0.75] }
+    );
+
+    const container = containerRef.current;
+    if (container) {
+      const cards = container.querySelectorAll('[data-content-id]');
+      cards.forEach((card) => observer.observe(card));
+    }
+
+    return () => observer.disconnect();
+  }, [allContent]);
+
+  // Scroll to content if URL has an ID
+  useEffect(() => {
+    if (currentId && containerRef.current) {
+      const index = allContent.findIndex(c => c.id === currentId);
+      if (index >= 0) {
+        const card = containerRef.current.querySelector(`[data-content-id="${currentId}"]`);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
-      queryClient.invalidateQueries({ queryKey: ["likes"] });
-    },
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: async ({ contentId, isSaved, isQuiz, isGame }: { contentId: string; isSaved: boolean; isQuiz?: boolean; isGame?: boolean }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuario no autenticado");
-
-      const idField = isGame ? "game_id" : isQuiz ? "quiz_id" : "content_id";
-      
-      if (isSaved) {
-        const { error } = await supabase
-          .from("saves")
-          .delete()
-          .eq(idField, contentId)
-          .eq("user_id", user.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("saves")
-          .insert([{ [idField]: contentId, user_id: user.id }]);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saves"] });
-      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
-    },
-  });
-
-  const handleLike = (contentId: string, isLiked: boolean, isQuiz?: boolean, isGame?: boolean) => {
-    if (!user) {
-      toast({ title: "Debes iniciar sesión", variant: "destructive" });
-      return;
     }
-    likeMutation.mutate({ contentId, isLiked, isQuiz, isGame });
-  };
+  }, [currentId, allContent]);
 
-  const handleSave = (contentId: string, isSaved: boolean, isQuiz?: boolean, isGame?: boolean) => {
-    if (!user) {
-      toast({ title: "Debes iniciar sesión", variant: "destructive" });
-      return;
+  const handleNavigation = (direction: 'next' | 'previous') => {
+    const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+    if (newIndex >= 0 && newIndex < allContent.length) {
+      const newContent = allContent[newIndex];
+      const contentType = newContent.content_type;
+      const param = contentType === 'quiz' ? 'quiz' : contentType === 'game' ? 'game' : 'content';
+      setSearchParams({ [param]: newContent.id });
     }
-    saveMutation.mutate({ contentId, isSaved, isQuiz, isGame });
-  };
-
-  const handleShare = (content: any) => {
-    const contentType = content.content_type;
-    const shareUrl = `${window.location.origin}/?${contentType === 'quiz' ? 'quiz' : contentType === 'game' ? 'game' : 'content'}=${content.id}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: content.title,
-        text: content.description || '',
-        url: shareUrl,
-      }).catch(() => {
-        navigator.clipboard.writeText(shareUrl);
-        toast({ title: "Link copiado al portapapeles" });
-      });
-    } else {
-      navigator.clipboard.writeText(shareUrl);
-      toast({ title: "Link copiado al portapapeles" });
-    }
-  };
-
-  const handleComments = (content: any) => {
-    const contentType = content.content_type;
-    navigate(`/?${contentType === 'quiz' ? 'quiz' : contentType === 'game' ? 'game' : 'content'}=${content.id}`);
   };
 
   if (isLoading) {
@@ -155,141 +118,57 @@ const SedeTok = () => {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {allContent.map((content, index) => {
+          const profile = content.profiles as any;
           const isQuiz = content.content_type === 'quiz';
           const isGame = content.content_type === 'game';
-          const isLiked = likes.has(content.id);
-          const isSaved = saves.has(content.id);
-          const profile = content.profiles as any;
-          const scientist = isQuiz ? getQuizScientistIcon(content.category) : null;
 
           return (
-            <div 
+            <div
               key={content.id}
-              className="relative h-screen w-full snap-start snap-always flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20"
+              data-content-id={content.id}
+              className="h-screen snap-start snap-always"
             >
-              {/* Content Display */}
-              <div className="relative w-full max-w-md h-full flex flex-col justify-center px-4">
-                {/* Thumbnail or Scientist Icon */}
-                {content.thumbnail_url ? (
-                  <img 
-                    src={content.thumbnail_url} 
-                    alt={content.title}
-                    className="absolute inset-0 w-full h-full object-cover blur-xl opacity-30"
-                  />
-                ) : scientist ? (
-                  <img 
-                    src={scientist.icon} 
-                    alt={scientist.name}
-                    className="absolute inset-0 w-full h-full object-contain blur-2xl opacity-20"
-                  />
-                ) : null}
-
-                <div className="relative z-10 flex flex-col items-center">
-                  <div 
-                    className="w-full max-w-sm bg-card/80 backdrop-blur-md rounded-2xl overflow-hidden shadow-2xl border border-border cursor-pointer hover:scale-105 transition-transform"
-                    onClick={() => {
-                      if (isQuiz) {
-                        navigate(`/?quiz=${content.id}`);
-                      } else if (isGame) {
-                        navigate(`/?game=${content.id}`);
-                      } else {
-                        navigate(`/?content=${content.id}`);
-                      }
-                    }}
-                  >
-                    {content.thumbnail_url ? (
-                      <img 
-                        src={content.thumbnail_url} 
-                        alt={content.title}
-                        className="w-full h-64 object-cover"
-                      />
-                    ) : scientist ? (
-                      <div className="w-full h-64 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                        <img src={scientist.icon} alt={scientist.name} className="w-40 h-40 object-contain" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-64 bg-gradient-to-br from-primary/20 to-secondary/20" />
-                    )}
-
-                    <div className="p-4 space-y-2">
-                      <h2 className="text-xl font-bold line-clamp-2">{content.title}</h2>
-                      {content.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">{content.description}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons - Right Side */}
-              <div className="absolute right-4 bottom-24 flex flex-col gap-6 z-20">
-                <button
-                  onClick={() => handleLike(content.id, isLiked, isQuiz, isGame)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full bg-card/80 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
-                    <Heart className={`w-6 h-6 ${isLiked ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
-                  </div>
-                  <span className="text-xs font-medium text-foreground">{content.likes_count || 0}</span>
-                </button>
-
-                <button
-                  onClick={() => handleComments(content)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full bg-card/80 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
-                    <MessageCircle className="w-6 h-6 text-foreground" />
-                  </div>
-                  <span className="text-xs font-medium text-foreground">{content.comments_count || 0}</span>
-                </button>
-
-                <button
-                  onClick={() => handleSave(content.id, isSaved, isQuiz, isGame)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full bg-card/80 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
-                    <Bookmark className={`w-6 h-6 ${isSaved ? 'fill-primary text-primary' : 'text-foreground'}`} />
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => handleShare(content)}
-                  className="flex flex-col items-center gap-1"
-                >
-                  <div className="w-12 h-12 rounded-full bg-card/80 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform shadow-lg">
-                    <Share2 className="w-6 h-6 text-foreground" />
-                  </div>
-                </button>
-              </div>
-
-              {/* Bottom Info */}
-              <div className="absolute bottom-4 left-4 right-20 z-20">
-                <div className="space-y-2">
-                  {profile && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-card/80 backdrop-blur-md overflow-hidden">
-                        {profile.avatar_url ? (
-                          <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs font-bold bg-primary text-primary-foreground">
-                            {profile.username?.[0]?.toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-sm font-medium text-foreground">{profile.username || profile.full_name}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Eye className="w-4 h-4" />
-                    <span>{content.views_count || 0} vistas</span>
-                  </div>
-                </div>
-              </div>
+              <ContentCard
+                id={content.id}
+                title={content.title}
+                description={content.description}
+                creator={profile?.username || profile?.full_name || 'Usuario'}
+                creatorId={content.created_by}
+                institution={content.institution}
+                tags={content.tags || []}
+                category={content.category || ''}
+                subject={content.subject}
+                thumbnail={content.thumbnail_url}
+                videoUrl={content.video_url}
+                documentUrl={content.document_url}
+                richText={content.rich_text}
+                contentType={content.content_type}
+                likes={content.likes_count || 0}
+                comments={content.comments_count || 0}
+                shares={content.shares_count || 0}
+                grade={content.grade_level || ''}
+                isLiked={false} // Will be managed by ContentCard internally
+                isSaved={false} // Will be managed by ContentCard internally
+                creatorAvatar={profile?.avatar_url}
+                onPrevious={index > 0 ? () => handleNavigation('previous') : undefined}
+                onNext={index < allContent.length - 1 ? () => handleNavigation('next') : undefined}
+                hasPrevious={index > 0}
+                hasNext={index < allContent.length - 1}
+                videoRef={(ref) => {
+                  if (ref) {
+                    videoRefs.current.set(content.id, ref);
+                  } else {
+                    videoRefs.current.delete(content.id);
+                  }
+                }}
+                questionsCount={isQuiz ? content.questions_count : undefined}
+                difficulty={isQuiz ? content.difficulty : undefined}
+                gameType={isGame ? content.game_type : undefined}
+              />
             </div>
           );
         })}
       </div>
-
     </>
   );
 };
