@@ -115,25 +115,55 @@ export const useGameSounds = () => {
   };
 
   const playWheelSpin = () => {
-    // Create a wheel spinning sound using Web Audio API
+    // Create a realistic roulette wheel sound using Web Audio API
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
       
-      oscillator.connect(gainNode);
+      // Create multiple oscillators for richer sound
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filterNode = audioContext.createBiquadFilter();
+      
+      oscillator1.connect(filterNode);
+      oscillator2.connect(filterNode);
+      filterNode.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      // Spinning sound: rapid frequency changes
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.5);
+      // Configure filter for more realistic sound
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(2000, audioContext.currentTime);
       
-      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+      // Realistic roulette ticking sound with deceleration
+      oscillator1.type = 'square';
+      oscillator2.type = 'triangle';
       
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.5);
+      // Start fast, then slow down (simulating wheel deceleration)
+      const duration = 3.5;
+      const startFreq = 40;
+      const midFreq = 25;
+      const endFreq = 3;
+      
+      // Main oscillator with realistic deceleration curve
+      oscillator1.frequency.setValueAtTime(startFreq, audioContext.currentTime);
+      oscillator1.frequency.exponentialRampToValueAtTime(midFreq, audioContext.currentTime + duration * 0.4);
+      oscillator1.frequency.exponentialRampToValueAtTime(endFreq, audioContext.currentTime + duration);
+      
+      // Secondary oscillator for depth
+      oscillator2.frequency.setValueAtTime(startFreq * 1.5, audioContext.currentTime);
+      oscillator2.frequency.exponentialRampToValueAtTime(midFreq * 1.5, audioContext.currentTime + duration * 0.4);
+      oscillator2.frequency.exponentialRampToValueAtTime(endFreq * 1.5, audioContext.currentTime + duration);
+      
+      // Volume envelope - fade in and gradual fade out
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.25, audioContext.currentTime + duration * 0.7);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+      
+      oscillator1.start(audioContext.currentTime);
+      oscillator2.start(audioContext.currentTime);
+      oscillator1.stop(audioContext.currentTime + duration);
+      oscillator2.stop(audioContext.currentTime + duration);
     } catch (e) {
       console.log('Error playing sound:', e);
     }

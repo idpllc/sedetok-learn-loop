@@ -41,6 +41,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
   const [turnEnded, setTurnEnded] = useState(false);
+  const [charactersWonThisTurn, setCharactersWonThisTurn] = useState(0);
 
   const { data: categories } = useQuery({
     queryKey: ['trivia-categories'],
@@ -61,10 +62,11 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const waitingForOpponent = !opponent;
   const matchIsWaiting = match?.status === 'waiting';
 
-  // Reset turnEnded when it actually becomes our turn and send notification
+  // Reset turnEnded and charactersWonThisTurn when it actually becomes our turn and send notification
   useEffect(() => {
     if (match?.current_player_id === user?.id) {
       setTurnEnded(false);
+      setCharactersWonThisTurn(0);
       
       // Send push notification when it becomes my turn
       const sendTurnNotification = async () => {
@@ -299,6 +301,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     setSelectedAnswer(null);
     setTimeLeft(20);
     setShowFeedback(false);
+    setCharactersWonThisTurn(0);
   };
 
   const handleCharacterWon = async (categoryId: string, stolen: boolean = false) => {
@@ -340,8 +343,27 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       origin: { y: 0.6 }
     });
 
+    const newCharactersCount = charactersWonThisTurn + 1;
+    setCharactersWonThisTurn(newCharactersCount);
     setCurrentStreak(0);
-    await changeTurn();
+
+    // Only change turn after winning 3 characters
+    if (newCharactersCount >= 3) {
+      setCharactersWonThisTurn(0);
+      await changeTurn();
+    } else {
+      // Continue playing - return to wheel
+      setPhase('wheel');
+      setCurrentQuestionIndex(0);
+      setQuestions([]);
+      setCurrentCategory(null);
+      setTimeLeft(20);
+      
+      toast({
+        title: `¡Personaje ganado! ${newCharactersCount}/3`,
+        description: `Puedes ganar ${3 - newCharactersCount} personaje(s) más antes de ceder el turno`,
+      });
+    }
   };
 
   const handleCharacterRoundFailed = async () => {
