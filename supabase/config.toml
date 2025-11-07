@@ -70,3 +70,6 @@ timeout = 300
 
 [functions.transcribe-audio]
 verify_jwt = true
+
+[functions.text-to-speech]
+verify_jwt = true

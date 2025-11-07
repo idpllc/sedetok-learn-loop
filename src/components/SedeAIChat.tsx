@@ -194,6 +194,8 @@ export const SedeAIChat = () => {
     sendMessage,
     selectConversation,
     deleteConversation,
+    shouldRespondWithVoice,
+    setShouldRespondWithVoice,
   } = useSedeAIChat();
 
   const [input, setInput] = useState("");
@@ -206,6 +208,7 @@ export const SedeAIChat = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const { uploadFile, uploading } = useCloudinary();
   const { toast } = useToast();
 
@@ -217,6 +220,59 @@ export const SedeAIChat = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Play AI response with voice when shouldRespondWithVoice is true
+  useEffect(() => {
+    const playAudioResponse = async () => {
+      if (!shouldRespondWithVoice || messages.length === 0) return;
+      
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role !== 'assistant' || isStreaming) return;
+
+      // Extract text content (remove special markers)
+      let textContent = lastMessage.content;
+      textContent = textContent.replace(/\|\|\|PATHS_DATA:.*?\|\|\|/g, '').trim();
+      textContent = textContent.replace(/\|\|\|CONTENT_DATA:.*?\|\|\|/g, '').trim();
+
+      if (!textContent) return;
+
+      try {
+        console.log('Generating speech for response...');
+        
+        const { data, error } = await supabase.functions.invoke('text-to-speech', {
+          body: { text: textContent }
+        });
+
+        if (error || !data?.audioContent) {
+          console.error('Error generating speech:', error);
+          return;
+        }
+
+        // Convert base64 to audio and play
+        const binaryString = atob(data.audioContent);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.src = audioUrl;
+          await audioPlayerRef.current.play();
+        }
+
+        // Reset flag after playing
+        setShouldRespondWithVoice(false);
+      } catch (error) {
+        console.error('Error playing audio response:', error);
+        setShouldRespondWithVoice(false);
+      }
+    };
+
+    playAudioResponse();
+  }, [messages, shouldRespondWithVoice, isStreaming, setShouldRespondWithVoice]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!input.trim() && attachments.length === 0) || isLoading) return;
@@ -225,7 +281,7 @@ export const SedeAIChat = () => {
     const attToSend = [...attachments];
     setInput("");
     setAttachments([]);
-    await sendMessage(message, attToSend);
+    await sendMessage(message, attToSend, false);
   };
 
   const startRecording = async () => {
@@ -300,12 +356,13 @@ export const SedeAIChat = () => {
           return;
         }
 
-        setInput(data.text);
+        // Send message directly with voice response flag
+        await sendMessage(data.text, [], true);
         setAudioBlob(null);
         
         toast({
-          title: "Audio transcrito",
-          description: "Puedes editar el texto antes de enviar",
+          title: "Audio enviado",
+          description: "La respuesta será en audio",
         });
       };
     } catch (error) {
@@ -457,6 +514,9 @@ export const SedeAIChat = () => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-background">
+      {/* Hidden audio player for voice responses */}
+      <audio ref={audioPlayerRef} className="hidden" />
+      
       {/* Desktop Sidebar */}
       {!isMobile && (
         <div className="w-80 border-r bg-card">
