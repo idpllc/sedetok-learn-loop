@@ -222,7 +222,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
 
     setShowFeedback(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setShowFeedback(false);
       setSelectedAnswer(null);
       
