@@ -4,12 +4,14 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PathData {
   id: string;
@@ -179,6 +181,7 @@ const PathCards = ({ paths }: { paths: PathData[] }) => {
 export const SedeAIChat = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const {
     conversations,
     messages,
@@ -193,6 +196,7 @@ export const SedeAIChat = () => {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -213,90 +217,112 @@ export const SedeAIChat = () => {
 
   const handleNewChat = () => {
     selectConversation(null);
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
   };
+
+  const handleSelectConversation = (id: string) => {
+    selectConversation(id);
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
+  };
+
+  const ConversationsList = () => (
+    <>
+      <div className="p-4 border-b flex items-center justify-between bg-card">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h2 className="font-bold text-lg">SEDE AI</h2>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleNewChat}
+          className="h-8 w-8"
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <ScrollArea className="h-[calc(100%-5rem)]">
+        <div className="p-4 space-y-2">
+          {conversations.length === 0 ? (
+            <div className="text-center text-sm text-muted-foreground py-8">
+              No hay conversaciones aún.
+              <br />
+              ¡Inicia una nueva!
+            </div>
+          ) : (
+            conversations.map((conv, index) => (
+              <div
+                key={conv.id}
+                className="relative"
+                style={{ zIndex: conversations.length - index }}
+              >
+                <Card
+                  className={cn(
+                    "p-3 cursor-pointer hover:bg-accent transition-colors group relative overflow-visible",
+                    currentConversationId === conv.id && "bg-accent border-primary"
+                  )}
+                  onClick={() => handleSelectConversation(conv.id)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium leading-snug line-clamp-2">
+                        {conv.title || "Nueva conversación"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(conv.updated_at).toLocaleDateString("es", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                        {String(((conv as any)?.last_message?.content) || (conv as any)?.last_message || (conv as any)?.preview || "").slice(0, 60)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm("¿Eliminar esta conversación?")) {
+                          deleteConversation(conv.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
+    </>
+  );
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-background">
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "w-80 border-r bg-card transition-all duration-300 relative z-30",
-          showSidebar ? "translate-x-0" : "-translate-x-full absolute lg:relative"
-        )}
-      >
-        <div className="p-4 border-b flex items-center justify-between bg-card relative z-10">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-lg">SEDE AI</h2>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleNewChat}
-            className="h-8 w-8"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <div className="w-80 border-r bg-card">
+          <ConversationsList />
         </div>
+      )}
 
-        <ScrollArea className="h-[calc(100%-5rem)]">
-          <div className="p-4 space-y-2">
-            {conversations.length === 0 ? (
-              <div className="text-center text-sm text-muted-foreground py-8">
-                No hay conversaciones aún.
-                <br />
-                ¡Inicia una nueva!
-              </div>
-            ) : (
-              conversations.map((conv, index) => (
-                <div
-                  key={conv.id}
-                  className="relative"
-                  style={{ zIndex: conversations.length - index }}
-                >
-                  <Card
-                    className={cn(
-                      "p-3 cursor-pointer hover:bg-accent transition-colors group relative overflow-visible",
-                      currentConversationId === conv.id && "bg-accent border-primary"
-                    )}
-                    onClick={() => selectConversation(conv.id)}
-                  >
-                    <div className="flex items-start justify-between gap-2 px-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-snug line-clamp-2">
-                          {conv.title || "Nueva conversación"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(conv.updated_at).toLocaleDateString("es", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </p>
-                        <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                          {String(((conv as any)?.last_message?.content) || (conv as any)?.last_message || (conv as any)?.preview || "").slice(0, 120)}
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm("¿Eliminar esta conversación?")) {
-                            deleteConversation(conv.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                      </Button>
-                    </div>
-                  </Card>
-                </div>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </div>
+      {/* Mobile Sheet */}
+      {isMobile && (
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetContent side="left" className="p-0 w-80">
+            <ConversationsList />
+          </SheetContent>
+        </Sheet>
+      )}
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col relative z-0">
@@ -310,14 +336,16 @@ export const SedeAIChat = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="lg:hidden flex-shrink-0"
-          >
-            <MessageSquare className="w-5 h-5" />
-          </Button>
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex-shrink-0"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
