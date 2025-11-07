@@ -240,22 +240,30 @@ export const useTriviaRankings = () => {
   const { data: globalRanking, isLoading: loadingGlobal } = useQuery({
     queryKey: ["trivia-rankings", "global"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch top stats first
+      const { data: stats, error: statsError } = await supabase
         .from("trivia_user_stats")
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            full_name,
-            avatar_url,
-            institution
-          )
-        `)
+        .select("*")
         .order("total_points", { ascending: false })
         .limit(100);
-      
-      if (error) throw error;
-      return data;
+      if (statsError) throw statsError;
+
+      const userIds = (stats || []).map((s: any) => s.user_id).filter(Boolean);
+      if (userIds.length === 0) return [] as any[];
+
+      // Fetch profiles separately (no FK join dependency)
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, institution")
+        .in("id", userIds);
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      // Attach profile under the same shape the UI expects (profiles can be object or array)
+      return (stats || []).map((s: any) => ({
+        ...s,
+        profiles: profileMap.get(s.user_id) || null,
+      }));
     },
   });
 
