@@ -1852,6 +1852,53 @@ export type Database = {
         }
         Relationships: []
       }
+      trivia_1v1_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          level: string
+          match_id: string | null
+          receiver_id: string
+          rejected_at: string | null
+          sender_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          level?: string
+          match_id?: string | null
+          receiver_id: string
+          rejected_at?: string | null
+          sender_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          level?: string
+          match_id?: string | null
+          receiver_id?: string
+          rejected_at?: string | null
+          sender_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trivia_1v1_invitations_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "trivia_1v1_matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trivia_1v1_matches: {
         Row: {
           created_at: string | null

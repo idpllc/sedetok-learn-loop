@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useTriviaGame, TriviaCategory, TriviaQuestion } from "@/hooks/useTriviaGame";
@@ -9,9 +9,11 @@ import { TriviaRanking } from "@/components/trivia/TriviaRanking";
 import { TriviaAdminPanel } from "@/components/trivia/TriviaAdminPanel";
 import { TriviaMatchLobby } from "@/components/trivia/TriviaMatchLobby";
 import { TriviaMatch1v1 } from "@/components/trivia/TriviaMatch1v1";
+import { ChallengeFriendsModal } from "@/components/trivia/ChallengeFriendsModal";
+import { InvitationsPanel } from "@/components/trivia/InvitationsPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
-import { Loader2, Trophy, User, Play, Crown, ArrowLeft, Users } from "lucide-react";
+import { Loader2, Trophy, User, Play, Crown, ArrowLeft, Users, Swords } from "lucide-react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +23,7 @@ type GameScreen = "menu" | "wheel" | "gameplay" | "results" | "ranking" | "admin
 
 export default function TriviaGame() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isSuperAdmin } = useSuperAdmin();
   const [screen, setScreen] = useState<GameScreen>("menu");
@@ -29,6 +32,16 @@ export default function TriviaGame() {
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [gameResult, setGameResult] = useState<any>(null);
   const [matchId, setMatchId] = useState<string | null>(null);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+
+  // Check if coming from a notification with match parameter
+  useEffect(() => {
+    const matchParam = searchParams.get('match');
+    if (matchParam && user) {
+      setMatchId(matchParam);
+      setScreen('match-1v1');
+    }
+  }, [searchParams, user]);
 
   const levels = [
     { value: "primaria", label: "📚 Primaria", description: "Conocimientos elementales" },
@@ -204,7 +217,7 @@ export default function TriviaGame() {
           )}
 
           {/* Action Buttons */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <Button
               size="lg"
               onClick={handleStartGame}
@@ -223,7 +236,20 @@ export default function TriviaGame() {
               <Users className="w-8 h-8 mr-2" />
               Jugar 1 vs 1
             </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setShowChallengeModal(true)}
+              className="h-32 text-2xl font-bold border-2 border-primary hover:bg-primary hover:text-primary-foreground"
+            >
+              <Swords className="w-8 h-8 mr-2" />
+              Retar Amigos
+            </Button>
           </div>
+
+          {/* Invitations Panel */}
+          <InvitationsPanel />
 
           <Button
             size="lg"
@@ -245,6 +271,12 @@ export default function TriviaGame() {
               Panel de Administración
             </Button>
           )}
+
+          {/* Challenge Modal */}
+          <ChallengeFriendsModal 
+            open={showChallengeModal}
+            onOpenChange={setShowChallengeModal}
+          />
         </div>
       </div>
     );
