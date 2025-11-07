@@ -128,10 +128,10 @@ export const TriviaWheel = ({ categories, onCategorySelected, disabled = false }
       <Button
         size="lg"
         onClick={spinWheel}
-        disabled={isSpinning || disabled}
+        disabled={isSpinning || disabled || selectedCategory !== null}
         className="text-lg font-bold px-8 py-6 rounded-full shadow-lg hover:scale-105 transition-transform"
       >
-        {isSpinning ? "Girando..." : disabled ? "Esperando turno..." : "¡Girar Ruleta!"}
+        {isSpinning ? "Girando..." : disabled ? "Esperando turno..." : selectedCategory ? "Categoría seleccionada" : "¡Girar Ruleta!"}
       </Button>
     </div>
   );
