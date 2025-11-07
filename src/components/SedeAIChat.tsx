@@ -231,22 +231,25 @@ export const SedeAIChat = () => {
 
   const ConversationsList = () => (
     <>
-      <div className="p-4 border-b flex items-center justify-between bg-card">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-primary" />
-          <h2 className="font-bold text-lg">SEDE AI</h2>
+      <div className="p-4 border-b bg-card">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <h2 className="font-bold text-lg">SEDE AI</h2>
+          </div>
         </div>
         <Button
-          variant="ghost"
-          size="icon"
+          variant="outline"
+          size="sm"
           onClick={handleNewChat}
-          className="h-8 w-8"
+          className="w-full"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 mr-2" />
+          Nueva conversación
         </Button>
       </div>
 
-      <ScrollArea className="h-[calc(100%-5rem)]">
+      <ScrollArea className="h-[calc(100%-8rem)]">
         <div className="p-4 space-y-2">
           {conversations.length === 0 ? (
             <div className="text-center text-sm text-muted-foreground py-8">
