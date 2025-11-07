@@ -155,13 +155,14 @@ Contexto del estudiante:
 ${userContext}
 
 💡 DIRECTRICES DE COMUNICACIÓN:
-- Respuestas concisas (2-3 líneas de texto antes de mostrar tarjetas)
+- Respuestas concisas (2-3 líneas de texto descriptivo)
 - Usa el nombre del estudiante ocasionalmente para personalizar
 - Celebra progreso y logros
 - Sé específico con datos reales del usuario
 - Usa emojis estratégicamente
 - Si no encuentras contenido: "No encontré [X] específico sobre ese tema, pero puedo buscar contenido relacionado"
-- Los marcadores especiales |||CONTENT_DATA:...|||  y |||PATHS_DATA:...||| se incluirán automáticamente`;
+- NO incluyas JSON ni datos estructurados en tu respuesta, solo texto conversacional
+- Las tarjetas visuales se mostrarán automáticamente`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -396,7 +397,7 @@ ${userContext}
                 name: toolCall.function.name,
                 content: JSON.stringify({
                   content: contentInfo,
-                  message: `Encontré ${contentInfo.length} contenidos. IMPORTANTE: Debes incluir en tu respuesta el siguiente bloque especial al final para mostrar las tarjetas: |||CONTENT_DATA:${JSON.stringify(contentInfo)}|||`
+                  message: `Encontré ${contentInfo.length} contenidos relevantes.`
                 })
               }
             ],
@@ -421,7 +422,41 @@ ${userContext}
           throw new Error(`AI gateway error: ${finalResponse.status}`);
         }
 
-        return new Response(finalResponse.body, {
+        // Stream the response and append the content data marker at the end
+        const reader = finalResponse.body!.getReader();
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              let buffer = '';
+              
+              while (true) {
+                const { done, value } = await reader.read();
+                
+                if (done) {
+                  // Append the content data marker at the end
+                  const marker = `\n\n|||CONTENT_DATA:${JSON.stringify(contentInfo)}|||`;
+                  const markerChunk = `data: ${JSON.stringify({
+                    choices: [{
+                      delta: { content: marker }
+                    }]
+                  })}\n\n`;
+                  controller.enqueue(encoder.encode(markerChunk));
+                  controller.close();
+                  break;
+                }
+                
+                controller.enqueue(value);
+              }
+            } catch (error) {
+              controller.error(error);
+            }
+          }
+        });
+
+        return new Response(stream, {
           headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
         });
       }
@@ -500,7 +535,7 @@ ${userContext}
                 name: toolCall.function.name,
                 content: JSON.stringify({
                   paths: pathsInfo,
-                  message: `Encontré ${pathsInfo.length} rutas. IMPORTANTE: Debes incluir en tu respuesta el siguiente bloque especial al final para mostrar las tarjetas: |||PATHS_DATA:${JSON.stringify(pathsInfo)}|||`
+                  message: `Encontré ${pathsInfo.length} rutas de aprendizaje relevantes.`
                 })
               }
             ],
@@ -525,7 +560,41 @@ ${userContext}
           throw new Error(`AI gateway error: ${finalResponse.status}`);
         }
 
-        return new Response(finalResponse.body, {
+        // Stream the response and append the paths data marker at the end
+        const reader = finalResponse.body!.getReader();
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              let buffer = '';
+              
+              while (true) {
+                const { done, value } = await reader.read();
+                
+                if (done) {
+                  // Append the paths data marker at the end
+                  const marker = `\n\n|||PATHS_DATA:${JSON.stringify(pathsInfo)}|||`;
+                  const markerChunk = `data: ${JSON.stringify({
+                    choices: [{
+                      delta: { content: marker }
+                    }]
+                  })}\n\n`;
+                  controller.enqueue(encoder.encode(markerChunk));
+                  controller.close();
+                  break;
+                }
+                
+                controller.enqueue(value);
+              }
+            } catch (error) {
+              controller.error(error);
+            }
+          }
+        });
+
+        return new Response(stream, {
           headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
         });
       }
