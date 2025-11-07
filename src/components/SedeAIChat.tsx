@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines, Phone } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -15,7 +15,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { VoiceConversation } from "./VoiceConversation";
+import { ErrorBoundary } from "./ErrorBoundary";
+
+// Temporarily disabled due to package compatibility issues
+// const VoiceConversation = lazy(() => import("./VoiceConversation").then(module => ({ default: module.VoiceConversation })));
 
 interface PathData {
   id: string;
@@ -202,7 +205,6 @@ export const SedeAIChat = () => {
   } = useSedeAIChat();
 
   const [input, setInput] = useState("");
-  const [showVoiceConversation, setShowVoiceConversation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -517,10 +519,17 @@ export const SedeAIChat = () => {
   );
 
   return (
-    <>
-      {showVoiceConversation && (
-        <VoiceConversation onClose={() => setShowVoiceConversation(false)} />
-      )}
+    <ErrorBoundary>
+      {/* Temporarily disabled due to package compatibility issues */}
+      {/* {showVoiceConversation && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin" />
+          </div>
+        }>
+          <VoiceConversation onClose={() => setShowVoiceConversation(false)} />
+        </Suspense>
+      )} */}
       
       <div className="flex h-[calc(100vh-4rem)] bg-background">
         {/* Hidden audio player for voice responses */}
@@ -579,15 +588,15 @@ export const SedeAIChat = () => {
           </div>
           
           <div className="flex gap-2">
-            {/* Voice Conversation Button */}
-            <Button
+            {/* Voice Conversation Button - Temporarily disabled due to package issues */}
+            {/* <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowVoiceConversation(true)}
               title="Modo conversación fluida"
             >
               <Phone className="w-5 h-5" />
-            </Button>
+            </Button> */}
             
             {/* Voice Mode Toggle */}
             <Button
@@ -847,6 +856,6 @@ export const SedeAIChat = () => {
         </div>
       </div>
     </div>
-    </>
+    </ErrorBoundary>
   );
 };
