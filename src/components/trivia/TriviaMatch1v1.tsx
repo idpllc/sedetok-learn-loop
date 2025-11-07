@@ -129,17 +129,18 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   // Activate match when second player joins
   useEffect(() => {
     const activateMatch = async () => {
-      if (matchIsWaiting && opponent && match) {
-        // Update match to active status
+      if (matchIsWaiting && opponent && match && players && players.length === 2) {
+        // Update match to active status - first player starts
+        const firstPlayer = players.find(p => p.player_number === 1);
         await updateMatch.mutateAsync({
           status: 'active',
           started_at: new Date().toISOString(),
-          current_player_id: currentPlayer?.user_id || user?.id
+          current_player_id: firstPlayer?.user_id || players[0]?.user_id
         });
       }
     };
     activateMatch();
-  }, [matchIsWaiting, opponent, match?.id]);
+  }, [matchIsWaiting, opponent, match?.id, players?.length]);
 
   // Timer
   useEffect(() => {
@@ -483,7 +484,47 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   };
 
   if (!match || !players || !categories) {
-    return <div>Cargando...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-6xl animate-bounce">🎮</div>
+          <p className="text-xl font-semibold">Cargando partida...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Waiting for match to start - show waiting screen
+  if (match.status === 'waiting' || !match.current_player_id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-lg w-full">
+          <CardContent className="pt-6 text-center space-y-6">
+            <div className="text-6xl animate-pulse">⏳</div>
+            <h2 className="text-2xl font-bold">Esperando al oponente</h2>
+            <p className="text-muted-foreground">
+              {waitingForOpponent 
+                ? "Esperando a que el otro jugador se una..."
+                : "Preparando la partida..."}
+            </p>
+            <div className="flex justify-center gap-4">
+              {players?.map((player) => (
+                <div key={player.id} className="flex flex-col items-center gap-2">
+                  <Avatar className="w-16 h-16 border-4 border-primary">
+                    <AvatarImage src={player.profiles?.avatar_url || undefined} />
+                    <AvatarFallback>{player.profiles?.username?.[0] || '?'}</AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm font-medium">{player.profiles?.username || 'Jugador'}</p>
+                </div>
+              ))}
+            </div>
+            <Button onClick={() => navigate('/trivia-game')} variant="outline">
+              Volver al menú
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Finished screen
