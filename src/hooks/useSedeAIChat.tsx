@@ -110,7 +110,7 @@ export const useSedeAIChat = () => {
   }, []);
 
   // Send message with streaming
-  const sendMessage = useCallback(async (message: string) => {
+  const sendMessage = useCallback(async (message: string, attachments?: Array<{type: 'image' | 'audio' | 'file', url: string, name?: string}>) => {
     if (!user || !message.trim()) return;
 
     let conversationId = currentConversationId;
@@ -153,6 +153,7 @@ export const useSedeAIChat = () => {
         body: JSON.stringify({
           message,
           conversationId,
+          attachments,
         }),
       });
 

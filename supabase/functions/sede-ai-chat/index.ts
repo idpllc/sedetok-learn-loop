@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId } = await req.json();
+    const { message, conversationId, attachments } = await req.json();
     
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -223,6 +223,30 @@ ${userContext}
       }
     ];
 
+    // Prepare user message with attachments
+    let userMessageContent: any = message;
+    
+    if (attachments && attachments.length > 0) {
+      // Build multimodal message for Gemini 2.5 Flash
+      const contentParts: any[] = [{ type: "text", text: message }];
+      
+      for (const att of attachments) {
+        if (att.type === 'image') {
+          contentParts.push({
+            type: "image_url",
+            image_url: { url: att.url }
+          });
+        } else if (att.type === 'audio' || att.type === 'file') {
+          contentParts.push({
+            type: "text",
+            text: `[Archivo adjunto: ${att.name || 'documento'}]`
+          });
+        }
+      }
+      
+      userMessageContent = contentParts;
+    }
+
     // First call to AI with tools
     const aiStartTime = Date.now();
     const initialResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -236,7 +260,10 @@ ${userContext}
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
-          { role: "user", content: message }
+          { 
+            role: "user", 
+            content: Array.isArray(userMessageContent) ? userMessageContent : [{ type: "text", text: userMessageContent }]
+          }
         ],
         tools,
         temperature: 0.8,

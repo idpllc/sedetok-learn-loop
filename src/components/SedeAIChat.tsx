@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,9 @@ import { cn } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCloudinary } from "@/hooks/useCloudinary";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PathData {
   id: string;
@@ -197,6 +200,14 @@ export const SedeAIChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [attachments, setAttachments] = useState<Array<{type: 'image' | 'audio' | 'file', url: string, name: string}>>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadFile, uploading } = useCloudinary();
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -208,11 +219,146 @@ export const SedeAIChat = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && attachments.length === 0) || isLoading) return;
 
-    const message = input;
+    const message = input || "Ver adjuntos";
+    const attToSend = [...attachments];
     setInput("");
-    await sendMessage(message);
+    setAttachments([]);
+    await sendMessage(message, attToSend);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo acceder al micrófono",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleAudioSubmit = async () => {
+    if (!audioBlob) return;
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = async () => {
+        const base64Audio = reader.result?.toString().split(',')[1];
+        if (!base64Audio) {
+          toast({
+            title: "Error",
+            description: "No se pudo procesar el audio",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Transcribiendo audio...",
+          description: "Por favor espera",
+        });
+
+        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+          body: { audio: base64Audio }
+        });
+
+        if (error || !data?.text) {
+          toast({
+            title: "Error",
+            description: "No se pudo transcribir el audio",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setInput(data.text);
+        setAudioBlob(null);
+        
+        toast({
+          title: "Audio transcrito",
+          description: "Puedes editar el texto antes de enviar",
+        });
+      };
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo procesar el audio",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      try {
+        let resourceType: "image" | "video" | "raw" = "raw";
+        let attachmentType: 'image' | 'audio' | 'file' = 'file';
+        
+        if (file.type.startsWith('image/')) {
+          resourceType = "image";
+          attachmentType = 'image';
+        } else if (file.type.startsWith('audio/')) {
+          resourceType = "raw";
+          attachmentType = 'audio';
+        }
+
+        const url = await uploadFile(file, resourceType);
+        
+        if (url) {
+          setAttachments(prev => [...prev, { 
+            type: attachmentType, 
+            url, 
+            name: file.name 
+          }]);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: `No se pudo subir ${file.name}`,
+          variant: "destructive",
+        });
+      }
+    }
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleNewChat = () => {
@@ -504,17 +650,90 @@ export const SedeAIChat = () => {
 
         {/* Input */}
         <div className="p-4 border-t bg-card">
+          {/* Attachments Preview */}
+          {attachments.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-2">
+              {attachments.map((att, idx) => (
+                <div key={idx} className="relative group">
+                  <Card className="p-2 pr-8">
+                    <div className="flex items-center gap-2">
+                      {att.type === 'image' && <ImageIcon className="w-4 h-4" />}
+                      {att.type === 'audio' && <Mic className="w-4 h-4" />}
+                      {att.type === 'file' && <Paperclip className="w-4 h-4" />}
+                      <span className="text-xs">{att.name}</span>
+                    </div>
+                  </Card>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute -top-2 -right-2 h-6 w-6"
+                    onClick={() => removeAttachment(idx)}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Audio Recording */}
+          {audioBlob && (
+            <div className="mb-3">
+              <Card className="p-3 flex items-center justify-between">
+                <span className="text-sm">Audio grabado</span>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAudioSubmit} disabled={uploading}>
+                    Transcribir
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setAudioBlob(null)}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
             <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,audio/*,.pdf,.doc,.docx,.txt"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading || uploading}
+              >
+                <Paperclip className="w-5 h-5" />
+              </Button>
+              
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isLoading || uploading}
+                className={cn(isRecording && "text-destructive")}
+              >
+                {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </Button>
+              
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Escribe tu pregunta o solicitud..."
-                disabled={isLoading}
+                disabled={isLoading || uploading}
                 className="flex-1"
               />
-              <Button type="submit" disabled={isLoading || !input.trim()}>
-                {isLoading ? (
+              <Button type="submit" disabled={isLoading || uploading || (!input.trim() && attachments.length === 0)}>
+                {isLoading || uploading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />

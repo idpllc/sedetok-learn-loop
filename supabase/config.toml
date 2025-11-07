@@ -67,3 +67,6 @@ timeout = 300
 [functions.sync-sede-academico]
 verify_jwt = false
 timeout = 300
+
+[functions.transcribe-audio]
+verify_jwt = true
