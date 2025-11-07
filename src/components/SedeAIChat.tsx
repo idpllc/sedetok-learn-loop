@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -196,6 +196,8 @@ export const SedeAIChat = () => {
     deleteConversation,
     shouldRespondWithVoice,
     setShouldRespondWithVoice,
+    voiceMode,
+    setVoiceMode,
   } = useSedeAIChat();
 
   const [input, setInput] = useState("");
@@ -536,36 +538,58 @@ export const SedeAIChat = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col relative z-0">
         {/* Header */}
-        <div className="p-4 border-b bg-card flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="flex-shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          {isMobile && (
+        <div className="p-4 border-b bg-card flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setMobileMenuOpen(true)}
+              onClick={() => navigate(-1)}
               className="flex-shrink-0"
             >
-              <Menu className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-          )}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg">SEDE AI</h1>
-              <p className="text-xs text-muted-foreground">
-                Tu asistente educativo inteligente
-              </p>
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(true)}
+                className="flex-shrink-0"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            )}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-lg">SEDE AI</h1>
+                <p className="text-xs text-muted-foreground">
+                  Tu asistente educativo inteligente
+                </p>
+              </div>
             </div>
           </div>
+          
+          {/* Voice Mode Toggle */}
+          <Button
+            variant={voiceMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setVoiceMode(!voiceMode)}
+            className="flex items-center gap-2"
+          >
+            {voiceMode ? (
+              <>
+                <AudioLines className="w-4 h-4" />
+                <span className="hidden sm:inline">Modo Voz</span>
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-4 h-4" />
+                <span className="hidden sm:inline">Modo Texto</span>
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Messages */}

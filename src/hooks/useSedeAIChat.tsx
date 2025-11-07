@@ -24,6 +24,7 @@ export const useSedeAIChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [shouldRespondWithVoice, setShouldRespondWithVoice] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
 
   // Load conversations
   const loadConversations = useCallback(async () => {
@@ -114,8 +115,8 @@ export const useSedeAIChat = () => {
   const sendMessage = useCallback(async (message: string, attachments?: Array<{type: 'image' | 'audio' | 'file', url: string, name?: string}>, isFromAudio?: boolean) => {
     if (!user || !message.trim()) return;
     
-    // Set flag to respond with voice if message is from audio
-    setShouldRespondWithVoice(!!isFromAudio);
+    // Set flag to respond with voice if in voice mode OR message is from audio
+    setShouldRespondWithVoice(voiceMode || !!isFromAudio);
 
     let conversationId = currentConversationId;
 
@@ -235,7 +236,7 @@ export const useSedeAIChat = () => {
       setIsStreaming(false);
       setIsLoading(false);
     }
-  }, [user, currentConversationId, createConversation, saveMessage, loadConversations, toast]);
+  }, [user, currentConversationId, createConversation, saveMessage, loadConversations, toast, voiceMode]);
 
   // Select conversation
   const selectConversation = useCallback((conversationId: string | null) => {
@@ -293,5 +294,7 @@ export const useSedeAIChat = () => {
     loadConversations,
     shouldRespondWithVoice,
     setShouldRespondWithVoice,
+    voiceMode,
+    setVoiceMode,
   };
 };
