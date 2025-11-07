@@ -64,6 +64,9 @@ serve(async (req) => {
       throw new Error('SENDGRID_API_KEY not configured');
     }
 
+    const fromEmail = Deno.env.get('SENDGRID_FROM_EMAIL') || 'info@sedefy.com';
+    const fromName = Deno.env.get('SENDGRID_FROM_NAME') || 'Trivia SEDEFY';
+
     const customDomain = Deno.env.get('CUSTOM_DOMAIN') || 'https://sedefy.com';
     const triviaUrl = `${customDomain}/trivia-game?match=${matchId}`;
 
@@ -82,9 +85,14 @@ serve(async (req) => {
           },
         ],
         from: {
-          email: 'info@sedefy.com',
-          name: 'Trivia SEDEFY',
+          email: fromEmail,
+          name: fromName,
         },
+        reply_to: {
+          email: fromEmail,
+          name: fromName,
+        },
+
         content: [
           {
             type: 'text/html',
@@ -145,11 +153,13 @@ serve(async (req) => {
       }),
     });
 
+    console.log('SendGrid response status:', emailResponse.status);
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
       console.error('SendGrid error:', errorText);
       throw new Error(`SendGrid error: ${errorText}`);
     }
+
 
     console.log('Email sent successfully to:', user.email);
 
