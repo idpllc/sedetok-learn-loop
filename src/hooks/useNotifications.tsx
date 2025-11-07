@@ -166,19 +166,28 @@ export const useNotifications = () => {
       relatedId?: string;
       relatedType?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke("send-email-notification", {
-        body: {
-          userId,
-          notificationType,
-          title,
-          message,
-          relatedId,
-          relatedType,
-        },
-      });
+      const [emailResult, pushResult] = await Promise.all([
+        supabase.functions.invoke("send-email-notification", {
+          body: {
+            userId,
+            notificationType,
+            title,
+            message,
+            relatedId,
+            relatedType,
+          },
+        }),
+        supabase.functions.invoke("send-push-notification", {
+          body: {
+            userId,
+            title,
+            message,
+          },
+        }),
+      ]);
 
-      if (error) throw error;
-      return data;
+      if (emailResult.error) throw emailResult.error;
+      return { email: emailResult.data, push: pushResult.data, pushError: pushResult.error };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

@@ -23,7 +23,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         auth: {
           persistSession: false,
@@ -35,14 +35,14 @@ serve(async (req) => {
 
     console.log('Processing email notification:', { userId, notificationType });
 
-    // Get user preferences
+    // Get user preferences (optional)
     const { data: preferences, error: prefsError } = await supabaseClient
       .from('notification_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    if (prefsError) {
+    if (prefsError && prefsError.code !== 'PGRST116') {
       console.error('Error fetching preferences:', prefsError);
       throw prefsError;
     }
@@ -58,7 +58,9 @@ serve(async (req) => {
     };
 
     const emailField = emailFieldMap[notificationType];
-    if (!preferences.email_enabled || (emailField && !preferences[emailField])) {
+    const emailEnabled = preferences ? preferences.email_enabled !== false : true;
+    const typeEnabled = emailField ? (preferences ? preferences[emailField] !== false : true) : true;
+    if (!emailEnabled || !typeEnabled) {
       console.log('Email notifications disabled for this type');
       return new Response(
         JSON.stringify({ message: 'Email notifications disabled for this type' }),
@@ -98,6 +100,9 @@ serve(async (req) => {
       throw new Error('SENDGRID_API_KEY not configured');
     }
 
+    const fromEmail = Deno.env.get('SENDGRID_FROM_EMAIL') || 'info@sedefy.com';
+    const fromName = Deno.env.get('SENDGRID_FROM_NAME') || 'SEDEFY';
+
     const emailResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
@@ -112,8 +117,12 @@ serve(async (req) => {
           },
         ],
         from: {
-          email: 'info@sedefy.com',
-          name: 'Adriana de SEDEFY',
+          email: fromEmail,
+          name: fromName,
+        },
+        reply_to: {
+          email: fromEmail,
+          name: fromName,
         },
         content: [
           {
@@ -150,6 +159,7 @@ serve(async (req) => {
       }),
     });
 
+    console.log('SendGrid response status:', emailResponse.status);
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
       console.error('SendGrid error:', errorText);
