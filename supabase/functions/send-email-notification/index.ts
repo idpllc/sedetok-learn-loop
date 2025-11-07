@@ -135,22 +135,28 @@ serve(async (req) => {
                   <meta charset="utf-8">
                   <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 </head>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px 10px 0 0;">
-                    <h1 style="color: white; margin: 0; font-size: 24px;">SEDEFY</h1>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+                  <div style="background: linear-gradient(135deg, hsl(165, 89%, 14%) 0%, hsl(165, 89%, 24%) 100%); padding: 30px 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                    <img src="https://mdvlhfxcllpfnatvltde.supabase.co/storage/v1/object/public/assets/sedefy-logo.png" 
+                         alt="SEDEFY Logo" 
+                         style="height: 50px; margin-bottom: 10px;">
+                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: bold;">SEDEFY</h1>
                   </div>
-                  <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-                    <h2 style="color: #667eea; margin-top: 0;">${title}</h2>
-                    <p style="font-size: 16px;">${message}</p>
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                  <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 20px rgba(2, 89, 69, 0.1);">
+                    <h2 style="color: hsl(165, 89%, 14%); margin-top: 0; font-size: 22px;">${title}</h2>
+                    <p style="font-size: 16px; color: #333; line-height: 1.8;">${message}</p>
+                    <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid hsl(158, 64%, 52%); text-align: center;">
                       <a href="${Deno.env.get('CUSTOM_DOMAIN') || 'https://sedefy.com'}" 
-                         style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                         style="display: inline-block; background: linear-gradient(135deg, hsl(165, 89%, 14%), hsl(165, 89%, 24%)); color: white; padding: 14px 35px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(2, 89, 69, 0.2);">
                         Ver en SEDEFY
                       </a>
                     </div>
-                    <p style="margin-top: 30px; font-size: 12px; color: #666;">
+                    <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center; border-top: 1px solid #e5e5e5; padding-top: 20px;">
                       Si no deseas recibir estas notificaciones, puedes configurar tus preferencias en tu perfil.
                     </p>
+                  </div>
+                  <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+                    <p style="margin: 0;">© 2024 SEDEFY. Todos los derechos reservados.</p>
                   </div>
                 </body>
               </html>
