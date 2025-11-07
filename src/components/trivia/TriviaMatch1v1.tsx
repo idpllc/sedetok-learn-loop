@@ -42,6 +42,9 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [turnEnded, setTurnEnded] = useState(false);
   const [charactersWonThisTurn, setCharactersWonThisTurn] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [incorrectAnswers, setIncorrectAnswers] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
 
   const { data: categories } = useQuery({
     queryKey: ['trivia-categories'],
@@ -67,6 +70,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     if (match?.current_player_id === user?.id) {
       setTurnEnded(false);
       setCharactersWonThisTurn(0);
+      setCurrentStreak(0);
       
       // Send push notification when it becomes my turn
       const sendTurnNotification = async () => {
@@ -204,11 +208,14 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     const newStreak = isCorrect ? currentStreak + 1 : 0;
     setCurrentStreak(newStreak);
 
-    // Play sound based on answer
+    // Track answers
     if (isCorrect) {
       playCorrect();
+      setCorrectAnswers(prev => prev + 1);
+      setMaxStreak(prev => Math.max(prev, newStreak));
     } else {
       playWrong();
+      setIncorrectAnswers(prev => prev + 1);
     }
 
     // Record turn
@@ -384,13 +391,25 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         .from('trivia_user_stats')
         .select('*')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
+      
+      const victoryPoints = 100;
+      const newTotalPoints = (stats?.total_points || 0) + victoryPoints;
+      const newTotalMatches = (stats?.total_matches || 0) + 1;
+      const newTotalCorrect = (stats?.total_correct || 0) + correctAnswers;
+      const newTotalIncorrect = (stats?.total_incorrect || 0) + incorrectAnswers;
+      const newBestStreak = Math.max(stats?.best_streak || 0, maxStreak);
       
       if (stats) {
         await supabase
           .from('trivia_user_stats')
           .update({
-            total_matches: (stats.total_matches || 0) + 1
+            total_points: newTotalPoints,
+            total_matches: newTotalMatches,
+            total_correct: newTotalCorrect,
+            total_incorrect: newTotalIncorrect,
+            best_streak: newBestStreak,
+            updated_at: new Date().toISOString()
           })
           .eq('user_id', user!.id);
       } else {
@@ -398,9 +417,19 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           .from('trivia_user_stats')
           .insert({
             user_id: user!.id,
-            total_matches: 1
+            total_points: victoryPoints,
+            total_matches: 1,
+            total_correct: correctAnswers,
+            total_incorrect: incorrectAnswers,
+            best_streak: maxStreak
           });
       }
+      
+      toast({
+        title: "🏆 ¡Victoria!",
+        description: `Has ganado ${victoryPoints} puntos`,
+        duration: 5000,
+      });
     }
     
     setPhase('finished');
@@ -413,19 +442,28 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   };
 
   const handleLoss = async () => {
-    // Update user stats for loss
+    // Update user stats for loss - NO POINTS FOR LOSING
     if (currentPlayer) {
       const { data: stats } = await supabase
         .from('trivia_user_stats')
         .select('*')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
+      
+      const newTotalMatches = (stats?.total_matches || 0) + 1;
+      const newTotalCorrect = (stats?.total_correct || 0) + correctAnswers;
+      const newTotalIncorrect = (stats?.total_incorrect || 0) + incorrectAnswers;
+      const newBestStreak = Math.max(stats?.best_streak || 0, maxStreak);
       
       if (stats) {
         await supabase
           .from('trivia_user_stats')
           .update({
-            total_matches: (stats.total_matches || 0) + 1
+            total_matches: newTotalMatches,
+            total_correct: newTotalCorrect,
+            total_incorrect: newTotalIncorrect,
+            best_streak: newBestStreak,
+            updated_at: new Date().toISOString()
           })
           .eq('user_id', user!.id);
       } else {
@@ -433,7 +471,10 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           .from('trivia_user_stats')
           .insert({
             user_id: user!.id,
-            total_matches: 1
+            total_matches: 1,
+            total_correct: correctAnswers,
+            total_incorrect: incorrectAnswers,
+            best_streak: maxStreak
           });
       }
     }

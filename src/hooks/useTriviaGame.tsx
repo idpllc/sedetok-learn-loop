@@ -278,7 +278,7 @@ export const useTriviaRankings = () => {
         .from("profiles")
         .select("institution")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
       
       if (profileError || !userProfile?.institution) return null;
 
@@ -288,28 +288,36 @@ export const useTriviaRankings = () => {
         .select("id")
         .eq("institution", userProfile.institution);
 
-      if (usersError || !institutionUsers) return null;
+      if (usersError || !institutionUsers || institutionUsers.length === 0) return null;
 
       const userIds = institutionUsers.map(u => u.id);
 
-      // Get stats for those users
-      const { data, error } = await supabase
+      // Get stats for those users (separate queries to avoid FK dependency)
+      const { data: stats, error: statsError } = await supabase
         .from("trivia_user_stats")
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            full_name,
-            avatar_url,
-            institution
-          )
-        `)
+        .select("*")
         .in("user_id", userIds)
         .order("total_points", { ascending: false })
         .limit(100);
       
-      if (error) throw error;
-      return data;
+      if (statsError) throw statsError;
+      
+      const statUserIds = (stats || []).map((s: any) => s.user_id).filter(Boolean);
+      if (statUserIds.length === 0) return [] as any[];
+
+      // Get profiles separately
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, institution")
+        .in("id", statUserIds);
+      
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      return (stats || []).map((s: any) => ({
+        ...s,
+        profiles: profileMap.get(s.user_id) || null,
+      }));
     },
     enabled: !!user,
   });
