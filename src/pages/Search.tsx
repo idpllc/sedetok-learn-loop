@@ -385,11 +385,11 @@ const Search = () => {
           </div>
         ) : filteredContent && filteredContent.length > 0 ? (
           <>
-            <div className="flex items-center justify-between mb-4">
+            {/* <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-muted-foreground">
                 {filteredContent.length} {filteredContent.length === 1 ? "resultado" : "resultados"}
               </p>
-            </div>
+            </div> */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredContent.map((item) => {
                 const isLearningPath = item.itemType === "learning_path";
