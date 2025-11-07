@@ -137,10 +137,9 @@ serve(async (req) => {
                 </head>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
                   <div style="background: linear-gradient(135deg, hsl(165, 89%, 14%) 0%, hsl(165, 89%, 24%) 100%); padding: 30px 20px; border-radius: 10px 10px 0 0; text-align: center;">
-                    <img src="https://mdvlhfxcllpfnatvltde.supabase.co/storage/v1/object/public/assets/sedefy-logo.png" 
-                         alt="SEDEFY Logo" 
-                         style="height: 50px; margin-bottom: 10px;">
-                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: bold;">SEDEFY</h1>
+                    <img src="${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/assets/sedefy-logo.png" 
+                         alt="SEDEFY" 
+                         style="height: 60px;">
                   </div>
                   <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 20px rgba(2, 89, 69, 0.1);">
                     <h2 style="color: hsl(165, 89%, 14%); margin-top: 0; font-size: 22px;">${title}</h2>
