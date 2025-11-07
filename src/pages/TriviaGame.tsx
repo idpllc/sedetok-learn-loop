@@ -255,7 +255,7 @@ export default function TriviaGame() {
             size="lg"
             variant="outline"
             onClick={() => setScreen("ranking")}
-            className="h-20 text-xl font-bold w-full max-w-md mx-auto"
+            className="h-20 text-xl font-bold w-full"
           >
             <Trophy className="w-6 h-6 mr-2" />
             Ver Ranking
