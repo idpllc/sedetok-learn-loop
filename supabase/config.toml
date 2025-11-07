@@ -1,5 +1,8 @@
 project_id = "mdvlhfxcllpfnatvltde"
 
+[functions.elevenlabs-signed-url]
+verify_jwt = true
+
 [functions.mcp-server]
 verify_jwt = false
 

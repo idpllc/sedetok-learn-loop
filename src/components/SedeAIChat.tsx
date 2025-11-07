@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines, Phone } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { VoiceConversation } from "./VoiceConversation";
 
 interface PathData {
   id: string;
@@ -201,6 +202,7 @@ export const SedeAIChat = () => {
   } = useSedeAIChat();
 
   const [input, setInput] = useState("");
+  const [showVoiceConversation, setShowVoiceConversation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -515,9 +517,14 @@ export const SedeAIChat = () => {
   );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background">
-      {/* Hidden audio player for voice responses */}
-      <audio ref={audioPlayerRef} className="hidden" />
+    <>
+      {showVoiceConversation && (
+        <VoiceConversation onClose={() => setShowVoiceConversation(false)} />
+      )}
+      
+      <div className="flex h-[calc(100vh-4rem)] bg-background">
+        {/* Hidden audio player for voice responses */}
+        <audio ref={audioPlayerRef} className="hidden" />
       
       {/* Desktop Sidebar */}
       {!isMobile && (
@@ -571,25 +578,37 @@ export const SedeAIChat = () => {
             </div>
           </div>
           
-          {/* Voice Mode Toggle */}
-          <Button
-            variant={voiceMode ? "default" : "outline"}
-            size="sm"
-            onClick={() => setVoiceMode(!voiceMode)}
-            className="flex items-center gap-2"
-          >
-            {voiceMode ? (
-              <>
-                <AudioLines className="w-4 h-4" />
-                <span className="hidden sm:inline">Modo Voz</span>
-              </>
-            ) : (
-              <>
-                <MessageSquare className="w-4 h-4" />
-                <span className="hidden sm:inline">Modo Texto</span>
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            {/* Voice Conversation Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowVoiceConversation(true)}
+              title="Modo conversación fluida"
+            >
+              <Phone className="w-5 h-5" />
+            </Button>
+            
+            {/* Voice Mode Toggle */}
+            <Button
+              variant={voiceMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setVoiceMode(!voiceMode)}
+              className="flex items-center gap-2"
+            >
+              {voiceMode ? (
+                <>
+                  <AudioLines className="w-4 h-4" />
+                  <span className="hidden sm:inline">Modo Voz</span>
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="w-4 h-4" />
+                  <span className="hidden sm:inline">Modo Texto</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -828,5 +847,6 @@ export const SedeAIChat = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
