@@ -234,31 +234,8 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         setCurrentCategory(null);
         setTurnEnded(true); // Block interaction immediately
         
-        // Send email notification to opponent
-        const sendEmailNotification = async () => {
-          if (opponent?.user_id) {
-            try {
-              console.log('Sending email notification to opponent:', opponent.user_id);
-              const { data, error } = await supabase.functions.invoke('send-trivia-turn-email', {
-                body: {
-                  opponentId: opponent.user_id,
-                  failedPlayerUsername: currentPlayer?.profiles?.username || 'Un jugador',
-                  matchId: matchId
-                }
-              });
-              
-              if (error) {
-                console.error('Error sending email notification:', error);
-              } else {
-                console.log('Email notification sent successfully:', data);
-              }
-            } catch (error) {
-              console.error('Exception sending email notification:', error);
-            }
-          }
-        };
-        
-        sendEmailNotification();
+        // Send turn notification to opponent
+        await sendTurnNotification();
         changeTurn();
       } else if (newStreak === 3) {
         // Won the right to character round after 3 correct answers (global streak)
@@ -274,7 +251,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     }, 2000);
   };
 
-  const handleTimeout = () => {
+  const handleTimeout = async () => {
     // Reset state when timeout occurs
     setSelectedAnswer(null);
     setShowFeedback(false);
@@ -282,7 +259,33 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     setQuestions([]);
     setCurrentCategory(null);
     setTurnEnded(true); // Block interaction immediately
+    
+    // Send email notification to opponent
+    await sendTurnNotification();
     changeTurn();
+  };
+
+  const sendTurnNotification = async () => {
+    if (opponent?.user_id) {
+      try {
+        console.log('Sending turn notification to opponent:', opponent.user_id);
+        const { error } = await supabase.functions.invoke('send-trivia-turn-email', {
+          body: {
+            opponentId: opponent.user_id,
+            failedPlayerUsername: currentPlayer?.profiles?.username || 'Un jugador',
+            matchId: matchId
+          }
+        });
+        
+        if (error) {
+          console.error('Error sending turn notification:', error);
+        } else {
+          console.log('Turn notification sent successfully');
+        }
+      } catch (error) {
+        console.error('Exception sending turn notification:', error);
+      }
+    }
   };
 
   const changeTurn = async () => {
