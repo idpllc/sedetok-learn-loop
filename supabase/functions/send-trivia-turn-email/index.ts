@@ -20,7 +20,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
         auth: {
           persistSession: false,
@@ -50,8 +50,8 @@ serve(async (req) => {
       console.error('Error fetching preferences:', prefsError);
     }
 
-    // Check if email notifications are enabled
-    if (!preferences?.email_enabled) {
+    // Check if email notifications are explicitly disabled (default to enabled)
+    if (preferences && preferences.email_enabled === false) {
       console.log('Email notifications disabled for user');
       return new Response(
         JSON.stringify({ message: 'Email notifications disabled' }),
