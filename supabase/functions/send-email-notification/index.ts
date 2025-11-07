@@ -55,6 +55,7 @@ serve(async (req) => {
       'path_update': 'email_path_update',
       'evaluation_result': 'email_evaluation_result',
       'mention': 'email_mention',
+      'trivia_invitation': 'email_new_follower', // Use existing preference
     };
 
     const emailField = emailFieldMap[notificationType];

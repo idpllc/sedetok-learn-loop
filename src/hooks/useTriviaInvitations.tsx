@@ -192,6 +192,18 @@ export const useTriviaInvitations = () => {
         }
       });
 
+      // Send email notification
+      await supabase.functions.invoke('send-email-notification', {
+        body: {
+          userId: receiverId,
+          notificationType: 'trivia_invitation',
+          title: '¡Te han retado en SEDEFY Trivia!',
+          message: 'Has recibido un nuevo reto de trivia. Ingresa a SEDEFY para aceptar el desafío y demostrar tus conocimientos.',
+          relatedId: data.id,
+          relatedType: 'trivia_invitation'
+        }
+      });
+
       return data;
     },
     onSuccess: () => {
