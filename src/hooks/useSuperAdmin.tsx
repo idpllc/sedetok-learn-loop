@@ -21,14 +21,16 @@ export const useSuperAdmin = () => {
           .select("role")
           .eq("user_id", user.id)
           .eq("role", "superadmin")
-          .single();
+          .maybeSingle();
 
         if (error) {
+          console.error("Error checking superadmin:", error);
           setIsSuperAdmin(false);
         } else {
           setIsSuperAdmin(!!data);
         }
       } catch (error) {
+        console.error("Exception checking superadmin:", error);
         setIsSuperAdmin(false);
       } finally {
         setLoading(false);
