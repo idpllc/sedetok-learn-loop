@@ -13,7 +13,18 @@ const SedeTok = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<Map<string, VideoPlayerRef | null>>(new Map());
   
-  const { data, fetchNextPage, hasNextPage, isLoading } = useInfiniteContent();
+  // Get filters from URL
+  const filterType = searchParams.get('type');
+  const filterSubject = searchParams.get('subject');
+  const filterGrade = searchParams.get('grade');
+  const filterQuery = searchParams.get('q');
+  
+  const { data, fetchNextPage, hasNextPage, isLoading } = useInfiniteContent(
+    filterType === 'all' ? undefined : filterType as any,
+    filterSubject === 'all' ? undefined : filterSubject,
+    filterGrade === 'all' ? undefined : filterGrade as any,
+    filterQuery || undefined
+  );
 
   const allContent = data?.pages.flatMap(page => page.items) || [];
 

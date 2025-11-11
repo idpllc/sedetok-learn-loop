@@ -357,12 +357,26 @@ const Index = () => {
                       onClick={() => {
                         if (isLearningPath) {
                           navigate(`/learning-paths/${item.id}`);
-                        } else if (isQuiz) {
-                          navigate(`/sedetok?quiz=${item.id}`);
-                        } else if (item.content_type === 'game') {
-                          navigate(`/sedetok?game=${item.id}`);
                         } else {
-                          navigate(`/sedetok?content=${item.id}`);
+                          const itemIndex = filteredContent.findIndex(c => c.id === item.id);
+                          const params = new URLSearchParams();
+                          
+                          if (isQuiz) {
+                            params.set('quiz', item.id);
+                          } else if (item.content_type === 'game') {
+                            params.set('game', item.id);
+                          } else {
+                            params.set('content', item.id);
+                          }
+                          
+                          // Pass filter parameters
+                          if (selectedType !== 'all') params.set('type', selectedType);
+                          if (selectedSubject !== 'all') params.set('subject', selectedSubject);
+                          if (selectedGrade !== 'all') params.set('grade', selectedGrade);
+                          if (searchQuery) params.set('q', searchQuery);
+                          params.set('index', itemIndex.toString());
+                          
+                          navigate(`/sedetok?${params.toString()}`);
                         }
                       }}
                     >

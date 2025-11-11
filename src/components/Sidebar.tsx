@@ -60,7 +60,7 @@ export const Sidebar = () => {
     { id: "home", icon: Home, label: "Inicio", path: "/" },
     { id: "sedetok", icon: Play, label: "Sede tok", path: "/sedetok" },
     { id: "sede-ai", icon: Sparkles, label: "SEDE AI", path: "/sede-ai" },
-    { id: "search", icon: Search, label: "Explorar", path: "/search" },
+    // { id: "search", icon: Search, label: "Explorar", path: "/search" },
     { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
     { id: "courses", icon: BookOpen, label: "Cursos", path: "/courses" },
     { id: "trivia", icon: Gamepad2, label: "Trivia Game", path: "/trivia-game" },
