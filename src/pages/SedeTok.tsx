@@ -21,9 +21,9 @@ const SedeTok = () => {
   
   const { data, fetchNextPage, hasNextPage, isLoading } = useInfiniteContent(
     filterType === 'all' ? undefined : filterType as any,
+    filterQuery || undefined,
     filterSubject === 'all' ? undefined : filterSubject,
-    filterGrade === 'all' ? undefined : filterGrade as any,
-    filterQuery || undefined
+    filterGrade === 'all' ? undefined : filterGrade as any
   );
 
   const allContent = data?.pages.flatMap(page => page.items) || [];
