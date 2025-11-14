@@ -46,11 +46,46 @@ const Profile = () => {
   const location = useLocation();
   const { userId } = useParams();
   const { user, loading: authLoading, signOut } = useAuth();
-  const isOwnProfile = !userId || userId === user?.id;
-  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(userId);
-  const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(userId || user?.id, 'created');
+  
+  const { data: profileData, isLoading: profileLoading } = useQuery({
+    queryKey: ["profile", userId, user?.id],
+    queryFn: async () => {
+      // If viewing another user's profile, use userId directly
+      // If viewing own profile, use user?.id
+      const targetUserId = userId || user?.id;
+      if (!targetUserId) return null;
+
+      // First try to get by username if userId looks like a username
+      if (userId && !userId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("username", userId)
+          .maybeSingle();
+
+        if (data) return data;
+      }
+
+      // Otherwise try by ID
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", targetUserId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId || !!user?.id,
+  });
+
+  // Determine if viewing own profile after data loads
+  const isOwnProfile = !userId || (profileData && user && profileData.id === user.id);
+
+  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(profileData?.id);
+  const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(profileData?.id, 'created');
   const { courses, isLoading: coursesLoading, deleteCourse } = useCourses('created');
-  const { isFollowing, toggleFollow, isProcessing } = useFollow(userId || "");
+  const { isFollowing, toggleFollow, isProcessing } = useFollow(profileData?.id || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
   const [pathToDelete, setPathToDelete] = useState<string | null>(null);
@@ -67,25 +102,7 @@ const Profile = () => {
   const [profileTab, setProfileTab] = useState<"creator" | "professional" | "vocational">("creator");
 
   // Fetch academic metrics for intelligences
-  const { data: metrics } = useAcademicMetrics(userId || user?.id);
-
-  const { data: profileData } = useQuery({
-    queryKey: ["profile", userId],
-    queryFn: async () => {
-      const targetUserId = userId || user?.id;
-      if (!targetUserId) return null;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", targetUserId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId || !!user?.id,
-  });
+  const { data: metrics } = useAcademicMetrics(profileData?.id);
 
   const handleSignOut = async () => {
     await signOut();
@@ -512,7 +529,8 @@ const Profile = () => {
     );
   };
 
-  if (authLoading || !user) {
+  // Only block on auth loading when viewing own profile
+  if (isOwnProfile && (authLoading || !user)) {
     return (
       <>
         <Sidebar />
@@ -526,7 +544,7 @@ const Profile = () => {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || profileLoading) {
     return (
       <>
         <Sidebar />
