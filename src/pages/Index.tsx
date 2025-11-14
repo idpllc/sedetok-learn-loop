@@ -57,13 +57,13 @@ const Index = () => {
   
   const isLoading = contentLoading || pathsLoading;
 
-  // Show app loader on initial load
-  if (isLoading && !data && !paths) {
-    return <AppLoader />;
-  }
-
   // Combine content from all pages
   const allContent = data?.pages.flatMap(page => page.items) || [];
+  
+  // Show app loader only on true initial load (when loading and no content available)
+  if (isLoading && allContent.length === 0 && (!paths || paths.length === 0)) {
+    return <AppLoader />;
+  }
   
   // Combine all content and paths for main grid
   const combinedContent = [
