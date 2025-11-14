@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
+import { AppLoader } from "@/components/AppLoader";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
@@ -55,6 +56,11 @@ const Index = () => {
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
   
   const isLoading = contentLoading || pathsLoading;
+
+  // Show app loader on initial load
+  if (isLoading && !data && !paths) {
+    return <AppLoader />;
+  }
 
   // Combine content from all pages
   const allContent = data?.pages.flatMap(page => page.items) || [];
