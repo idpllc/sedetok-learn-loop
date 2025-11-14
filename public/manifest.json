@@ -27,9 +27,9 @@
   "categories": ["education", "learning"],
   "screenshots": [
     {
-      "src": "https://storage.googleapis.com/gpt-engineer-file-uploads/Y6COrr67ZRX0cfWL1VOGkV8F2Pv1/social-images/social-1760027066186-2486c7d6-d9a2-4ee3-bfc2-577b1a194076.jpeg",
-      "sizes": "1280x720",
-      "type": "image/jpeg",
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
       "form_factor": "wide"
     }
   ]
