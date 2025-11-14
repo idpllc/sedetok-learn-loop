@@ -7,12 +7,14 @@ import { OnboardingTeaser } from "@/components/OnboardingTeaser";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
+import { useSearchUsers } from "@/hooks/useSearchUsers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight, Users } from "lucide-react";
 import { subjects } from "@/lib/subjects";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
@@ -47,6 +49,7 @@ const Index = () => {
     selectedGrade !== "all" ? selectedGrade : undefined
   );
   const { paths, isLoading: pathsLoading } = useLearningPaths();
+  const { data: searchedUsers, isLoading: usersLoading } = useSearchUsers(searchQuery);
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
@@ -323,6 +326,64 @@ const Index = () => {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+          {/* Users Section - Only show when searching */}
+          {searchQuery && searchedUsers && searchedUsers.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold">Usuarios</h2>
+                <Badge variant="secondary">{searchedUsers.length}</Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+                {searchedUsers.map((profile) => (
+                  <Card 
+                    key={profile.id} 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => navigate(`/profile/${profile.username}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={profile.avatar_url || ""} alt={profile.full_name || profile.username} />
+                          <AvatarFallback>
+                            {(profile.full_name || profile.username).charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm truncate">
+                            {profile.full_name || profile.username}
+                          </h3>
+                          <p className="text-xs text-muted-foreground truncate">
+                            @{profile.username}
+                          </p>
+                          {profile.bio && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {profile.bio}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1 mt-2">
+                            <Users className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
+                              {profile.followers_count || 0} seguidores
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Content Section Header */}
+          {searchQuery && searchedUsers && searchedUsers.length > 0 && (
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Contenido</h2>
+            </div>
+          )}
+
           {/* Main Content Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
