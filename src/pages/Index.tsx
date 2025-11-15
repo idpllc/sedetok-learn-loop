@@ -58,7 +58,7 @@ const Index = () => {
   const isLoading = contentLoading || pathsLoading;
 
   // Combine content from all pages
-  const allContent = data?.pages.flatMap(page => page.items) || [];
+  const allContent = (data?.pages ?? []).flatMap((page) => page.items || []) || [];
   
   // Show app loader only on true initial load (when loading and no content available)
   if (isLoading && allContent.length === 0 && (!paths || paths.length === 0)) {
