@@ -43,6 +43,10 @@ const Index = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">('all');
   
+  // Onboarding hook
+  const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
+  
+  // Content hooks - always call in same order
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: contentLoading } = useInfiniteContent(
     selectedType === "all" ? undefined : selectedType === "learning_path" ? undefined : selectedType,
     searchQuery,
@@ -51,9 +55,10 @@ const Index = () => {
   );
   const { paths, isLoading: pathsLoading } = useLearningPaths();
   const { data: searchedUsers, isLoading: usersLoading } = useSearchUsers(searchQuery);
+  
+  // User interaction hooks
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
-  const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
   
   const isLoading = contentLoading || pathsLoading;
 
