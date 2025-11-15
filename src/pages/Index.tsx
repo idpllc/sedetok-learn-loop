@@ -4,7 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
-import { AppLoader } from "@/components/AppLoader";
+
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { useLearningPaths } from "@/hooks/useLearningPaths";
@@ -60,10 +60,6 @@ const Index = () => {
   // Combine content from all pages
   const allContent = (data?.pages ?? []).flatMap((page) => page.items || []) || [];
   
-  // Show app loader only on true initial load (when loading and no content available)
-  if (isLoading && allContent.length === 0 && (!paths || paths.length === 0)) {
-    return <AppLoader />;
-  }
   
   // Combine all content and paths for main grid
   const combinedContent = [
