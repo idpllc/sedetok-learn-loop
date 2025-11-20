@@ -545,8 +545,28 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                             <p className="text-sm font-medium mb-2">
                               {idx + 1}. {q.question_text}
                             </p>
-                            <div className="text-xs text-muted-foreground">
-                              {q.options.length} opciones • {q.points} pts • {q.time_limit}s
+                            <div className="space-y-1 mt-2">
+                              {q.options.map((option, optIdx) => (
+                                <div 
+                                  key={optIdx} 
+                                  className={`text-xs px-2 py-1 rounded flex items-center gap-2 ${
+                                    q.correct_answer === optIdx 
+                                      ? 'bg-green-500/10 text-green-700 dark:text-green-400 font-medium' 
+                                      : 'bg-muted/50 text-muted-foreground'
+                                  }`}
+                                >
+                                  <span className="font-semibold">{String.fromCharCode(65 + optIdx)}.</span>
+                                  <span>{typeof option === 'string' ? option : option.text}</span>
+                                  {q.correct_answer === optIdx && (
+                                    <span className="ml-auto text-green-600 dark:text-green-400">✓</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
+                              <span>{q.points} pts</span>
+                              <span>•</span>
+                              <span>{q.time_limit}s</span>
                             </div>
                           </Card>
                         ))}
