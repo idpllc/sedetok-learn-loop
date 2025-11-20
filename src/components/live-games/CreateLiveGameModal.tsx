@@ -5,15 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLiveGames, LiveGameQuestion } from "@/hooks/useLiveGames";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Search, Eye } from "lucide-react";
+import { Plus, Trash2, Search, Eye, Sparkles, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CreateLiveGameModalProps {
   open: boolean;
@@ -29,6 +30,12 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
   const [searchQuery, setSearchQuery] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [customQuestions, setCustomQuestions] = useState<Omit<LiveGameQuestion, 'id' | 'game_id' | 'created_at'>[]>([]);
+  
+  // AI generation states
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiGradeLevel, setAiGradeLevel] = useState("");
+  const [aiNumberOfQuestions, setAiNumberOfQuestions] = useState("5");
+  const [aiDifficulty, setAiDifficulty] = useState("");
 
   const { data: quizzes } = useQuery({
     queryKey: ["quizzes-for-live-game", searchQuery],
@@ -191,6 +198,51 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
     }
   };
 
+  const generateWithAI = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('generate-live-game-questions', {
+        body: {
+          topic: aiTopic,
+          gradeLevel: aiGradeLevel,
+          numberOfQuestions: parseInt(aiNumberOfQuestions),
+          difficulty: aiDifficulty || undefined,
+        }
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.questions) {
+        setCustomQuestions(data.questions);
+        toast({
+          title: "¡Preguntas generadas!",
+          description: `Se generaron ${data.questions.length} preguntas con IA`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error al generar preguntas",
+        description: error.message || "No se pudieron generar las preguntas",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleGenerateWithAI = () => {
+    if (!aiTopic || !aiGradeLevel || !aiNumberOfQuestions) {
+      toast({
+        title: "Campos incompletos",
+        description: "Por favor completa todos los campos requeridos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    generateWithAI.mutate();
+  };
+
   const handleCreateCustom = () => {
     if (!title || customQuestions.length === 0) return;
 
@@ -227,9 +279,13 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
           </div>
 
           <Tabs defaultValue="from-quiz">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="from-quiz">Desde Quiz Existente</TabsTrigger>
-              <TabsTrigger value="custom">Crear Preguntas</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="from-quiz">Desde Quiz</TabsTrigger>
+              <TabsTrigger value="ai">
+                <Sparkles className="w-4 h-4 mr-1" />
+                Generar con IA
+              </TabsTrigger>
+              <TabsTrigger value="custom">Crear Manual</TabsTrigger>
             </TabsList>
 
             <TabsContent value="from-quiz" className="space-y-4">
@@ -340,6 +396,130 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
               >
                 {createGame.isPending ? "Creando..." : "Crear Juego"}
               </Button>
+            </TabsContent>
+
+            <TabsContent value="ai" className="space-y-4">
+              <Card className="p-4 bg-primary/5 border-primary/20">
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Sparkles className="w-4 h-4 mt-0.5 text-primary" />
+                  <p>La IA generará preguntas educativas basadas en el tema y nivel que especifiques</p>
+                </div>
+              </Card>
+
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="ai-topic">Tema de las Preguntas *</Label>
+                  <Input
+                    id="ai-topic"
+                    value={aiTopic}
+                    onChange={(e) => setAiTopic(e.target.value)}
+                    placeholder="Ej: La Revolución Francesa, Fotosíntesis, Trigonometría..."
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="ai-grade">Nivel Educativo *</Label>
+                  <Select value={aiGradeLevel} onValueChange={setAiGradeLevel}>
+                    <SelectTrigger id="ai-grade">
+                      <SelectValue placeholder="Selecciona el nivel..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="primaria">Primaria</SelectItem>
+                      <SelectItem value="secundaria">Secundaria</SelectItem>
+                      <SelectItem value="bachillerato">Bachillerato</SelectItem>
+                      <SelectItem value="universidad">Universidad</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="ai-number">Número de Preguntas *</Label>
+                  <Select value={aiNumberOfQuestions} onValueChange={setAiNumberOfQuestions}>
+                    <SelectTrigger id="ai-number">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3 preguntas</SelectItem>
+                      <SelectItem value="5">5 preguntas</SelectItem>
+                      <SelectItem value="10">10 preguntas</SelectItem>
+                      <SelectItem value="15">15 preguntas</SelectItem>
+                      <SelectItem value="20">20 preguntas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="ai-difficulty">Dificultad (Opcional)</Label>
+                  <Select value={aiDifficulty} onValueChange={setAiDifficulty}>
+                    <SelectTrigger id="ai-difficulty">
+                      <SelectValue placeholder="Automática" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Automática</SelectItem>
+                      <SelectItem value="fácil">Fácil</SelectItem>
+                      <SelectItem value="intermedia">Intermedia</SelectItem>
+                      <SelectItem value="difícil">Difícil</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleGenerateWithAI}
+                disabled={generateWithAI.isPending || !aiTopic || !aiGradeLevel}
+                className="w-full"
+              >
+                {generateWithAI.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generando preguntas...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generar Preguntas con IA
+                  </>
+                )}
+              </Button>
+
+              {customQuestions.length > 0 && (
+                <>
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label>Preguntas Generadas ({customQuestions.length})</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCustomQuestions([])}
+                      >
+                        Limpiar
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-[300px]">
+                      <div className="space-y-2">
+                        {customQuestions.map((q, idx) => (
+                          <Card key={idx} className="p-3">
+                            <p className="text-sm font-medium mb-2">
+                              {idx + 1}. {q.question_text}
+                            </p>
+                            <div className="text-xs text-muted-foreground">
+                              {q.options.length} opciones • {q.points} pts • {q.time_limit}s
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+
+                  <Button
+                    onClick={handleCreateCustom}
+                    disabled={!title || createGame.isPending}
+                    className="w-full"
+                  >
+                    {createGame.isPending ? "Creando..." : "Crear Juego con Preguntas"}
+                  </Button>
+                </>
+              )}
             </TabsContent>
 
             <TabsContent value="custom" className="space-y-4">

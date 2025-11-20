@@ -70,6 +70,10 @@ timeout = 300
 verify_jwt = true
 timeout = 300
 
+[functions.generate-live-game-questions]
+verify_jwt = true
+timeout = 300
+
 [functions.sync-sede-academico]
 verify_jwt = false
 timeout = 300
