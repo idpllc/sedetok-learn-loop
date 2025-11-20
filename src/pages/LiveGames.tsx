@@ -13,9 +13,18 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const LiveGames = () => {
   const navigate = useNavigate();
-  const { games, isLoading, deleteGame } = useLiveGames();
+  const { games, isLoading, deleteGame, replayGame } = useLiveGames();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+
+  const handleReplayGame = async (gameId: string) => {
+    try {
+      const result = await replayGame.mutateAsync(gameId);
+      navigate(`/live-games/host/${result.id}`);
+    } catch (error) {
+      console.error("Error replaying game:", error);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -185,13 +194,23 @@ const LiveGames = () => {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={() => navigate(`/live-games/results/${game.id}`)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Ver Resultados
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => navigate(`/live-games/results/${game.id}`)}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Ver Resultados
+                    </Button>
+                    <Button
+                      onClick={() => handleReplayGame(game.id)}
+                      className="flex-1"
+                      disabled={replayGame.isPending}
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Jugar de Nuevo
+                    </Button>
+                  </div>
                 </Card>
               ))}
             </div>
