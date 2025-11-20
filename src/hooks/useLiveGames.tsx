@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Database } from "@/integrations/supabase/types";
+import { useEffect } from "react";
 
 type GradeLevel = Database['public']['Enums']['grade_level'];
 
@@ -321,8 +322,55 @@ export const useLiveGameDetails = (gameId?: string) => {
       return data as LiveGamePlayer[];
     },
     enabled: !!gameId,
-    refetchInterval: game?.status === 'in_progress' ? 1000 : false,
   });
+
+  // Real-time subscriptions
+  useEffect(() => {
+    if (!gameId) return;
+
+    const channel = supabase
+      .channel(`live-game-${gameId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_games',
+          filter: `id=eq.${gameId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["live-game", gameId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_game_players',
+          filter: `game_id=eq.${gameId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_game_answers',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameId, queryClient]);
 
   return {
     game,
