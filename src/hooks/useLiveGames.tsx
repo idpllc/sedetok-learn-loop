@@ -142,10 +142,15 @@ export const useLiveGames = () => {
       const questionsWithGameId = questions.map((q, index) => {
         // Ensure options is a proper JSONB array
         const formattedOptions = Array.isArray(q.options) 
-          ? q.options.map(opt => ({
-              text: typeof opt === 'string' ? opt : (opt.text || ''),
-              ...(opt.image_url && { image_url: opt.image_url })
-            }))
+          ? q.options.map(opt => {
+              if (typeof opt === 'string') {
+                return { text: opt, image_url: '' };
+              }
+              return {
+                text: opt.text || '',
+                image_url: opt.image_url || ''
+              };
+            })
           : [];
 
         return {
@@ -159,6 +164,7 @@ export const useLiveGames = () => {
           order_index: index,
           ...(q.image_url && { image_url: q.image_url }),
           ...(q.video_url && { video_url: q.video_url }),
+          ...(q.feedback && { feedback: q.feedback }),
         };
       });
 
