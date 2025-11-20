@@ -256,6 +256,85 @@ export const useLiveGames = () => {
     },
   });
 
+  const replayGame = useMutation({
+    mutationFn: async (originalGameId: string) => {
+      if (!user) throw new Error("User not authenticated");
+
+      // Get original game data
+      const { data: originalGame, error: gameError } = await supabase
+        .from("live_games")
+        .select("*")
+        .eq("id", originalGameId)
+        .single();
+
+      if (gameError) throw gameError;
+
+      // Get original questions
+      const { data: originalQuestions, error: questionsError } = await supabase
+        .from("live_game_questions")
+        .select("*")
+        .eq("game_id", originalGameId)
+        .order("order_index", { ascending: true });
+
+      if (questionsError) throw questionsError;
+
+      // Generate new PIN
+      const { data: pinData, error: pinError } = await supabase
+        .rpc('generate_game_pin');
+
+      if (pinError) throw pinError;
+
+      // Create new game
+      const { data: newGameData, error: newGameError } = await supabase
+        .from("live_games")
+        .insert([{
+          creator_id: user.id,
+          quiz_id: originalGame.quiz_id,
+          game_id: originalGame.game_id,
+          title: originalGame.title,
+          pin: pinData,
+          status: 'waiting' as const,
+          institution_id: originalGame.institution_id,
+          subject: originalGame.subject,
+          grade_level: originalGame.grade_level,
+        }])
+        .select()
+        .single();
+
+      if (newGameError) throw newGameError;
+
+      // Create questions for new game
+      const questionsToInsert = originalQuestions.map((q) => ({
+        game_id: newGameData.id,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        options: q.options,
+        correct_answer: q.correct_answer,
+        points: q.points,
+        time_limit: q.time_limit,
+        order_index: q.order_index,
+        image_url: q.image_url,
+        video_url: q.video_url,
+      }));
+
+      const { error: insertQuestionsError } = await supabase
+        .from("live_game_questions")
+        .insert(questionsToInsert);
+
+      if (insertQuestionsError) throw insertQuestionsError;
+
+      return newGameData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["live-games"] });
+      toast.success("Juego recreado exitosamente");
+    },
+    onError: (error) => {
+      console.error("Error replaying game:", error);
+      toast.error("Error al recrear el juego");
+    },
+  });
+
   return {
     games,
     isLoading,
@@ -264,6 +343,7 @@ export const useLiveGames = () => {
     nextQuestion,
     finishGame,
     deleteGame,
+    replayGame,
   };
 };
 
