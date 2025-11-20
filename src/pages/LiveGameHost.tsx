@@ -17,6 +17,7 @@ const LiveGameHost = () => {
   const [currentQuestion, setCurrentQuestion] = useState<any>(null);
   const [showResults, setShowResults] = useState(false);
   const [answerStats, setAnswerStats] = useState<{ [key: number]: number }>({});
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -82,12 +83,17 @@ const LiveGameHost = () => {
   };
 
   const handleStartGame = async () => {
-    if (!gameId) return;
-
-    await supabase
-      .from("live_games")
-      .update({ status: 'in_progress', started_at: new Date().toISOString() })
-      .eq('id', gameId);
+    if (!gameId || isStarting) return;
+    
+    setIsStarting(true);
+    try {
+      await supabase
+        .from("live_games")
+        .update({ status: 'in_progress', started_at: new Date().toISOString() })
+        .eq('id', gameId);
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   const handleNextQuestion = async () => {
@@ -199,10 +205,10 @@ const LiveGameHost = () => {
             <Button
               onClick={handleStartGame}
               size="lg"
-              disabled={!players || players.length === 0}
+              disabled={!players || players.length === 0 || isStarting}
             >
               <Play className="w-5 h-5 mr-2" />
-              Iniciar Juego
+              {isStarting ? "Iniciando..." : "Iniciar Juego"}
             </Button>
           </Card>
         )}
