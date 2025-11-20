@@ -98,11 +98,18 @@ export const useLiveGames = () => {
     }) => {
       if (!user) throw new Error("User not authenticated");
 
+      console.log("Creating game with:", { title, quiz_id, game_id, questionsCount: questions.length });
+
       // Generate PIN
       const { data: pinData, error: pinError } = await supabase
         .rpc('generate_game_pin');
 
-      if (pinError) throw pinError;
+      if (pinError) {
+        console.error("Error generating PIN:", pinError);
+        throw pinError;
+      }
+
+      console.log("Generated PIN:", pinData);
 
       // Create game
       const { data: gameData, error: gameError } = await supabase
@@ -116,25 +123,54 @@ export const useLiveGames = () => {
           status: 'waiting' as const,
           institution_id,
           subject,
-          grade_level,
+          ...(grade_level && { grade_level }),
         }])
         .select()
         .single();
 
-      if (gameError) throw gameError;
+      if (gameError) {
+        console.error("Error creating game:", gameError);
+        throw gameError;
+      }
 
-      // Create questions
-      const questionsWithGameId = questions.map((q, index) => ({
-        ...q,
-        game_id: gameData.id,
-        order_index: index,
-      }));
+      console.log("Game created:", gameData);
+
+      // Create questions with proper formatting
+      const questionsWithGameId = questions.map((q, index) => {
+        // Ensure options is a proper JSONB array
+        const formattedOptions = Array.isArray(q.options) 
+          ? q.options.map(opt => ({
+              text: typeof opt === 'string' ? opt : (opt.text || ''),
+              ...(opt.image_url && { image_url: opt.image_url })
+            }))
+          : [];
+
+        return {
+          game_id: gameData.id,
+          question_text: q.question_text,
+          question_type: q.question_type || 'multiple_choice',
+          options: formattedOptions,
+          correct_answer: q.correct_answer,
+          points: q.points || 1000,
+          time_limit: q.time_limit || 20,
+          order_index: index,
+          ...(q.image_url && { image_url: q.image_url }),
+          ...(q.video_url && { video_url: q.video_url }),
+        };
+      });
+
+      console.log("Inserting questions:", questionsWithGameId);
 
       const { error: questionsError } = await supabase
         .from("live_game_questions")
         .insert(questionsWithGameId);
 
-      if (questionsError) throw questionsError;
+      if (questionsError) {
+        console.error("Error creating questions:", questionsError);
+        throw questionsError;
+      }
+
+      console.log("Questions created successfully");
 
       return gameData as LiveGame;
     },
@@ -144,7 +180,7 @@ export const useLiveGames = () => {
     },
     onError: (error) => {
       console.error("Error creating game:", error);
-      toast.error("Error al crear el juego");
+      toast.error(`Error al crear el juego: ${error.message}`);
     },
   });
 
