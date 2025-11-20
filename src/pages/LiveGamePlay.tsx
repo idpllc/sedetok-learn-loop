@@ -186,6 +186,14 @@ const LiveGamePlay = () => {
           </Card>
         )}
 
+        {/* Loading Question */}
+        {game.status === 'in_progress' && !currentQuestion && (
+          <Card className="p-12 text-center">
+            <Loader2 className="w-16 h-16 mx-auto mb-6 text-primary animate-spin" />
+            <h2 className="text-2xl font-bold mb-4">Cargando pregunta...</h2>
+          </Card>
+        )}
+
         {/* Active Game */}
         {game.status === 'in_progress' && currentQuestion && (
           <>
