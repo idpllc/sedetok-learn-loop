@@ -391,17 +391,29 @@ export const useJoinLiveGame = () => {
         .from("live_games")
         .select("*")
         .eq("pin", pin)
-        .eq("status", "waiting")
+        .in("status", ["waiting", "in_progress"])
         .single();
 
       if (gameError) throw new Error("Código PIN inválido o juego no disponible");
+
+      // Check if player already joined
+      const { data: existingPlayer } = await supabase
+        .from("live_game_players")
+        .select("*")
+        .eq("game_id", gameData.id)
+        .eq("player_name", playerName)
+        .maybeSingle();
+
+      if (existingPlayer) {
+        throw new Error("Ya existe un jugador con ese nombre en este juego");
+      }
 
       // Join game
       const { data: playerData, error: playerError } = await supabase
         .from("live_game_players")
         .insert({
           game_id: gameData.id,
-          user_id: user?.id,
+          user_id: user?.id || null,
           player_name: playerName,
           total_score: 0,
         })
