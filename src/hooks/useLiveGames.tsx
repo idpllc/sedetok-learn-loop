@@ -328,6 +328,8 @@ export const useLiveGameDetails = (gameId?: string) => {
   useEffect(() => {
     if (!gameId) return;
 
+    console.log('Setting up realtime subscriptions for game:', gameId);
+
     const channel = supabase
       .channel(`live-game-${gameId}`)
       .on(
@@ -338,7 +340,8 @@ export const useLiveGameDetails = (gameId?: string) => {
           table: 'live_games',
           filter: `id=eq.${gameId}`,
         },
-        () => {
+        (payload) => {
+          console.log('Game update received:', payload);
           queryClient.invalidateQueries({ queryKey: ["live-game", gameId] });
         }
       )
@@ -350,24 +353,30 @@ export const useLiveGameDetails = (gameId?: string) => {
           table: 'live_game_players',
           filter: `game_id=eq.${gameId}`,
         },
-        () => {
+        (payload) => {
+          console.log('Players update received:', payload);
           queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'live_game_answers',
         },
-        () => {
+        (payload) => {
+          console.log('Answer inserted:', payload);
+          // Force immediate refetch of players to update scores
           queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
+      console.log('Removing channel for game:', gameId);
       supabase.removeChannel(channel);
     };
   }, [gameId, queryClient]);
@@ -468,6 +477,8 @@ export const useSubmitAnswer = () => {
         pointsEarned = Math.round(maxPoints * (0.5 + timeBonus * 0.5));
       }
 
+      console.log('Submitting answer:', { playerId, questionId, selectedAnswer, isCorrect, pointsEarned });
+
       // Submit answer
       const { error: answerError } = await supabase
         .from("live_game_answers")
@@ -480,28 +491,49 @@ export const useSubmitAnswer = () => {
           points_earned: pointsEarned,
         });
 
-      if (answerError) throw answerError;
+      if (answerError) {
+        console.error('Error inserting answer:', answerError);
+        throw answerError;
+      }
 
-      // Update player total score
-      const { data: playerData } = await supabase
+      // Get current player score
+      const { data: playerData, error: fetchError } = await supabase
         .from("live_game_players")
-        .select("total_score")
+        .select("total_score, game_id")
         .eq("id", playerId)
         .single();
 
+      if (fetchError) {
+        console.error('Error fetching player:', fetchError);
+        throw fetchError;
+      }
+
       if (playerData) {
+        const newScore = playerData.total_score + pointsEarned;
+        console.log('Updating player score:', { playerId, oldScore: playerData.total_score, pointsEarned, newScore });
+
         const { error: updateError } = await supabase
           .from("live_game_players")
-          .update({ total_score: playerData.total_score + pointsEarned })
+          .update({ total_score: newScore })
           .eq("id", playerId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating score:', updateError);
+          throw updateError;
+        }
+
+        // Force immediate refetch
+        queryClient.invalidateQueries({ queryKey: ["live-game-players", playerData.game_id] });
+        console.log('Score updated successfully');
       }
 
       return { isCorrect, pointsEarned };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["live-game-players"] });
+    onSuccess: (data, variables) => {
+      console.log('Answer submitted successfully:', data);
+    },
+    onError: (error) => {
+      console.error('Error submitting answer:', error);
     },
   });
 
