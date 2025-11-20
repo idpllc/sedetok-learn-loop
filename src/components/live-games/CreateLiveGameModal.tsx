@@ -35,7 +35,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
   const [aiTopic, setAiTopic] = useState("");
   const [aiGradeLevel, setAiGradeLevel] = useState("");
   const [aiNumberOfQuestions, setAiNumberOfQuestions] = useState("5");
-  const [aiDifficulty, setAiDifficulty] = useState("");
+  const [aiDifficulty, setAiDifficulty] = useState("auto");
 
   const { data: quizzes } = useQuery({
     queryKey: ["quizzes-for-live-game", searchQuery],
@@ -207,7 +207,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
           topic: aiTopic,
           gradeLevel: aiGradeLevel,
           numberOfQuestions: parseInt(aiNumberOfQuestions),
-          difficulty: aiDifficulty || undefined,
+          difficulty: aiDifficulty === "auto" ? undefined : aiDifficulty,
         }
       });
 
@@ -479,7 +479,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                       <SelectValue placeholder="Automática" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Automática</SelectItem>
+                      <SelectItem value="auto">Automática</SelectItem>
                       <SelectItem value="fácil">Fácil</SelectItem>
                       <SelectItem value="intermedia">Intermedia</SelectItem>
                       <SelectItem value="difícil">Difícil</SelectItem>
