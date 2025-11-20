@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,15 @@ import { useLiveGames, LiveGameQuestion } from "@/hooks/useLiveGames";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Search, Eye, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Trash2, Search, Eye, Sparkles, Loader2, Image as ImageIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RichTextEditor } from "@/components/quiz/RichTextEditor";
+import { OptionEditor } from "./OptionEditor";
 
 interface CreateLiveGameModalProps {
   open: boolean;
@@ -80,15 +82,16 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
         question_text: "",
         question_type: "multiple_choice",
         options: [
-          { text: "" },
-          { text: "" },
-          { text: "" },
-          { text: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
         ],
         correct_answer: 0,
         points: 1000,
         time_limit: 20,
         order_index: customQuestions.length,
+        feedback: "",
       },
     ]);
   };
@@ -103,10 +106,10 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
     setCustomQuestions(updated);
   };
 
-  const handleOptionChange = (qIndex: number, oIndex: number, value: string) => {
+  const handleOptionChange = (qIndex: number, oIndex: number, field: 'text' | 'image_url', value: string) => {
     const updated = [...customQuestions];
     const options = [...updated[qIndex].options];
-    options[oIndex] = { text: value };
+    options[oIndex] = { ...options[oIndex], [field]: value };
     updated[qIndex] = { ...updated[qIndex], options };
     setCustomQuestions(updated);
   };
@@ -566,74 +569,109 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                 Agregar Pregunta
               </Button>
 
-              {customQuestions.map((question, qIndex) => (
-                <Card key={qIndex} className="p-4 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <Label>Pregunta {qIndex + 1}</Label>
-                    <Button
-                      onClick={() => handleRemoveQuestion(qIndex)}
-                      variant="ghost"
-                      size="icon"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+              <ScrollArea className="h-[600px] pr-4">
+                {customQuestions.map((question, qIndex) => (
+                  <Card key={qIndex} className="p-4 space-y-3 mb-4">
+                    <div className="flex justify-between items-start">
+                      <Label>Pregunta {qIndex + 1}</Label>
+                      <Button
+                        onClick={() => handleRemoveQuestion(qIndex)}
+                        variant="ghost"
+                        size="icon"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
 
-                  <Textarea
-                    value={question.question_text}
-                    onChange={(e) =>
-                      handleQuestionChange(qIndex, "question_text", e.target.value)
-                    }
-                    placeholder="Escribe la pregunta..."
-                  />
+                    <div className="space-y-2">
+                      <Label>Pregunta (Texto Enriquecido)</Label>
+                      <RichTextEditor
+                        content={question.question_text}
+                        onChange={(content) =>
+                          handleQuestionChange(qIndex, "question_text", content)
+                        }
+                        placeholder="Escribe la pregunta con formato..."
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label>Opciones</Label>
-                    {question.options.map((option, oIndex) => (
-                      <div key={oIndex} className="flex gap-2 items-center">
-                        <Input
-                          value={option.text}
-                          onChange={(e) =>
-                            handleOptionChange(qIndex, oIndex, e.target.value)
+                    <div className="space-y-2">
+                      <Label>Opciones</Label>
+                      {question.options.map((option, oIndex) => (
+                        <OptionEditor
+                          key={oIndex}
+                          option={option}
+                          index={oIndex}
+                          onTextChange={(value) =>
+                            handleOptionChange(qIndex, oIndex, 'text', value)
                           }
-                          placeholder={`Opción ${oIndex + 1}`}
+                          onImageChange={(value) =>
+                            handleOptionChange(qIndex, oIndex, 'image_url', value)
+                          }
                         />
-                        <input
-                          type="radio"
-                          name={`correct-${qIndex}`}
-                          checked={question.correct_answer === oIndex}
-                          onChange={() =>
-                            handleQuestionChange(qIndex, "correct_answer", oIndex)
+                      ))}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Respuesta Correcta</Label>
+                      <Select
+                        value={String(question.correct_answer)}
+                        onValueChange={(value) =>
+                          handleQuestionChange(qIndex, "correct_answer", parseInt(value))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona la respuesta correcta" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {question.options.map((_, idx) => (
+                            <SelectItem key={idx} value={String(idx)}>
+                              Opción {idx + 1}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Retroalimentación (opcional)</Label>
+                      <RichTextEditor
+                        content={question.feedback || ""}
+                        onChange={(content) =>
+                          handleQuestionChange(qIndex, "feedback", content)
+                        }
+                        placeholder="Agrega retroalimentación que se mostrará después de la pregunta..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Puntos</Label>
+                        <Input
+                          type="number"
+                          value={question.points}
+                          onChange={(e) =>
+                            handleQuestionChange(qIndex, "points", parseInt(e.target.value))
                           }
+                          min={100}
+                          step={100}
                         />
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Puntos</Label>
-                      <Input
-                        type="number"
-                        value={question.points}
-                        onChange={(e) =>
-                          handleQuestionChange(qIndex, "points", Number(e.target.value))
-                        }
-                      />
+                      <div className="space-y-2">
+                        <Label>Tiempo (segundos)</Label>
+                        <Input
+                          type="number"
+                          value={question.time_limit}
+                          onChange={(e) =>
+                            handleQuestionChange(qIndex, "time_limit", parseInt(e.target.value))
+                          }
+                          min={5}
+                          max={120}
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label>Tiempo (segundos)</Label>
-                      <Input
-                        type="number"
-                        value={question.time_limit}
-                        onChange={(e) =>
-                          handleQuestionChange(qIndex, "time_limit", Number(e.target.value))
-                        }
-                      />
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </ScrollArea>
 
               {customQuestions.length > 0 && (
                 <Button
