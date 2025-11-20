@@ -1,4 +1,4 @@
-import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2, MoreHorizontal, BookOpen, Gamepad2, Sparkles, Play } from "lucide-react";
+import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2, MoreHorizontal, BookOpen, Gamepad2, Sparkles, Play, Radio } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useCallback, useMemo } from "react";
 import { AuthModal } from "./AuthModal";
@@ -64,6 +64,7 @@ export const Sidebar = () => {
     { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
     { id: "courses", icon: BookOpen, label: "Cursos", path: "/courses" },
     { id: "trivia", icon: Gamepad2, label: "Trivia Game", path: "/trivia-game" },
+    { id: "live-games", icon: Radio, label: "Juegos en Vivo", path: "/live-games" },
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ], []);
