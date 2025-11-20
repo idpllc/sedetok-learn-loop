@@ -1097,6 +1097,229 @@ export type Database = {
           },
         ]
       }
+      live_game_answers: {
+        Row: {
+          answered_at: string
+          id: string
+          is_correct: boolean
+          player_id: string
+          points_earned: number
+          question_id: string
+          response_time_ms: number
+          selected_answer: number
+        }
+        Insert: {
+          answered_at?: string
+          id?: string
+          is_correct: boolean
+          player_id: string
+          points_earned?: number
+          question_id: string
+          response_time_ms: number
+          selected_answer: number
+        }
+        Update: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          player_id?: string
+          points_earned?: number
+          question_id?: string
+          response_time_ms?: number
+          selected_answer?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_game_answers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "live_game_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_game_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "live_game_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_game_players: {
+        Row: {
+          game_id: string
+          id: string
+          joined_at: string
+          player_name: string
+          total_score: number
+          user_id: string | null
+        }
+        Insert: {
+          game_id: string
+          id?: string
+          joined_at?: string
+          player_name: string
+          total_score?: number
+          user_id?: string | null
+        }
+        Update: {
+          game_id?: string
+          id?: string
+          joined_at?: string
+          player_name?: string
+          total_score?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_game_players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "live_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_game_players_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_game_questions: {
+        Row: {
+          correct_answer: number
+          created_at: string
+          game_id: string
+          id: string
+          image_url: string | null
+          options: Json
+          order_index: number
+          points: number
+          question_text: string
+          question_type: string
+          time_limit: number
+          video_url: string | null
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string
+          game_id: string
+          id?: string
+          image_url?: string | null
+          options: Json
+          order_index: number
+          points?: number
+          question_text: string
+          question_type?: string
+          time_limit?: number
+          video_url?: string | null
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string
+          game_id?: string
+          id?: string
+          image_url?: string | null
+          options?: Json
+          order_index?: number
+          points?: number
+          question_text?: string
+          question_type?: string
+          time_limit?: number
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_game_questions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "live_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_games: {
+        Row: {
+          created_at: string
+          creator_id: string
+          current_question_index: number | null
+          finished_at: string | null
+          game_id: string | null
+          grade_level: Database["public"]["Enums"]["grade_level"] | null
+          id: string
+          institution_id: string | null
+          pin: string
+          quiz_id: string | null
+          started_at: string | null
+          status: string
+          subject: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          current_question_index?: number | null
+          finished_at?: string | null
+          game_id?: string | null
+          grade_level?: Database["public"]["Enums"]["grade_level"] | null
+          id?: string
+          institution_id?: string | null
+          pin: string
+          quiz_id?: string | null
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          current_question_index?: number | null
+          finished_at?: string | null
+          game_id?: string | null
+          grade_level?: Database["public"]["Enums"]["grade_level"] | null
+          id?: string
+          institution_id?: string | null
+          pin?: string
+          quiz_id?: string | null
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_games_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_games_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_games_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_games_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           created_at: string | null
@@ -2851,6 +3074,7 @@ export type Database = {
         Returns: string
       }
       generate_access_code: { Args: never; Returns: string }
+      generate_game_pin: { Args: never; Returns: string }
       get_evaluation_event_by_code: {
         Args: { p_access_code: string }
         Returns: {
