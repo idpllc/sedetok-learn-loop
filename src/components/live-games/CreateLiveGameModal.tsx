@@ -144,18 +144,19 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
 
       const formattedQuestions = questions.map((q, index) => {
         // Ensure options is properly formatted
-        let options: Array<{ text: string }> = [];
+        let options: Array<{ text: string; image_url?: string }> = [];
         
         if (Array.isArray(q.options)) {
           options = q.options.map((opt: any) => {
             if (typeof opt === 'string') {
-              return { text: opt };
-            } else if (opt && typeof opt === 'object' && 'text' in opt) {
-              return { text: String(opt.text || '') };
-            } else if (opt && typeof opt === 'object' && 'option_text' in opt) {
-              return { text: String(opt.option_text || '') };
+              return { text: opt, image_url: '' };
+            } else if (opt && typeof opt === 'object') {
+              return { 
+                text: String(opt.text || opt.option_text || opt),
+                image_url: opt.image_url || ''
+              };
             }
-            return { text: String(opt) };
+            return { text: String(opt), image_url: '' };
           });
         }
 
@@ -169,6 +170,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
           order_index: index,
           image_url: q.image_url || undefined,
           video_url: q.video_url || undefined,
+          feedback: q.feedback || undefined,
         };
       });
 
