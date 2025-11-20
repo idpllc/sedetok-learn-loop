@@ -200,6 +200,8 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
 
   const generateWithAI = useMutation({
     mutationFn: async () => {
+      console.log("Calling AI generation with:", { aiTopic, aiGradeLevel, aiNumberOfQuestions, aiDifficulty });
+      
       const { data, error } = await supabase.functions.invoke('generate-live-game-questions', {
         body: {
           topic: aiTopic,
@@ -209,10 +211,13 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
         }
       });
 
+      console.log("AI generation response:", { data, error });
+
       if (error) throw error;
       return data;
     },
     onSuccess: (data) => {
+      console.log("AI generation successful:", data);
       if (data.questions) {
         setCustomQuestions(data.questions);
         toast({
@@ -222,6 +227,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
       }
     },
     onError: (error: any) => {
+      console.error("AI generation error:", error);
       toast({
         title: "Error al generar preguntas",
         description: error.message || "No se pudieron generar las preguntas",
@@ -244,7 +250,16 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
   };
 
   const handleCreateCustom = () => {
-    if (!title || customQuestions.length === 0) return;
+    if (!title || customQuestions.length === 0) {
+      toast({
+        title: "Error",
+        description: "Por favor completa el título y agrega al menos una pregunta",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log("Creating custom game with questions:", customQuestions);
 
     createGame.mutate(
       {
@@ -253,8 +268,17 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
       },
       {
         onSuccess: (game) => {
+          console.log("Game created successfully:", game);
           onOpenChange(false);
           navigate(`/live-games/host/${game.id}`);
+        },
+        onError: (error) => {
+          console.error("Error creating custom game:", error);
+          toast({
+            title: "Error al crear juego",
+            description: error.message || "Ocurrió un error inesperado",
+            variant: "destructive",
+          });
         },
       }
     );
@@ -481,6 +505,20 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                   </>
                 )}
               </Button>
+
+              {generateWithAI.isPending && (
+                <Card className="p-4 border-primary/20 bg-primary/5">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Generando preguntas con IA...</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Esto puede tomar unos segundos
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              )}
 
               {customQuestions.length > 0 && (
                 <>
