@@ -226,12 +226,33 @@ const LiveGameHost = () => {
 
             {/* Question */}
             <Card className="p-8 mb-6">
-              <h2 className="text-3xl font-bold text-center mb-8">
-                {currentQuestion.question_text}
-              </h2>
+              <div
+                className="text-3xl font-bold text-center mb-8 prose prose-lg max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ __html: currentQuestion.question_text }}
+              />
 
               {!showResults ? (
                 <>
+                  {/* Question Image/Video */}
+                  {currentQuestion.image_url && (
+                    <div className="mb-6">
+                      <img
+                        src={currentQuestion.image_url}
+                        alt="Question"
+                        className="w-full max-h-96 object-contain rounded-lg"
+                      />
+                    </div>
+                  )}
+                  {currentQuestion.video_url && (
+                    <div className="mb-6">
+                      <video
+                        src={currentQuestion.video_url}
+                        controls
+                        className="w-full max-h-96 rounded-lg"
+                      />
+                    </div>
+                  )}
+
                   {/* Options */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     {currentQuestion.options.map((option: any, index: number) => (
@@ -239,9 +260,14 @@ const LiveGameHost = () => {
                         key={index}
                         className={`p-6 ${getOptionColors(index)} text-white cursor-default`}
                       >
-                        <p className="text-xl font-semibold text-center">
-                          {option.text}
-                        </p>
+                        {option.image_url && (
+                          <img
+                            src={option.image_url}
+                            alt={`Opción ${index + 1}`}
+                            className="w-full h-32 object-cover rounded mb-3"
+                          />
+                        )}
+                        <p className="text-xl font-semibold text-center">{option.text}</p>
                       </Card>
                     ))}
                   </div>
@@ -265,6 +291,13 @@ const LiveGameHost = () => {
                           key={index}
                           className={`p-6 ${getOptionColors(index)} text-white ${isCorrect ? 'ring-4 ring-green-400' : ''}`}
                         >
+                          {option.image_url && (
+                            <img
+                              src={option.image_url}
+                              alt={`Opción ${index + 1}`}
+                              className="w-full h-32 object-cover rounded mb-3"
+                            />
+                          )}
                           <p className="text-xl font-semibold text-center mb-2">
                             {option.text}
                           </p>
@@ -278,6 +311,19 @@ const LiveGameHost = () => {
                       );
                     })}
                   </div>
+
+                  {/* Feedback */}
+                  {currentQuestion.feedback && (
+                    <Card className="p-6 mb-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                      <h3 className="text-lg font-semibold mb-3 text-blue-900 dark:text-blue-100">
+                        📚 Retroalimentación
+                      </h3>
+                      <div
+                        className="prose prose-sm max-w-none dark:prose-invert"
+                        dangerouslySetInnerHTML={{ __html: currentQuestion.feedback }}
+                      />
+                    </Card>
+                  )}
 
                   {/* Top Players */}
                   <Card className="p-6 mb-6">

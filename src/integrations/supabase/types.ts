@@ -1191,6 +1191,7 @@ export type Database = {
         Row: {
           correct_answer: number
           created_at: string
+          feedback: string | null
           game_id: string
           id: string
           image_url: string | null
@@ -1205,6 +1206,7 @@ export type Database = {
         Insert: {
           correct_answer: number
           created_at?: string
+          feedback?: string | null
           game_id: string
           id?: string
           image_url?: string | null
@@ -1219,6 +1221,7 @@ export type Database = {
         Update: {
           correct_answer?: number
           created_at?: string
+          feedback?: string | null
           game_id?: string
           id?: string
           image_url?: string | null

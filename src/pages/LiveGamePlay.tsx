@@ -222,9 +222,30 @@ const LiveGamePlay = () => {
 
             {/* Question */}
             <Card className="p-6 mb-6">
-              <h2 className="text-2xl font-bold text-center mb-8">
-                {currentQuestion.question_text}
-              </h2>
+              <div
+                className="text-2xl font-bold text-center mb-8 prose prose-sm max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ __html: currentQuestion.question_text }}
+              />
+
+              {/* Question Image/Video */}
+              {currentQuestion.image_url && (
+                <div className="mb-6">
+                  <img
+                    src={currentQuestion.image_url}
+                    alt="Question"
+                    className="w-full max-h-64 object-contain rounded-lg mx-auto"
+                  />
+                </div>
+              )}
+              {currentQuestion.video_url && (
+                <div className="mb-6">
+                  <video
+                    src={currentQuestion.video_url}
+                    controls
+                    className="w-full max-h-64 rounded-lg mx-auto"
+                  />
+                </div>
+              )}
 
               {/* Options */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -239,10 +260,17 @@ const LiveGamePlay = () => {
                       <Button
                         onClick={() => handleSelectAnswer(index)}
                         disabled={hasAnswered}
-                        className={`w-full h-20 text-lg ${getOptionColors(index)} text-white ${
+                        className={`w-full min-h-20 text-lg flex flex-col gap-2 p-4 ${getOptionColors(index)} text-white ${
                           selectedAnswer === index ? 'ring-4 ring-white' : ''
                         } ${hasAnswered && index === currentQuestion.correct_answer ? 'ring-4 ring-green-400' : ''}`}
                       >
+                        {option.image_url && (
+                          <img
+                            src={option.image_url}
+                            alt={`Opción ${index + 1}`}
+                            className="w-full h-20 object-cover rounded"
+                          />
+                        )}
                         {option.text}
                       </Button>
                     </motion.div>
@@ -250,7 +278,7 @@ const LiveGamePlay = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Feedback */}
+              {/* Feedback after answer */}
               {feedback?.show && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -267,6 +295,26 @@ const LiveGamePlay = () => {
                   <p className="text-xl">
                     {feedback.isCorrect ? `+${feedback.points} puntos` : '0 puntos'}
                   </p>
+                </motion.div>
+              )}
+
+              {/* Feedback from question */}
+              {feedback?.show && currentQuestion.feedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-4"
+                >
+                  <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                    <h3 className="text-sm font-semibold mb-2 text-blue-900 dark:text-blue-100">
+                      📚 Retroalimentación
+                    </h3>
+                    <div
+                      className="prose prose-sm max-w-none dark:prose-invert text-sm"
+                      dangerouslySetInnerHTML={{ __html: currentQuestion.feedback }}
+                    />
+                  </Card>
                 </motion.div>
               )}
             </Card>

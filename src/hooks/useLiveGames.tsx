@@ -45,6 +45,8 @@ export interface LiveGameQuestion {
   order_index: number;
   image_url?: string;
   video_url?: string;
+  feedback?: string;
+  created_at?: string;
 }
 
 export interface LiveGameAnswer {
