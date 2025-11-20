@@ -46,6 +46,11 @@ import ViewCourse from "./pages/ViewCourse";
 import EditGame from "./pages/EditGame";
 import TriviaGame from "./pages/TriviaGame";
 import SedeTok from "./pages/SedeTok";
+import LiveGames from "./pages/LiveGames";
+import LiveGameHost from "./pages/LiveGameHost";
+import LiveGamePlay from "./pages/LiveGamePlay";
+import LiveGameResults from "./pages/LiveGameResults";
+import PathEvaluationResults from "./pages/PathEvaluationResults";
 
 const queryClient = new QueryClient();
 
@@ -107,6 +112,11 @@ const App = () => (
           <Route path="/game-evaluations" element={<QuizEvaluations />} />
           <Route path="/trivia-game" element={<TriviaGame />} />
           <Route path="/sede-ai" element={<SedeAI />} />
+          <Route path="/live-games" element={<LiveGames />} />
+          <Route path="/live-games/host/:gameId" element={<LiveGameHost />} />
+          <Route path="/live-games/play/:gameId" element={<LiveGamePlay />} />
+          <Route path="/live-games/results/:gameId" element={<LiveGameResults />} />
+          <Route path="/path-evaluation-results/:eventId" element={<PathEvaluationResults />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
