@@ -112,13 +112,13 @@ export const VoiceAssistant = ({ onClose, agentId }: VoiceAssistantProps) => {
     onClose();
   }, [conversation, onClose]);
 
+  // Only cleanup on unmount, not on conversation state changes
   useEffect(() => {
     return () => {
-      if (conversation.status === 'connected') {
-        conversation.endSession();
-      }
+      conversation.endSession();
     };
-  }, [conversation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate orb scale based on speaking/listening state
   const orbScale = conversation.isSpeaking 
