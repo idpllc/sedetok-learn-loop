@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines, Phone } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines, Phone, User } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -17,8 +17,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { VoiceAssistant } from "./VoiceAssistant";
+import { AgentSelector } from "./voice/AgentSelector";
+import { VoiceAssistant3D } from "./voice/VoiceAssistant3D";
+import { VoiceAgent } from "@/lib/voiceAgents";
 import { AnimatePresence } from "framer-motion";
-
 interface PathData {
   id: string;
   title: string;
@@ -218,6 +220,8 @@ export const SedeAIChat = () => {
   const { toast } = useToast();
   const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
   const [voiceAgentId, setVoiceAgentId] = useState('');
+  const [showAgentSelector, setShowAgentSelector] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<(VoiceAgent & { configuredAgentId: string }) | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -842,6 +846,17 @@ export const SedeAIChat = () => {
                 type="button"
                 size="icon"
                 variant="ghost"
+                onClick={() => setShowAgentSelector(true)}
+                disabled={isLoading || uploading}
+                title="Avatar de voz 3D"
+              >
+                <User className="w-5 h-5" />
+              </Button>
+
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
                 onClick={() => {
                   setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq');
                   setShowVoiceAssistant(true);
@@ -877,6 +892,29 @@ export const SedeAIChat = () => {
           <VoiceAssistant
             onClose={() => setShowVoiceAssistant(false)}
             agentId={voiceAgentId}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Agent Selector Modal */}
+      <AnimatePresence>
+        {showAgentSelector && (
+          <AgentSelector
+            onSelectAgent={(agent) => {
+              setSelectedAgent(agent);
+              setShowAgentSelector(false);
+            }}
+            onClose={() => setShowAgentSelector(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 3D Voice Assistant Modal */}
+      <AnimatePresence>
+        {selectedAgent && (
+          <VoiceAssistant3D
+            agent={selectedAgent}
+            onClose={() => setSelectedAgent(null)}
           />
         )}
       </AnimatePresence>
