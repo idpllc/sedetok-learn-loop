@@ -16,19 +16,19 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     id: 'sofia',
     name: 'Sofía',
     description: 'Tu tutora de aprendizaje general',
-    agentId: '', // User will configure this
-    avatarUrl: 'https://models.readyplayer.me/64c4a1e60f347b57f2c60c31.glb',
+    agentId: 'agent_5201kc59xc30ew7s7vsnxcsr10gj',
+    avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb',
     personality: 'Amigable, paciente y motivadora. Especialista en explicar conceptos complejos de forma sencilla.',
-    color: 'hsl(165 89% 24%)', // Primary green
+    color: 'hsl(165 89% 24%)',
   },
   {
     id: 'alejandro',
     name: 'Alejandro',
     description: 'Experto en ciencias y matemáticas',
-    agentId: '', // User will configure this
-    avatarUrl: 'https://models.readyplayer.me/64c4a2e60f347b57f2c60c33.glb',
+    agentId: 'agent_5201kc59xc30ew7s7vsnxcsr10gj',
+    avatarUrl: 'https://models.readyplayer.me/693a028814ff705000c68122.glb',
     personality: 'Analítico, preciso y entusiasta. Le encanta resolver problemas paso a paso.',
-    color: 'hsl(200 89% 40%)', // Blue
+    color: 'hsl(200 89% 40%)',
   },
 ];
 
