@@ -20,6 +20,7 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   
   const currentVisemeRef = useRef<string>('viseme_sil');
   const lastUpdateRef = useRef(0);
+  const jawBoneRef = useRef<THREE.Bone | null>(null);
 
   // Find meshes with morph targets (Ready Player Me uses Wolf3D_ prefix)
   const morphMeshes = useMemo(() => {
@@ -37,6 +38,11 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
             meshes.push(mesh);
           }
         }
+      }
+      // Also find jaw bone for fallback animation
+      if ((child as THREE.Bone).isBone && child.name.toLowerCase().includes('jaw')) {
+        jawBoneRef.current = child as THREE.Bone;
+        console.log('Found jaw bone:', child.name);
       }
     });
     return meshes;
@@ -57,40 +63,51 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
 
   // Animate lip-sync based on speaking state
   useFrame(() => {
-    if (morphMeshes.length === 0) return;
-
     const now = performance.now();
-    const morphSmoothing = 0.2;
+    const morphSmoothing = 0.25;
 
     if (isSpeaking) {
-      // Cycle through visemes when speaking
-      if (now - lastUpdateRef.current > 60 + Math.random() * 60) {
-        // Select random viseme for speech simulation
-        const speakingVisemes = ['viseme_aa', 'viseme_E', 'viseme_I', 'viseme_O', 'viseme_U', 'viseme_PP', 'viseme_FF', 'viseme_TH', 'viseme_DD', 'viseme_kk', 'viseme_SS', 'viseme_nn', 'viseme_RR'];
-        const randomIndex = Math.floor(Math.random() * speakingVisemes.length);
-        currentVisemeRef.current = speakingVisemes[randomIndex];
-        lastUpdateRef.current = now;
-      }
+      // If we have morph meshes with visemes, use them
+      if (morphMeshes.length > 0) {
+        // Cycle through visemes when speaking
+        if (now - lastUpdateRef.current > 80 + Math.random() * 80) {
+          const speakingVisemes = ['viseme_aa', 'viseme_E', 'viseme_I', 'viseme_O', 'viseme_U', 'viseme_PP', 'viseme_FF', 'viseme_TH', 'viseme_DD', 'viseme_kk', 'viseme_SS', 'viseme_nn', 'viseme_RR'];
+          const randomIndex = Math.floor(Math.random() * speakingVisemes.length);
+          currentVisemeRef.current = speakingVisemes[randomIndex];
+          lastUpdateRef.current = now;
+        }
 
-      // Apply current viseme with intensity based on audio level
-      const intensity = 0.4 + (audioLevel * 0.6);
-      
-      morphMeshes.forEach((mesh) => {
-        if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
+        // Apply current viseme with intensity based on audio level
+        const intensity = Math.max(0.3, Math.min(1, 0.4 + (audioLevel * 0.8)));
         
-        VISEME_TARGETS.forEach((viseme) => {
-          const index = mesh.morphTargetDictionary![viseme];
+        morphMeshes.forEach((mesh) => {
+          if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
           
-          if (index !== undefined) {
-            const targetValue = viseme === currentVisemeRef.current ? intensity : 0;
-            mesh.morphTargetInfluences![index] = THREE.MathUtils.lerp(
-              mesh.morphTargetInfluences![index],
-              targetValue,
-              morphSmoothing
-            );
-          }
+          VISEME_TARGETS.forEach((viseme) => {
+            const index = mesh.morphTargetDictionary![viseme];
+            
+            if (index !== undefined) {
+              const targetValue = viseme === currentVisemeRef.current ? intensity : 0;
+              mesh.morphTargetInfluences![index] = THREE.MathUtils.lerp(
+                mesh.morphTargetInfluences![index],
+                targetValue,
+                morphSmoothing
+              );
+            }
+          });
         });
-      });
+      }
+      
+      // Fallback: animate jaw bone if no morph targets
+      if (jawBoneRef.current) {
+        const jawIntensity = Math.max(0.05, audioLevel * 0.15);
+        const targetRotation = -jawIntensity + Math.sin(now * 0.02) * 0.03;
+        jawBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+          jawBoneRef.current.rotation.x,
+          targetRotation,
+          0.3
+        );
+      }
     } else {
       // Reset to silent viseme when not speaking
       morphMeshes.forEach((mesh) => {
@@ -108,6 +125,15 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
           }
         });
       });
+      
+      // Reset jaw bone
+      if (jawBoneRef.current) {
+        jawBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+          jawBoneRef.current.rotation.x,
+          0,
+          0.15
+        );
+      }
     }
 
     // Subtle idle animation - slight head movement
