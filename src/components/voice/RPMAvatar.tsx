@@ -138,7 +138,7 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   });
 
   return (
-    <group ref={group} position={[0, -0.6, 0]} scale={1.5}>
+    <group ref={group} position={[0, 0, 0]} scale={1}>
       <primitive object={clone} />
     </group>
   );
