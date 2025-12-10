@@ -25,7 +25,7 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     id: 'alejandro',
     name: 'Alejandro',
     description: 'Experto en ciencias y matemáticas',
-    agentId: 'agent_5201kc59xc30ew7s7vsnxcsr10gj',
+    agentId: 'agent_9001kc53p9b3f3da7353ycdk1bgq',
     avatarUrl: 'https://models.readyplayer.me/693a028814ff705000c68122.glb',
     personality: 'Analítico, preciso y entusiasta. Le encanta resolver problemas paso a paso.',
     color: 'hsl(200 89% 40%)',

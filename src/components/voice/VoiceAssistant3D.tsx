@@ -56,11 +56,16 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
   useEffect(() => {
     const updateVolume = () => {
       if (conversation.status === 'connected') {
-        const outputVol = conversation.getOutputVolume?.() || 0;
-        const inputVol = conversation.getInputVolume?.() || 0;
-        // Use output volume when speaking, input when listening
-        const level = conversation.isSpeaking ? outputVol : inputVol;
-        setAudioLevel(level);
+        try {
+          const outputVol = conversation.getOutputVolume?.() || 0;
+          const inputVol = conversation.getInputVolume?.() || 0;
+          // Use output volume when speaking, input when listening
+          const level = conversation.isSpeaking ? outputVol : inputVol;
+          setAudioLevel(level);
+          console.log('Audio levels - isSpeaking:', conversation.isSpeaking, 'level:', level);
+        } catch (e) {
+          // Volume methods may not be available
+        }
       }
       animationRef.current = requestAnimationFrame(updateVolume);
     };
@@ -74,7 +79,7 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [conversation.status, conversation]);
+  }, [conversation.status, conversation.isSpeaking]);
 
   const startConversation = useCallback(async () => {
     try {
