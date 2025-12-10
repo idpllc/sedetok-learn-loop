@@ -23,7 +23,7 @@ export function AvatarScene({ avatarUrl, isSpeaking, audioLevel = 0 }: AvatarSce
   return (
     <div className="w-full h-full relative">
       <Canvas
-        camera={{ position: [0, 0.2, 1.5], fov: 35 }}
+        camera={{ position: [0, 1.6, 0.8], fov: 30 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: 'transparent' }}
       >
@@ -51,7 +51,7 @@ export function AvatarScene({ avatarUrl, isSpeaking, audioLevel = 0 }: AvatarSce
           enableZoom={false}
           minPolarAngle={Math.PI / 2.5}
           maxPolarAngle={Math.PI / 1.8}
-          target={[0, 0.1, 0]}
+          target={[0, 1.5, 0]}
         />
       </Canvas>
       
