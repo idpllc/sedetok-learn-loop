@@ -3126,11 +3126,11 @@ export type Database = {
       increment_shares_count:
         | { Args: { content_id: string }; Returns: undefined }
         | {
-            Args: { content_id?: string; game_id?: string; quiz_id?: string }
+            Args: { content_id?: string; quiz_id?: string }
             Returns: undefined
           }
         | {
-            Args: { content_id?: string; quiz_id?: string }
+            Args: { content_id?: string; game_id?: string; quiz_id?: string }
             Returns: undefined
           }
       increment_views_count: {
