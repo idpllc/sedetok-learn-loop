@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines } from "lucide-react";
+import { Sparkles, Send, Loader2, MessageSquare, Trash2, Plus, ArrowLeft, Menu, Paperclip, Mic, Square, X, Image as ImageIcon, AudioLines, Phone } from "lucide-react";
 import { useSedeAIChat } from "@/hooks/useSedeAIChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -16,9 +16,8 @@ import { useCloudinary } from "@/hooks/useCloudinary";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ErrorBoundary } from "./ErrorBoundary";
-
-// Temporarily disabled due to package compatibility issues
-// const VoiceConversation = lazy(() => import("./VoiceConversation").then(module => ({ default: module.VoiceConversation })));
+import { VoiceAssistant } from "./VoiceAssistant";
+import { AnimatePresence } from "framer-motion";
 
 interface PathData {
   id: string;
@@ -217,6 +216,8 @@ export const SedeAIChat = () => {
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const { uploadFile, uploading } = useCloudinary();
   const { toast } = useToast();
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
+  const [voiceAgentId, setVoiceAgentId] = useState('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -836,6 +837,23 @@ export const SedeAIChat = () => {
               >
                 {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
               </Button>
+
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  const id = prompt('Ingresa tu ElevenLabs Agent ID para conversación de voz:');
+                  if (id) {
+                    setVoiceAgentId(id);
+                    setShowVoiceAssistant(true);
+                  }
+                }}
+                disabled={isLoading || uploading}
+                title="Conversación de voz"
+              >
+                <Phone className="w-5 h-5" />
+              </Button>
               
               <Input
                 value={input}
@@ -855,6 +873,16 @@ export const SedeAIChat = () => {
           </form>
         </div>
       </div>
+
+      {/* Voice Assistant Modal */}
+      <AnimatePresence>
+        {showVoiceAssistant && (
+          <VoiceAssistant
+            onClose={() => setShowVoiceAssistant(false)}
+            agentId={voiceAgentId}
+          />
+        )}
+      </AnimatePresence>
     </div>
     </ErrorBoundary>
   );
