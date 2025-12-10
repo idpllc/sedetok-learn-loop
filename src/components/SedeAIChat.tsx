@@ -843,11 +843,8 @@ export const SedeAIChat = () => {
                 size="icon"
                 variant="ghost"
                 onClick={() => {
-                  const id = prompt('Ingresa tu ElevenLabs Agent ID para conversación de voz:');
-                  if (id) {
-                    setVoiceAgentId(id);
-                    setShowVoiceAssistant(true);
-                  }
+                  setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq');
+                  setShowVoiceAssistant(true);
                 }}
                 disabled={isLoading || uploading}
                 title="Conversación de voz"
