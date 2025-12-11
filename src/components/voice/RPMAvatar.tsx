@@ -21,13 +21,18 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   const currentVisemeRef = useRef<string>('viseme_sil');
   const lastUpdateRef = useRef(0);
   const jawBoneRef = useRef<THREE.Bone | null>(null);
-  const handBonesRef = useRef<THREE.Bone[]>([]);
+  const spineBoneRef = useRef<THREE.Bone | null>(null);
+  const neckBoneRef = useRef<THREE.Bone | null>(null);
+  const headBoneRef = useRef<THREE.Bone | null>(null);
+  const leftArmBoneRef = useRef<THREE.Bone | null>(null);
+  const rightArmBoneRef = useRef<THREE.Bone | null>(null);
+  const leftHandBoneRef = useRef<THREE.Bone | null>(null);
+  const rightHandBoneRef = useRef<THREE.Bone | null>(null);
   const fingerBonesRef = useRef<THREE.Bone[]>([]);
 
   // Find meshes with morph targets and bones
   const morphMeshes = useMemo(() => {
     const meshes: THREE.SkinnedMesh[] = [];
-    const handBones: THREE.Bone[] = [];
     const fingerBones: THREE.Bone[] = [];
     
     clone.traverse((child) => {
@@ -38,7 +43,6 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
             key.startsWith('viseme_')
           );
           if (hasVisemes) {
-            console.log('Found morph mesh:', mesh.name, Object.keys(mesh.morphTargetDictionary));
             meshes.push(mesh);
           }
         }
@@ -46,32 +50,49 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
       
       if ((child as THREE.Bone).isBone) {
         const bone = child as THREE.Bone;
-        const boneName = bone.name.toLowerCase();
+        const name = bone.name;
         
-        // Find jaw bone
-        if (boneName.includes('jaw')) {
-          jawBoneRef.current = bone;
-          console.log('Found jaw bone:', bone.name);
+        // Ready Player Me bone names (case-sensitive)
+        switch(name) {
+          case 'Jaw':
+            jawBoneRef.current = bone;
+            break;
+          case 'Spine1':
+          case 'Spine2':
+            if (!spineBoneRef.current) spineBoneRef.current = bone;
+            break;
+          case 'Neck':
+            neckBoneRef.current = bone;
+            break;
+          case 'Head':
+            headBoneRef.current = bone;
+            break;
+          case 'LeftArm':
+            leftArmBoneRef.current = bone;
+            break;
+          case 'RightArm':
+            rightArmBoneRef.current = bone;
+            break;
+          case 'LeftHand':
+            leftHandBoneRef.current = bone;
+            break;
+          case 'RightHand':
+            rightHandBoneRef.current = bone;
+            break;
         }
         
-        // Find hand/wrist bones
-        if (boneName.includes('hand') || boneName.includes('wrist')) {
-          handBones.push(bone);
-          console.log('Found hand bone:', bone.name);
-        }
-        
-        // Find finger bones (proximal, intermediate, distal)
-        if (boneName.includes('thumb') || boneName.includes('index') || 
-            boneName.includes('middle') || boneName.includes('ring') || 
-            boneName.includes('pinky') || boneName.includes('little')) {
+        // Find finger bones (RPM naming: LeftHandIndex1, RightHandThumb2, etc.)
+        if (name.includes('Hand') && (
+          name.includes('Thumb') || name.includes('Index') || 
+          name.includes('Middle') || name.includes('Ring') || 
+          name.includes('Pinky') || name.includes('Little')
+        )) {
           fingerBones.push(bone);
         }
       }
     });
     
-    handBonesRef.current = handBones;
     fingerBonesRef.current = fingerBones;
-    console.log(`Found ${handBones.length} hand bones and ${fingerBones.length} finger bones`);
     
     return meshes;
   }, [clone]);
@@ -249,57 +270,110 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
       }
     }
 
-    // Subtle idle head movement
-    if (group.current) {
-      group.current.rotation.y = Math.sin(time * 0.5) * 0.03;
-      group.current.rotation.x = Math.sin(time * 0.3) * 0.01;
+
+    // === BREATHING / SPINE ANIMATION ===
+    if (spineBoneRef.current) {
+      const breathe = Math.sin(time * 0.8) * 0.008;
+      spineBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        spineBoneRef.current.rotation.x,
+        breathe,
+        0.05
+      );
     }
 
-    // === RELAXED HAND AND FINGER ANIMATION ===
-    // Subtle hand sway
-    handBonesRef.current.forEach((bone, index) => {
-      const offset = index * 0.5; // Different phase for each hand
-      bone.rotation.z = THREE.MathUtils.lerp(
-        bone.rotation.z,
-        Math.sin(time * 0.4 + offset) * 0.03,
-        0.1
+    // === SUBTLE NECK/HEAD IDLE MOVEMENT ===
+    if (neckBoneRef.current) {
+      neckBoneRef.current.rotation.y = THREE.MathUtils.lerp(
+        neckBoneRef.current.rotation.y,
+        Math.sin(time * 0.4) * 0.02,
+        0.05
       );
-      bone.rotation.x = THREE.MathUtils.lerp(
-        bone.rotation.x,
-        Math.sin(time * 0.3 + offset) * 0.02,
-        0.1
+      neckBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        neckBoneRef.current.rotation.x,
+        Math.sin(time * 0.3) * 0.01,
+        0.05
       );
-    });
+    }
 
-    // Subtle finger curl for relaxed pose
+    if (headBoneRef.current) {
+      headBoneRef.current.rotation.y = THREE.MathUtils.lerp(
+        headBoneRef.current.rotation.y,
+        Math.sin(time * 0.5 + 0.5) * 0.025,
+        0.05
+      );
+    }
+
+    // === RELAXED ARM ANIMATION ===
+    if (leftArmBoneRef.current) {
+      leftArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        leftArmBoneRef.current.rotation.z,
+        Math.sin(time * 0.3) * 0.015,
+        0.05
+      );
+    }
+    if (rightArmBoneRef.current) {
+      rightArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        rightArmBoneRef.current.rotation.z,
+        Math.sin(time * 0.3 + 1) * 0.015,
+        0.05
+      );
+    }
+
+    // === RELAXED HAND ANIMATION ===
+    if (leftHandBoneRef.current) {
+      leftHandBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        leftHandBoneRef.current.rotation.z,
+        Math.sin(time * 0.4) * 0.03,
+        0.08
+      );
+      leftHandBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        leftHandBoneRef.current.rotation.x,
+        Math.sin(time * 0.35) * 0.02,
+        0.08
+      );
+    }
+    if (rightHandBoneRef.current) {
+      rightHandBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        rightHandBoneRef.current.rotation.z,
+        Math.sin(time * 0.4 + 0.5) * 0.03,
+        0.08
+      );
+      rightHandBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        rightHandBoneRef.current.rotation.x,
+        Math.sin(time * 0.35 + 0.5) * 0.02,
+        0.08
+      );
+    }
+
+    // === SUBTLE FINGER CURL FOR RELAXED POSE ===
     fingerBonesRef.current.forEach((bone, index) => {
-      const boneName = bone.name.toLowerCase();
-      const offset = index * 0.2;
+      const name = bone.name;
+      const offset = index * 0.15;
       
-      // Base curl amount - makes fingers look naturally curved
-      let baseCurl = 0.15;
+      // Base curl - natural relaxed position
+      let baseCurl = 0.12;
       
-      // Proximal bones curl less, distal bones curl more
-      if (boneName.includes('proximal')) {
-        baseCurl = 0.1;
-      } else if (boneName.includes('intermediate')) {
+      // Different curl based on finger segment (1=proximal, 2=intermediate, 3=distal)
+      if (name.includes('1')) {
+        baseCurl = 0.08;
+      } else if (name.includes('2')) {
+        baseCurl = 0.12;
+      } else if (name.includes('3')) {
         baseCurl = 0.15;
-      } else if (boneName.includes('distal')) {
-        baseCurl = 0.2;
       }
       
-      // Thumb curls differently
-      if (boneName.includes('thumb')) {
-        baseCurl *= 0.5;
+      // Thumb curls less
+      if (name.includes('Thumb')) {
+        baseCurl *= 0.4;
       }
       
       // Add subtle movement
-      const movement = Math.sin(time * 0.25 + offset) * 0.02;
+      const movement = Math.sin(time * 0.2 + offset) * 0.015;
       
       bone.rotation.z = THREE.MathUtils.lerp(
         bone.rotation.z,
         baseCurl + movement,
-        0.05
+        0.04
       );
     });
   });
