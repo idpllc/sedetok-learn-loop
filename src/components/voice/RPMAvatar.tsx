@@ -159,9 +159,9 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
       });
     }
 
-    // === SUBTLE EYE MOVEMENT ===
-    const eyeLookX = Math.sin(time * 0.7) * 0.15; // Horizontal movement
-    const eyeLookY = Math.sin(time * 0.5 + 1) * 0.1; // Vertical movement
+    // === EYE MOVEMENT ===
+    const eyeLookX = Math.sin(time * 0.8) * 0.25; // More visible horizontal movement
+    const eyeLookY = Math.sin(time * 0.6 + 1) * 0.15; // More visible vertical movement
     
     morphMeshes.forEach((mesh) => {
       if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
@@ -273,90 +273,110 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
 
     // === BREATHING / SPINE ANIMATION ===
     if (spineBoneRef.current) {
-      const breathe = Math.sin(time * 0.8) * 0.008;
+      const breathe = Math.sin(time * 1.2) * 0.025; // More visible breathing
       spineBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         spineBoneRef.current.rotation.x,
         breathe,
-        0.05
+        0.08
       );
     }
 
-    // === SUBTLE NECK/HEAD IDLE MOVEMENT ===
+    // === NECK/HEAD IDLE MOVEMENT ===
     if (neckBoneRef.current) {
-      // Only subtle side-to-side movement, no up/down tilt
+      // Side-to-side and slight tilt
       neckBoneRef.current.rotation.y = THREE.MathUtils.lerp(
         neckBoneRef.current.rotation.y,
-        Math.sin(time * 0.4) * 0.015,
-        0.05
+        Math.sin(time * 0.6) * 0.06,
+        0.08
+      );
+      neckBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        neckBoneRef.current.rotation.z,
+        Math.sin(time * 0.4 + 0.5) * 0.03,
+        0.06
       );
     }
 
     if (headBoneRef.current) {
-      // Very subtle head turn only
+      // Head turn and slight nod
       headBoneRef.current.rotation.y = THREE.MathUtils.lerp(
         headBoneRef.current.rotation.y,
-        Math.sin(time * 0.5 + 0.5) * 0.02,
-        0.05
+        Math.sin(time * 0.5 + 0.5) * 0.08,
+        0.08
+      );
+      headBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        headBoneRef.current.rotation.z,
+        Math.sin(time * 0.7) * 0.04,
+        0.06
       );
     }
 
-    // === RELAXED ARM ANIMATION ===
+    // === SHOULDER/ARM SWAY ===
     if (leftArmBoneRef.current) {
       leftArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         leftArmBoneRef.current.rotation.z,
-        Math.sin(time * 0.3) * 0.015,
-        0.05
+        Math.sin(time * 0.5) * 0.04,
+        0.06
+      );
+      leftArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        leftArmBoneRef.current.rotation.x,
+        Math.sin(time * 0.4) * 0.02,
+        0.06
       );
     }
     if (rightArmBoneRef.current) {
       rightArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         rightArmBoneRef.current.rotation.z,
-        Math.sin(time * 0.3 + 1) * 0.015,
-        0.05
+        Math.sin(time * 0.5 + 1) * 0.04,
+        0.06
+      );
+      rightArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        rightArmBoneRef.current.rotation.x,
+        Math.sin(time * 0.4 + 1) * 0.02,
+        0.06
       );
     }
 
-    // === RELAXED HAND ANIMATION ===
+    // === HAND ANIMATION ===
     if (leftHandBoneRef.current) {
       leftHandBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         leftHandBoneRef.current.rotation.z,
-        Math.sin(time * 0.4) * 0.03,
-        0.08
+        Math.sin(time * 0.6) * 0.06,
+        0.1
       );
       leftHandBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         leftHandBoneRef.current.rotation.x,
-        Math.sin(time * 0.35) * 0.02,
-        0.08
+        Math.sin(time * 0.5) * 0.04,
+        0.1
       );
     }
     if (rightHandBoneRef.current) {
       rightHandBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         rightHandBoneRef.current.rotation.z,
-        Math.sin(time * 0.4 + 0.5) * 0.03,
-        0.08
+        Math.sin(time * 0.6 + 0.5) * 0.06,
+        0.1
       );
       rightHandBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         rightHandBoneRef.current.rotation.x,
-        Math.sin(time * 0.35 + 0.5) * 0.02,
-        0.08
+        Math.sin(time * 0.5 + 0.5) * 0.04,
+        0.1
       );
     }
 
-    // === SUBTLE FINGER CURL FOR RELAXED POSE ===
+    // === FINGER CURL FOR RELAXED POSE ===
     fingerBonesRef.current.forEach((bone, index) => {
       const name = bone.name;
       const offset = index * 0.15;
       
       // Base curl - natural relaxed position
-      let baseCurl = 0.12;
+      let baseCurl = 0.2;
       
       // Different curl based on finger segment (1=proximal, 2=intermediate, 3=distal)
       if (name.includes('1')) {
-        baseCurl = 0.08;
-      } else if (name.includes('2')) {
-        baseCurl = 0.12;
-      } else if (name.includes('3')) {
         baseCurl = 0.15;
+      } else if (name.includes('2')) {
+        baseCurl = 0.22;
+      } else if (name.includes('3')) {
+        baseCurl = 0.28;
       }
       
       // Thumb curls less
@@ -365,12 +385,12 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
       }
       
       // Add subtle movement
-      const movement = Math.sin(time * 0.2 + offset) * 0.015;
+      const movement = Math.sin(time * 0.3 + offset) * 0.03;
       
       bone.rotation.z = THREE.MathUtils.lerp(
         bone.rotation.z,
         baseCurl + movement,
-        0.04
+        0.06
       );
     });
   });
