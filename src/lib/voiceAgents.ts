@@ -17,7 +17,8 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     name: 'Sofía',
     description: 'Tu tutora de aprendizaje general',
     agentId: 'agent_5201kc59xc30ew7s7vsnxcsr10gj',
-    avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb',
+    // morphTargets parameter required for viseme lip-sync
+    avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit',
     personality: 'Amigable, paciente y motivadora. Especialista en explicar conceptos complejos de forma sencilla.',
     color: 'hsl(165 89% 24%)',
   },
@@ -26,7 +27,8 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     name: 'Alejandro',
     description: 'Experto en ciencias y matemáticas',
     agentId: 'agent_9001kc53p9b3f3da7353ycdk1bgq',
-    avatarUrl: 'https://models.readyplayer.me/693a028814ff705000c68122.glb',
+    // morphTargets parameter required for viseme lip-sync
+    avatarUrl: 'https://models.readyplayer.me/693a028814ff705000c68122.glb?morphTargets=Oculus%20Visemes,ARKit',
     personality: 'Analítico, preciso y entusiasta. Le encanta resolver problemas paso a paso.',
     color: 'hsl(200 89% 40%)',
   },
