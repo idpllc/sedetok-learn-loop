@@ -283,22 +283,19 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
 
     // === SUBTLE NECK/HEAD IDLE MOVEMENT ===
     if (neckBoneRef.current) {
+      // Only subtle side-to-side movement, no up/down tilt
       neckBoneRef.current.rotation.y = THREE.MathUtils.lerp(
         neckBoneRef.current.rotation.y,
-        Math.sin(time * 0.4) * 0.02,
-        0.05
-      );
-      neckBoneRef.current.rotation.x = THREE.MathUtils.lerp(
-        neckBoneRef.current.rotation.x,
-        Math.sin(time * 0.3) * 0.01,
+        Math.sin(time * 0.4) * 0.015,
         0.05
       );
     }
 
     if (headBoneRef.current) {
+      // Very subtle head turn only
       headBoneRef.current.rotation.y = THREE.MathUtils.lerp(
         headBoneRef.current.rotation.y,
-        Math.sin(time * 0.5 + 0.5) * 0.025,
+        Math.sin(time * 0.5 + 0.5) * 0.02,
         0.05
       );
     }
