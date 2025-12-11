@@ -131,21 +131,20 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   useEffect(() => {
     if (initialPoseApplied.current) return;
     
-    // RPM avatars in T-pose: arms extended horizontally
-    // Z rotation ~1.5 (close to π/2) brings arms fully down relaxed
+    // RPM avatars: X rotation brings arms down from T-pose
     if (leftArmBoneRef.current) {
-      leftArmBoneRef.current.rotation.set(0, 0, 1.5);
+      leftArmBoneRef.current.rotation.x = 1.2; // positive X = down for left arm
     }
     if (rightArmBoneRef.current) {
-      rightArmBoneRef.current.rotation.set(0, 0, -1.5);
+      rightArmBoneRef.current.rotation.x = -1.2; // negative X = down for right arm
     }
     
-    // Slight elbow bend for natural relaxed look
+    // Slight elbow bend
     if (leftForeArmRef.current) {
-      leftForeArmRef.current.rotation.set(0, 0.15, 0);
+      leftForeArmRef.current.rotation.z = 0.2;
     }
     if (rightForeArmRef.current) {
-      rightForeArmRef.current.rotation.set(0, -0.15, 0);
+      rightForeArmRef.current.rotation.z = -0.2;
     }
     
     initialPoseApplied.current = true;
@@ -353,34 +352,32 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
 
     // === ARM SWAY (around resting position) ===
     if (leftArmBoneRef.current) {
-      // Base: z=1.5 - arms relaxed down
-      leftArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
-        leftArmBoneRef.current.rotation.z,
-        1.5 + Math.sin(time * 0.5) * 0.02,
+      leftArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        leftArmBoneRef.current.rotation.x,
+        1.2 + Math.sin(time * 0.5) * 0.02,
         0.06
       );
     }
     if (rightArmBoneRef.current) {
-      // Base: z=-1.5 (mirrored)
-      rightArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
-        rightArmBoneRef.current.rotation.z,
-        -1.5 + Math.sin(time * 0.5 + 1) * 0.02,
+      rightArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
+        rightArmBoneRef.current.rotation.x,
+        -1.2 + Math.sin(time * 0.5 + 1) * 0.02,
         0.06
       );
     }
 
     // === FOREARM ANIMATION ===
     if (leftForeArmRef.current) {
-      leftForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
-        leftForeArmRef.current.rotation.y,
-        0.15 + Math.sin(time * 0.6) * 0.02,
+      leftForeArmRef.current.rotation.z = THREE.MathUtils.lerp(
+        leftForeArmRef.current.rotation.z,
+        0.2 + Math.sin(time * 0.6) * 0.02,
         0.06
       );
     }
     if (rightForeArmRef.current) {
-      rightForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
-        rightForeArmRef.current.rotation.y,
-        -0.15 + Math.sin(time * 0.6 + 0.5) * 0.02,
+      rightForeArmRef.current.rotation.z = THREE.MathUtils.lerp(
+        rightForeArmRef.current.rotation.z,
+        -0.2 + Math.sin(time * 0.6 + 0.5) * 0.02,
         0.06
       );
     }
