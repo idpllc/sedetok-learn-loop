@@ -131,20 +131,20 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   useEffect(() => {
     if (initialPoseApplied.current) return;
     
-    // RPM avatars: X rotation brings arms down from T-pose
+    // RPM avatars: both arms need same X rotation sign to go down
     if (leftArmBoneRef.current) {
-      leftArmBoneRef.current.rotation.x = 1.2; // positive X = down for left arm
+      leftArmBoneRef.current.rotation.x = -1.2;
     }
     if (rightArmBoneRef.current) {
-      rightArmBoneRef.current.rotation.x = -1.2; // negative X = down for right arm
+      rightArmBoneRef.current.rotation.x = -1.2;
     }
     
     // Slight elbow bend
     if (leftForeArmRef.current) {
-      leftForeArmRef.current.rotation.z = 0.2;
+      leftForeArmRef.current.rotation.z = 0.15;
     }
     if (rightForeArmRef.current) {
-      rightForeArmRef.current.rotation.z = -0.2;
+      rightForeArmRef.current.rotation.z = -0.15;
     }
     
     initialPoseApplied.current = true;
@@ -354,7 +354,7 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
     if (leftArmBoneRef.current) {
       leftArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         leftArmBoneRef.current.rotation.x,
-        1.2 + Math.sin(time * 0.5) * 0.02,
+        -1.2 + Math.sin(time * 0.5) * 0.02,
         0.06
       );
     }
@@ -370,14 +370,14 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
     if (leftForeArmRef.current) {
       leftForeArmRef.current.rotation.z = THREE.MathUtils.lerp(
         leftForeArmRef.current.rotation.z,
-        0.2 + Math.sin(time * 0.6) * 0.02,
+        0.15 + Math.sin(time * 0.6) * 0.02,
         0.06
       );
     }
     if (rightForeArmRef.current) {
       rightForeArmRef.current.rotation.z = THREE.MathUtils.lerp(
         rightForeArmRef.current.rotation.z,
-        -0.2 + Math.sin(time * 0.6 + 0.5) * 0.02,
+        -0.15 + Math.sin(time * 0.6 + 0.5) * 0.02,
         0.06
       );
     }
