@@ -24,11 +24,16 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   const spineBoneRef = useRef<THREE.Bone | null>(null);
   const neckBoneRef = useRef<THREE.Bone | null>(null);
   const headBoneRef = useRef<THREE.Bone | null>(null);
+  const leftShoulderRef = useRef<THREE.Bone | null>(null);
+  const rightShoulderRef = useRef<THREE.Bone | null>(null);
   const leftArmBoneRef = useRef<THREE.Bone | null>(null);
   const rightArmBoneRef = useRef<THREE.Bone | null>(null);
+  const leftForeArmRef = useRef<THREE.Bone | null>(null);
+  const rightForeArmRef = useRef<THREE.Bone | null>(null);
   const leftHandBoneRef = useRef<THREE.Bone | null>(null);
   const rightHandBoneRef = useRef<THREE.Bone | null>(null);
   const fingerBonesRef = useRef<THREE.Bone[]>([]);
+  const initialPoseApplied = useRef(false);
 
   // Find meshes with morph targets and bones
   const morphMeshes = useMemo(() => {
@@ -67,11 +72,23 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
           case 'Head':
             headBoneRef.current = bone;
             break;
+          case 'LeftShoulder':
+            leftShoulderRef.current = bone;
+            break;
+          case 'RightShoulder':
+            rightShoulderRef.current = bone;
+            break;
           case 'LeftArm':
             leftArmBoneRef.current = bone;
             break;
           case 'RightArm':
             rightArmBoneRef.current = bone;
+            break;
+          case 'LeftForeArm':
+            leftForeArmRef.current = bone;
+            break;
+          case 'RightForeArm':
+            rightForeArmRef.current = bone;
             break;
           case 'LeftHand':
             leftHandBoneRef.current = bone;
@@ -109,6 +126,39 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
       mixer?.stopAllAction();
     };
   }, [actions, mixer]);
+
+  // Apply initial relaxed pose (arms down from T-pose)
+  useEffect(() => {
+    if (initialPoseApplied.current) return;
+    
+    // Set arms down from T-pose to natural resting position
+    if (leftArmBoneRef.current) {
+      leftArmBoneRef.current.rotation.z = 1.2; // Rotate arm down
+      leftArmBoneRef.current.rotation.x = 0.1; // Slight forward
+    }
+    if (rightArmBoneRef.current) {
+      rightArmBoneRef.current.rotation.z = -1.2; // Rotate arm down (opposite direction)
+      rightArmBoneRef.current.rotation.x = 0.1; // Slight forward
+    }
+    
+    // Bend forearms slightly
+    if (leftForeArmRef.current) {
+      leftForeArmRef.current.rotation.y = 0.3; // Slight bend
+    }
+    if (rightForeArmRef.current) {
+      rightForeArmRef.current.rotation.y = -0.3; // Slight bend (opposite)
+    }
+    
+    // Relax shoulders
+    if (leftShoulderRef.current) {
+      leftShoulderRef.current.rotation.z = 0.05;
+    }
+    if (rightShoulderRef.current) {
+      rightShoulderRef.current.rotation.z = -0.05;
+    }
+    
+    initialPoseApplied.current = true;
+  }, [morphMeshes]); // Run after bones are found
 
   // Eye blink state
   const blinkStateRef = useRef({ nextBlink: 0, isBlinking: false, blinkProgress: 0 });
@@ -310,28 +360,46 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
       );
     }
 
-    // === SHOULDER/ARM SWAY ===
+    // === ARM SWAY (around resting position) ===
     if (leftArmBoneRef.current) {
+      // Base position is 1.2 (arm down), add subtle movement
       leftArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         leftArmBoneRef.current.rotation.z,
-        Math.sin(time * 0.5) * 0.04,
+        1.2 + Math.sin(time * 0.5) * 0.04,
         0.06
       );
       leftArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         leftArmBoneRef.current.rotation.x,
-        Math.sin(time * 0.4) * 0.02,
+        0.1 + Math.sin(time * 0.4) * 0.02,
         0.06
       );
     }
     if (rightArmBoneRef.current) {
+      // Base position is -1.2 (arm down), add subtle movement
       rightArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         rightArmBoneRef.current.rotation.z,
-        Math.sin(time * 0.5 + 1) * 0.04,
+        -1.2 + Math.sin(time * 0.5 + 1) * 0.04,
         0.06
       );
       rightArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         rightArmBoneRef.current.rotation.x,
-        Math.sin(time * 0.4 + 1) * 0.02,
+        0.1 + Math.sin(time * 0.4 + 1) * 0.02,
+        0.06
+      );
+    }
+
+    // === FOREARM ANIMATION ===
+    if (leftForeArmRef.current) {
+      leftForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
+        leftForeArmRef.current.rotation.y,
+        0.3 + Math.sin(time * 0.6) * 0.03,
+        0.06
+      );
+    }
+    if (rightForeArmRef.current) {
+      rightForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
+        rightForeArmRef.current.rotation.y,
+        -0.3 + Math.sin(time * 0.6 + 0.5) * 0.03,
         0.06
       );
     }
