@@ -131,12 +131,12 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   useEffect(() => {
     if (initialPoseApplied.current) return;
     
-    // RPM avatars: both arms need same X rotation sign to go down
+    // RPM avatars: positive X rotation brings arms down
     if (leftArmBoneRef.current) {
-      leftArmBoneRef.current.rotation.x = -1.2;
+      leftArmBoneRef.current.rotation.x = 1.2;
     }
     if (rightArmBoneRef.current) {
-      rightArmBoneRef.current.rotation.x = -1.2;
+      rightArmBoneRef.current.rotation.x = 1.2;
     }
     
     // Slight elbow bend
@@ -354,14 +354,14 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
     if (leftArmBoneRef.current) {
       leftArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         leftArmBoneRef.current.rotation.x,
-        -1.2 + Math.sin(time * 0.5) * 0.02,
+        1.2 + Math.sin(time * 0.5) * 0.02,
         0.06
       );
     }
     if (rightArmBoneRef.current) {
       rightArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         rightArmBoneRef.current.rotation.x,
-        -1.2 + Math.sin(time * 0.5 + 1) * 0.02,
+        1.2 + Math.sin(time * 0.5 + 1) * 0.02,
         0.06
       );
     }
