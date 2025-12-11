@@ -811,70 +811,81 @@ export const SedeAIChat = () => {
           )}
 
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-            <div className="flex gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*,audio/*,.pdf,.doc,.docx,.txt"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading || uploading}
-              >
-                <Paperclip className="w-5 h-5" />
-              </Button>
-              
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isLoading || uploading}
-                className={cn(isRecording && "text-destructive")}
-              >
-                {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-              </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,audio/*,.pdf,.doc,.docx,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            
+            <div className="flex items-center gap-2 bg-muted/50 rounded-full px-2 py-1.5">
+              <div className="flex items-center gap-0.5">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || uploading}
+                >
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+                
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-full"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isLoading || uploading}
+                >
+                  {isRecording ? <Square className="w-4 h-4 text-destructive" /> : <Mic className="w-4 h-4" />}
+                </Button>
 
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={() => setShowAgentSelector(true)}
-                disabled={isLoading || uploading}
-                title="Avatar de voz 3D"
-              >
-                <User className="w-5 h-5" />
-              </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => setShowAgentSelector(true)}
+                  disabled={isLoading || uploading}
+                  title="Avatar de voz 3D"
+                >
+                  <User className="w-4 h-4" />
+                </Button>
 
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq');
-                  setShowVoiceAssistant(true);
-                }}
-                disabled={isLoading || uploading}
-                title="Conversación de voz"
-              >
-                <Phone className="w-5 h-5" />
-              </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => {
+                    setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq');
+                    setShowVoiceAssistant(true);
+                  }}
+                  disabled={isLoading || uploading}
+                  title="Conversación de voz"
+                >
+                  <Phone className="w-4 h-4" />
+                </Button>
+              </div>
               
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe tu pregunta o solicitud..."
+                placeholder="Escribe tu pregunta..."
                 disabled={isLoading || uploading}
-                className="flex-1"
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
               />
-              <Button type="submit" disabled={isLoading || uploading || (!input.trim() && attachments.length === 0)}>
+              
+              <Button 
+                type="submit" 
+                size="icon"
+                className="h-9 w-9 rounded-full shrink-0"
+                disabled={isLoading || uploading || (!input.trim() && attachments.length === 0)}
+              >
                 {isLoading || uploading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
