@@ -42,6 +42,25 @@ interface ContentData {
   type: 'video' | 'quiz' | 'game' | 'reading';
 }
 
+interface ItineraryDay {
+  day: number;
+  title: string;
+  subtopics: string[];
+  objectives: string[];
+  activities: string[];
+  estimated_hours: number;
+}
+
+interface ItineraryData {
+  topic: string;
+  total_days: number;
+  hours_per_day: number;
+  difficulty: string;
+  overview: string;
+  days: ItineraryDay[];
+  final_project?: string;
+}
+
 const ContentCards = ({ content }: { content: ContentData[] }) => {
   const navigate = useNavigate();
   
@@ -186,6 +205,117 @@ const PathCards = ({ paths }: { paths: PathData[] }) => {
   );
 };
 
+const ItineraryCard = ({ itinerary }: { itinerary: ItineraryData }) => {
+  const [expandedDay, setExpandedDay] = useState<number | null>(null);
+
+  const getDifficultyColor = (difficulty: string) => {
+    const colors: Record<string, string> = {
+      basico: 'bg-green-500/10 text-green-700 dark:text-green-400',
+      intermedio: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
+      avanzado: 'bg-red-500/10 text-red-700 dark:text-red-400'
+    };
+    return colors[difficulty] || 'bg-primary/10 text-primary';
+  };
+
+  return (
+    <div className="mt-4 w-full">
+      <Card className="overflow-hidden border-primary/20">
+        <div className="p-4 bg-gradient-to-r from-primary/10 to-purple-500/10 border-b">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-bold text-lg">📚 {itinerary.topic}</h3>
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDifficultyColor(itinerary.difficulty)}`}>
+              {itinerary.difficulty.charAt(0).toUpperCase() + itinerary.difficulty.slice(1)}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">{itinerary.overview}</p>
+          <div className="flex gap-4 mt-3 text-xs text-muted-foreground">
+            <span>📅 {itinerary.total_days} días</span>
+            <span>⏰ {itinerary.hours_per_day}h/día</span>
+            <span>📊 {itinerary.total_days * itinerary.hours_per_day}h total</span>
+          </div>
+        </div>
+        
+        <div className="divide-y">
+          {itinerary.days.map((day) => (
+            <div key={day.day} className="p-3 hover:bg-accent/50 transition-colors">
+              <button
+                className="w-full text-left flex items-center justify-between"
+                onClick={() => setExpandedDay(expandedDay === day.day ? null : day.day)}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+                    {day.day}
+                  </span>
+                  <div>
+                    <h4 className="font-medium text-sm">{day.title}</h4>
+                    <p className="text-xs text-muted-foreground">{day.estimated_hours}h estimadas</p>
+                  </div>
+                </div>
+                <span className="text-muted-foreground text-lg">
+                  {expandedDay === day.day ? '−' : '+'}
+                </span>
+              </button>
+              
+              {expandedDay === day.day && (
+                <div className="mt-3 pl-11 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {day.subtopics.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">📖 Subtemas:</p>
+                      <ul className="text-sm space-y-1">
+                        {day.subtopics.map((topic, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            {topic}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {day.objectives.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">🎯 Objetivos:</p>
+                      <ul className="text-sm space-y-1">
+                        {day.objectives.map((obj, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-green-500 mt-0.5">✓</span>
+                            {obj}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {day.activities.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">✏️ Actividades:</p>
+                      <ul className="text-sm space-y-1">
+                        {day.activities.map((act, i) => (
+                          <li key={i} className="flex items-start gap-2 text-muted-foreground">
+                            <span>→</span>
+                            {act}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        
+        {itinerary.final_project && (
+          <div className="p-4 bg-gradient-to-r from-purple-500/10 to-primary/10 border-t">
+            <p className="text-xs font-medium text-muted-foreground mb-1">🏆 Proyecto Final:</p>
+            <p className="text-sm">{itinerary.final_project}</p>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
 export const SedeAIChat = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -243,6 +373,7 @@ export const SedeAIChat = () => {
       let textContent = lastMessage.content;
       textContent = textContent.replace(/\|\|\|PATHS_DATA:.*?\|\|\|/g, '').trim();
       textContent = textContent.replace(/\|\|\|CONTENT_DATA:.*?\|\|\|/g, '').trim();
+      textContent = textContent.replace(/\|\|\|ITINERARY_DATA:.*?\|\|\|/g, '').trim();
 
       if (!textContent) return;
 
@@ -670,6 +801,16 @@ export const SedeAIChat = () => {
                   <Card
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
                     onClick={() =>
+                      sendMessage("Quiero un itinerario de estudio")
+                    }
+                  >
+                    <p className="text-sm font-medium">
+                      📚 Crear itinerario de estudio
+                    </p>
+                  </Card>
+                  <Card
+                    className="p-4 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() =>
                       sendMessage("Dame consejos para mi desarrollo profesional")
                     }
                   >
@@ -681,17 +822,19 @@ export const SedeAIChat = () => {
               </div>
             ) : (
               messages.map((message, idx) => {
-                // Check if message contains path or content data
+                // Check if message contains path, content, or itinerary data
                 const pathsMatch = message.content.match(/\|\|\|PATHS_DATA:(.*?)\|\|\|/);
                 const contentMatch = message.content.match(/\|\|\|CONTENT_DATA:(.*?)\|\|\|/);
+                const itineraryMatch = message.content.match(/\|\|\|ITINERARY_DATA:(.*?)\|\|\|/);
                 let messageContent = message.content;
                 let pathsData: PathData[] = [];
                 let contentData: ContentData[] = [];
+                let itineraryData: ItineraryData | null = null;
 
                 if (pathsMatch) {
                   try {
                     pathsData = JSON.parse(pathsMatch[1]);
-                    messageContent = message.content.replace(/\|\|\|PATHS_DATA:.*?\|\|\|/, '').trim();
+                    messageContent = messageContent.replace(/\|\|\|PATHS_DATA:.*?\|\|\|/, '').trim();
                   } catch (e) {
                     console.error('Error parsing paths data:', e);
                   }
@@ -700,9 +843,18 @@ export const SedeAIChat = () => {
                 if (contentMatch) {
                   try {
                     contentData = JSON.parse(contentMatch[1]);
-                    messageContent = message.content.replace(/\|\|\|CONTENT_DATA:.*?\|\|\|/, '').trim();
+                    messageContent = messageContent.replace(/\|\|\|CONTENT_DATA:.*?\|\|\|/, '').trim();
                   } catch (e) {
                     console.error('Error parsing content data:', e);
+                  }
+                }
+
+                if (itineraryMatch) {
+                  try {
+                    itineraryData = JSON.parse(itineraryMatch[1]);
+                    messageContent = messageContent.replace(/\|\|\|ITINERARY_DATA:.*?\|\|\|/, '').trim();
+                  } catch (e) {
+                    console.error('Error parsing itinerary data:', e);
                   }
                 }
 
@@ -736,6 +888,7 @@ export const SedeAIChat = () => {
                       </Card>
                       {pathsData.length > 0 && <PathCards paths={pathsData} />}
                       {contentData.length > 0 && <ContentCards content={contentData} />}
+                      {itineraryData && <ItineraryCard itinerary={itineraryData} />}
                     </div>
                     {message.role === "user" && (
                       <Avatar className="w-8 h-8 mt-1">
