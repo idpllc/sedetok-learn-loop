@@ -23,7 +23,7 @@ export function AvatarScene({ avatarUrl, isSpeaking, audioLevel = 0 }: AvatarSce
   return (
     <div className="w-full h-full relative">
       <Canvas
-        camera={{ position: [0, 1.6, 0.8], fov: 30 }}
+        camera={{ position: [0, 1.4, 2.2], fov: 35 }}
         gl={{ antialias: true, alpha: true }}
         style={{ background: 'transparent' }}
       >
@@ -32,14 +32,16 @@ export function AvatarScene({ avatarUrl, isSpeaking, audioLevel = 0 }: AvatarSce
         <directionalLight position={[-5, 5, -5]} intensity={0.4} />
         
         <Suspense fallback={<LoadingFallback />}>
-          <RPMAvatar 
-            avatarUrl={avatarUrl} 
-            isSpeaking={isSpeaking} 
-            audioLevel={audioLevel}
-          />
+          <group position={[0, -0.3, 0]}>
+            <RPMAvatar 
+              avatarUrl={avatarUrl} 
+              isSpeaking={isSpeaking} 
+              audioLevel={audioLevel}
+            />
+          </group>
           <Environment preset="apartment" />
           <ContactShadows 
-            position={[0, -0.6, 0]} 
+            position={[0, -0.9, 0]} 
             opacity={0.4} 
             scale={2} 
             blur={2} 
@@ -51,7 +53,7 @@ export function AvatarScene({ avatarUrl, isSpeaking, audioLevel = 0 }: AvatarSce
           enableZoom={false}
           minPolarAngle={Math.PI / 2.5}
           maxPolarAngle={Math.PI / 1.8}
-          target={[0, 1.5, 0]}
+          target={[0, 1.1, 0]}
         />
       </Canvas>
       
