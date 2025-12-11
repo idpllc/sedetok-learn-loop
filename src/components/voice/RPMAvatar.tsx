@@ -132,21 +132,20 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
     if (initialPoseApplied.current) return;
     
     // RPM avatars in T-pose: arms extended horizontally
-    // To bring arms down naturally, we only rotate around Z axis (frontal plane)
-    // X rotation pushes arms forward/back - we don't want that
+    // Z rotation ~1.5 (close to π/2) brings arms fully down relaxed
     if (leftArmBoneRef.current) {
-      leftArmBoneRef.current.rotation.set(0, 0, 1.1); // only Z rotation to bring arm down
+      leftArmBoneRef.current.rotation.set(0, 0, 1.5);
     }
     if (rightArmBoneRef.current) {
-      rightArmBoneRef.current.rotation.set(0, 0, -1.1); // mirror for right side
+      rightArmBoneRef.current.rotation.set(0, 0, -1.5);
     }
     
-    // Slight elbow bend for natural look
+    // Slight elbow bend for natural relaxed look
     if (leftForeArmRef.current) {
-      leftForeArmRef.current.rotation.set(0, 0.3, 0);
+      leftForeArmRef.current.rotation.set(0, 0.15, 0);
     }
     if (rightForeArmRef.current) {
-      rightForeArmRef.current.rotation.set(0, -0.3, 0);
+      rightForeArmRef.current.rotation.set(0, -0.15, 0);
     }
     
     initialPoseApplied.current = true;
@@ -354,18 +353,18 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
 
     // === ARM SWAY (around resting position) ===
     if (leftArmBoneRef.current) {
-      // Base: x=0, z=1.1 - only animate Z to keep arms at sides
+      // Base: z=1.5 - arms relaxed down
       leftArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         leftArmBoneRef.current.rotation.z,
-        1.1 + Math.sin(time * 0.5) * 0.03,
+        1.5 + Math.sin(time * 0.5) * 0.02,
         0.06
       );
     }
     if (rightArmBoneRef.current) {
-      // Base: x=0, z=-1.1 (mirrored)
+      // Base: z=-1.5 (mirrored)
       rightArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
         rightArmBoneRef.current.rotation.z,
-        -1.1 + Math.sin(time * 0.5 + 1) * 0.03,
+        -1.5 + Math.sin(time * 0.5 + 1) * 0.02,
         0.06
       );
     }
@@ -374,14 +373,14 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
     if (leftForeArmRef.current) {
       leftForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
         leftForeArmRef.current.rotation.y,
-        0.3 + Math.sin(time * 0.6) * 0.03,
+        0.15 + Math.sin(time * 0.6) * 0.02,
         0.06
       );
     }
     if (rightForeArmRef.current) {
       rightForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
         rightForeArmRef.current.rotation.y,
-        -0.3 + Math.sin(time * 0.6 + 0.5) * 0.03,
+        -0.15 + Math.sin(time * 0.6 + 0.5) * 0.02,
         0.06
       );
     }
