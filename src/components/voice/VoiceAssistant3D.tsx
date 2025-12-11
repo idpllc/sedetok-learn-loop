@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useConversation } from '@11labs/react';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Loader2, X, Volume2 } from 'lucide-react';
+import { Mic, MicOff, Loader2, X, Volume2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,11 +19,16 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
   const [transcript, setTranscript] = useState<string>('');
   const [aiResponse, setAiResponse] = useState<string>('');
   const [audioLevel, setAudioLevel] = useState(0);
+  const [connectionError, setConnectionError] = useState(false);
   const animationRef = useRef<number>();
+  const isClosingRef = useRef(false);
+  const wasConnectedRef = useRef(false);
 
   const conversation = useConversation({
     onConnect: () => {
       console.log('Connected to ElevenLabs Voice Agent');
+      wasConnectedRef.current = true;
+      setConnectionError(false);
       toast({
         title: "Conectado",
         description: `Ahora puedes hablar con ${agent.name}`,
@@ -31,8 +36,18 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
     },
     onDisconnect: () => {
       console.log('Disconnected from ElevenLabs');
+      // Only show error if we were connected and not intentionally closing
+      if (wasConnectedRef.current && !isClosingRef.current) {
+        setConnectionError(true);
+        toast({
+          title: "Conexión perdida",
+          description: "La conversación se ha interrumpido. Puedes reconectarte.",
+          variant: "destructive",
+        });
+      }
       setTranscript('');
       setAiResponse('');
+      wasConnectedRef.current = false;
     },
     onMessage: (message) => {
       console.log('Message received:', message);
@@ -44,9 +59,10 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
     },
     onError: (error) => {
       console.error('Conversation error:', error);
+      setConnectionError(true);
       toast({
         title: "Error de conversación",
-        description: "Hubo un problema con la conexión de voz",
+        description: "Hubo un problema con la conexión de voz. Intenta reconectar.",
         variant: "destructive",
       });
     },
@@ -62,7 +78,6 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
           // Use output volume when speaking, input when listening
           const level = conversation.isSpeaking ? outputVol : inputVol;
           setAudioLevel(level);
-          console.log('Audio levels - isSpeaking:', conversation.isSpeaking, 'level:', level);
         } catch (e) {
           // Volume methods may not be available
         }
@@ -84,6 +99,8 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
   const startConversation = useCallback(async () => {
     try {
       setIsLoading(true);
+      setConnectionError(false);
+      isClosingRef.current = false;
 
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -106,6 +123,7 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
 
     } catch (error) {
       console.error('Error starting conversation:', error);
+      setConnectionError(true);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : 'No se pudo iniciar la conversación',
@@ -117,16 +135,26 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
   }, [agent.configuredAgentId, conversation, toast]);
 
   const endConversation = useCallback(async () => {
-    await conversation.endSession();
+    isClosingRef.current = true;
+    try {
+      await conversation.endSession();
+    } catch (e) {
+      console.log('Session already ended');
+    }
     onClose();
   }, [conversation, onClose]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      conversation.endSession();
+      isClosingRef.current = true;
+      try {
+        conversation.endSession();
+      } catch (e) {
+        // Session may already be ended
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [conversation]);
 
   return (
     <motion.div 
@@ -242,6 +270,11 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Conectando...
+                  </>
+                ) : connectionError ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Reconectar
                   </>
                 ) : (
                   <>
