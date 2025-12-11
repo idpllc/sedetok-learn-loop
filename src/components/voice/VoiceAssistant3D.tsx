@@ -144,17 +144,21 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
     onClose();
   }, [conversation, onClose]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount only - empty dependency array
   useEffect(() => {
+    const conversationRef = conversation;
     return () => {
       isClosingRef.current = true;
-      try {
-        conversation.endSession();
-      } catch (e) {
-        // Session may already be ended
+      if (conversationRef.status === 'connected') {
+        try {
+          conversationRef.endSession();
+        } catch (e) {
+          // Session may already be ended
+        }
       }
     };
-  }, [conversation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <motion.div 
