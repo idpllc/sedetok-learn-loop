@@ -1,9 +1,17 @@
 import { VOICE_AGENTS, VoiceAgent } from '@/lib/voiceAgents';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+import sofiaAvatar from '@/assets/avatars/sofia-avatar.png';
+import alejandroAvatar from '@/assets/avatars/alejandro-avatar.png';
+
+const AGENT_AVATARS: Record<string, string> = {
+  sofia: sofiaAvatar,
+  alejandro: alejandroAvatar,
+};
 
 interface AgentSelectorProps {
   onSelectAgent: (agent: VoiceAgent & { configuredAgentId: string }) => void;
@@ -40,6 +48,11 @@ export function AgentSelector({ onSelectAgent, onClose }: AgentSelectorProps) {
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <Avatar className="w-16 h-16 rounded-lg">
+                    <AvatarImage 
+                      src={AGENT_AVATARS[agent.id]} 
+                      alt={agent.name}
+                      className="object-cover"
+                    />
                     <AvatarFallback 
                       className="rounded-lg text-xl text-white"
                       style={{ backgroundColor: agent.color }}
