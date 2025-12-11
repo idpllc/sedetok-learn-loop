@@ -131,34 +131,25 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   useEffect(() => {
     if (initialPoseApplied.current) return;
     
-    // Set arms down from T-pose to natural resting position
+    // Set arms down from T-pose - RPM uses Y-up, Z-forward coordinate system
+    // LeftArm: positive X rotation = arm goes down and back
     if (leftArmBoneRef.current) {
-      leftArmBoneRef.current.rotation.z = 1.2; // Rotate arm down
-      leftArmBoneRef.current.rotation.x = 0.1; // Slight forward
+      leftArmBoneRef.current.rotation.set(0.4, 0, 0.9); // x=back, z=down
     }
     if (rightArmBoneRef.current) {
-      rightArmBoneRef.current.rotation.z = -1.2; // Rotate arm down (opposite direction)
-      rightArmBoneRef.current.rotation.x = 0.1; // Slight forward
+      rightArmBoneRef.current.rotation.set(0.4, 0, -0.9); // mirror for right side
     }
     
-    // Bend forearms slightly
+    // Bend forearms for natural look
     if (leftForeArmRef.current) {
-      leftForeArmRef.current.rotation.y = 0.3; // Slight bend
+      leftForeArmRef.current.rotation.set(0, 0.5, 0); // bend elbow
     }
     if (rightForeArmRef.current) {
-      rightForeArmRef.current.rotation.y = -0.3; // Slight bend (opposite)
-    }
-    
-    // Relax shoulders
-    if (leftShoulderRef.current) {
-      leftShoulderRef.current.rotation.z = 0.05;
-    }
-    if (rightShoulderRef.current) {
-      rightShoulderRef.current.rotation.z = -0.05;
+      rightForeArmRef.current.rotation.set(0, -0.5, 0); // bend elbow (mirror)
     }
     
     initialPoseApplied.current = true;
-  }, [morphMeshes]); // Run after bones are found
+  }, [morphMeshes]);
 
   // Eye blink state
   const blinkStateRef = useRef({ nextBlink: 0, isBlinking: false, blinkProgress: 0 });
@@ -362,28 +353,28 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
 
     // === ARM SWAY (around resting position) ===
     if (leftArmBoneRef.current) {
-      // Base position is 1.2 (arm down), add subtle movement
-      leftArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
-        leftArmBoneRef.current.rotation.z,
-        1.2 + Math.sin(time * 0.5) * 0.04,
-        0.06
-      );
+      // Base: x=0.4, z=0.9, add subtle movement
       leftArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         leftArmBoneRef.current.rotation.x,
-        0.1 + Math.sin(time * 0.4) * 0.02,
+        0.4 + Math.sin(time * 0.4) * 0.02,
+        0.06
+      );
+      leftArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        leftArmBoneRef.current.rotation.z,
+        0.9 + Math.sin(time * 0.5) * 0.03,
         0.06
       );
     }
     if (rightArmBoneRef.current) {
-      // Base position is -1.2 (arm down), add subtle movement
-      rightArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
-        rightArmBoneRef.current.rotation.z,
-        -1.2 + Math.sin(time * 0.5 + 1) * 0.04,
-        0.06
-      );
+      // Base: x=0.4, z=-0.9 (mirrored)
       rightArmBoneRef.current.rotation.x = THREE.MathUtils.lerp(
         rightArmBoneRef.current.rotation.x,
-        0.1 + Math.sin(time * 0.4 + 1) * 0.02,
+        0.4 + Math.sin(time * 0.4 + 1) * 0.02,
+        0.06
+      );
+      rightArmBoneRef.current.rotation.z = THREE.MathUtils.lerp(
+        rightArmBoneRef.current.rotation.z,
+        -0.9 + Math.sin(time * 0.5 + 1) * 0.03,
         0.06
       );
     }
@@ -392,14 +383,14 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
     if (leftForeArmRef.current) {
       leftForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
         leftForeArmRef.current.rotation.y,
-        0.3 + Math.sin(time * 0.6) * 0.03,
+        0.5 + Math.sin(time * 0.6) * 0.03,
         0.06
       );
     }
     if (rightForeArmRef.current) {
       rightForeArmRef.current.rotation.y = THREE.MathUtils.lerp(
         rightForeArmRef.current.rotation.y,
-        -0.3 + Math.sin(time * 0.6 + 0.5) * 0.03,
+        -0.5 + Math.sin(time * 0.6 + 0.5) * 0.03,
         0.06
       );
     }
