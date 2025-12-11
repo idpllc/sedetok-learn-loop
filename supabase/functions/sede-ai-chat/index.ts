@@ -123,6 +123,7 @@ ${vocationalProfile ? `Perfil Vocacional: ${vocationalProfile.summary.slice(0, 1
 - Identificar áreas de oportunidad y fortalezas
 - Motivar con feedback constructivo y celebrar logros
 - Guiar en el desarrollo de habilidades y exploración vocacional
+- Crear itinerarios de estudio personalizados cuando el usuario lo solicite
 
 ⚠️ REGLA CRÍTICA - NUNCA INVENTAR CONTENIDO:
 - JAMÁS sugieras contenido, rutas o recursos que no hayas encontrado mediante las herramientas de búsqueda
@@ -132,6 +133,12 @@ ${vocationalProfile ? `Perfil Vocacional: ${vocationalProfile.summary.slice(0, 1
 - Si los resultados de búsqueda están vacíos, NO hagas recomendaciones específicas
 
 📚 CUÁNDO USAR CADA HERRAMIENTA:
+
+Usa generate_study_itinerary cuando:
+- Usuario pida un "itinerario de estudio", "plan de estudio", "cronograma de aprendizaje"
+- Diga: "hazme un itinerario", "quiero un plan para estudiar", "organiza mi estudio de [tema]"
+- Necesite una estructura organizada para aprender un tema completo
+- IMPORTANTE: Si el usuario pide un itinerario pero NO especifica el tema, PRIMERO pregúntale cuál es el tema que desea estudiar
 
 Usa search_learning_paths cuando:
 - Usuario quiera "estudiar [tema]" de forma completa
@@ -162,7 +169,8 @@ ${userContext}
 - Usa emojis estratégicamente
 - Si no encuentras contenido: "No encontré [X] específico sobre ese tema, pero puedo buscar contenido relacionado"
 - NO incluyas JSON ni datos estructurados en tu respuesta, solo texto conversacional
-- Las tarjetas visuales se mostrarán automáticamente`;
+- Las tarjetas visuales se mostrarán automáticamente
+- Para itinerarios: presenta la información de forma clara y estructurada con emojis para cada sección`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -219,6 +227,36 @@ ${userContext}
               }
             },
             required: ["query"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "generate_study_itinerary",
+          description: "Genera un itinerario de estudio estructurado para un tema específico. Usa cuando el usuario pida un plan de estudio, cronograma o itinerario de aprendizaje. El itinerario incluirá subtemas organizados con tiempos estimados y recursos sugeridos.",
+          parameters: {
+            type: "object",
+            properties: {
+              topic: {
+                type: "string",
+                description: "El tema principal que el usuario quiere estudiar"
+              },
+              duration_days: {
+                type: "number",
+                description: "Número de días para completar el itinerario (default: 7)"
+              },
+              hours_per_day: {
+                type: "number",
+                description: "Horas de estudio por día (default: 2)"
+              },
+              difficulty: {
+                type: "string",
+                description: "Nivel de dificultad: 'basico', 'intermedio', 'avanzado'",
+                enum: ["basico", "intermedio", "avanzado"]
+              }
+            },
+            required: ["topic"]
           }
         }
       }
@@ -582,6 +620,171 @@ ${userContext}
                     }]
                   })}\n\n`;
                   controller.enqueue(encoder.encode(markerChunk));
+                  controller.close();
+                  break;
+                }
+                
+                controller.enqueue(value);
+              }
+            } catch (error) {
+              controller.error(error);
+            }
+          }
+        });
+
+        return new Response(stream, {
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+        });
+      }
+
+      if (toolCall.function.name === "generate_study_itinerary") {
+        const args = JSON.parse(toolCall.function.arguments);
+        const topic = args.topic || "";
+        const durationDays = args.duration_days || 7;
+        const hoursPerDay = args.hours_per_day || 2;
+        const difficulty = args.difficulty || "intermedio";
+
+        console.log('Generating study itinerary for:', topic, 'duration:', durationDays, 'days');
+
+        // Generate itinerary using AI
+        const itineraryResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { 
+                role: "system", 
+                content: `Eres un experto en diseño curricular y pedagogía. Tu tarea es crear itinerarios de estudio detallados y estructurados.
+
+REGLAS:
+- Genera un itinerario de estudio para el tema proporcionado
+- El itinerario debe tener ${durationDays} días
+- Cada día tiene aproximadamente ${hoursPerDay} horas de estudio
+- Nivel de dificultad: ${difficulty}
+- Divide el tema en subtemas lógicos y progresivos
+- Incluye objetivos de aprendizaje para cada día
+- Sugiere actividades prácticas cuando sea relevante
+- Sé específico con los subtemas, no genérico
+
+FORMATO DE RESPUESTA (JSON):
+{
+  "topic": "Tema principal",
+  "total_days": número,
+  "hours_per_day": número,
+  "difficulty": "nivel",
+  "overview": "Descripción breve del itinerario",
+  "days": [
+    {
+      "day": 1,
+      "title": "Título del día",
+      "subtopics": ["Subtema 1", "Subtema 2"],
+      "objectives": ["Objetivo 1", "Objetivo 2"],
+      "activities": ["Actividad sugerida"],
+      "estimated_hours": número
+    }
+  ],
+  "final_project": "Descripción de un proyecto final opcional"
+}`
+              },
+              { role: "user", content: `Crea un itinerario de estudio completo para: "${topic}"` }
+            ],
+            temperature: 0.7,
+          }),
+        });
+
+        if (!itineraryResponse.ok) {
+          console.error('Error generating itinerary:', itineraryResponse.status);
+          throw new Error(`Failed to generate itinerary: ${itineraryResponse.status}`);
+        }
+
+        const itineraryData = await itineraryResponse.json();
+        let itinerary = null;
+        
+        try {
+          const content = itineraryData.choices?.[0]?.message?.content || "";
+          // Extract JSON from the response
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            itinerary = JSON.parse(jsonMatch[0]);
+          }
+        } catch (parseError) {
+          console.error('Error parsing itinerary JSON:', parseError);
+        }
+
+        console.log('Generated itinerary:', itinerary?.topic);
+
+        // Second call to AI to present the itinerary in a conversational way
+        const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: systemPrompt + `\n\nIMPORTANTE: Presenta el itinerario de estudio de forma clara y estructurada. Usa emojis para cada día (📅, 📖, ✏️, 🎯, etc.). Hazlo visualmente atractivo con saltos de línea y formato claro.` },
+              ...messages,
+              { role: "user", content: message },
+              choice.message,
+              {
+                role: "tool",
+                tool_call_id: toolCall.id,
+                name: toolCall.function.name,
+                content: JSON.stringify({
+                  itinerary: itinerary,
+                  message: itinerary 
+                    ? `Itinerario generado para "${itinerary.topic}" con ${itinerary.total_days} días de estudio.`
+                    : `No se pudo generar el itinerario. Por favor, intenta de nuevo.`
+                })
+              }
+            ],
+            stream: true,
+            temperature: 0.8,
+          }),
+        });
+
+        if (!finalResponse.ok) {
+          if (finalResponse.status === 429) {
+            return new Response(JSON.stringify({ error: "Límite de solicitudes excedido, intenta más tarde." }), {
+              status: 429,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          if (finalResponse.status === 402) {
+            return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
+              status: 402,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          throw new Error(`AI gateway error: ${finalResponse.status}`);
+        }
+
+        // Stream the response and append the itinerary data marker at the end
+        const reader = finalResponse.body!.getReader();
+        const encoder = new TextEncoder();
+
+        const stream = new ReadableStream({
+          async start(controller) {
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                
+                if (done) {
+                  // Append the itinerary data marker at the end
+                  if (itinerary) {
+                    const marker = `\n\n|||ITINERARY_DATA:${JSON.stringify(itinerary)}|||`;
+                    const markerChunk = `data: ${JSON.stringify({
+                      choices: [{
+                        delta: { content: marker }
+                      }]
+                    })}\n\n`;
+                    controller.enqueue(encoder.encode(markerChunk));
+                  }
                   controller.close();
                   break;
                 }
