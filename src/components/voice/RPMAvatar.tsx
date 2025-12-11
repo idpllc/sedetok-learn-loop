@@ -61,15 +61,104 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
     };
   }, [actions, mixer]);
 
-  // Animate lip-sync based on speaking state
+  // Eye blink state
+  const blinkStateRef = useRef({ nextBlink: 0, isBlinking: false, blinkProgress: 0 });
+  
+  // Animate lip-sync, blinking, and eye movement
   useFrame(() => {
     const now = performance.now();
     const morphSmoothing = 0.25;
+    const time = now * 0.001;
 
+    // === EYE BLINKING ===
+    const blinkState = blinkStateRef.current;
+    
+    // Schedule next blink (random interval 2-5 seconds)
+    if (now > blinkState.nextBlink && !blinkState.isBlinking) {
+      blinkState.isBlinking = true;
+      blinkState.blinkProgress = 0;
+    }
+    
+    if (blinkState.isBlinking) {
+      blinkState.blinkProgress += 0.15; // Speed of blink
+      
+      // Blink curve: quick close, quick open
+      let blinkValue = 0;
+      if (blinkState.blinkProgress < 0.5) {
+        blinkValue = blinkState.blinkProgress * 2; // Close
+      } else if (blinkState.blinkProgress < 1) {
+        blinkValue = 1 - (blinkState.blinkProgress - 0.5) * 2; // Open
+      } else {
+        blinkState.isBlinking = false;
+        blinkState.nextBlink = now + 2000 + Math.random() * 3000; // Next blink in 2-5s
+        blinkValue = 0;
+      }
+      
+      // Apply blink to both eyes
+      morphMeshes.forEach((mesh) => {
+        if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
+        
+        const leftBlinkIndex = mesh.morphTargetDictionary['eyeBlinkLeft'];
+        const rightBlinkIndex = mesh.morphTargetDictionary['eyeBlinkRight'];
+        
+        if (leftBlinkIndex !== undefined) {
+          mesh.morphTargetInfluences[leftBlinkIndex] = blinkValue;
+        }
+        if (rightBlinkIndex !== undefined) {
+          mesh.morphTargetInfluences[rightBlinkIndex] = blinkValue;
+        }
+      });
+    }
+
+    // === SUBTLE EYE MOVEMENT ===
+    const eyeLookX = Math.sin(time * 0.7) * 0.15; // Horizontal movement
+    const eyeLookY = Math.sin(time * 0.5 + 1) * 0.1; // Vertical movement
+    
+    morphMeshes.forEach((mesh) => {
+      if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
+      
+      // Horizontal eye movement
+      const lookLeftIndex = mesh.morphTargetDictionary['eyeLookOutLeft'];
+      const lookRightIndex = mesh.morphTargetDictionary['eyeLookOutRight'];
+      const lookInLeftIndex = mesh.morphTargetDictionary['eyeLookInLeft'];
+      const lookInRightIndex = mesh.morphTargetDictionary['eyeLookInRight'];
+      
+      if (eyeLookX > 0) {
+        // Looking right
+        if (lookRightIndex !== undefined) mesh.morphTargetInfluences[lookRightIndex] = eyeLookX;
+        if (lookInLeftIndex !== undefined) mesh.morphTargetInfluences[lookInLeftIndex] = eyeLookX;
+        if (lookLeftIndex !== undefined) mesh.morphTargetInfluences[lookLeftIndex] = 0;
+        if (lookInRightIndex !== undefined) mesh.morphTargetInfluences[lookInRightIndex] = 0;
+      } else {
+        // Looking left
+        if (lookLeftIndex !== undefined) mesh.morphTargetInfluences[lookLeftIndex] = -eyeLookX;
+        if (lookInRightIndex !== undefined) mesh.morphTargetInfluences[lookInRightIndex] = -eyeLookX;
+        if (lookRightIndex !== undefined) mesh.morphTargetInfluences[lookRightIndex] = 0;
+        if (lookInLeftIndex !== undefined) mesh.morphTargetInfluences[lookInLeftIndex] = 0;
+      }
+      
+      // Vertical eye movement
+      const lookUpLeftIndex = mesh.morphTargetDictionary['eyeLookUpLeft'];
+      const lookUpRightIndex = mesh.morphTargetDictionary['eyeLookUpRight'];
+      const lookDownLeftIndex = mesh.morphTargetDictionary['eyeLookDownLeft'];
+      const lookDownRightIndex = mesh.morphTargetDictionary['eyeLookDownRight'];
+      
+      if (eyeLookY > 0) {
+        if (lookUpLeftIndex !== undefined) mesh.morphTargetInfluences[lookUpLeftIndex] = eyeLookY;
+        if (lookUpRightIndex !== undefined) mesh.morphTargetInfluences[lookUpRightIndex] = eyeLookY;
+        if (lookDownLeftIndex !== undefined) mesh.morphTargetInfluences[lookDownLeftIndex] = 0;
+        if (lookDownRightIndex !== undefined) mesh.morphTargetInfluences[lookDownRightIndex] = 0;
+      } else {
+        if (lookDownLeftIndex !== undefined) mesh.morphTargetInfluences[lookDownLeftIndex] = -eyeLookY;
+        if (lookDownRightIndex !== undefined) mesh.morphTargetInfluences[lookDownRightIndex] = -eyeLookY;
+        if (lookUpLeftIndex !== undefined) mesh.morphTargetInfluences[lookUpLeftIndex] = 0;
+        if (lookUpRightIndex !== undefined) mesh.morphTargetInfluences[lookUpRightIndex] = 0;
+      }
+    });
+
+    // === LIP SYNC ===
     if (isSpeaking) {
-      // If we have morph meshes with visemes, use them
       if (morphMeshes.length > 0) {
-        // Cycle through visemes when speaking
         if (now - lastUpdateRef.current > 80 + Math.random() * 80) {
           const speakingVisemes = ['viseme_aa', 'viseme_E', 'viseme_I', 'viseme_O', 'viseme_U', 'viseme_PP', 'viseme_FF', 'viseme_TH', 'viseme_DD', 'viseme_kk', 'viseme_SS', 'viseme_nn', 'viseme_RR'];
           const randomIndex = Math.floor(Math.random() * speakingVisemes.length);
@@ -77,7 +166,6 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
           lastUpdateRef.current = now;
         }
 
-        // Apply current viseme with intensity based on audio level
         const intensity = Math.max(0.3, Math.min(1, 0.4 + (audioLevel * 0.8)));
         
         morphMeshes.forEach((mesh) => {
@@ -98,7 +186,6 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
         });
       }
       
-      // Fallback: animate jaw bone if no morph targets
       if (jawBoneRef.current) {
         const jawIntensity = Math.max(0.05, audioLevel * 0.15);
         const targetRotation = -jawIntensity + Math.sin(now * 0.02) * 0.03;
@@ -109,7 +196,6 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
         );
       }
     } else {
-      // Reset to silent viseme when not speaking
       morphMeshes.forEach((mesh) => {
         if (!mesh.morphTargetDictionary || !mesh.morphTargetInfluences) return;
         
@@ -126,7 +212,6 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
         });
       });
       
-      // Reset jaw bone
       if (jawBoneRef.current) {
         jawBoneRef.current.rotation.x = THREE.MathUtils.lerp(
           jawBoneRef.current.rotation.x,
@@ -136,9 +221,8 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
       }
     }
 
-    // Subtle idle animation - slight head movement
+    // Subtle idle head movement
     if (group.current) {
-      const time = now * 0.001;
       group.current.rotation.y = Math.sin(time * 0.5) * 0.03;
       group.current.rotation.x = Math.sin(time * 0.3) * 0.01;
     }
