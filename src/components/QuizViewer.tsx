@@ -627,6 +627,9 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const normalizedScore = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
 
   if (isCompleted) {
+    const correctAnswersCount = Object.values(questionResults).filter(Boolean).length;
+    const incorrectAnswersCount = questions.length - correctAnswersCount;
+    
     if (!showResultsImmediately) {
       return (
         <div className="h-full flex items-center justify-center p-6">
@@ -640,7 +643,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                 </p>
               </div>
               <Button onClick={onComplete} size="lg" className="w-full">
-                Cerrar
+                Salir
               </Button>
             </CardContent>
           </Card>
@@ -649,24 +652,104 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     }
     
     return (
-      <div className="h-full flex items-center justify-center p-6">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 md:p-8 text-center space-y-6">
-            <div className="text-6xl">{normalizedScore >= 60 ? "🎉" : "📚"}</div>
-            <div>
-              <h3 className="text-2xl font-bold mb-2">Quiz Completado</h3>
-              <p className="text-4xl font-bold text-primary mb-2">
-                {normalizedScore} / 100
-              </p>
-              <p className="text-muted-foreground">
-                {normalizedScore >= 60 ? "¡Excelente trabajo!" : "Sigue practicando"}
-              </p>
-            </div>
-            <Button onClick={onComplete} size="lg" className="w-full">
-              Cerrar
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="h-full overflow-y-auto p-4 md:p-6">
+        <div className="w-full max-w-2xl mx-auto space-y-6">
+          {/* Score Header */}
+          <Card>
+            <CardContent className="p-6 md:p-8 text-center space-y-4">
+              <div className="text-6xl">{normalizedScore >= 60 ? "🎉" : "📚"}</div>
+              <div>
+                <h3 className="text-2xl font-bold mb-2">Quiz Completado</h3>
+                <p className="text-4xl font-bold text-primary mb-2">
+                  {normalizedScore} / 100
+                </p>
+                <p className="text-muted-foreground">
+                  {normalizedScore >= 60 ? "¡Excelente trabajo!" : "Sigue practicando"}
+                </p>
+              </div>
+              
+              {/* Summary Stats */}
+              <div className="flex justify-center gap-8 pt-4 border-t">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-green-500">
+                    <Check className="h-5 w-5" />
+                    <span className="text-2xl font-bold">{correctAnswersCount}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Correctas</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1 text-red-500">
+                    <X className="h-5 w-5" />
+                    <span className="text-2xl font-bold">{incorrectAnswersCount}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Incorrectas</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Questions Review */}
+          <div className="space-y-3">
+            <h4 className="font-semibold text-lg">Revisión de respuestas</h4>
+            {questions.map((q, index) => {
+              const isCorrect = questionResults[index];
+              const userAnswer = userAnswers[index];
+              const selectedOption = q.quiz_options.find(opt => opt.id === userAnswer);
+              const correctOption = q.quiz_options.find(opt => opt.is_correct);
+              
+              return (
+                <Card key={q.id} className={`border-l-4 ${isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isCorrect ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                        {isCorrect ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm mb-1">Pregunta {index + 1}</p>
+                        <div 
+                          className="text-sm text-muted-foreground line-clamp-2"
+                          dangerouslySetInnerHTML={{ __html: q.question_text }}
+                        />
+                        {q.question_type === 'short_answer' || q.question_type === 'open_ended' ? (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-sm">
+                              <span className="text-muted-foreground">Tu respuesta: </span>
+                              <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>{userAnswer || 'Sin respuesta'}</span>
+                            </p>
+                            {!isCorrect && correctOption && (
+                              <p className="text-sm">
+                                <span className="text-muted-foreground">Respuesta correcta: </span>
+                                <span className="text-green-600">{correctOption.option_text}</span>
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-sm">
+                              <span className="text-muted-foreground">Tu respuesta: </span>
+                              <span className={isCorrect ? 'text-green-600' : 'text-red-600'}>{selectedOption?.option_text || 'Sin respuesta'}</span>
+                            </p>
+                            {!isCorrect && correctOption && (
+                              <p className="text-sm">
+                                <span className="text-muted-foreground">Respuesta correcta: </span>
+                                <span className="text-green-600">{correctOption.option_text}</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Exit Button */}
+          <Button onClick={onComplete} size="lg" className="w-full">
+            Salir
+          </Button>
+        </div>
       </div>
     );
   }
