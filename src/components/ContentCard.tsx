@@ -766,7 +766,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       )}
       
       {/* Evaluation Event Modal */}
-      {(contentType === 'quiz' || contentType === 'game') && user && user.id === creatorId && (
+      {(contentType === 'quiz' || contentType === 'game') && user && (user.id === creatorId || userProfile?.tipo_usuario === 'Docente') && (
         <CreateUnifiedEvaluationEvent
           quizId={contentType === 'quiz' ? id : undefined}
           gameId={contentType === 'game' ? id : undefined}
