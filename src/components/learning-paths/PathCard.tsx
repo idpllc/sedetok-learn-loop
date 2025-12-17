@@ -22,16 +22,22 @@ interface PathCardProps {
 export const PathCard = ({ path }: PathCardProps) => {
   
   const { user } = useAuth();
-  const { updatePath, deletePath } = useLearningPaths();
+  const { updatePath, deletePath } = useLearningPaths(user?.id);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const isCreator = Boolean(user?.id && path?.creator_id && user.id === path.creator_id);
 
-  const handleToggleVisibility = async () => {
-    await updatePath.mutateAsync({
-      id: path.id,
-      updates: { is_public: !path.is_public },
-    });
+  const handleToggleVisibility = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await updatePath.mutateAsync({
+        id: path.id,
+        updates: { is_public: !path.is_public },
+      });
+    } catch (error) {
+      console.error("Error toggling visibility:", error);
+    }
   };
 
   const handleDelete = async () => {
@@ -142,7 +148,7 @@ export const PathCard = ({ path }: PathCardProps) => {
                       Editar
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleToggleVisibility}>
+                  <DropdownMenuItem onClick={(e) => handleToggleVisibility(e)}>
                     {path.is_public ? (
                       <>
                         <EyeOff className="w-4 h-4 mr-2" />
