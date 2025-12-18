@@ -2,9 +2,14 @@ import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
 import { Maximize2, Loader2, Download } from "lucide-react";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+// Configure PDF.js worker for pdfjs-dist 5.x
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  `pdfjs-dist/build/pdf.worker.min.mjs`,
+  import.meta.url
+).toString();
 
 interface PDFViewerProps {
   fileUrl: string;
