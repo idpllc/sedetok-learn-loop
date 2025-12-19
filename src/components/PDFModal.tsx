@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -43,10 +44,24 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
       setScale(1.0);
 
       try {
+        const { data, error } = await supabase.functions.invoke("download-file", {
+          body: {
+            url: fileUrl,
+            filename: fileUrl.split("/").pop() || "documento.pdf",
+          },
+        });
+
+        if (!error && !(data as any)?.fallback) {
+          const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
+          const buf = await blob.arrayBuffer();
+          if (!cancelled) setPdfData(buf);
+          return;
+        }
+
         const res = await fetch(fileUrl, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.arrayBuffer();
-        if (!cancelled) setPdfData(data);
+        const buf = await res.arrayBuffer();
+        if (!cancelled) setPdfData(buf);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error("Error fetching PDF:", { fileUrl, error: msg });

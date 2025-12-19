@@ -305,40 +305,38 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   if (!resourceUrl) return;
                   
                   try {
-                    // Use edge function to download file (bypasses CORS)
-                    const { data, error } = await supabase.functions.invoke('download-file', {
-                      body: { 
+                    // Use backend function to download file (bypasses CORS) as binary
+                    const { data, error } = await supabase.functions.invoke("download-file", {
+                      body: {
                         url: resourceUrl,
-                        filename: resourceUrl.split('/').pop() || 'recurso'
-                      }
+                        filename: resourceUrl.split("/").pop() || "recurso",
+                      },
                     });
-                    
+
                     if (error) throw error;
-                    
-                    // Check if it's a fallback response
-                    if (data?.fallback) {
-                      // Open URL directly in new tab
-                      window.open(resourceUrl, '_blank', 'noopener,noreferrer');
+
+                    // Fallback path: open URL directly in new tab
+                    if ((data as any)?.fallback) {
+                      window.open(resourceUrl, "_blank", "noopener,noreferrer");
                     } else {
-                      // Create blob from response and trigger download
-                      const blob = new Blob([data], { type: 'application/octet-stream' });
+                      // When the function returns Content-Type: application/octet-stream,
+                      // supabase.functions.invoke() gives us a Blob.
+                      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
                       const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement('a');
+                      const link = document.createElement("a");
                       link.href = url;
-                      link.download = resourceUrl.split('/').pop() || 'recurso';
+                      link.download = resourceUrl.split("/").pop() || "recurso";
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
                       window.URL.revokeObjectURL(url);
                     }
-                    
-                    if (onDocumentDownload) {
-                      onDocumentDownload();
-                    }
+
+                    onDocumentDownload?.();
                   } catch (error) {
-                    console.error('Error downloading file:', error);
+                    console.error("Error downloading file:", error);
                     // Fallback: open in new tab
-                    window.open(resourceUrl, '_blank', 'noopener,noreferrer');
+                    window.open(resourceUrl, "_blank", "noopener,noreferrer");
                   }
                 }}
                 className="flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform pointer-events-auto"
