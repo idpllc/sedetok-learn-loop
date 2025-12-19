@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
 import { Maximize2, Loader2, Download } from "lucide-react";
@@ -20,6 +20,39 @@ interface PDFViewerProps {
 export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }: PDFViewerProps) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      setErrorMessage(null);
+      setPdfData(null);
+      setNumPages(null);
+
+      try {
+        const res = await fetch(fileUrl, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.arrayBuffer();
+        if (!cancelled) setPdfData(data);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.error("Error fetching PDF:", { fileUrl, error: msg });
+        if (!cancelled) {
+          setErrorMessage("Se ha producido un error al cargar el documento PDF.");
+          setLoading(false);
+        }
+      }
+    };
+
+    if (fileUrl) load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fileUrl]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -27,17 +60,18 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
   };
 
   const onDocumentLoadError = (error: Error) => {
-    console.error("Error loading PDF:", error);
+    console.error("Error loading PDF (react-pdf):", { fileUrl, error });
+    setErrorMessage("Se ha producido un error al cargar el documento PDF.");
     setLoading(false);
   };
 
   const handleDownload = async () => {
-    const filename = fileUrl.split("/").pop() || "documento.pdf";
+    const filename = decodeURIComponent(fileUrl.split("/").pop()?.split("?")[0] || "documento.pdf");
 
     try {
-      const response = await fetch(fileUrl);
-      if (!response.ok) throw new Error("Failed to fetch");
-      const blob = await response.blob();
+      const arrayBuffer = pdfData ?? (await (await fetch(fileUrl)).arrayBuffer());
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -59,25 +93,26 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       )}
-      
+
       <div className="relative w-full h-[500px] overflow-hidden flex items-center justify-center bg-muted">
-        <Document
-          file={fileUrl}
-          onLoadSuccess={onDocumentLoadSuccess}
-          onLoadError={onDocumentLoadError}
-          loading={
-            <div className="flex items-center justify-center h-[500px]">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          }
-        >
-          <Page
-            pageNumber={1}
-            width={Math.min(window.innerWidth * 0.8, 800)}
-            renderTextLayer={true}
-            renderAnnotationLayer={false}
-          />
-        </Document>
+        {errorMessage ? (
+          <div className="px-6 text-center text-sm text-muted-foreground">{errorMessage}</div>
+        ) : (
+          <Document
+            file={pdfData ? { data: pdfData } : null}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
+            loading={
+              <div className="flex items-center justify-center h-[500px]">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            }
+            error={<div className="px-6 text-center text-sm text-muted-foreground">Se ha producido un error al cargar el documento PDF.</div>}
+            noData={<div className="px-6 text-center text-sm text-muted-foreground">Cargando documento…</div>}
+          >
+            <Page pageNumber={1} width={Math.min(window.innerWidth * 0.8, 800)} renderTextLayer renderAnnotationLayer={false} />
+          </Document>
+        )}
       </div>
 
       <div className="absolute bottom-4 right-4 z-20 flex gap-2">
@@ -91,17 +126,13 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
             Descargar
           </Button>
         )}
-        <Button
-          size="sm"
-          onClick={onExpandClick}
-          className="flex items-center gap-2 shadow-lg bg-primary hover:bg-primary/90"
-        >
+        <Button size="sm" onClick={onExpandClick} className="flex items-center gap-2 shadow-lg bg-primary hover:bg-primary/90">
           <Maximize2 className="w-4 h-4" />
           Ampliar recurso
         </Button>
       </div>
 
-      {numPages && (
+      {numPages && !errorMessage && (
         <div className="absolute bottom-4 left-4 z-20">
           <div className="bg-background/90 backdrop-blur-sm px-3 py-1 rounded-md text-sm font-medium shadow-md">
             {numPages} {numPages === 1 ? "página" : "páginas"}
@@ -111,3 +142,4 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
     </div>
   );
 };
+
