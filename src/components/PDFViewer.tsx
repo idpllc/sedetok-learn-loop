@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
 import { Maximize2, Loader2, Download } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -20,6 +21,31 @@ interface PDFViewerProps {
 export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }: PDFViewerProps) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resolvedUrl, setResolvedUrl] = useState<string>(fileUrl);
+
+  const isS3Url = useMemo(
+    () => fileUrl.includes("amazonaws.com") && fileUrl.includes(".s3."),
+    [fileUrl]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setResolvedUrl(fileUrl);
+
+    const run = async () => {
+      if (!isS3Url) return;
+      const { data, error } = await supabase.functions.invoke("s3-signed-url", {
+        body: { url: fileUrl },
+      });
+      if (cancelled) return;
+      if (!error && data?.url) setResolvedUrl(data.url);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [fileUrl, isS3Url]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -32,16 +58,16 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
   };
 
   const handleDownload = async () => {
-    const filename = fileUrl.split('/').pop() || 'documento.pdf';
-    
+    const filename = fileUrl.split("/").pop() || "documento.pdf";
+
     try {
-      // For S3 URLs (public), download directly
-      if (fileUrl.includes('s3.') && fileUrl.includes('amazonaws.com')) {
-        const response = await fetch(fileUrl);
-        if (!response.ok) throw new Error('Failed to fetch');
+      const urlToUse = isS3Url ? resolvedUrl : fileUrl;
+      if (isS3Url) {
+        const response = await fetch(urlToUse);
+        if (!response.ok) throw new Error("Failed to fetch");
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
         link.download = filename;
         document.body.appendChild(link);
@@ -50,14 +76,11 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
         window.URL.revokeObjectURL(url);
         return;
       }
-      
-      // For other URLs (Cloudinary, etc), open directly in new tab
-      // This allows the browser to handle the download
-      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+
+      window.open(urlToUse, "_blank", "noopener,noreferrer");
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      // Fallback: open in new tab
-      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      console.error("Error downloading PDF:", error);
+      window.open(fileUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -71,7 +94,7 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
       
       <div className="relative w-full h-[500px] overflow-hidden flex items-center justify-center bg-muted">
         <Document
-          file={fileUrl}
+          file={resolvedUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
           loading={
