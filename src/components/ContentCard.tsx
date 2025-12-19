@@ -299,23 +299,40 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             <div className="absolute inset-0 flex items-center justify-center z-[999]">
               <Button
                 size="lg"
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
                   const resourceUrl = documentUrl || thumbnail;
                   if (!resourceUrl) return;
                   
-                  // For Cloudinary URLs, add fl_attachment parameter to force download
-                  let downloadUrl = resourceUrl;
-                  if (resourceUrl.includes('cloudinary.com')) {
-                    // Insert fl_attachment before the version number (v1234567)
-                    downloadUrl = resourceUrl.replace('/upload/', '/upload/fl_attachment/');
-                  }
-                  
-                  // Open in new tab with download parameter
-                  window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-                  
-                  if (onDocumentDownload) {
-                    onDocumentDownload();
+                  try {
+                    // Use edge function to download file (bypasses CORS)
+                    const { data, error } = await supabase.functions.invoke('download-file', {
+                      body: { 
+                        url: resourceUrl,
+                        filename: resourceUrl.split('/').pop() || 'recurso'
+                      }
+                    });
+                    
+                    if (error) throw error;
+                    
+                    // Create blob from response and trigger download
+                    const blob = new Blob([data], { type: 'application/octet-stream' });
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = resourceUrl.split('/').pop() || 'recurso';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    
+                    if (onDocumentDownload) {
+                      onDocumentDownload();
+                    }
+                  } catch (error) {
+                    console.error('Error downloading file:', error);
+                    // Fallback: open in new tab
+                    window.open(resourceUrl, '_blank', 'noopener,noreferrer');
                   }
                 }}
                 className="flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform pointer-events-auto"

@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -55,25 +56,25 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
 
   const handleDownload = async () => {
     try {
-      // Fetch the file as blob to bypass CORS issues with Cloudinary
-      const response = await fetch(fileUrl);
-      if (!response.ok) throw new Error('Error al descargar el archivo');
+      // Use edge function to download file (bypasses CORS)
+      const { data, error } = await supabase.functions.invoke('download-file', {
+        body: { 
+          url: fileUrl,
+          filename: fileUrl.split('/').pop() || 'documento.pdf'
+        }
+      });
       
-      const blob = await response.blob();
+      if (error) throw error;
+      
+      // Create blob from response and trigger download
+      const blob = new Blob([data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
-      
-      // Create a link and trigger download
       const link = document.createElement('a');
       link.href = url;
-      // Extract filename from URL or use default
-      const urlParts = fileUrl.split('/');
-      const filename = urlParts[urlParts.length - 1] || 'documento.pdf';
-      link.download = filename;
+      link.download = fileUrl.split('/').pop() || 'documento.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Clean up the blob URL
       window.URL.revokeObjectURL(url);
       
       // Notify that document was downloaded
