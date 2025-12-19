@@ -315,16 +315,22 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                     
                     if (error) throw error;
                     
-                    // Create blob from response and trigger download
-                    const blob = new Blob([data], { type: 'application/octet-stream' });
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = resourceUrl.split('/').pop() || 'recurso';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
+                    // Check if it's a fallback response
+                    if (data?.fallback) {
+                      // Open URL directly in new tab
+                      window.open(resourceUrl, '_blank', 'noopener,noreferrer');
+                    } else {
+                      // Create blob from response and trigger download
+                      const blob = new Blob([data], { type: 'application/octet-stream' });
+                      const url = window.URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = resourceUrl.split('/').pop() || 'recurso';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                    }
                     
                     if (onDocumentDownload) {
                       onDocumentDownload();

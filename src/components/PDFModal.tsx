@@ -66,16 +66,21 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
       
       if (error) throw error;
       
-      // Create blob from response and trigger download
-      const blob = new Blob([data], { type: 'application/pdf' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileUrl.split('/').pop() || 'documento.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Check if it's a fallback response
+      if (data?.fallback) {
+        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      } else {
+        // Create blob from response and trigger download
+        const blob = new Blob([data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileUrl.split('/').pop() || 'documento.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
       
       // Notify that document was downloaded
       if (onDownload) {
