@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
 import { Maximize2, Loader2, Download } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -33,10 +34,25 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
       setNumPages(null);
 
       try {
+        // Prefer backend function (bypasses CORS). If it fails (e.g., not logged in), fall back to direct fetch.
+        const { data, error } = await supabase.functions.invoke("download-file", {
+          body: {
+            url: fileUrl,
+            filename: fileUrl.split("/").pop() || "documento.pdf",
+          },
+        });
+
+        if (!error && !(data as any)?.fallback) {
+          const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
+          const buf = await blob.arrayBuffer();
+          if (!cancelled) setPdfData(buf);
+          return;
+        }
+
         const res = await fetch(fileUrl, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.arrayBuffer();
-        if (!cancelled) setPdfData(data);
+        const buf = await res.arrayBuffer();
+        if (!cancelled) setPdfData(buf);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         console.error("Error fetching PDF:", { fileUrl, error: msg });
