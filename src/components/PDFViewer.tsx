@@ -31,15 +31,33 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
     setLoading(false);
   };
 
-  const handleDownload = () => {
-    // For Cloudinary URLs, add fl_attachment parameter to force download
-    let downloadUrl = fileUrl;
-    if (fileUrl.includes('cloudinary.com')) {
-      downloadUrl = fileUrl.replace('/upload/', '/upload/fl_attachment/');
+  const handleDownload = async () => {
+    try {
+      // Fetch the file as blob to bypass CORS issues with Cloudinary
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error('Error al descargar el archivo');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      // Extract filename from URL or use default
+      const urlParts = fileUrl.split('/');
+      const filename = urlParts[urlParts.length - 1] || 'documento.pdf';
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      // Fallback: open in new tab
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
     }
-    
-    // Open in new tab to trigger download
-    window.open(downloadUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
