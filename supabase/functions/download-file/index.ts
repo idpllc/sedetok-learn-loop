@@ -23,11 +23,27 @@ serve(async (req) => {
 
     console.log(`Downloading file from: ${url}`);
 
-    // Fetch the file from the URL
-    const response = await fetch(url);
+    // Fetch the file from the URL with browser-like headers
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': url,
+      }
+    });
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch file: ${response.status} ${response.statusText}`);
+      console.error(`Fetch failed with status: ${response.status} ${response.statusText}`);
+      // If direct fetch fails, return the URL for client-side fallback
+      return new Response(
+        JSON.stringify({ 
+          fallback: true, 
+          url: url,
+          message: 'Direct download not available, use fallback URL'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Get the file content
