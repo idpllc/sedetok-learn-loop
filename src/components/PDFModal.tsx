@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut, Download } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
-import { supabase } from "@/integrations/supabase/client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -27,31 +26,6 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [loading, setLoading] = useState(true);
-  const [resolvedUrl, setResolvedUrl] = useState<string>(fileUrl);
-
-  const isS3Url = useMemo(
-    () => fileUrl.includes("amazonaws.com") && fileUrl.includes(".s3."),
-    [fileUrl]
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    setResolvedUrl(fileUrl);
-
-    const run = async () => {
-      if (!isS3Url) return;
-      const { data, error } = await supabase.functions.invoke("s3-signed-url", {
-        body: { url: fileUrl },
-      });
-      if (cancelled) return;
-      if (!error && data?.url) setResolvedUrl(data.url);
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [fileUrl, isS3Url]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -83,26 +57,18 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
     const filename = fileUrl.split("/").pop() || "documento.pdf";
 
     try {
-      const urlToUse = isS3Url ? resolvedUrl : fileUrl;
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error("Failed to fetch");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-      if (isS3Url) {
-        const response = await fetch(urlToUse);
-        if (!response.ok) throw new Error("Failed to fetch");
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        if (onDownload) onDownload();
-        return;
-      }
-
-      window.open(urlToUse, "_blank", "noopener,noreferrer");
       if (onDownload) onDownload();
     } catch (error) {
       console.error("Error downloading PDF:", error);
@@ -193,7 +159,7 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
           
           <div className="flex justify-center">
             <Document
-                file={resolvedUrl}
+              file={fileUrl}
               onLoadSuccess={onDocumentLoadSuccess}
               onLoadError={onDocumentLoadError}
               loading={
