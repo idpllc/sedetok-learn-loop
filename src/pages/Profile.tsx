@@ -4,8 +4,6 @@ import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
-import { PDFViewer } from "@/components/PDFViewer";
-import { PDFModal } from "@/components/PDFModal";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -92,8 +90,6 @@ const Profile = () => {
   const [deletePathDialogOpen, setDeletePathDialogOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const [deleteCourseDialogOpen, setDeleteCourseDialogOpen] = useState(false);
-  const [pdfModalOpen, setPdfModalOpen] = useState(false);
-  const [selectedPdf, setSelectedPdf] = useState<{ url: string; title: string } | null>(null);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
   const { likedContent, savedContent, sharedContent, isLoading: activityLoading } = useUserActivity();
   const { updateProfile } = useProfileUpdate();
@@ -109,10 +105,6 @@ const Profile = () => {
     navigate("/auth", { replace: true });
   };
 
-  const handleExpandPdf = (url: string, title: string) => {
-    setSelectedPdf({ url, title });
-    setPdfModalOpen(true);
-  };
 
   useEffect(() => {
     if (!authLoading && !user && isOwnProfile) {
@@ -988,15 +980,6 @@ const Profile = () => {
         />
       )}
 
-      {/* PDF Modal */}
-      {selectedPdf && (
-        <PDFModal
-          open={pdfModalOpen}
-          onOpenChange={setPdfModalOpen}
-          fileUrl={selectedPdf.url}
-          title={selectedPdf.title}
-        />
-      )}
     </div>
     </>
   );

@@ -9,8 +9,6 @@ import { useViews } from "@/hooks/useViews";
 import { useXP } from "@/hooks/useXP";
 import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
-import { PDFViewer } from "./PDFViewer";
-import { PDFModal } from "./PDFModal";
 import { ReadingModal } from "./ReadingModal";
 import { QuizViewer } from "./QuizViewer";
 import { GameViewer } from "./GameViewer";
@@ -124,14 +122,12 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   });
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
-  const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [gameModalOpen, setGameModalOpen] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showPdfContent, setShowPdfContent] = useState(true);
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('videoMuted');
     return saved ? JSON.parse(saved) : false;
@@ -217,9 +213,6 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     }
   };
 
-  const handleExpandPdf = () => {
-    setPdfModalOpen(true);
-  };
 
   const handleExpandReading = () => {
     setIsReadingModalOpen(true);
@@ -704,16 +697,6 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         onSuccess={handleAuthSuccess}
       />
 
-      {/* PDF Modal */}
-      {documentUrl && (
-        <PDFModal
-          open={pdfModalOpen}
-          onOpenChange={setPdfModalOpen}
-          fileUrl={documentUrl}
-          title={title}
-          onDownload={onDocumentDownload}
-        />
-      )}
 
       {/* Reading Modal */}
       {richText && (
