@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useCloudinary = () => {
+type ResourceType = "image" | "document" | "video";
+
+export const useS3Upload = () => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const uploadFile = async (file: File, resourceType: "image" | "video" | "raw" = "raw") => {
+  const uploadFile = async (file: File, resourceType: ResourceType = "document") => {
     setUploading(true);
     try {
       const formData = new FormData();

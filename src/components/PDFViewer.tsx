@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { Button } from "./ui/button";
 import { Maximize2, Loader2, Download } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -33,32 +32,28 @@ export const PDFViewer = ({ fileUrl, onExpandClick, showDownloadButton = false }
   };
 
   const handleDownload = async () => {
+    const filename = fileUrl.split('/').pop() || 'documento.pdf';
+    
     try {
-      // Use edge function to download file (bypasses CORS)
-      const { data, error } = await supabase.functions.invoke('download-file', {
-        body: { 
-          url: fileUrl,
-          filename: fileUrl.split('/').pop() || 'documento.pdf'
-        }
-      });
-      
-      if (error) throw error;
-      
-      // Check if it's a fallback response
-      if (data?.fallback) {
-        window.open(fileUrl, '_blank', 'noopener,noreferrer');
-      } else {
-        // Create blob from response and trigger download
-        const blob = new Blob([data], { type: 'application/pdf' });
+      // For S3 URLs (public), download directly
+      if (fileUrl.includes('s3.') && fileUrl.includes('amazonaws.com')) {
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = fileUrl.split('/').pop() || 'documento.pdf';
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+        return;
       }
+      
+      // For other URLs (Cloudinary, etc), open directly in new tab
+      // This allows the browser to handle the download
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error downloading PDF:', error);
       // Fallback: open in new tab
