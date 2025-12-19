@@ -54,12 +54,18 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
   };
 
   const handleDownload = async () => {
-    const filename = fileUrl.split("/").pop() || "documento.pdf";
+    const filename = decodeURIComponent(fileUrl.split("/").pop()?.split("?")[0] || "documento.pdf");
 
     try {
       const response = await fetch(fileUrl);
       if (!response.ok) throw new Error("Failed to fetch");
-      const blob = await response.blob();
+      
+      // Get the raw ArrayBuffer to preserve binary data integrity
+      const arrayBuffer = await response.arrayBuffer();
+      
+      // Create blob with explicit PDF MIME type
+      const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+      
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -72,6 +78,7 @@ export const PDFModal = ({ open, onOpenChange, fileUrl, title, onDownload }: PDF
       if (onDownload) onDownload();
     } catch (error) {
       console.error("Error downloading PDF:", error);
+      // Fallback: open in new tab for direct download
       window.open(fileUrl, "_blank", "noopener,noreferrer");
     }
   };
