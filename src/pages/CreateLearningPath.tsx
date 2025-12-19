@@ -115,15 +115,15 @@ const CreateLearningPath = () => {
             level: data.level || "",
             language: data.language || "Español",
             category: data.category || "matematicas",
-            is_public: cloneId ? false : (data.is_public || false),
+            is_public: cloneId ? false : (data.is_public ?? false),
             cover_url: data.cover_url || "",
-            enforce_order: data.enforce_order || false,
-            require_quiz_pass: data.require_quiz_pass || false,
-            allow_collaboration: data.allow_collaboration || false,
+            enforce_order: data.enforce_order ?? false,
+            require_quiz_pass: data.require_quiz_pass ?? false,
+            allow_collaboration: data.allow_collaboration ?? false,
             required_routes: data.required_routes || [],
             tipo_aprendizaje: data.tipo_aprendizaje || "",
             estimated_duration: data.estimated_duration || 0,
-            tags: data.tags || [],
+            tags: Array.isArray(data.tags) ? data.tags : [],
           };
           
           setPathData(loadedData);
@@ -142,7 +142,7 @@ const CreateLearningPath = () => {
     };
 
     loadPathData();
-  }, [id, cloneId, navigate, toast, user, clonePath, authLoading]);
+  }, [id, cloneId, user?.id, authLoading]);
 
   const steps = [
     { number: 1, title: "Información Básica", component: PathBasicInfo },
