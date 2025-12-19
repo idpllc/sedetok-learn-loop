@@ -40,42 +40,19 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
   const [requiresPrerequisites, setRequiresPrerequisites] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [showIntelligenceHelp, setShowIntelligenceHelp] = useState(false);
-  // Coerce tags to array for rendering/logic
-  const tagsArray: string[] = Array.isArray(data.tags)
-    ? data.tags
-    : (typeof data.tags === "string"
-        ? (() => { try { const p = JSON.parse(data.tags); return Array.isArray(p) ? p : data.tags.split(/[,;|]/).map((t:string)=>t.trim()).filter(Boolean);} catch { return data.tags.split(/[,;|]/).map((t:string)=>t.trim()).filter(Boolean);} })()
-        : []);
-
-  // Normaliza etiquetas provenientes de la BD (array, string JSON o cadena separada por comas)
-  useEffect(() => {
-    const raw = (data as any)?.tags as any;
-    let normalized: string[] = [];
-
-    if (Array.isArray(raw)) {
-      normalized = raw;
-    } else if (typeof raw === "string") {
+  // Coerce tags to array for rendering/logic - memoized to prevent unnecessary re-renders
+  const tagsArray: string[] = (() => {
+    if (Array.isArray(data.tags)) return data.tags;
+    if (typeof data.tags === "string") {
       try {
-        const parsed = JSON.parse(raw);
-        normalized = Array.isArray(parsed) ? parsed : raw.split(/[,;|]/);
+        const parsed = JSON.parse(data.tags);
+        return Array.isArray(parsed) ? parsed : data.tags.split(/[,;|]/).map((t: string) => t.trim()).filter(Boolean);
       } catch {
-        normalized = raw.split(/[,;|]/);
+        return data.tags.split(/[,;|]/).map((t: string) => t.trim()).filter(Boolean);
       }
     }
-
-    normalized = normalized
-      .map((t) => (t || "").toString().trim())
-      .filter((t) => t.length > 0);
-
-    const current = Array.isArray(data.tags) ? data.tags : [];
-    const different =
-      current.length !== normalized.length ||
-      current.some((t: string, i: number) => t !== normalized[i]);
-
-    if (different) {
-      onChange((prev: any) => ({ ...prev, tags: normalized }));
-    }
-  }, [data.tags]);
+    return [];
+  })();
 
   const grades = [
     { value: "primaria", label: "Primaria" },
