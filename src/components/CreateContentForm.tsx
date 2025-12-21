@@ -61,7 +61,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const navigate = useNavigate();
   const { toast: toastHook } = useToast();
   const { user } = useAuth();
-  const { uploadFile, uploading } = useCloudinary();
+  const { uploadFile, uploadVideo, uploading } = useCloudinary();
   const { createMutation } = useCreateContent();
   const { createQuiz, updateQuiz } = useQuizzes();
   const { createQuestion, deleteQuestion } = useQuizQuestions();
@@ -601,8 +601,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
       if (uploadedFile) {
         if (fileType === 'video') {
-          videoUrl = await uploadFile(uploadedFile, "video");
-          thumbnailUrl = videoUrl.replace(/\.[^/.]+$/, ".jpg");
+          // Videos go to Cloudinary with auto-generated thumbnail
+          const videoResult = await uploadVideo(uploadedFile);
+          videoUrl = videoResult.url;
+          thumbnailUrl = videoResult.thumbnail_url;
         } else if (fileType === 'document') {
           documentUrl = await uploadFile(uploadedFile, "raw");
         } else if (fileType === 'image') {
