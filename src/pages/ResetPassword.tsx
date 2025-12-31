@@ -33,24 +33,30 @@ const ResetPassword = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+    try {
+      const { data, error } = await supabase.functions.invoke('send-password-reset', {
+        body: {
+          email,
+          redirectUrl: `${window.location.origin}/reset-password`,
+        },
       });
-    } else {
+
+      if (error) throw error;
+
       setMode("success");
       toast({
         title: "Correo enviado",
         description: "Revisa tu bandeja de entrada para restablecer tu contraseña",
       });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo enviar el correo de recuperación",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
