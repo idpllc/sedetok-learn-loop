@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +19,16 @@ interface AuthModalProps {
 
 export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+
+  const handleForgotPassword = () => {
+    onOpenChange(false);
+    navigate("/reset-password");
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,6 +207,15 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
                   "Iniciar Sesión"
                 )}
               </Button>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-primary hover:underline"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
             </form>
           </TabsContent>
 
