@@ -8,6 +8,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import AutoLogin from "./pages/AutoLogin";
 import Search from "./pages/Search";
 import Achievements from "./pages/Achievements";
@@ -63,6 +64,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/sedetok" element={<SedeTok />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auto-login" element={<AutoLogin />} />
           <Route path="/search" element={<Search />} />
           <Route path="/achievements" element={<Achievements />} />

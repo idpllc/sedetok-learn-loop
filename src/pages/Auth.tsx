@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -194,6 +194,14 @@ const Auth = () => {
                     placeholder="••••••••"
                     required
                   />
+                </div>
+                <div className="flex justify-end">
+                  <Link 
+                    to="/reset-password" 
+                    className="text-sm text-primary hover:underline"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Cargando..." : "Iniciar Sesión"}
