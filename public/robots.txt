@@ -1,12 +1,14 @@
 # Sitemap
-Sitemap: https://1b5fcdcc-9515-4ad7-a26f-48e6459b8585.lovableproject.com/sitemap.xml
+Sitemap: https://sedefy.com/sitemap.xml
 
 # Robots principales
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Twitterbot
 Allow: /
@@ -14,11 +16,36 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-# Permitir a todos los demás
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+# Permitir a todos los demás bots
 User-agent: *
 Allow: /
+
+# Rutas privadas - no indexar
 Disallow: /admin
 Disallow: /api/
-
-# Crawl delay
-Crawl-delay: 1
+Disallow: /teacher-dashboard
+Disallow: /institution-dashboard
+Disallow: /edit-profile
+Disallow: /edit-content
+Disallow: /edit-game
+Disallow: /create-content
+Disallow: /create-course
+Disallow: /create-learning-path
+Disallow: /quiz-evaluation
+Disallow: /game-evaluation
+Disallow: /path-evaluation-results
+Disallow: /live-game-host
+Disallow: /live-game-play
+Disallow: /live-game-results
+Disallow: /cv-variations
+Disallow: /buy-educoins
+Disallow: /educoin-history
+Disallow: /xp-history
+Disallow: /notifications
+Disallow: /auto-login
