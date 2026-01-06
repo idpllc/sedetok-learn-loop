@@ -11,12 +11,25 @@ export const subjects = [
   
   // Ciencias Naturales
   { value: "ciencias", label: "Ciencias" },
+  { value: "ciencias_naturales", label: "Ciencias Naturales" },
   { value: "biologia", label: "Biología" },
   { value: "quimica", label: "Química" },
   { value: "fisica", label: "Física" },
   { value: "astronomia", label: "Astronomía" },
   { value: "ecologia", label: "Ecología" },
   { value: "geologia", label: "Geología" },
+  { value: "botanica", label: "Botánica" },
+  { value: "zoologia", label: "Zoología" },
+  { value: "microbiologia", label: "Microbiología" },
+  { value: "genetica", label: "Genética" },
+  { value: "anatomia", label: "Anatomía" },
+  { value: "fisiologia", label: "Fisiología" },
+  { value: "bioquimica", label: "Bioquímica" },
+  { value: "medio_ambiente", label: "Medio Ambiente" },
+  { value: "ciencias_tierra", label: "Ciencias de la Tierra" },
+  { value: "meteorologia", label: "Meteorología" },
+  { value: "oceanografia", label: "Oceanografía" },
+  { value: "paleontologia", label: "Paleontología" },
   
   // Lenguaje y Comunicación
   { value: "lenguaje", label: "Lenguaje" },
@@ -136,14 +149,27 @@ export const subjectToCategoryMap: Record<string, string> = {
   estadistica: "matematicas",
   probabilidad: "matematicas",
   
-  // Ciencias
+  // Ciencias Naturales
   ciencias: "ciencias",
+  ciencias_naturales: "ciencias",
   biologia: "ciencias",
   quimica: "ciencias",
   fisica: "ciencias",
   astronomia: "ciencias",
   ecologia: "ciencias",
   geologia: "ciencias",
+  botanica: "ciencias",
+  zoologia: "ciencias",
+  microbiologia: "ciencias",
+  genetica: "ciencias",
+  anatomia: "ciencias",
+  fisiologia: "ciencias",
+  bioquimica: "ciencias",
+  medio_ambiente: "ciencias",
+  ciencias_tierra: "ciencias",
+  meteorologia: "ciencias",
+  oceanografia: "ciencias",
+  paleontologia: "ciencias",
   
   // Lenguaje
   lenguaje: "lenguaje",
