@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Copy, Check, ExternalLink, Search, Filter, BookOpen, Code, Zap } from "lucide-react";
+import { ArrowLeft, Copy, Check, ExternalLink, Search, Filter, BookOpen, Code, Zap, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +59,7 @@ const ApiDocumentation = () => {
           </Button>
           <div>
             <h1 className="text-xl font-bold">Sedefy API — Rutas de Aprendizaje</h1>
-            <p className="text-sm text-muted-foreground">Documentación para integración externa</p>
+            <p className="text-sm text-muted-foreground">API pública abierta para integración externa</p>
           </div>
           <Badge variant="outline" className="ml-auto">v1.0</Badge>
         </div>
@@ -85,10 +85,10 @@ const ApiDocumentation = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10"><Zap className="w-5 h-5 text-primary" /></div>
+                <div className="p-2 rounded-lg bg-green-500/10"><Globe className="w-5 h-5 text-green-600" /></div>
                 <div>
-                  <h3 className="font-semibold text-sm">Sin autenticación</h3>
-                  <p className="text-xs text-muted-foreground">API pública, solo necesitas la URL y la apikey</p>
+                  <h3 className="font-semibold text-sm">100% Abierta</h3>
+                  <p className="text-xs text-muted-foreground">Sin API key, sin autenticación. Solo haz la petición GET</p>
                 </div>
               </div>
             </div>
@@ -100,9 +100,8 @@ const ApiDocumentation = () => {
           <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Code className="w-5 h-5" /> URL Base</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <CodeBlock language="text" code={API_BASE_URL} />
-            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <p className="text-sm"><strong>⚠️ Header requerido:</strong> Todas las peticiones deben incluir el header <code className="bg-muted px-1 rounded">apikey</code> con la clave pública del proyecto.</p>
-              <CodeBlock language="text" code={`apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`} />
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+              <p className="text-sm"><strong>✅ API completamente abierta:</strong> No necesitas API key, tokens ni autenticación. Solo haz una petición <code className="bg-muted px-1 rounded">GET</code> a la URL.</p>
             </div>
           </CardContent>
         </Card>
@@ -238,30 +237,24 @@ const ApiDocumentation = () => {
 
               <TabsContent value="curl" className="space-y-4">
                 <p className="text-sm font-medium">1. Listar todas las rutas</p>
-                <CodeBlock language="bash" code={`curl "${API_BASE_URL}" \\
-  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"`} />
+                <CodeBlock language="bash" code={`curl "${API_BASE_URL}"`} />
 
                 <p className="text-sm font-medium">2. Buscar por texto</p>
-                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?search=guerra&limit=5" \\
-  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"`} />
+                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?search=guerra&limit=5"`} />
 
                 <p className="text-sm font-medium">3. Filtrar por tags + categoría</p>
-                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?tags=historia,medieval&category=historia" \\
-  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"`} />
+                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?tags=historia,medieval&category=historia"`} />
 
                 <p className="text-sm font-medium">4. Obtener una ruta con su contenido</p>
-                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?id=UUID_AQUI&include_content=true" \\
-  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"`} />
+                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?id=UUID_AQUI&include_content=true"`} />
 
                 <p className="text-sm font-medium">5. Filtrar por nivel + asignatura + paginación</p>
-                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?grade_level=secundaria&subject=Historia&page=2&limit=10&sort_by=title&sort_order=asc" \\
-  -H "apikey: ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}"`} />
+                <CodeBlock language="bash" code={`curl "${API_BASE_URL}?grade_level=secundaria&subject=Historia&page=2&limit=10&sort_by=title&sort_order=asc"`} />
               </TabsContent>
 
               <TabsContent value="js" className="space-y-4">
                 <p className="text-sm font-medium">Función de búsqueda con filtros</p>
                 <CodeBlock language="javascript" code={`const API_URL = "${API_BASE_URL}";
-const API_KEY = "${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}";
 
 async function searchLearningPaths(filters = {}) {
   const params = new URLSearchParams();
@@ -280,9 +273,7 @@ async function searchLearningPaths(filters = {}) {
   if (filters.sort_by) params.set("sort_by", filters.sort_by);
   if (filters.sort_order) params.set("sort_order", filters.sort_order);
 
-  const response = await fetch(\`\${API_URL}?\${params}\`, {
-    headers: { "apikey": API_KEY }
-  });
+  const response = await fetch(\`\${API_URL}?\${params}\`);
   
   if (!response.ok) throw new Error("Error fetching learning paths");
   return response.json();
@@ -306,7 +297,6 @@ console.log(results.pagination);  // Info de paginación`} />
 import { useState, useEffect } from "react";
 
 const API_URL = "${API_BASE_URL}";
-const API_KEY = "${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}";
 
 interface LearningPath {
   id: string;
@@ -356,9 +346,7 @@ export default function LearningPathSearch() {
     if (gradeLevel) params.set("grade_level", gradeLevel);
 
     try {
-      const res = await fetch(\`\${API_URL}?\${params}\`, {
-        headers: { apikey: API_KEY },
-      });
+      const res = await fetch(\`\${API_URL}?\${params}\`);
       const json: ApiResponse = await res.json();
       setPaths(json.data);
       setPagination(json.pagination);
@@ -533,12 +521,12 @@ export default function LearningPathSearch() {
           </CardContent>
         </Card>
 
-        {/* Rate limits */}
+        {/* Info */}
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">
-              <strong>Límites:</strong> Máximo 100 resultados por página. Solo se devuelven rutas públicas y con estado "published". 
-              La API no requiere autenticación, solo el header <code className="bg-muted px-1 rounded">apikey</code>.
+              <strong>ℹ️ Información:</strong> Máximo 100 resultados por página. Solo se devuelven rutas públicas y con estado "published". 
+              La API es completamente abierta y no requiere ningún tipo de autenticación ni API key.
             </p>
           </CardContent>
         </Card>

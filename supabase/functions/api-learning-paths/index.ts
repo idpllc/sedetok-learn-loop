@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Use service role key directly — this is a public read-only API
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
