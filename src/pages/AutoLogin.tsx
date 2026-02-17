@@ -12,21 +12,25 @@ const AutoLogin = () => {
   useEffect(() => {
     const handleAutoLogin = async () => {
       const token = searchParams.get("token");
+      const documento = searchParams.get("documento");
       const redirect = searchParams.get("redirect") || "/";
 
-      if (!token) {
-        toast.error("Token de acceso no proporcionado");
+      if (!token && !documento) {
+        toast.error("Token o documento de acceso no proporcionado");
         setStatus("error");
         setTimeout(() => navigate("/auth"), 2000);
         return;
       }
 
       try {
-        console.log("Iniciando auto-login...");
+        console.log("Iniciando auto-login...", { hasToken: !!token, hasDocumento: !!documento });
 
-        // Llamar al endpoint de auto-login
+        const body: Record<string, string> = {};
+        if (token) body.token = token;
+        if (documento) body.documento = documento;
+
         const { data, error } = await supabase.functions.invoke("auto-login", {
-          body: { token },
+          body,
         });
 
         if (error) {
@@ -38,7 +42,6 @@ const AutoLogin = () => {
         }
 
         if (data?.session) {
-          // Establecer la sesión en Supabase
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: data.session.access_token,
             refresh_token: data.session.refresh_token,
@@ -53,11 +56,7 @@ const AutoLogin = () => {
           }
 
           toast.success("Sesión iniciada correctamente");
-          
-          // Redirigir después de un breve delay
-          setTimeout(() => {
-            navigate(redirect);
-          }, 1000);
+          setTimeout(() => navigate(redirect), 1000);
         } else {
           toast.error("No se pudo iniciar sesión");
           setStatus("error");

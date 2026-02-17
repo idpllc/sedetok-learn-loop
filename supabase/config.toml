@@ -78,6 +78,10 @@ timeout = 300
 verify_jwt = false
 timeout = 300
 
+[functions.sync-institution-batch]
+verify_jwt = false
+timeout = 300
+
 [functions.transcribe-audio]
 verify_jwt = true
 
