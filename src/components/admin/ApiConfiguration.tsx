@@ -2116,6 +2116,523 @@ echo $chatUrl;
         </CardContent>
       </Card>
 
+      {/* Sincronización Batch de Instituciones */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="w-5 h-5" />
+            API REST - Sincronización Batch de Institución
+          </CardTitle>
+          <CardDescription>
+            Endpoint para crear/sincronizar institución, grupos académicos, usuarios (admin, docentes, coordinadores, estudiantes, padres) y chats grupales en un solo request
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Endpoint URL</label>
+              <Badge variant="outline" className="gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                Activo
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-3 py-2 bg-muted rounded text-sm font-mono break-all">
+                {`https://${projectId}.supabase.co/functions/v1/sync-institution-batch`}
+              </code>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(`https://${projectId}.supabase.co/functions/v1/sync-institution-batch`, 'endpoint')}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Método HTTP</label>
+            <Badge>POST</Badge>
+          </div>
+
+          {/* Payload Schema */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Esquema del Payload JSON</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`{
+  "institution": {
+    "name": "Colegio San José",          // requerido
+    "nit": "900123456",                  // opcional - busca institución existente
+    "codigo_dane": "123456789012",       // opcional
+    "admin_documento": "1001234567",     // requerido - No. documento del admin
+    "address": "Calle 10 #5-20",        // opcional
+    "city": "Bogotá",                   // opcional
+    "country": "Colombia",              // opcional
+    "contact_email": "info@colegio.edu",// opcional
+    "contact_phone": "3001234567",      // opcional
+    "description": "Descripción",       // opcional
+    "logo_url": "https://...",          // opcional
+    "cover_url": "https://..."          // opcional
+  },
+  "groups": [                            // opcional
+    {
+      "name": "5°A",                     // requerido
+      "course_name": "Quinto",           // opcional
+      "academic_year": "2025",           // opcional
+      "director_documento": "1009876543" // opcional - doc. del director
+    },
+    { "name": "6°B", "course_name": "Sexto" }
+  ],
+  "users": [                             // requerido - max 5000
+    {
+      "numero_documento": "1001234567",  // requerido
+      "tipo_documento": "CC",            // opcional (CC por defecto)
+      "full_name": "Juan Admin",         // opcional
+      "email": "admin@colegio.edu",      // opcional (se genera automático)
+      "member_role": "admin",            // requerido: admin|teacher|coordinator|student|parent
+      "grupo": null,                     // opcional - nombre del grupo
+      "es_director_grupo": false         // opcional
+    },
+    {
+      "numero_documento": "1009876543",
+      "full_name": "María Profesora",
+      "member_role": "teacher",
+      "grupo": "5°A",
+      "es_director_grupo": true
+    },
+    {
+      "numero_documento": "1012345678",
+      "tipo_documento": "TI",
+      "full_name": "Pedro Estudiante",
+      "member_role": "student",
+      "grupo": "5°A"
+    }
+  ]
+}`}
+            </pre>
+          </div>
+
+          {/* Roles */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Roles disponibles (member_role)</label>
+            <div className="space-y-1 text-sm">
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs min-w-[100px]">admin</code>
+                <span className="text-muted-foreground">Administrador de la institución</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs min-w-[100px]">teacher</code>
+                <span className="text-muted-foreground">Docente</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs min-w-[100px]">coordinator</code>
+                <span className="text-muted-foreground">Coordinador académico</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs min-w-[100px]">student</code>
+                <span className="text-muted-foreground">Estudiante</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs min-w-[100px]">parent</code>
+                <span className="text-muted-foreground">Padre de familia</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Response */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Response de éxito</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`{
+  "success": true,
+  "institution_id": "uuid-de-la-institución",
+  "log": {
+    "users_created": 45,
+    "users_updated": 3,
+    "users_skipped": 0,
+    "groups_created": 6,
+    "group_members_added": 180,
+    "chat_conversations_created": 7,
+    "errors": []
+  }
+}`}
+            </pre>
+          </div>
+
+          {/* Comportamiento */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Comportamiento</label>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <p><strong>Idempotente:</strong> Si la institución ya existe (por NIT o nombre), se actualiza en lugar de duplicar</p>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <p><strong>Usuarios sin email:</strong> Se genera automáticamente <code className="px-1 py-0.5 bg-muted rounded">{'{documento}@sedefy.local'}</code></p>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <p><strong>Contraseña:</strong> Siempre es el número de documento del usuario</p>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <p><strong>Chats automáticos:</strong> Se crea un chat grupal por cada grupo académico + un chat institucional para staff</p>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <p><strong>Participantes:</strong> Todos los miembros del grupo se agregan automáticamente al chat correspondiente</p>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <p><strong>Procesamiento batch:</strong> Los usuarios se procesan en lotes de 50 en paralelo. Máximo 5000 usuarios por request</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Ejemplos de implementación */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium">Ejemplo cURL</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`curl -X POST "${`https://${projectId}.supabase.co/functions/v1/sync-institution-batch`}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "institution": {
+      "name": "Colegio San José",
+      "nit": "900123456",
+      "admin_documento": "1001234567",
+      "city": "Bogotá"
+    },
+    "groups": [
+      { "name": "5°A", "course_name": "Quinto", "director_documento": "1009876543" },
+      { "name": "6°B", "course_name": "Sexto" }
+    ],
+    "users": [
+      { "numero_documento": "1001234567", "full_name": "Admin", "member_role": "admin", "email": "admin@colegio.edu" },
+      { "numero_documento": "1009876543", "full_name": "Prof. María", "member_role": "teacher", "grupo": "5°A", "es_director_grupo": true },
+      { "numero_documento": "1012345678", "full_name": "Pedro Gómez", "member_role": "student", "grupo": "5°A", "tipo_documento": "TI" },
+      { "numero_documento": "1050001234", "full_name": "Padre de Pedro", "member_role": "parent", "grupo": "5°A" }
+    ]
+  }'`}
+            </pre>
+          </div>
+
+          {/* Node.js */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">JavaScript (Node.js)</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`const syncInstitution = async (data) => {
+  const response = await fetch(
+    '${`https://${projectId}.supabase.co/functions/v1/sync-institution-batch`}',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }
+  );
+  return await response.json();
+};
+
+// Ejemplo: sincronizar desde base de datos escolar
+const students = await db.query('SELECT * FROM estudiantes WHERE activo = true');
+const teachers = await db.query('SELECT * FROM docentes WHERE activo = true');
+
+const payload = {
+  institution: {
+    name: 'Colegio San José',
+    nit: '900123456',
+    admin_documento: '1001234567',
+    city: 'Bogotá',
+  },
+  groups: [
+    { name: '5°A', course_name: 'Quinto', academic_year: '2025', director_documento: '1009876543' },
+    { name: '6°B', course_name: 'Sexto', academic_year: '2025' },
+  ],
+  users: [
+    ...teachers.map(t => ({
+      numero_documento: t.documento,
+      full_name: t.nombre,
+      email: t.email,
+      member_role: 'teacher',
+      grupo: t.grupo_asignado,
+      es_director_grupo: t.es_director,
+    })),
+    ...students.map(s => ({
+      numero_documento: s.documento,
+      tipo_documento: s.tipo_documento || 'TI',
+      full_name: s.nombre,
+      member_role: 'student',
+      grupo: s.grupo,
+    })),
+  ],
+};
+
+const result = await syncInstitution(payload);
+console.log('Sincronización:', result.log);`}
+            </pre>
+          </div>
+
+          {/* Python */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Python</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`import requests
+
+SYNC_URL = "${`https://${projectId}.supabase.co/functions/v1/sync-institution-batch`}"
+
+def sync_institution(data):
+    response = requests.post(SYNC_URL, json=data)
+    response.raise_for_status()
+    return response.json()
+
+# Ejemplo completo
+payload = {
+    "institution": {
+        "name": "Colegio San José",
+        "nit": "900123456",
+        "admin_documento": "1001234567",
+        "city": "Bogotá",
+        "country": "Colombia"
+    },
+    "groups": [
+        {"name": "5°A", "course_name": "Quinto", "academic_year": "2025", "director_documento": "1009876543"},
+        {"name": "6°B", "course_name": "Sexto", "academic_year": "2025"}
+    ],
+    "users": [
+        {"numero_documento": "1001234567", "full_name": "Admin", "member_role": "admin"},
+        {"numero_documento": "1009876543", "full_name": "Prof. María", "member_role": "teacher", "grupo": "5°A", "es_director_grupo": True},
+        {"numero_documento": "1012345678", "full_name": "Pedro Gómez", "member_role": "student", "grupo": "5°A", "tipo_documento": "TI"},
+        {"numero_documento": "1050001234", "full_name": "Mamá de Pedro", "member_role": "parent", "grupo": "5°A"}
+    ]
+}
+
+result = sync_institution(payload)
+print(f"Creados: {result['log']['users_created']}, Actualizados: {result['log']['users_updated']}")
+print(f"Chats creados: {result['log']['chat_conversations_created']}")`}
+            </pre>
+          </div>
+
+          {/* PHP */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">PHP</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`<?php
+$syncUrl = "${`https://${projectId}.supabase.co/functions/v1/sync-institution-batch`}";
+
+function syncInstitution($data) {
+    global $syncUrl;
+    
+    $ch = curl_init($syncUrl);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 300); // 5 minutos para batches grandes
+    
+    $response = curl_exec($ch);
+    curl_close($ch);
+    
+    return json_decode($response, true);
+}
+
+// Ejemplo: sincronizar desde SEDE Académico
+$estudiantes = $db->query("SELECT * FROM estudiantes WHERE estado = 'activo'");
+$docentes = $db->query("SELECT * FROM docentes WHERE estado = 'activo'");
+
+$users = [];
+foreach ($docentes as $d) {
+    $users[] = [
+        'numero_documento' => $d['documento'],
+        'full_name' => $d['nombre'],
+        'email' => $d['email'],
+        'member_role' => 'teacher',
+        'grupo' => $d['grupo_asignado'],
+        'es_director_grupo' => (bool) $d['es_director']
+    ];
+}
+foreach ($estudiantes as $e) {
+    $users[] = [
+        'numero_documento' => $e['documento'],
+        'tipo_documento' => $e['tipo_doc'] ?? 'TI',
+        'full_name' => $e['nombre'],
+        'member_role' => 'student',
+        'grupo' => $e['grupo']
+    ];
+}
+
+$result = syncInstitution([
+    'institution' => [
+        'name' => 'Colegio San José',
+        'nit' => '900123456',
+        'admin_documento' => '1001234567',
+    ],
+    'groups' => [
+        ['name' => '5°A', 'course_name' => 'Quinto', 'academic_year' => '2025'],
+    ],
+    'users' => $users
+]);
+
+echo "Sincronización: " . json_encode($result['log']);
+?>`}
+            </pre>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Auto-Login por Documento */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Code className="w-5 h-5" />
+            Auto-Login por Número de Documento
+          </CardTitle>
+          <CardDescription>
+            Acceso automático vía URL para usuarios sincronizados — ideal para integración con sistemas escolares
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">URL de Acceso Directo</label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 px-3 py-2 bg-muted rounded text-sm font-mono break-all">
+                {`https://sedefy.com/auto-login?documento={NUMERO_DOCUMENTO}&redirect=/chat`}
+              </code>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard('https://sedefy.com/auto-login?documento={NUMERO_DOCUMENTO}&redirect=/chat', 'auto-login-endpoint')}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Parámetros de URL</label>
+            <div className="space-y-1 text-sm">
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">documento</code>
+                <span className="text-muted-foreground">Número de documento del usuario (requerido)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">redirect</code>
+                <span className="text-muted-foreground">Ruta a la que redirigir después del login (default: /)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">¿Cómo funciona?</label>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <div className="flex gap-2">
+                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">1</span>
+                <p>El usuario accede a la URL con su número de documento</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">2</span>
+                <p>El sistema busca al usuario por <code className="px-1 py-0.5 bg-muted rounded">numero_documento</code> en la BD</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">3</span>
+                <p>Inicia sesión automáticamente (contraseña = número de documento)</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">4</span>
+                <p>Redirige al chat donde ya están precreados los grupos</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Ejemplos por rol */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Ejemplos por Rol</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`<!-- Estudiante: accede al chat de su grupo -->
+<a href="https://sedefy.com/auto-login?documento=1012345678&redirect=/chat">
+  Ir al Chat
+</a>
+
+<!-- Docente: accede al chat -->
+<a href="https://sedefy.com/auto-login?documento=1009876543&redirect=/chat">
+  Abrir Chat Escolar
+</a>
+
+<!-- Admin: accede al dashboard institucional -->
+<a href="https://sedefy.com/auto-login?documento=1001234567&redirect=/institution">
+  Panel Institución
+</a>
+
+<!-- Padre: accede al chat del grupo de su hijo -->
+<a href="https://sedefy.com/auto-login?documento=1050001234&redirect=/chat">
+  Chat con Docentes
+</a>`}
+            </pre>
+          </div>
+
+          {/* Ejemplo de integración con sistema escolar */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Integración desde Sistema Escolar (JavaScript)</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`// Generar botón de acceso al chat para cada usuario
+function generarEnlaceChat(documento) {
+  return \`https://sedefy.com/auto-login?documento=\${documento}&redirect=/chat\`;
+}
+
+// En la vista del estudiante
+const btnChat = document.createElement('a');
+btnChat.href = generarEnlaceChat(estudiante.documento);
+btnChat.target = '_blank';
+btnChat.textContent = 'Abrir Chat Escolar';
+document.body.appendChild(btnChat);`}
+            </pre>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Integración desde PHP</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`<?php
+// En la vista del usuario en SEDE Académico
+function enlaceChat($documento, $ruta = '/chat') {
+    return "https://sedefy.com/auto-login?documento={$documento}&redirect={$ruta}";
+}
+?>
+
+<!-- En la plantilla Blade/HTML -->
+<a href="<?= enlaceChat($usuario->documento) ?>" target="_blank" class="btn btn-primary">
+    💬 Abrir Chat Escolar
+</a>`}
+            </pre>
+          </div>
+
+          {/* Flujo completo */}
+          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+              🔄 Flujo Completo de Integración
+            </h4>
+            <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
+              <li>Sincronice la institución con <code className="px-1 py-0.5 bg-blue-200/50 rounded">sync-institution-batch</code> (crea usuarios, grupos y chats)</li>
+              <li>Genere enlaces de acceso con <code className="px-1 py-0.5 bg-blue-200/50 rounded">/auto-login?documento=XXX&redirect=/chat</code></li>
+              <li>Los usuarios hacen clic → inician sesión automáticamente → entran al chat con sus grupos ya creados</li>
+              <li>Re-sincronice periódicamente para actualizar usuarios nuevos o cambios de grupo</li>
+            </ol>
+          </div>
+
+          {/* Seguridad */}
+          <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-2">
+              🔒 Consideraciones de Seguridad
+            </h4>
+            <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1 list-disc list-inside">
+              <li>La contraseña de todos los usuarios es su número de documento</li>
+              <li>Se recomienda que los usuarios cambien su contraseña después del primer acceso</li>
+              <li>Los enlaces de auto-login deben generarse desde el servidor, nunca expuestos públicamente</li>
+              <li>El endpoint <code className="px-1 py-0.5 bg-amber-200/50 rounded">sync-institution-batch</code> usa Service Role Key — no requiere autenticación de usuario</li>
+              <li>Máximo 5000 usuarios por request para evitar timeouts</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Webhook de Consolidado de Notas */}
       <WebhookDocumentation />
     </div>
