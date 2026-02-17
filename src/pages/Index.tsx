@@ -7,7 +7,6 @@ import { OnboardingTeaser } from "@/components/OnboardingTeaser";
 
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
-import { useLearningPaths } from "@/hooks/useLearningPaths";
 import { useSearchUsers } from "@/hooks/useSearchUsers";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -48,30 +47,21 @@ const Index = () => {
   
   // Content hooks - always call in same order
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading: contentLoading } = useInfiniteContent(
-    selectedType === "all" ? undefined : selectedType === "learning_path" ? undefined : selectedType,
+    selectedType === "all" ? undefined : selectedType,
     searchQuery,
     selectedSubject !== "all" ? selectedSubject : undefined,
     selectedGrade !== "all" ? selectedGrade : undefined
   );
-  const { paths, isLoading: pathsLoading } = useLearningPaths();
   const { data: searchedUsers, isLoading: usersLoading } = useSearchUsers(searchQuery);
   
   // User interaction hooks
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   
-  const isLoading = contentLoading || pathsLoading;
+  const isLoading = contentLoading;
 
-  // Combine content from all pages
-  const allContent = (data?.pages ?? []).flatMap((page) => page.items || []) || [];
-  
-  
-  // Combine all content and paths for main grid (limit paths to 20)
-  const publicPaths = paths?.filter(p => p.is_public).slice(0, 20) || [];
-  const combinedContent = [
-    ...allContent.map(item => ({ ...item, itemType: 'content' })),
-    ...publicPaths.map(p => ({ ...p, itemType: 'learning_path' }))
-  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  // All content already comes unified and paginated (max 20 per page) from the hook
+  const filteredContent = (data?.pages ?? []).flatMap((page) => page.items || []);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -116,25 +106,7 @@ const Index = () => {
     { value: "libre", label: "Libre" },
   ];
 
-  // Filter content
-  const filteredContent = combinedContent?.filter((item) => {
-    if (item.itemType === "learning_path") {
-      const matchesSearch = !searchQuery || searchQuery.trim() === "" ||
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        item.subject?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesType = selectedType === "all" || selectedType === "learning_path";
-      const matchesSubject = selectedSubject === "all" || item.subject?.toLowerCase() === selectedSubject.toLowerCase();
-      const matchesGrade = selectedGrade === "all" || item.grade_level === selectedGrade;
-      
-      return matchesSearch && matchesType && matchesSubject && matchesGrade;
-    }
-    
-    const matchesType = selectedType === "all" || selectedType === item.content_type || (selectedType === "quiz" && item.content_type === "quiz");
-    return matchesType;
-  });
+  // Filtering is now done server-side in useInfiniteContent
 
   const getContentIcon = (type: ContentType | "learning_path") => {
     switch (type) {
