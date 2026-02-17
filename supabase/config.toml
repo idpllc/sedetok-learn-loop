@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.api-learning-paths]
 verify_jwt = false
+
+[functions.chat-login]
+verify_jwt = false
