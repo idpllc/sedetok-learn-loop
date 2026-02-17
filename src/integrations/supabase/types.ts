@@ -55,6 +55,7 @@ export type Database = {
           id: string
           institution_id: string
           name: string
+          sede_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -65,6 +66,7 @@ export type Database = {
           id?: string
           institution_id: string
           name: string
+          sede_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -75,6 +77,7 @@ export type Database = {
           id?: string
           institution_id?: string
           name?: string
+          sede_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -83,6 +86,13 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_groups_sede_id_fkey"
+            columns: ["sede_id"]
+            isOneToOne: false
+            referencedRelation: "institution_sedes"
             referencedColumns: ["id"]
           },
         ]
@@ -1024,6 +1034,57 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_sedes: {
+        Row: {
+          address: string | null
+          city: string | null
+          code: string | null
+          coordinator_user_id: string | null
+          created_at: string | null
+          id: string
+          institution_id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          coordinator_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          coordinator_user_id?: string | null
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_sedes_coordinator_user_id_fkey"
+            columns: ["coordinator_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institution_sedes_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
             referencedColumns: ["id"]
           },
         ]

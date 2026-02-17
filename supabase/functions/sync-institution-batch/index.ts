@@ -12,7 +12,16 @@ interface UserPayload {
   email?: string;
   member_role: "admin" | "teacher" | "coordinator" | "student" | "parent";
   grupo?: string; // e.g. "5°A"
+  sede?: string; // e.g. "Sede Norte" — para diferenciar grupos con mismo nombre en distintas sedes
   es_director_grupo?: boolean;
+}
+
+interface SedePayload {
+  name: string; // e.g. "Sede Norte"
+  code?: string; // e.g. "SN01"
+  address?: string;
+  city?: string;
+  coordinator_documento?: string; // documento del coordinador de sede
 }
 
 interface GroupPayload {
@@ -20,6 +29,7 @@ interface GroupPayload {
   course_name?: string; // e.g. "Quinto"
   academic_year?: string; // e.g. "2025"
   director_documento?: string; // documento del director de grupo
+  sede?: string; // nombre de la sede a la que pertenece el grupo
 }
 
 interface BatchPayload {
@@ -37,6 +47,7 @@ interface BatchPayload {
     cover_url?: string;
     admin_documento: string; // documento del admin principal
   };
+  sedes?: SedePayload[];
   groups?: GroupPayload[];
   users: UserPayload[];
 }
@@ -170,18 +181,50 @@ Deno.serve(async (req) => {
     // Ensure admin is institution member
     await ensureMember(supabase, institutionId, adminUser.id, "admin");
 
-    // ========== 2. CREATE GROUPS ==========
-    const groupMap: Record<string, string> = {}; // name -> group_id
-    const directorMap: Record<string, string> = {}; // group_name -> director_documento
+    // ========== 2. CREATE SEDES ==========
+    const sedeMap: Record<string, string> = {}; // sede_name -> sede_id
+
+    if (payload.sedes && Array.isArray(payload.sedes)) {
+      for (const s of payload.sedes) {
+        const sedeId = await ensureSede(supabase, institutionId, s);
+        if (sedeId) {
+          sedeMap[s.name] = sedeId;
+          // Assign coordinator if specified
+          if (s.coordinator_documento) {
+            const { data: coordProfile } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("numero_documento", s.coordinator_documento)
+              .limit(1)
+              .single();
+            if (coordProfile) {
+              await supabase.from("institution_sedes")
+                .update({ coordinator_user_id: coordProfile.id })
+                .eq("id", sedeId);
+            }
+          }
+        }
+      }
+    }
+
+    // ========== 3. CREATE GROUPS ==========
+    // groupKey = "sede_name::group_name" or just "group_name" if no sede
+    const groupMap: Record<string, string> = {}; // groupKey -> group_id
+    const directorMap: Record<string, string> = {}; // groupKey -> director_documento
+
+    const makeGroupKey = (groupName: string, sedeName?: string | null) =>
+      sedeName ? `${sedeName}::${groupName}` : groupName;
 
     if (payload.groups && Array.isArray(payload.groups)) {
       for (const g of payload.groups) {
-        const groupId = await ensureGroup(supabase, institutionId, g.name, g.course_name, g.academic_year);
+        const sedeId = g.sede ? sedeMap[g.sede] || null : null;
+        const groupId = await ensureGroup(supabase, institutionId, g.name, g.course_name, g.academic_year, sedeId);
+        const key = makeGroupKey(g.name, g.sede);
         if (groupId) {
-          groupMap[g.name] = groupId;
+          groupMap[key] = groupId;
           log.groups_created++;
           if (g.director_documento) {
-            directorMap[g.name] = g.director_documento;
+            directorMap[key] = g.director_documento;
           }
         }
       }
@@ -209,13 +252,15 @@ Deno.serve(async (req) => {
           // Handle group membership
           const groupName = userData.grupo;
           if (groupName) {
+            const key = makeGroupKey(groupName, userData.sede);
             // Ensure group exists
-            if (!groupMap[groupName]) {
-              const gId = await ensureGroup(supabase, institutionId, groupName, null, null);
-              if (gId) groupMap[groupName] = gId;
+            if (!groupMap[key]) {
+              const sedeId = userData.sede ? sedeMap[userData.sede] || null : null;
+              const gId = await ensureGroup(supabase, institutionId, groupName, null, null, sedeId);
+              if (gId) groupMap[key] = gId;
             }
 
-            const groupId = groupMap[groupName];
+            const groupId = groupMap[key];
             if (groupId) {
               // Add to academic group
               const memberRole = userData.member_role === "parent" ? "parent" 
@@ -554,15 +599,22 @@ async function ensureGroup(
   institutionId: string,
   name: string,
   courseName: string | null | undefined,
-  academicYear: string | null | undefined
+  academicYear: string | null | undefined,
+  sedeId: string | null = null
 ): Promise<string | null> {
-  const { data: existing } = await supabase
+  let query = supabase
     .from("academic_groups")
     .select("id")
     .eq("institution_id", institutionId)
-    .eq("name", name)
-    .limit(1)
-    .single();
+    .eq("name", name);
+
+  if (sedeId) {
+    query = query.eq("sede_id", sedeId);
+  } else {
+    query = query.is("sede_id", null);
+  }
+
+  const { data: existing } = await query.limit(1).single();
 
   if (existing) return existing.id;
 
@@ -573,6 +625,7 @@ async function ensureGroup(
       name,
       course_name: courseName || null,
       academic_year: academicYear || null,
+      sede_id: sedeId,
     })
     .select("id")
     .single();
@@ -583,4 +636,39 @@ async function ensureGroup(
   }
 
   return newGroup?.id || null;
+}
+
+async function ensureSede(
+  supabase: any,
+  institutionId: string,
+  sede: SedePayload
+): Promise<string | null> {
+  const { data: existing } = await supabase
+    .from("institution_sedes")
+    .select("id")
+    .eq("institution_id", institutionId)
+    .eq("name", sede.name)
+    .limit(1)
+    .single();
+
+  if (existing) return existing.id;
+
+  const { data: newSede, error } = await supabase
+    .from("institution_sedes")
+    .insert({
+      institution_id: institutionId,
+      name: sede.name,
+      code: sede.code || null,
+      address: sede.address || null,
+      city: sede.city || null,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error(`Error creating sede ${sede.name}:`, error);
+    return null;
+  }
+
+  return newSede?.id || null;
 }
