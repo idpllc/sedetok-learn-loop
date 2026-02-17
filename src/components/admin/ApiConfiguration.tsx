@@ -2375,9 +2375,14 @@ const payload = {
     admin_documento: '1001234567',
     city: 'Bogotá',
   },
+  sedes: [
+    { name: 'Sede Norte', code: 'SN01', address: 'Calle 50 #10-30' },
+    { name: 'Sede Sur', address: 'Av 68 #20-10' },
+  ],
   groups: [
-    { name: '5°A', course_name: 'Quinto', academic_year: '2025', director_documento: '1009876543' },
-    { name: '6°B', course_name: 'Sexto', academic_year: '2025' },
+    { name: '5°A', course_name: 'Quinto', academic_year: '2025', sede: 'Sede Norte', director_documento: '1009876543' },
+    { name: '5°A', course_name: 'Quinto', academic_year: '2025', sede: 'Sede Sur' },
+    { name: '6°B', course_name: 'Sexto', academic_year: '2025', sede: 'Sede Norte' },
   ],
   users: [
     ...teachers.map(t => ({
@@ -2386,6 +2391,7 @@ const payload = {
       email: t.email,
       member_role: 'teacher',
       grupo: t.grupo_asignado,
+      sede: t.sede,
       es_director_grupo: t.es_director,
     })),
     ...students.map(s => ({
@@ -2394,6 +2400,7 @@ const payload = {
       full_name: s.nombre,
       member_role: 'student',
       grupo: s.grupo,
+      sede: s.sede,
     })),
   ],
 };
@@ -2425,15 +2432,21 @@ payload = {
         "city": "Bogotá",
         "country": "Colombia"
     },
+    "sedes": [
+        {"name": "Sede Norte", "code": "SN01", "address": "Calle 50 #10-30"},
+        {"name": "Sede Sur", "address": "Av 68 #20-10"}
+    ],
     "groups": [
-        {"name": "5°A", "course_name": "Quinto", "academic_year": "2025", "director_documento": "1009876543"},
-        {"name": "6°B", "course_name": "Sexto", "academic_year": "2025"}
+        {"name": "5°A", "course_name": "Quinto", "academic_year": "2025", "sede": "Sede Norte", "director_documento": "1009876543"},
+        {"name": "5°A", "course_name": "Quinto", "academic_year": "2025", "sede": "Sede Sur"},
+        {"name": "6°B", "course_name": "Sexto", "academic_year": "2025", "sede": "Sede Norte"}
     ],
     "users": [
         {"numero_documento": "1001234567", "full_name": "Admin", "member_role": "admin"},
-        {"numero_documento": "1009876543", "full_name": "Prof. María", "member_role": "teacher", "grupo": "5°A", "es_director_grupo": True},
-        {"numero_documento": "1012345678", "full_name": "Pedro Gómez", "member_role": "student", "grupo": "5°A", "tipo_documento": "TI"},
-        {"numero_documento": "1050001234", "full_name": "Mamá de Pedro", "member_role": "parent", "grupo": "5°A"}
+        {"numero_documento": "1009876543", "full_name": "Prof. María", "member_role": "teacher", "grupo": "5°A", "sede": "Sede Norte", "es_director_grupo": True},
+        {"numero_documento": "1012345678", "full_name": "Pedro Gómez", "member_role": "student", "grupo": "5°A", "sede": "Sede Norte", "tipo_documento": "TI"},
+        {"numero_documento": "1099999999", "full_name": "Ana López", "member_role": "student", "grupo": "5°A", "sede": "Sede Sur"},
+        {"numero_documento": "1050001234", "full_name": "Mamá de Pedro", "member_role": "parent", "grupo": "5°A", "sede": "Sede Norte"}
     ]
 }
 
@@ -2478,6 +2491,7 @@ foreach ($docentes as $d) {
         'email' => $d['email'],
         'member_role' => 'teacher',
         'grupo' => $d['grupo_asignado'],
+        'sede' => $d['sede'],
         'es_director_grupo' => (bool) $d['es_director']
     ];
 }
@@ -2487,7 +2501,8 @@ foreach ($estudiantes as $e) {
         'tipo_documento' => $e['tipo_doc'] ?? 'TI',
         'full_name' => $e['nombre'],
         'member_role' => 'student',
-        'grupo' => $e['grupo']
+        'grupo' => $e['grupo'],
+        'sede' => $e['sede']
     ];
 }
 
@@ -2497,8 +2512,13 @@ $result = syncInstitution([
         'nit' => '900123456',
         'admin_documento' => '1001234567',
     ],
+    'sedes' => [
+        ['name' => 'Sede Norte', 'code' => 'SN01', 'address' => 'Calle 50 #10-30'],
+        ['name' => 'Sede Sur', 'address' => 'Av 68 #20-10'],
+    ],
     'groups' => [
-        ['name' => '5°A', 'course_name' => 'Quinto', 'academic_year' => '2025'],
+        ['name' => '5°A', 'course_name' => 'Quinto', 'academic_year' => '2025', 'sede' => 'Sede Norte'],
+        ['name' => '5°A', 'course_name' => 'Quinto', 'academic_year' => '2025', 'sede' => 'Sede Sur'],
     ],
     'users' => $users
 ]);
