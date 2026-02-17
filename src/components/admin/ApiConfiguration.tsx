@@ -2174,14 +2174,25 @@ echo $chatUrl;
     "logo_url": "https://...",          // opcional
     "cover_url": "https://..."          // opcional
   },
+  "sedes": [                             // opcional - sedes/campus
+    {
+      "name": "Sede Norte",              // requerido
+      "code": "SN01",                    // opcional
+      "address": "Calle 50 #10-30",     // opcional
+      "city": "Bogotá",                 // opcional
+      "coordinator_documento": "1005555555" // opcional - doc. del coordinador
+    },
+    { "name": "Sede Sur", "address": "Av 68 #20-10" }
+  ],
   "groups": [                            // opcional
     {
       "name": "5°A",                     // requerido
       "course_name": "Quinto",           // opcional
       "academic_year": "2025",           // opcional
-      "director_documento": "1009876543" // opcional - doc. del director
+      "director_documento": "1009876543",// opcional - doc. del director
+      "sede": "Sede Norte"               // opcional - nombre de la sede
     },
-    { "name": "6°B", "course_name": "Sexto" }
+    { "name": "5°A", "course_name": "Quinto", "sede": "Sede Sur" }
   ],
   "users": [                             // requerido - max 5000
     {
@@ -2191,6 +2202,7 @@ echo $chatUrl;
       "email": "admin@colegio.edu",      // opcional (se genera automático)
       "member_role": "admin",            // requerido: admin|teacher|coordinator|student|parent
       "grupo": null,                     // opcional - nombre del grupo
+      "sede": null,                      // opcional - nombre de la sede (requerido si hay grupos con mismo nombre en distintas sedes)
       "es_director_grupo": false         // opcional
     },
     {
@@ -2198,6 +2210,7 @@ echo $chatUrl;
       "full_name": "María Profesora",
       "member_role": "teacher",
       "grupo": "5°A",
+      "sede": "Sede Norte",
       "es_director_grupo": true
     },
     {
@@ -2205,7 +2218,15 @@ echo $chatUrl;
       "tipo_documento": "TI",
       "full_name": "Pedro Estudiante",
       "member_role": "student",
-      "grupo": "5°A"
+      "grupo": "5°A",
+      "sede": "Sede Norte"
+    },
+    {
+      "numero_documento": "1099999999",
+      "full_name": "Ana Estudiante",
+      "member_role": "student",
+      "grupo": "5°A",
+      "sede": "Sede Sur"
     }
   ]
 }`}
@@ -2287,6 +2308,10 @@ echo $chatUrl;
                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
                 <p><strong>Procesamiento batch:</strong> Los usuarios se procesan en lotes de 50 en paralelo. Máximo 5000 usuarios por request</p>
               </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
+                <p><strong>Sedes:</strong> Los grupos pueden pertenecer a una sede específica. Dos grupos con el mismo nombre en sedes distintas se crean por separado. Usuarios se asignan al grupo correcto indicando <code className="px-1 py-0.5 bg-muted rounded">sede</code> en el payload</p>
+              </div>
             </div>
           </div>
 
@@ -2303,15 +2328,21 @@ echo $chatUrl;
       "admin_documento": "1001234567",
       "city": "Bogotá"
     },
+    "sedes": [
+      { "name": "Sede Norte", "code": "SN01", "address": "Calle 50 #10-30" },
+      { "name": "Sede Sur", "address": "Av 68 #20-10" }
+    ],
     "groups": [
-      { "name": "5°A", "course_name": "Quinto", "director_documento": "1009876543" },
-      { "name": "6°B", "course_name": "Sexto" }
+      { "name": "5°A", "course_name": "Quinto", "sede": "Sede Norte", "director_documento": "1009876543" },
+      { "name": "5°A", "course_name": "Quinto", "sede": "Sede Sur" },
+      { "name": "6°B", "course_name": "Sexto", "sede": "Sede Norte" }
     ],
     "users": [
       { "numero_documento": "1001234567", "full_name": "Admin", "member_role": "admin", "email": "admin@colegio.edu" },
-      { "numero_documento": "1009876543", "full_name": "Prof. María", "member_role": "teacher", "grupo": "5°A", "es_director_grupo": true },
-      { "numero_documento": "1012345678", "full_name": "Pedro Gómez", "member_role": "student", "grupo": "5°A", "tipo_documento": "TI" },
-      { "numero_documento": "1050001234", "full_name": "Padre de Pedro", "member_role": "parent", "grupo": "5°A" }
+      { "numero_documento": "1009876543", "full_name": "Prof. María", "member_role": "teacher", "grupo": "5°A", "sede": "Sede Norte", "es_director_grupo": true },
+      { "numero_documento": "1012345678", "full_name": "Pedro Gómez", "member_role": "student", "grupo": "5°A", "sede": "Sede Norte", "tipo_documento": "TI" },
+      { "numero_documento": "1099999999", "full_name": "Ana López", "member_role": "student", "grupo": "5°A", "sede": "Sede Sur" },
+      { "numero_documento": "1050001234", "full_name": "Padre de Pedro", "member_role": "parent", "grupo": "5°A", "sede": "Sede Norte" }
     ]
   }'`}
             </pre>
