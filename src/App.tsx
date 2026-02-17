@@ -53,6 +53,8 @@ import LiveGamePlay from "./pages/LiveGamePlay";
 import LiveGameResults from "./pages/LiveGameResults";
 import PathEvaluationResults from "./pages/PathEvaluationResults";
 import ApiDocumentation from "./pages/ApiDocumentation";
+import Chat from "./pages/Chat";
+import ChatLogin from "./pages/ChatLogin";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +123,8 @@ const App = () => (
           <Route path="/live-games/results/:gameId" element={<LiveGameResults />} />
           <Route path="/path-evaluation-results/:eventId" element={<PathEvaluationResults />} />
           <Route path="/api-docs" element={<ApiDocumentation />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat/login" element={<ChatLogin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
