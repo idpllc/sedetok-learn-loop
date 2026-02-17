@@ -66,10 +66,11 @@ const Index = () => {
   const allContent = (data?.pages ?? []).flatMap((page) => page.items || []) || [];
   
   
-  // Combine all content and paths for main grid
+  // Combine all content and paths for main grid (limit paths to 20)
+  const publicPaths = paths?.filter(p => p.is_public).slice(0, 20) || [];
   const combinedContent = [
     ...allContent.map(item => ({ ...item, itemType: 'content' })),
-    ...(paths?.filter(p => p.is_public).map(p => ({ ...p, itemType: 'learning_path' })) || [])
+    ...publicPaths.map(p => ({ ...p, itemType: 'learning_path' }))
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   // Infinite scroll observer
