@@ -4,254 +4,166 @@ import { useToast } from "@/hooks/use-toast";
 import { subjects as subjectOptions } from "@/lib/subjects";
 const ITEMS_PER_PAGE = 20;
 
+// Helper to build subject filters
+const buildSubjectFilter = (subject: string) => {
+  const opt = subjectOptions.find(s => s.value === subject);
+  const label = opt?.label || subject;
+  const deaccent = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const patterns = Array.from(new Set([subject, label, deaccent(label), deaccent(subject)]));
+  return patterns
+    .flatMap(p => [
+      `subject.ilike.%${p}%`,
+      `title.ilike.%${p}%`,
+      `description.ilike.%${p}%`
+    ])
+    .join(',');
+};
+
 export const useInfiniteContent = (
   contentType?: string, 
   searchQuery?: string,
   subject?: string,
   gradeLevel?: string
 ) => {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
   return useInfiniteQuery({
     queryKey: ["infinite-content", contentType, searchQuery, subject, gradeLevel],
     queryFn: async ({ pageParam = 0 }) => {
-      const startIndex = pageParam * ITEMS_PER_PAGE;
-      const endIndex = startIndex + ITEMS_PER_PAGE - 1;
-      
-      // Fetch regular content with pagination using range
-      let contentQuery = supabase
-        .from("content")
-        .select(`
-          *,
-          profiles:creator_id (
-            username,
-            full_name,
-            avatar_url,
-            institution,
-            is_verified
-          )
-        `, { count: 'exact' })
-        .eq("is_public", true)
-        .order("created_at", { ascending: false })
-        .range(startIndex, endIndex);
+      // We use a cursor-based approach: pageParam is the page number.
+      // We fetch ITEMS_PER_PAGE from each active source, merge, sort, and take ITEMS_PER_PAGE.
+      // To get the right offset for each source, we track cumulative offsets via pageParam.
+      const offset = pageParam * ITEMS_PER_PAGE;
 
-      if (contentType && contentType !== "all" && contentType !== "quiz" && contentType !== "game") {
-        contentQuery = contentQuery.eq("content_type", contentType as any);
+      const includeContent = !contentType || contentType === "all" || (contentType !== "quiz" && contentType !== "game" && contentType !== "learning_path");
+      const includeQuizzes = !contentType || contentType === "all" || contentType === "quiz";
+      const includeGames = !contentType || contentType === "all" || contentType === "game";
+      const includePaths = !contentType || contentType === "all" || contentType === "learning_path";
+
+      // Build all queries in parallel, each fetching ITEMS_PER_PAGE items at the right offset
+      const promises: Promise<any>[] = [];
+
+      // --- Content ---
+      if (includeContent) {
+        let q = supabase
+          .from("content")
+          .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`, { count: 'exact' })
+          .eq("is_public", true)
+          .order("created_at", { ascending: false })
+          .range(offset, offset + ITEMS_PER_PAGE - 1);
+        if (contentType && contentType !== "all" && contentType !== "learning_path") {
+          q = q.eq("content_type", contentType as any);
+        }
+        if (searchQuery?.trim()) {
+          q = q.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+        }
+        if (subject && subject !== "all") {
+          q = q.or(buildSubjectFilter(subject));
+        }
+        if (gradeLevel && gradeLevel !== "all") {
+          q = q.eq("grade_level", gradeLevel as any);
+        }
+        promises.push(Promise.resolve(q).then(r => ({ source: 'content', data: r.data || [], count: r.count || 0, error: r.error })));
+      } else {
+        promises.push(Promise.resolve({ source: 'content', data: [], count: 0, error: null }));
       }
 
-      // Apply search filter (title, description, subject)
-      if (searchQuery && searchQuery.trim() !== "") {
-        contentQuery = contentQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
-      }
-
-      // Apply subject filter directly in database query (accent-insensitive with label/value variants)
-      if (subject && subject !== "all") {
-        const opt = subjectOptions.find(s => s.value === subject);
-        const label = opt?.label || subject;
-        const deaccent = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const patterns = Array.from(new Set([subject, label, deaccent(label), deaccent(subject)]));
-        const orFilters = patterns
-          .flatMap(p => [
-            `subject.ilike.%${p}%`,
-            `title.ilike.%${p}%`,
-            `description.ilike.%${p}%`
-          ])
-          .join(',');
-        contentQuery = contentQuery.or(orFilters);
-      }
-
-      // Apply grade level filter
-      if (gradeLevel && gradeLevel !== "all") {
-        contentQuery = contentQuery.eq("grade_level", gradeLevel as any);
-      }
-
-      const { data: contentData, error: contentError, count: contentCount } = await contentQuery;
-
-      if (contentError) throw contentError;
-
-      // Fetch quizzes only if not filtering by specific content type or if type is quiz
-      let quizData = [];
-      let quizCount = 0;
-      if (!contentType || contentType === "all" || contentType === "quiz") {
-        let quizQuery = supabase
+      // --- Quizzes ---
+      if (includeQuizzes) {
+        let q = supabase
           .from("quizzes")
-          .select(`
-            *,
-            profiles:creator_id (
-              username,
-              full_name,
-              avatar_url,
-              institution,
-              is_verified
-            )
-          `, { count: 'exact' })
+          .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`, { count: 'exact' })
           .eq("is_public", true)
           .eq("status", "publicado")
           .order("created_at", { ascending: false })
-          .range(startIndex, endIndex);
-
-        // Apply search filter (title, description, subject)
-        if (searchQuery && searchQuery.trim() !== "") {
-          quizQuery = quizQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+          .range(offset, offset + ITEMS_PER_PAGE - 1);
+        if (searchQuery?.trim()) {
+          q = q.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         }
-
-        // Apply subject filter directly in database query (accent-insensitive with label/value variants)
         if (subject && subject !== "all") {
-          const opt = subjectOptions.find(s => s.value === subject);
-          const label = opt?.label || subject;
-          const deaccent = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const patterns = Array.from(new Set([subject, label, deaccent(label), deaccent(subject)]));
-          const orFilters = patterns
-            .flatMap(p => [
-              `subject.ilike.%${p}%`,
-              `title.ilike.%${p}%`,
-              `description.ilike.%${p}%`
-            ])
-            .join(',');
-          quizQuery = quizQuery.or(orFilters);
+          q = q.or(buildSubjectFilter(subject));
         }
-
-        // Apply grade level filter
         if (gradeLevel && gradeLevel !== "all") {
-          quizQuery = quizQuery.eq("grade_level", gradeLevel as any);
+          q = q.eq("grade_level", gradeLevel as any);
         }
-
-        const { data: fetchedQuizData, error: quizError, count: fetchedQuizCount } = await quizQuery;
-
-        if (quizError) throw quizError;
-        quizData = fetchedQuizData || [];
-        quizCount = fetchedQuizCount || 0;
+        promises.push(Promise.resolve(q).then(r => ({ source: 'quizzes', data: r.data || [], count: r.count || 0, error: r.error })));
+      } else {
+        promises.push(Promise.resolve({ source: 'quizzes', data: [], count: 0, error: null }));
       }
 
-      // Fetch games only if not filtering by specific content type or if type is game
-      let gameData = [];
-      let gameCount = 0;
-      if (!contentType || contentType === "all" || contentType === "game") {
-        let gameQuery = supabase
+      // --- Games ---
+      if (includeGames) {
+        let q = supabase
           .from("games")
-          .select(`
-            *,
-            profiles:creator_id (
-              username,
-              full_name,
-              avatar_url,
-              institution,
-              is_verified
-            )
-          `, { count: 'exact' })
+          .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`, { count: 'exact' })
           .eq("is_public", true)
           .order("created_at", { ascending: false })
-          .range(startIndex, endIndex);
-
-        // Apply search filter (title, description, subject)
-        if (searchQuery && searchQuery.trim() !== "") {
-          gameQuery = gameQuery.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+          .range(offset, offset + ITEMS_PER_PAGE - 1);
+        if (searchQuery?.trim()) {
+          q = q.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
         }
-
-        // Apply subject filter directly in database query (accent-insensitive fallback)
         if (subject && subject !== "all") {
           const normalizedSubject = subject.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          gameQuery = gameQuery.or(`subject.ilike.%${subject}%,subject.ilike.%${normalizedSubject}%`);
+          q = q.or(`subject.ilike.%${subject}%,subject.ilike.%${normalizedSubject}%`);
         }
-
-        // Apply grade level filter
         if (gradeLevel && gradeLevel !== "all") {
-          gameQuery = gameQuery.eq("grade_level", gradeLevel as any);
+          q = q.eq("grade_level", gradeLevel as any);
         }
-
-        const { data: fetchedGameData, error: gameError, count: fetchedGameCount } = await gameQuery;
-
-        if (gameError) throw gameError;
-        gameData = fetchedGameData || [];
-        gameCount = fetchedGameCount || 0;
+        promises.push(Promise.resolve(q).then(r => ({ source: 'games', data: r.data || [], count: r.count || 0, error: r.error })));
+      } else {
+        promises.push(Promise.resolve({ source: 'games', data: [], count: 0, error: null }));
       }
 
-      // Get question counts for each quiz and game
-      const quizIds = quizData.map(q => q.id);
-      const gameIds = gameData.map(g => g.id);
-      const questionCounts: Record<string, number> = {};
-      const likeCounts: Record<string, number> = {};
-      const commentCounts: Record<string, number> = {};
+      // --- Learning Paths ---
+      if (includePaths) {
+        let q = supabase
+          .from("learning_paths")
+          .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`, { count: 'exact' })
+          .eq("is_public", true)
+          .order("created_at", { ascending: false })
+          .range(offset, offset + ITEMS_PER_PAGE - 1);
+        if (searchQuery?.trim()) {
+          q = q.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+        }
+        if (subject && subject !== "all") {
+          q = q.or(buildSubjectFilter(subject));
+        }
+        if (gradeLevel && gradeLevel !== "all") {
+          q = q.eq("grade_level", gradeLevel as any);
+        }
+        promises.push(Promise.resolve(q).then(r => ({ source: 'paths', data: r.data || [], count: r.count || 0, error: r.error })));
+      } else {
+        promises.push(Promise.resolve({ source: 'paths', data: [], count: 0, error: null }));
+      }
+
+      const [contentResult, quizResult, gameResult, pathResult] = await Promise.all(promises);
+
+      if (contentResult.error) throw contentResult.error;
+      if (quizResult.error) throw quizResult.error;
+      if (gameResult.error) throw gameResult.error;
+      if (pathResult.error) throw pathResult.error;
+
+      // Mark each item with its type
+      const contentItems = (contentResult.data as any[]).map((item: any) => ({ ...item, itemType: 'content' }));
       
-      if (quizIds.length > 0) {
-        // Get question counts
-        const { data: questionsData } = await supabase
-          .from("quiz_questions")
-          .select("content_id")
-          .in("content_id", quizIds);
-        
-        if (questionsData) {
-          questionsData.forEach((q) => {
-            questionCounts[q.content_id] = (questionCounts[q.content_id] || 0) + 1;
-          });
-        }
-
-        // Get like counts for quizzes
-        const { data: likesData } = await supabase
-          .from("likes")
-          .select("quiz_id")
-          .in("quiz_id", quizIds)
-          .not("quiz_id", "is", null);
-        
-        if (likesData) {
-          likesData.forEach((like) => {
-            if (like.quiz_id) {
-              likeCounts[like.quiz_id] = (likeCounts[like.quiz_id] || 0) + 1;
-            }
-          });
-        }
-
-        // Get comment counts for quizzes
-        const { data: commentsData } = await supabase
-          .from("comments")
-          .select("quiz_id")
-          .in("quiz_id", quizIds)
-          .not("quiz_id", "is", null);
-        
-        if (commentsData) {
-          commentsData.forEach((comment) => {
-            if (comment.quiz_id) {
-              commentCounts[comment.quiz_id] = (commentCounts[comment.quiz_id] || 0) + 1;
-            }
-          });
-        }
-      }
-
-      // Get question counts for games
-      if (gameIds.length > 0) {
-        const { data: gameQuestionsData } = await supabase
-          .from("game_questions")
-          .select("game_id")
-          .in("game_id", gameIds);
-        
-        if (gameQuestionsData) {
-          gameQuestionsData.forEach((q) => {
-            questionCounts[q.game_id] = (questionCounts[q.game_id] || 0) + 1;
-          });
-        }
-      }
-
-      // Combine and mark quizzes with content_type
-      const quizzes = quizData.map(quiz => ({
+      const quizItems = (quizResult.data as any[]).map((quiz: any) => ({
         ...quiz,
         content_type: 'quiz' as const,
-        likes_count: likeCounts[quiz.id] || 0,
+        itemType: 'content',
+        likes_count: 0,
         views_count: 0,
         saves_count: 0,
         shares_count: 0,
-        comments_count: commentCounts[quiz.id] || 0,
+        comments_count: 0,
         video_url: null,
         document_url: null,
         rich_text: null,
-        tags: [],
-        questions_count: questionCounts[quiz.id] || 0,
+        tags: quiz.tags || [],
+        questions_count: 0,
       }));
 
-      // Combine and mark games with content_type
-      const games = gameData.map(game => ({
+      const gameItems = (gameResult.data as any[]).map((game: any) => ({
         ...game,
         content_type: 'game' as const,
+        itemType: 'content',
         likes_count: game.likes_count || 0,
         views_count: 0,
         saves_count: game.saves_count || 0,
@@ -261,49 +173,39 @@ export const useInfiniteContent = (
         document_url: null,
         rich_text: null,
         tags: game.tags || [],
-        questions_count: questionCounts[game.id] || 0,
+        questions_count: 0,
       }));
 
-      // Combine all arrays and sort by created_at
-      let allContent = [...(contentData || []), ...quizzes, ...games].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      const pathItems = (pathResult.data as any[]).map((path: any) => ({ ...path, itemType: 'learning_path' }));
 
-      // Apply client-side tag filtering if search query exists
-      if (searchQuery && searchQuery.trim() !== "") {
+      // Merge all, sort by created_at descending, take only ITEMS_PER_PAGE
+      let allItems = [...contentItems, ...quizItems, ...gameItems, ...pathItems]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, ITEMS_PER_PAGE);
+
+      // Client-side tag filtering
+      if (searchQuery?.trim()) {
         const searchLower = searchQuery.toLowerCase();
-        allContent = allContent.filter(item => {
-          // Already matched by DB query (title, description, subject)
+        allItems = allItems.filter(item => {
           const matchedByDB = 
             item.title?.toLowerCase().includes(searchLower) ||
             item.description?.toLowerCase().includes(searchLower) ||
             item.subject?.toLowerCase().includes(searchLower);
-          
-          // Check if any tag matches
           const matchedByTags = item.tags?.some((tag: string) => 
             tag.toLowerCase().includes(searchLower)
           );
-          
           return matchedByDB || matchedByTags;
         });
       }
 
       // Calculate total count from all sources
-      const totalCount = (contentCount || 0) + (quizCount || 0) + (gameCount || 0);
-
-      // Determine how many sources are being combined to compute a correct page size
-      const sourcesCount = 1 
-        + ((!contentType || contentType === "all" || contentType === "quiz") ? 1 : 0) 
-        + ((!contentType || contentType === "all" || contentType === "game") ? 1 : 0);
-      const combinedPageSize = ITEMS_PER_PAGE * sourcesCount;
-
-      // There are more pages if we haven't reached the total count yet
-      const hasMore = allContent.length > 0 && (startIndex + combinedPageSize) < totalCount;
+      const totalCount = contentResult.count + quizResult.count + gameResult.count + pathResult.count;
+      const hasMore = allItems.length === ITEMS_PER_PAGE && (offset + ITEMS_PER_PAGE) < totalCount;
 
       return {
-        items: allContent,
+        items: allItems,
         nextPage: hasMore ? pageParam + 1 : undefined,
-        totalCount: totalCount,
+        totalCount,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextPage,
