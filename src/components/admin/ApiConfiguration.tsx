@@ -1749,6 +1749,373 @@ echo "Procesados: {$response['processed']}, Errores: {$response['errors']}";
         </CardContent>
       </Card>
 
+      {/* Chat Login JWT */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5" />
+                API - Chat Login (JWT)
+              </CardTitle>
+              <CardDescription>
+                Endpoint para acceder al chat escolar mediante un token JWT firmado. Crea usuarios, asigna instituciones, grupos académicos y dirige al chat automáticamente.
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="text-green-500 border-green-500">
+              POST / GET
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Endpoint */}
+          <div className="flex items-start gap-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <ExternalLink className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <p className="font-medium text-blue-900 dark:text-blue-100">
+                Endpoint del Chat Login
+              </p>
+              <code className="block px-3 py-2 bg-blue-100 dark:bg-blue-900/30 rounded text-sm break-all">
+                https://{projectId}.supabase.co/functions/v1/chat-login
+              </code>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://${projectId}.supabase.co/functions/v1/chat-login`);
+                  toast({
+                    title: "Endpoint copiado",
+                    description: "La URL del endpoint ha sido copiada al portapapeles",
+                  });
+                }}
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copiar URL
+              </Button>
+            </div>
+          </div>
+
+          {/* URL de acceso */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">URL de Acceso al Chat</label>
+            <p className="text-sm text-muted-foreground">
+              Los usuarios acceden al chat visitando la siguiente URL con el token JWT como parámetro:
+            </p>
+            <code className="block px-3 py-2 bg-muted rounded text-sm break-all">
+              https://sedefy.com/chat/login?token=JWT_TOKEN_AQUI
+            </code>
+            <p className="text-xs text-muted-foreground mt-1">
+              La aplicación procesa el token, crea/autentica al usuario y lo redirige al chat automáticamente.
+            </p>
+          </div>
+
+          {/* Autenticación */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Autenticación</label>
+            <p className="text-sm text-muted-foreground">
+              Endpoint público. La seguridad está garantizada por la firma HMAC-SHA256 del JWT. El token se verifica con el secret <code className="px-1 py-0.5 bg-muted rounded">CHAT_JWT_SECRET</code> configurado en el servidor.
+            </p>
+          </div>
+
+          {/* Payload JWT */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Payload del JWT</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "email": "usuario@colegio.edu.co",        // Requerido
+  "full_name": "Juan Pérez",                // Opcional
+  "member_role": "teacher",                  // Requerido: teacher | student | admin | coordinator | parent
+  "institution_name": "Colegio ABC",         // Opcional: nombre de la institución (se busca o crea)
+  "institution_id": "uuid-de-institucion",   // Opcional: ID directo (tiene prioridad sobre nombre)
+  "numero_documento": "123456",              // Opcional
+  "password": "custom_password",             // Opcional (default: Sede_{numero_documento})
+  "grupo": "5°A",                            // Opcional: grupo académico del estudiante
+  "curso_nombre": "2025",                    // Opcional: año o nombre del curso
+  "es_director_grupo": false,                // Opcional: si el docente es director del grupo
+  "director_grupo": "5°A",                   // Opcional: grupo del que es director (para docentes)
+  "exp": 1750000000                          // Requerido: expiración UNIX timestamp
+}`}
+            </pre>
+          </div>
+
+          {/* Campos detallados */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Detalle de Campos</label>
+            <div className="space-y-1 text-sm">
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">email</code>
+                <span className="text-muted-foreground">Correo electrónico del usuario (requerido)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">full_name</code>
+                <span className="text-muted-foreground">Nombre completo (se usa al crear el perfil)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">member_role</code>
+                <span className="text-muted-foreground">Rol en la institución: teacher, student, admin, coordinator, parent</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">institution_name</code>
+                <span className="text-muted-foreground">Nombre de la institución. Si no existe, se crea automáticamente</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">institution_id</code>
+                <span className="text-muted-foreground">UUID de la institución (tiene prioridad sobre institution_name)</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">grupo</code>
+                <span className="text-muted-foreground">Nombre del grupo académico (ej: "5°A", "10°B"). Asigna al usuario como estudiante</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">director_grupo</code>
+                <span className="text-muted-foreground">Si member_role es "teacher", asigna al docente como director de ese grupo</span>
+              </div>
+              <div className="flex gap-2">
+                <code className="px-2 py-1 bg-muted rounded text-xs">exp</code>
+                <span className="text-muted-foreground">Timestamp UNIX de expiración del token</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Lógica de funcionamiento */}
+          <div className="space-y-2 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Key className="w-4 h-4" />
+              Lógica de Procesamiento
+            </label>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p><strong>1. Verificación del token:</strong> Se verifica la firma HMAC-SHA256 y la expiración.</p>
+              <p><strong>2. Usuario:</strong> Si el email ya existe, se reutiliza. Si no, se crea un nuevo usuario con email confirmado.</p>
+              <p><strong>3. Contraseña:</strong> Si no se proporciona <code className="px-1 py-0.5 bg-muted rounded">password</code>, se genera como <code className="px-1 py-0.5 bg-muted rounded">Sede_{'{numero_documento}'}</code>.</p>
+              <p><strong>4. Institución:</strong> Se busca por ID o nombre. Si no existe, se crea con el usuario como admin.</p>
+              <p><strong>5. Membresía:</strong> Se agrega al usuario como miembro de la institución con el rol indicado.</p>
+              <p><strong>6. Grupo académico:</strong> Si se indica <code className="px-1 py-0.5 bg-muted rounded">grupo</code>, se busca/crea el grupo y se agrega al usuario.</p>
+              <p><strong>7. Director de grupo:</strong> Si el docente tiene <code className="px-1 py-0.5 bg-muted rounded">director_grupo</code>, se le asigna como director (esto crea automáticamente un chat grupal).</p>
+              <p><strong>8. Auto-login:</strong> Se retornan las credenciales para que el cliente inicie sesión automáticamente.</p>
+            </div>
+          </div>
+
+          {/* Generación del JWT */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Generación del JWT</label>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                El JWT debe firmarse con el algoritmo HMAC-SHA256 (HS256) usando el secret compartido <code className="px-1 py-0.5 bg-muted rounded">CHAT_JWT_SECRET</code>.
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium mb-2">JavaScript/Node.js (con jsonwebtoken)</h4>
+                  <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`const jwt = require('jsonwebtoken');
+
+const SECRET = 'tu_chat_jwt_secret';
+
+function generarTokenChat(userData) {
+  const payload = {
+    email: userData.email,
+    full_name: userData.full_name,
+    member_role: userData.member_role,  // teacher | student | admin | coordinator | parent
+    institution_name: userData.institution_name,
+    numero_documento: userData.numero_documento,
+    grupo: userData.grupo || null,
+    director_grupo: userData.director_grupo || null,
+    curso_nombre: userData.curso_nombre || null,
+  };
+
+  return jwt.sign(payload, SECRET, { expiresIn: '10m' });
+}
+
+// Ejemplo: Crear URL de acceso al chat para un estudiante
+const token = generarTokenChat({
+  email: 'estudiante@colegio.edu.co',
+  full_name: 'María García',
+  member_role: 'student',
+  institution_name: 'Colegio ABC',
+  numero_documento: '1234567890',
+  grupo: '5°A',
+});
+
+const chatUrl = \`https://sedefy.com/chat/login?token=\${token}\`;
+console.log(chatUrl);`}
+                  </pre>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Python (con PyJWT)</h4>
+                  <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`import jwt
+import time
+
+SECRET = 'tu_chat_jwt_secret'
+
+def generar_token_chat(user_data):
+    payload = {
+        'email': user_data['email'],
+        'full_name': user_data.get('full_name'),
+        'member_role': user_data['member_role'],
+        'institution_name': user_data.get('institution_name'),
+        'numero_documento': user_data.get('numero_documento'),
+        'grupo': user_data.get('grupo'),
+        'director_grupo': user_data.get('director_grupo'),
+        'exp': int(time.time()) + 600  # 10 minutos
+    }
+    return jwt.encode(payload, SECRET, algorithm='HS256')
+
+# Ejemplo: Docente director de grupo
+token = generar_token_chat({
+    'email': 'profe@colegio.edu.co',
+    'full_name': 'Carlos López',
+    'member_role': 'teacher',
+    'institution_name': 'Colegio ABC',
+    'numero_documento': '9876543',
+    'director_grupo': '10°B',
+    'curso_nombre': '2025'
+})
+
+chat_url = f'https://sedefy.com/chat/login?token={token}'
+print(chat_url)`}
+                  </pre>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium mb-2">PHP (con firebase/php-jwt)</h4>
+                  <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`<?php
+use Firebase\\JWT\\JWT;
+
+$secret = 'tu_chat_jwt_secret';
+
+function generarTokenChat($userData) {
+    global $secret;
+    
+    $payload = [
+        'email' => $userData['email'],
+        'full_name' => $userData['full_name'] ?? null,
+        'member_role' => $userData['member_role'],
+        'institution_name' => $userData['institution_name'] ?? null,
+        'numero_documento' => $userData['numero_documento'] ?? null,
+        'grupo' => $userData['grupo'] ?? null,
+        'director_grupo' => $userData['director_grupo'] ?? null,
+        'exp' => time() + 600  // 10 minutos
+    ];
+    
+    return JWT::encode($payload, $secret, 'HS256');
+}
+
+// Ejemplo: Padre de familia
+$token = generarTokenChat([
+    'email' => 'padre@gmail.com',
+    'full_name' => 'Pedro Martínez',
+    'member_role' => 'parent',
+    'institution_name' => 'Colegio ABC',
+    'grupo' => '5°A'
+]);
+
+$chatUrl = "https://sedefy.com/chat/login?token=$token";
+echo $chatUrl;
+?>`}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Respuesta exitosa */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Respuesta Exitosa (200)</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+{`{
+  "success": true,
+  "user_id": "uuid-del-usuario",
+  "email": "usuario@colegio.edu.co",
+  "redirect": "/chat",
+  "auto_login": {
+    "email": "usuario@colegio.edu.co",
+    "password": "Sede_123456"
+  }
+}`}
+            </pre>
+            <p className="text-xs text-muted-foreground">
+              El campo <code className="px-1 py-0.5 bg-muted rounded">auto_login</code> contiene las credenciales para que el cliente inicie sesión automáticamente.
+            </p>
+          </div>
+
+          {/* Errores */}
+          <div className="space-y-4">
+            <label className="text-sm font-medium">Respuestas de Error</label>
+            
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Token no proporcionado</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{ "error": "Token requerido" }`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Email faltante en el token</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{ "error": "Email requerido en el token" }`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 400 - Token expirado o firma inválida</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{ "error": "Token expired" }
+{ "error": "Invalid signature" }`}
+              </pre>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground">Error 500 - Secret no configurado</label>
+              <pre className="p-4 bg-muted rounded text-xs font-mono">
+{`{ "error": "JWT secret not configured" }`}
+              </pre>
+            </div>
+          </div>
+
+          {/* Escenarios de uso */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Escenarios de Uso</label>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="font-medium text-foreground mb-1">📚 Estudiante accede al chat</p>
+                <p>El sistema académico genera un JWT con <code className="px-1 py-0.5 bg-muted rounded">member_role: "student"</code>, <code className="px-1 py-0.5 bg-muted rounded">grupo: "5°A"</code>. El estudiante se agrega automáticamente al grupo académico y al chat grupal del director.</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="font-medium text-foreground mb-1">👨‍🏫 Docente director de grupo</p>
+                <p>JWT con <code className="px-1 py-0.5 bg-muted rounded">member_role: "teacher"</code>, <code className="px-1 py-0.5 bg-muted rounded">director_grupo: "10°B"</code>. Se crea automáticamente un chat grupal con todos los miembros del grupo.</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="font-medium text-foreground mb-1">👨‍👩‍👧 Padre de familia</p>
+                <p>JWT con <code className="px-1 py-0.5 bg-muted rounded">member_role: "parent"</code>, <code className="px-1 py-0.5 bg-muted rounded">grupo: "5°A"</code>. El padre se agrega como miembro del grupo con rol "parent" y puede comunicarse con el director.</p>
+              </div>
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="font-medium text-foreground mb-1">🏫 Admin institucional</p>
+                <p>JWT con <code className="px-1 py-0.5 bg-muted rounded">member_role: "admin"</code>. Puede ver los chats de docentes y coordinadores, y buscar usuarios de su institución.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Seguridad */}
+          <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-2">
+              🔒 Seguridad
+            </h4>
+            <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1 list-disc list-inside">
+              <li>Los JWT se verifican con HMAC-SHA256 — no pueden ser falsificados sin el secret</li>
+              <li>Siempre incluya <code className="px-1 py-0.5 bg-amber-200/50 rounded">exp</code> para evitar reutilización de tokens</li>
+              <li>Tiempo de expiración recomendado: 10 minutos</li>
+              <li>El CHAT_JWT_SECRET debe mantenerse privado y seguro</li>
+              <li>Las contraseñas de los usuarios creados son temporales — invitar al usuario a cambiarla</li>
+              <li>Use HTTPS para todas las peticiones</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Webhook de Consolidado de Notas */}
       <WebhookDocumentation />
     </div>
