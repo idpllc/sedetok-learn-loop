@@ -2306,11 +2306,15 @@ echo $chatUrl;
               </div>
               <div className="flex gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
-                <p><strong>Procesamiento batch:</strong> Los usuarios se procesan en lotes de 50 en paralelo. Máximo 5000 usuarios por request</p>
+                <p><strong>Procesamiento batch:</strong> Los usuarios se procesan en lotes de 20 en paralelo internamente. <span className="text-amber-600 font-medium">Máximo 500 usuarios por request</span> — para instituciones grandes, divide en múltiples llamadas secuenciales.</p>
               </div>
               <div className="flex gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
                 <p><strong>Sedes:</strong> Los grupos pueden pertenecer a una sede específica. Dos grupos con el mismo nombre en sedes distintas se crean por separado. Usuarios se asignan al grupo correcto indicando <code className="px-1 py-0.5 bg-muted rounded">sede</code> en el payload</p>
+              </div>
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 shrink-0"></div>
+                <p><strong>tipo_documento:</strong> Acepta valores estándar (<code className="px-1 py-0.5 bg-muted rounded">CC</code>, <code className="px-1 py-0.5 bg-muted rounded">TI</code>, <code className="px-1 py-0.5 bg-muted rounded">CE</code>, <code className="px-1 py-0.5 bg-muted rounded">PP</code>, <code className="px-1 py-0.5 bg-muted rounded">RC</code>) y también normaliza automáticamente valores extendidos como "TARJETA DE IDENTIDAD" → <code className="px-1 py-0.5 bg-muted rounded">TI</code>, "CEDULA DE CIUDADANIA" → <code className="px-1 py-0.5 bg-muted rounded">CC</code>, etc.</p>
               </div>
             </div>
           </div>
@@ -2678,7 +2682,8 @@ function enlaceChat($documento, $ruta = '/chat') {
               <li>Se recomienda que los usuarios cambien su contraseña después del primer acceso</li>
               <li>Los enlaces de auto-login deben generarse desde el servidor, nunca expuestos públicamente</li>
               <li>El endpoint <code className="px-1 py-0.5 bg-amber-200/50 rounded">sync-institution-batch</code> usa Service Role Key — no requiere autenticación de usuario</li>
-              <li>Máximo 5000 usuarios por request para evitar timeouts</li>
+              <li><strong>Máximo 500 usuarios por request</strong> — para instituciones con más usuarios, usa múltiples llamadas secuenciales de 200-300 usuarios cada una</li>
+              <li><strong>tipo_documento:</strong> usa valores cortos (<code className="px-1 py-0.5 bg-amber-200/50 rounded">CC</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">TI</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">CE</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">PP</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">RC</code>) — el sistema normaliza valores extendidos automáticamente</li>
             </ul>
           </div>
         </CardContent>
