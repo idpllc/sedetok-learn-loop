@@ -876,195 +876,241 @@ export function ApiConfiguration() {
         </CardContent>
       </Card>
 
-      {/* Auto-login Endpoint Documentation */}
+      {/* Auto-login con Registro Automático */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <CardTitle className="flex items-center gap-2">
                 <Key className="h-5 w-5" />
-                Auto-login (SSO)
+                Auto-login por URL — Registro y Login Automático
               </CardTitle>
               <CardDescription>
-                Endpoint para iniciar sesión automáticamente usando un token cifrado
+                Un solo endpoint que crea el usuario si no existe, lo asigna a su institución, sede y grupo, y retorna la sesión activa.
               </CardDescription>
             </div>
             <Badge variant="outline" className="text-green-500 border-green-500">
-              POST
+              GET / POST
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+
+          {/* Endpoint */}
           <div className="flex items-start gap-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <ExternalLink className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-            <div className="space-y-1">
-              <p className="font-medium text-blue-900 dark:text-blue-100">
-                Endpoint de Auto-login
-              </p>
+            <div className="space-y-1 w-full">
+              <p className="font-medium text-blue-900 dark:text-blue-100">Endpoint</p>
               <code className="block px-3 py-2 bg-blue-100 dark:bg-blue-900/30 rounded text-sm break-all">
-                https://{projectId}.supabase.co/functions/v1/auto-login
+                {`https://${projectId}.supabase.co/functions/v1/auto-login`}
               </code>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2"
+              <Button variant="ghost" size="sm" className="mt-2"
                 onClick={() => {
                   navigator.clipboard.writeText(`https://${projectId}.supabase.co/functions/v1/auto-login`);
                   setCopiedAutoLoginEndpoint(true);
                   setTimeout(() => setCopiedAutoLoginEndpoint(false), 2000);
-                  toast({
-                    title: "Endpoint copiado",
-                    description: "La URL del endpoint ha sido copiada al portapapeles",
-                  });
-                }}
-              >
-                {copiedAutoLoginEndpoint ? (
-                  <Check className="h-4 w-4 mr-2" />
-                ) : (
-                  <Copy className="h-4 w-4 mr-2" />
-                )}
+                  toast({ title: "Endpoint copiado" });
+                }}>
+                {copiedAutoLoginEndpoint ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                 Copiar URL
               </Button>
             </div>
           </div>
 
+          {/* Parámetros */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Headers Requeridos</label>
-            <code className="block px-3 py-2 bg-muted rounded text-sm">
-              Content-Type: application/json
-            </code>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Autenticación</label>
-            <p className="text-sm text-muted-foreground">
-              Endpoint público (no requiere API key) - Los datos están protegidos por cifrado HMAC
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Body (JSON)</label>
+            <label className="text-sm font-medium">Parámetros (Query String o JSON Body)</label>
             <div className="space-y-1 text-sm">
-              <div className="flex gap-2">
-                <code className="px-2 py-1 bg-muted rounded text-xs">token</code>
-                <span className="text-muted-foreground">Token cifrado con formato: base64(data).base64(hmac)</span>
-              </div>
+              {[
+                ["documento", "requerido", "Número de documento del usuario"],
+                ["institution", "requerido", "Nombre exacto de la institución"],
+                ["member_role", "requerido", "student | teacher | admin | coordinator | parent"],
+                ["full_name", "opcional", "Nombre completo (usado solo al crear usuario nuevo)"],
+                ["email", "opcional", "Email real; si no se proporciona se usa {documento}@sedefy.local"],
+                ["tipo_documento", "opcional", "CC, TI, CE, RC, PA — default: CC"],
+                ["grupo", "opcional", "Nombre del grupo (ej: 5°A)"],
+                ["course_name", "opcional", "Nombre del curso académico (ej: Quinto)"],
+                ["sede", "opcional", "Nombre de la sede (ej: Sede Norte)"],
+                ["academic_year", "opcional", "Año académico (ej: 2025)"],
+                ["es_director_grupo", "opcional", "true | false — si el docente es director de grupo"],
+                ["redirect", "opcional", "Ruta de destino después del login en la app (ej: /chat)"],
+              ].map(([param, req, desc]) => (
+                <div key={param} className="flex gap-2 items-start">
+                  <code className="px-2 py-1 bg-muted rounded text-xs shrink-0">{param}</code>
+                  <Badge variant={req === "requerido" ? "default" : "outline"} className="text-xs shrink-0">{req}</Badge>
+                  <span className="text-muted-foreground text-xs">{desc}</span>
+                </div>
+              ))}
             </div>
           </div>
 
+          {/* Cómo funciona */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Generación del Token</label>
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                El token debe generarse de la siguiente manera:
-              </p>
-              <div className="space-y-2 pl-4 border-l-2 border-muted">
-                <p className="text-sm"><strong>1. Crear el payload:</strong></p>
-                <pre className="p-3 bg-muted rounded text-xs font-mono overflow-x-auto">
-{`{
-  "email": "usuario@ejemplo.com",
-  "password": "contraseña_del_usuario",
-  "timestamp": 1234567890000
-}
-
-// O usando número de documento:
-{
-  "numero_documento": "12345678",
-  "password": "contraseña_del_usuario",
-  "timestamp": 1234567890000
-}`}
-                </pre>
-                
-                <p className="text-sm mt-3"><strong>2. Codificar en base64:</strong></p>
-                <code className="block px-3 py-2 bg-muted rounded text-xs">
-                  encodedData = base64(JSON.stringify(payload))
-                </code>
-                
-                <p className="text-sm mt-3"><strong>3. Generar HMAC SHA-256 usando "tucanmistico" como clave secreta:</strong></p>
-                <code className="block px-3 py-2 bg-muted rounded text-xs">
-                  hmac = HMAC-SHA256(encodedData, "tucanmistico")
-                </code>
-                
-                <p className="text-sm mt-3"><strong>4. Codificar el HMAC en base64:</strong></p>
-                <code className="block px-3 py-2 bg-muted rounded text-xs">
-                  encodedHmac = base64(hmac)
-                </code>
-                
-                <p className="text-sm mt-3"><strong>5. Formar el token final:</strong></p>
-                <code className="block px-3 py-2 bg-muted rounded text-xs">
-                  token = encodedData + "." + encodedHmac
-                </code>
+            <label className="text-sm font-medium">¿Qué hace el endpoint?</label>
+            <div className="text-sm text-muted-foreground space-y-1.5">
+              <p><strong>1.</strong> Si el usuario <strong>no existe</strong>: lo crea con <code className="px-1 py-0.5 bg-muted rounded">documento</code> como contraseña.</p>
+              <p><strong>2.</strong> Vincula al usuario a la institución y la sede.</p>
+              <p><strong>3.</strong> Crea grupos de chat según el rol:</p>
+              <div className="pl-4 space-y-1 border-l-2 border-muted">
+                <p>• <strong>Estudiante:</strong> Entra al grupo <code className="px-1 py-0.5 bg-muted rounded">{"{grupo} - {course_name}"}</code></p>
+                <p>• <strong>Docente:</strong> Entra al grupo <code className="px-1 py-0.5 bg-muted rounded">Docentes {"{sede}"}</code> (puede ser varias sedes)</p>
+                <p>• <strong>Admin:</strong> Entra al grupo <code className="px-1 py-0.5 bg-muted rounded">Admin</code> + todos los <code className="px-1 py-0.5 bg-muted rounded">Docentes {"{sede}"}</code></p>
+                <p>• <strong>Coordinador:</strong> Entra al grupo <code className="px-1 py-0.5 bg-muted rounded">Coordinadores</code> + todos los <code className="px-1 py-0.5 bg-muted rounded">Docentes {"{sede}"}</code></p>
               </div>
-              
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded border border-yellow-200 dark:border-yellow-800 mt-4">
-                <p className="text-sm text-yellow-900 dark:text-yellow-100">
-                  <strong>⚠️ Importante:</strong> El timestamp es opcional pero recomendado. Los tokens expiran después de 5 minutos si incluyen timestamp.
-                </p>
-              </div>
+              <p><strong>4.</strong> Si el usuario <strong>ya existe</strong>: inicia sesión directamente sin duplicar grupos.</p>
+              <p><strong>5.</strong> Retorna la sesión activa con <code className="px-1 py-0.5 bg-muted rounded">access_token</code> y <code className="px-1 py-0.5 bg-muted rounded">refresh_token</code>.</p>
             </div>
           </div>
 
+          {/* Ejemplos por rol */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium">Ejemplos de URL por Rol</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`# Estudiante en 5°A del curso Quinto, Sede Norte
+https://sedefy.com/auto-login
+  ?documento=1012345678
+  &institution=Colegio San José
+  &member_role=student
+  &full_name=María López
+  &grupo=5°A
+  &course_name=Quinto
+  &sede=Sede Norte
+  &redirect=/chat
+
+# Docente en Sede Norte (director del grupo 6°B)
+https://sedefy.com/auto-login
+  ?documento=1009876543
+  &institution=Colegio San José
+  &member_role=teacher
+  &full_name=Carlos Pérez
+  &sede=Sede Norte
+  &grupo=6°B
+  &course_name=Sexto
+  &es_director_grupo=true
+  &redirect=/chat
+
+# Administrador (accede a Admin + todos los Docentes-{sede})
+https://sedefy.com/auto-login
+  ?documento=1001234567
+  &institution=Colegio San José
+  &member_role=admin
+  &full_name=Ana Rodríguez
+  &redirect=/institution
+
+# Coordinador
+https://sedefy.com/auto-login
+  ?documento=1007654321
+  &institution=Colegio San José
+  &member_role=coordinator
+  &full_name=Luis Martínez
+  &redirect=/chat`}
+            </pre>
+          </div>
+
+          {/* Ejemplo cURL */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Funcionamiento</label>
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>1. Si se proporciona <code className="px-1 py-0.5 bg-muted rounded">email</code>, se usa directamente para login</p>
-              <p>2. Si se proporciona <code className="px-1 py-0.5 bg-muted rounded">numero_documento</code>, se busca el email asociado en la base de datos</p>
-              <p>3. El password debe ser la contraseña actual del usuario</p>
-              <p>4. Para usuarios creados con create-user-by-document, la contraseña es el número de documento</p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">URL de Auto-login en la Aplicación</label>
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Una vez generado el token, construye la URL de la siguiente manera:
-              </p>
-              <code className="block px-3 py-2 bg-muted rounded text-sm break-all">
-                https://sedefy.com/auto-login?token=GENERATED_TOKEN&redirect=/profile
-              </code>
-              <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                <p>• <code className="px-1 py-0.5 bg-muted rounded">token</code>: El token generado (requerido)</p>
-                <p>• <code className="px-1 py-0.5 bg-muted rounded">redirect</code>: Ruta de destino después del login (opcional, por defecto "/")</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <label className="text-sm font-medium">Ejemplo de Solicitud</label>
-            <div className="space-y-2">
-              <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
+            <label className="text-sm font-medium">Ejemplo cURL (POST JSON)</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
 {`curl -X POST "https://${projectId}.supabase.co/functions/v1/auto-login" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "token": "eyJlbWFpbCI6InVzdWFyaW9AZWplbXBsby5jb20iLCJwYXNzd29yZCI6Im1pX2NvbnRyYXNlw7FhIiwidGltZXN0YW1wIjoxNzM0NTY3ODkwMDAwfQ==.aGFzaF9kZWxfaG1hY19hcXVp"
+    "documento": "1012345678",
+    "institution": "Colegio San José",
+    "member_role": "student",
+    "full_name": "María López",
+    "grupo": "5°A",
+    "course_name": "Quinto",
+    "sede": "Sede Norte"
   }'`}
-              </pre>
-            </div>
+            </pre>
           </div>
 
-          <div className="space-y-4">
+          {/* Respuesta */}
+          <div className="space-y-2">
             <label className="text-sm font-medium">Respuesta Exitosa</label>
             <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto">
 {`{
   "success": true,
+  "is_new_user": true,
   "session": {
     "access_token": "eyJhbGci...",
     "refresh_token": "v1_eyJhbGc...",
     "expires_in": 3600,
-    "token_type": "bearer",
-    "user": {
-      "id": "uuid-here",
-      "email": "usuario@ejemplo.com",
-      ...
-    }
+    "token_type": "bearer"
   },
   "user": {
-    "id": "uuid-here",
-    "email": "usuario@ejemplo.com",
-    ...
+    "id": "uuid-aqui",
+    "email": "1012345678@sedefy.local",
+    "full_name": "María López",
+    "numero_documento": "1012345678",
+    "member_role": "student",
+    "institution": "Colegio San José",
+    "sede": "Sede Norte",
+    "grupo": "5°A",
+    "course_name": "Quinto"
   }
 }`}
+            </pre>
+          </div>
+
+          {/* Integración JS */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Integración desde JavaScript (Sistema Escolar)</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`const SEDEFY_URL = "https://sedefy.com";
+
+function generarEnlace(usuario) {
+  const params = new URLSearchParams({
+    documento:   usuario.documento,
+    institution: "Colegio San José",
+    member_role: usuario.rol,       // student | teacher | admin | coordinator
+    full_name:   usuario.nombre,
+    sede:        usuario.sede,
+    grupo:       usuario.grupo ?? "",
+    course_name: usuario.curso ?? "",
+    redirect:    "/chat",
+  });
+  return \`\${SEDEFY_URL}/auto-login?\${params}\`;
+}
+
+// Uso
+const link = generarEnlace({
+  documento: "1012345678",
+  rol: "student",
+  nombre: "María López",
+  sede: "Sede Norte",
+  grupo: "5°A",
+  curso: "Quinto",
+});
+window.open(link, "_blank");`}
+            </pre>
+          </div>
+
+          {/* PHP */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Integración desde PHP</label>
+            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
+{`<?php
+function enlaceSedefy(array $usuario, string $destino = '/chat'): string {
+  $base = "https://sedefy.com/auto-login";
+  $params = http_build_query([
+    'documento'   => $usuario['documento'],
+    'institution' => 'Colegio San José',
+    'member_role' => $usuario['rol'],  // student|teacher|admin|coordinator
+    'full_name'   => $usuario['nombre'],
+    'sede'        => $usuario['sede'] ?? '',
+    'grupo'       => $usuario['grupo'] ?? '',
+    'course_name' => $usuario['curso'] ?? '',
+    'redirect'    => $destino,
+  ]);
+  return "{$base}?{$params}";
+}
+?>
+
+<!-- En la plantilla HTML -->
+<a href="<?= htmlspecialchars(enlaceSedefy($usuario)) ?>" target="_blank">
+  💬 Abrir Chat Escolar
+</a>`}
             </pre>
           </div>
 
@@ -2534,156 +2580,22 @@ echo "Sincronización: " . json_encode($result['log']);
         </CardContent>
       </Card>
 
-      {/* Auto-Login por Documento */}
+      {/* Seguridad */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Code className="w-5 h-5" />
-            Auto-Login por Número de Documento
+            <Key className="w-5 h-5" />
+            Consideraciones de Seguridad
           </CardTitle>
-          <CardDescription>
-            Acceso automático vía URL para usuarios sincronizados — ideal para integración con sistemas escolares
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">URL de Acceso Directo</label>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 px-3 py-2 bg-muted rounded text-sm font-mono break-all">
-                {`https://sedefy.com/auto-login?documento={NUMERO_DOCUMENTO}&redirect=/chat`}
-              </code>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => copyToClipboard('https://sedefy.com/auto-login?documento={NUMERO_DOCUMENTO}&redirect=/chat', 'auto-login-endpoint')}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Parámetros de URL</label>
-            <div className="space-y-1 text-sm">
-              <div className="flex gap-2">
-                <code className="px-2 py-1 bg-muted rounded text-xs">documento</code>
-                <span className="text-muted-foreground">Número de documento del usuario (requerido)</span>
-              </div>
-              <div className="flex gap-2">
-                <code className="px-2 py-1 bg-muted rounded text-xs">redirect</code>
-                <span className="text-muted-foreground">Ruta a la que redirigir después del login (default: /)</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">¿Cómo funciona?</label>
-            <div className="space-y-1 text-sm text-muted-foreground">
-              <div className="flex gap-2">
-                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">1</span>
-                <p>El usuario accede a la URL con su número de documento</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">2</span>
-                <p>El sistema busca al usuario por <code className="px-1 py-0.5 bg-muted rounded">numero_documento</code> en la BD</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">3</span>
-                <p>Inicia sesión automáticamente (contraseña = número de documento)</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">4</span>
-                <p>Redirige al chat donde ya están precreados los grupos</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Ejemplos por rol */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Ejemplos por Rol</label>
-            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-{`<!-- Estudiante: accede al chat de su grupo -->
-<a href="https://sedefy.com/auto-login?documento=1012345678&redirect=/chat">
-  Ir al Chat
-</a>
-
-<!-- Docente: accede al chat -->
-<a href="https://sedefy.com/auto-login?documento=1009876543&redirect=/chat">
-  Abrir Chat Escolar
-</a>
-
-<!-- Admin: accede al dashboard institucional -->
-<a href="https://sedefy.com/auto-login?documento=1001234567&redirect=/institution">
-  Panel Institución
-</a>
-
-<!-- Padre: accede al chat del grupo de su hijo -->
-<a href="https://sedefy.com/auto-login?documento=1050001234&redirect=/chat">
-  Chat con Docentes
-</a>`}
-            </pre>
-          </div>
-
-          {/* Ejemplo de integración con sistema escolar */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Integración desde Sistema Escolar (JavaScript)</label>
-            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-{`// Generar botón de acceso al chat para cada usuario
-function generarEnlaceChat(documento) {
-  return \`https://sedefy.com/auto-login?documento=\${documento}&redirect=/chat\`;
-}
-
-// En la vista del estudiante
-const btnChat = document.createElement('a');
-btnChat.href = generarEnlaceChat(estudiante.documento);
-btnChat.target = '_blank';
-btnChat.textContent = 'Abrir Chat Escolar';
-document.body.appendChild(btnChat);`}
-            </pre>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Integración desde PHP</label>
-            <pre className="p-4 bg-muted rounded text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-{`<?php
-// En la vista del usuario en SEDE Académico
-function enlaceChat($documento, $ruta = '/chat') {
-    return "https://sedefy.com/auto-login?documento={$documento}&redirect={$ruta}";
-}
-?>
-
-<!-- En la plantilla Blade/HTML -->
-<a href="<?= enlaceChat($usuario->documento) ?>" target="_blank" class="btn btn-primary">
-    💬 Abrir Chat Escolar
-</a>`}
-            </pre>
-          </div>
-
-          {/* Flujo completo */}
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-              🔄 Flujo Completo de Integración
-            </h4>
-            <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
-              <li>Sincronice la institución con <code className="px-1 py-0.5 bg-blue-200/50 rounded">sync-institution-batch</code> (crea usuarios, grupos y chats)</li>
-              <li>Genere enlaces de acceso con <code className="px-1 py-0.5 bg-blue-200/50 rounded">/auto-login?documento=XXX&redirect=/chat</code></li>
-              <li>Los usuarios hacen clic → inician sesión automáticamente → entran al chat con sus grupos ya creados</li>
-              <li>Re-sincronice periódicamente para actualizar usuarios nuevos o cambios de grupo</li>
-            </ol>
-          </div>
-
-          {/* Seguridad */}
+        <CardContent>
           <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-            <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-2">
-              🔒 Consideraciones de Seguridad
-            </h4>
-            <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1 list-disc list-inside">
-              <li>La contraseña de todos los usuarios es su número de documento</li>
-              <li>Se recomienda que los usuarios cambien su contraseña después del primer acceso</li>
-              <li>Los enlaces de auto-login deben generarse desde el servidor, nunca expuestos públicamente</li>
-              <li>El endpoint <code className="px-1 py-0.5 bg-amber-200/50 rounded">sync-institution-batch</code> usa Service Role Key — no requiere autenticación de usuario</li>
-              <li><strong>Máximo 500 usuarios por request</strong> — para instituciones con más usuarios, usa múltiples llamadas secuenciales de 200-300 usuarios cada una</li>
-              <li><strong>tipo_documento:</strong> usa valores cortos (<code className="px-1 py-0.5 bg-amber-200/50 rounded">CC</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">TI</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">CE</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">PP</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">RC</code>) — el sistema normaliza valores extendidos automáticamente</li>
+            <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1.5 list-disc list-inside">
+              <li>La contraseña inicial de cada usuario es su número de documento — se recomienda que la cambien al primer ingreso.</li>
+              <li>Los enlaces de auto-login deben generarse <strong>desde el servidor</strong>, nunca expuestos en el front-end público.</li>
+              <li>El endpoint es público pero idempotente: si el usuario ya existe, simplemente inicia sesión sin modificar sus datos.</li>
+              <li>El campo <code className="px-1 py-0.5 bg-amber-200/50 rounded">institution</code> debe coincidir exactamente con el nombre registrado (sensible a mayúsculas).</li>
+              <li><strong>tipo_documento:</strong> acepta valores cortos (<code className="px-1 py-0.5 bg-amber-200/50 rounded">CC</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">TI</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">CE</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">PA</code>, <code className="px-1 py-0.5 bg-amber-200/50 rounded">RC</code>) y también cadenas largas como "TARJETA DE IDENTIDAD" — se normalizan automáticamente.</li>
             </ul>
           </div>
         </CardContent>
