@@ -73,9 +73,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (payload.users.length > 5000) {
+    if (payload.users.length > 500) {
       return new Response(
-        JSON.stringify({ error: "Máximo 5000 usuarios por lote" }),
+        JSON.stringify({ 
+          error: "Máximo 500 usuarios por lote. Para instituciones más grandes, divide el payload en múltiples llamadas usando el parámetro 'batch_index'.",
+          recommendation: "Divide tu lista de usuarios en lotes de máximo 200-300 y llama al endpoint secuencialmente."
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -232,7 +235,7 @@ Deno.serve(async (req) => {
 
     // ========== 3. PROCESS USERS ==========
     // Process in batches of 50
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = 20;
     for (let i = 0; i < payload.users.length; i += BATCH_SIZE) {
       const batch = payload.users.slice(i, i + BATCH_SIZE);
       
@@ -506,6 +509,33 @@ async function ensureUser(
     parent: "estudiante",
   };
 
+  // Normalize tipo_documento to valid enum values
+  const tipoDocumentoMap: Record<string, string> = {
+    "CC": "CC",
+    "TI": "TI",
+    "CE": "CE",
+    "PP": "PP",
+    "NIT": "NIT",
+    "CEDULA DE CIUDADANIA": "CC",
+    "CÉDULA DE CIUDADANÍA": "CC",
+    "CEDULA CIUDADANIA": "CC",
+    "TARJETA DE IDENTIDAD": "TI",
+    "CEDULA DE EXTRANJERIA": "CE",
+    "CÉDULA DE EXTRANJERÍA": "CE",
+    "PASAPORTE": "PP",
+    "REGISTRO CIVIL": "RC",
+    "REGISTRO CIVIL DE NACIMIENTO": "RC",
+    "RC": "RC",
+    "PERMISO DE PROTECCIÓN TEMPORAL": "CC", // map to CC as closest match
+    "PERMISO DE PROTECCION TEMPORAL": "CC",
+    "PPT": "CC",
+    "Desconocido": "CC",
+    "DESCONOCIDO": "CC",
+  };
+
+  const rawTipoDoc = userData.tipo_documento || "CC";
+  const normalizedTipoDoc = tipoDocumentoMap[rawTipoDoc.trim()] || tipoDocumentoMap[rawTipoDoc.trim().toUpperCase()] || "CC";
+
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
     password,
@@ -519,13 +549,15 @@ async function ensureUser(
   if (authError) {
     // If email already taken, try to find by email
     if (authError.message?.includes("already been registered") || authError.message?.includes("already exists")) {
-      const { data: users } = await supabase.auth.admin.listUsers({ filter: email });
-      const found = users?.users?.find((u: any) => u.email === email);
+      // Search by email directly in profiles via numero_documento (already checked above, user just has the email)
+      // Try auth admin search
+      const { data: authSearchData } = await supabase.auth.admin.listUsers();
+      const found = authSearchData?.users?.find((u: any) => u.email === email);
       if (found) {
-        // Update profile with documento
+        // Update profile with documento - no setTimeout needed
         await supabase.from("profiles").update({
           numero_documento: doc,
-          tipo_documento: userData.tipo_documento || "CC",
+          tipo_documento: normalizedTipoDoc,
           full_name: userData.full_name || doc,
         }).eq("id", found.id);
 
@@ -537,20 +569,18 @@ async function ensureUser(
     return null;
   }
 
-  // Wait a moment for the trigger to create the profile
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  // Update profile with document data
+  // NO setTimeout — profile is created synchronously by the trigger.
+  // We just do a single update with safe normalized values.
   const { error: profileErr } = await supabase.from("profiles").update({
     full_name: userData.full_name || doc,
     numero_documento: doc,
-    tipo_documento: userData.tipo_documento || "CC",
+    tipo_documento: normalizedTipoDoc,
     tipo_usuario: tipoUsuarioMap[userData.member_role] || "estudiante",
   }).eq("id", authData.user.id);
 
   if (profileErr) {
     console.error(`Profile update error for ${doc}:`, profileErr);
-    // Retry without tipo_documento enum in case of mismatch
+    // Fallback: update only safe fields (no enum)
     await supabase.from("profiles").update({
       full_name: userData.full_name || doc,
       numero_documento: doc,
