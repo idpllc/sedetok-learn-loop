@@ -13,7 +13,7 @@ const AutoLogin = () => {
     const handleAutoLogin = async () => {
       const token = searchParams.get("token");
       const documento = searchParams.get("documento");
-      const redirect = searchParams.get("redirect") || "/";
+      const redirect = searchParams.get("redirect") || "/chat";
 
       if (!token && !documento) {
         toast.error("Token o documento de acceso no proporcionado");
