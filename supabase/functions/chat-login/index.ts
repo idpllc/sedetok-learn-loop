@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Simple JWT decode (header.payload.signature)
 function decodeJWT(token: string): { header: any; payload: any } {
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Invalid JWT format");
@@ -14,7 +13,6 @@ function decodeJWT(token: string): { header: any; payload: any } {
   return { header: decode(parts[0]), payload: decode(parts[1]) };
 }
 
-// Verify HMAC-SHA256 JWT signature
 async function verifyJWT(token: string, secret: string): Promise<any> {
   const [headerB64, payloadB64, signatureB64] = token.split(".");
   if (!headerB64 || !payloadB64 || !signatureB64) throw new Error("Invalid JWT");
@@ -35,13 +33,12 @@ async function verifyJWT(token: string, secret: string): Promise<any> {
   );
 
   const valid = await crypto.subtle.verify("HMAC", key, signature, data);
-  if (!valid) throw new Error("Invalid signature");
+  if (!valid) throw new Error("Firma del token inválida");
 
   const { payload } = decodeJWT(token);
 
-  // Check expiration
   if (payload.exp && Date.now() / 1000 > payload.exp) {
-    throw new Error("Token expired");
+    throw new Error("Token expirado");
   }
 
   return payload;
@@ -53,8 +50,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const token = url.searchParams.get("token") || (await req.json().catch(() => ({}))).token;
+    const body = await req.json().catch(() => ({}));
+    const token = body.token;
 
     if (!token) {
       return new Response(JSON.stringify({ error: "Token requerido" }), {
@@ -65,7 +62,7 @@ Deno.serve(async (req) => {
 
     const jwtSecret = Deno.env.get("CHAT_JWT_SECRET");
     if (!jwtSecret) {
-      return new Response(JSON.stringify({ error: "JWT secret not configured" }), {
+      return new Response(JSON.stringify({ error: "JWT secret no configurado" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -75,7 +72,7 @@ Deno.serve(async (req) => {
     const payload = await verifyJWT(token, jwtSecret);
 
     /*
-    Expected JWT payload:
+    Payload esperado del JWT:
     {
       "email": "user@school.edu",
       "full_name": "Juan Pérez",
@@ -83,10 +80,10 @@ Deno.serve(async (req) => {
       "institution_name": "Colegio XYZ",
       "institution_id": "optional-uuid",
       "numero_documento": "123456",
-      "grupo": "5°A",          // optional - for students
-      "curso_nombre": "2025",  // optional
+      "grupo": "5°A",
+      "course_name": "Quinto",
+      "sede": "Sede Norte",
       "es_director_grupo": false,
-      "director_grupo": "5°A", // optional - if teacher is director
       "exp": 1234567890
     }
     */
@@ -99,10 +96,9 @@ Deno.serve(async (req) => {
       institution_id,
       numero_documento,
       grupo,
-      curso_nombre,
+      course_name,
+      sede,
       es_director_grupo,
-      director_grupo,
-      password,
     } = payload;
 
     if (!email) {
@@ -118,17 +114,16 @@ Deno.serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Try to find existing user
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
+    // Find or create user
+    const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
     const existingUser = existingUsers?.users?.find((u: any) => u.email === email);
 
     let userId: string;
-    const userPassword = password || `Sede_${numero_documento || Date.now()}`;
 
     if (existingUser) {
       userId = existingUser.id;
     } else {
-      // Create user
+      const userPassword = `Sede_${numero_documento || Math.random().toString(36).slice(2, 10)}`;
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email,
         password: userPassword,
@@ -159,7 +154,6 @@ Deno.serve(async (req) => {
     let instId = institution_id;
 
     if (institution_name && !instId) {
-      // Find or create institution
       const { data: existingInst } = await supabase
         .from("institutions")
         .select("id")
@@ -179,29 +173,53 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Add to institution if not already a member
     if (instId) {
-      const { data: existingMember } = await supabase
-        .from("institution_members")
-        .select("id")
-        .eq("institution_id", instId)
-        .eq("user_id", userId)
-        .limit(1)
-        .single();
+      // Add to institution
+      await supabase.from("institution_members").upsert({
+        institution_id: instId,
+        user_id: userId,
+        member_role: member_role || "student",
+        status: "active",
+      }, { onConflict: "institution_id,user_id" });
 
-      if (!existingMember) {
-        await supabase.from("institution_members").insert({
-          institution_id: instId,
-          user_id: userId,
-          member_role: member_role || "student",
-          status: "active",
-        });
+      // Handle sede
+      let sedeId: string | null = null;
+      if (sede) {
+        const { data: existingSede } = await supabase
+          .from("institution_sedes")
+          .select("id")
+          .eq("institution_id", instId)
+          .eq("name", sede)
+          .limit(1)
+          .single();
+
+        if (existingSede) {
+          sedeId = existingSede.id;
+        } else {
+          const { data: newSede } = await supabase
+            .from("institution_sedes")
+            .insert({ institution_id: instId, name: sede })
+            .select("id")
+            .single();
+          sedeId = newSede?.id || null;
+        }
+
+        // Update profile with sede
+        if (sedeId) {
+          await supabase.from("profiles").update({ id_sede: sedeId }).eq("id", userId);
+        }
       }
 
-      // Handle academic groups
-      if (grupo && instId) {
-        // Find or create group
-        let { data: groupData } = await supabase
+      // ── CHAT GROUPS ──────────────────────────────────────────────────────────
+
+      const role = member_role || "student";
+
+      if (role === "student" && grupo) {
+        // Group chat: "{grupo} - {course_name}"
+        const groupChatName = `${grupo}${course_name ? ` - ${course_name}` : ""}`;
+
+        // Find or create academic_group
+        let { data: academicGroup } = await supabase
           .from("academic_groups")
           .select("id")
           .eq("institution_id", instId)
@@ -209,80 +227,95 @@ Deno.serve(async (req) => {
           .limit(1)
           .single();
 
-        if (!groupData) {
+        if (!academicGroup) {
           const { data: newGroup } = await supabase
             .from("academic_groups")
             .insert({
               institution_id: instId,
               name: grupo,
-              course_name: curso_nombre || null,
+              course_name: course_name || null,
+              sede_id: sedeId,
               director_user_id: es_director_grupo ? userId : null,
             })
             .select("id")
             .single();
-          groupData = newGroup;
+          academicGroup = newGroup;
         }
 
-        if (groupData) {
-          // Add to group
-          await supabase
-            .from("academic_group_members")
-            .upsert({
-              group_id: groupData.id,
+        if (academicGroup) {
+          await supabase.from("academic_group_members").upsert({
+            group_id: academicGroup.id,
+            user_id: userId,
+            role: "student",
+          }, { onConflict: "group_id,user_id" });
+
+          // Find or create group chat conversation
+          let { data: groupConv } = await supabase
+            .from("chat_conversations")
+            .select("id")
+            .eq("academic_group_id", academicGroup.id)
+            .eq("type", "group")
+            .limit(1)
+            .single();
+
+          if (!groupConv) {
+            const { data: newConv } = await supabase
+              .from("chat_conversations")
+              .insert({
+                type: "group",
+                name: groupChatName,
+                institution_id: instId,
+                academic_group_id: academicGroup.id,
+                created_by: userId,
+              })
+              .select("id")
+              .single();
+            groupConv = newConv;
+          }
+
+          if (groupConv) {
+            await supabase.from("chat_participants").upsert({
+              conversation_id: groupConv.id,
               user_id: userId,
-              role: member_role === "parent" ? "parent" : "student",
-            }, { onConflict: "group_id,user_id" });
+              role: "member",
+            }, { onConflict: "conversation_id,user_id" });
+          }
         }
-      }
-
-      // If teacher is director of a group
-      if (director_grupo && instId && member_role === "teacher") {
-        const { data: groupToAssign } = await supabase
-          .from("academic_groups")
-          .select("id")
-          .eq("institution_id", instId)
-          .eq("name", director_grupo)
-          .limit(1)
-          .single();
-
-        if (groupToAssign) {
-          await supabase
-            .from("academic_groups")
-            .update({ director_user_id: userId })
-            .eq("id", groupToAssign.id);
-        } else {
-          await supabase.from("academic_groups").insert({
-            institution_id: instId,
-            name: director_grupo,
-            course_name: curso_nombre || null,
-            director_user_id: userId,
-          });
-        }
+      } else if (role === "teacher" && sede) {
+        // Teacher: add to "Docentes {sede}"
+        await ensureDocentes(supabase, instId, sede, userId);
+      } else if (role === "admin") {
+        // Admin: "Grupo de admin" + all "Docentes {sede}" in institution
+        await ensureSpecialGroup(supabase, instId, "Grupo de admin", userId);
+        await addToAllDocenteGroups(supabase, instId, userId);
+      } else if (role === "coordinator") {
+        // Coordinator: "Grupo de coordinadores" + all "Docentes {sede}" in institution
+        await ensureSpecialGroup(supabase, instId, "Grupo de coordinadores", userId);
+        await addToAllDocenteGroups(supabase, instId, userId);
       }
     }
 
-    // Sign in the user and return session
-    const { data: signInData, error: signInError } = await supabase.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-    });
+    // Generate session using admin API
+    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({ userId });
 
-    // Return data for auto-login
+    if (sessionError || !sessionData?.session) {
+      return new Response(JSON.stringify({ error: "No se pudo crear la sesión" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         user_id: userId,
         email,
-        redirect: "/chat",
-        // Return credentials for client-side sign in
-        auto_login: {
-          email,
-          password: userPassword,
+        session: {
+          access_token: sessionData.session.access_token,
+          refresh_token: sessionData.session.refresh_token,
         },
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error in chat-login:", error);
@@ -295,3 +328,81 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+async function ensureDocentes(supabase: any, instId: string, sedeName: string, userId: string) {
+  const chatName = `Docentes ${sedeName}`;
+  let { data: conv } = await supabase
+    .from("chat_conversations")
+    .select("id")
+    .eq("institution_id", instId)
+    .eq("name", chatName)
+    .eq("type", "group")
+    .limit(1)
+    .single();
+
+  if (!conv) {
+    const { data: newConv } = await supabase
+      .from("chat_conversations")
+      .insert({ type: "group", name: chatName, institution_id: instId, created_by: userId })
+      .select("id")
+      .single();
+    conv = newConv;
+  }
+
+  if (conv) {
+    await supabase.from("chat_participants").upsert({
+      conversation_id: conv.id,
+      user_id: userId,
+      role: "member",
+    }, { onConflict: "conversation_id,user_id" });
+  }
+}
+
+async function ensureSpecialGroup(supabase: any, instId: string, groupName: string, userId: string) {
+  let { data: conv } = await supabase
+    .from("chat_conversations")
+    .select("id")
+    .eq("institution_id", instId)
+    .eq("name", groupName)
+    .eq("type", "group")
+    .limit(1)
+    .single();
+
+  if (!conv) {
+    const { data: newConv } = await supabase
+      .from("chat_conversations")
+      .insert({ type: "group", name: groupName, institution_id: instId, created_by: userId })
+      .select("id")
+      .single();
+    conv = newConv;
+  }
+
+  if (conv) {
+    await supabase.from("chat_participants").upsert({
+      conversation_id: conv.id,
+      user_id: userId,
+      role: "member",
+    }, { onConflict: "conversation_id,user_id" });
+  }
+}
+
+async function addToAllDocenteGroups(supabase: any, instId: string, userId: string) {
+  const { data: docenteConvs } = await supabase
+    .from("chat_conversations")
+    .select("id")
+    .eq("institution_id", instId)
+    .eq("type", "group")
+    .like("name", "Docentes %");
+
+  if (docenteConvs) {
+    for (const conv of docenteConvs) {
+      await supabase.from("chat_participants").upsert({
+        conversation_id: conv.id,
+        user_id: userId,
+        role: "member",
+      }, { onConflict: "conversation_id,user_id" });
+    }
+  }
+}
