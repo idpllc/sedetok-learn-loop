@@ -10,6 +10,8 @@ const ChatLogin: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let authListener: any = null;
+
     const processLogin = async () => {
       const token = searchParams.get("token");
       if (!token) {
@@ -27,23 +29,40 @@ const ChatLogin: React.FC = () => {
         if (data?.error) throw new Error(data.error);
 
         if (data?.session) {
+          // Listen for auth state change BEFORE setting session to avoid race condition
+          const { data: listenerData } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === "SIGNED_IN" && session) {
+              authListener?.subscription?.unsubscribe();
+              // Use setTimeout to ensure the auth state is fully propagated before navigating
+              setTimeout(() => {
+                navigate("/chat", { replace: true });
+              }, 100);
+            }
+          });
+          authListener = listenerData;
+
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: data.session.access_token,
             refresh_token: data.session.refresh_token,
           });
 
           if (sessionError) throw new Error(sessionError.message);
+        } else {
+          throw new Error("No se recibió sesión del servidor");
         }
-
-        navigate("/chat", { replace: true });
       } catch (err: any) {
         console.error("Login error:", err);
+        authListener?.subscription?.unsubscribe();
         setError(err.message || "Error al procesar el acceso");
         setLoading(false);
       }
     };
 
     processLogin();
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, [searchParams, navigate]);
 
   if (loading) {
