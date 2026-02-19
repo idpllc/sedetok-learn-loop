@@ -44,6 +44,11 @@ async function verifyJWT(token: string, secret: string): Promise<any> {
   return payload;
 }
 
+// Generate a deterministic password from userId so it's stable
+function generateStablePassword(userId: string): string {
+  return `SedeChat_${userId.replace(/-/g, "").slice(0, 16)}_!2024`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -93,32 +98,26 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Find user by email using admin API (more reliable than listUsers)
-    const { data: userList, error: listError } = await adminClient.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
-    });
-    
-    // Use direct query to find user by email
-    const { data: userByEmail } = await adminClient
-      .from("profiles")
-      .select("id")
-      .eq("username", email.split("@")[0])
-      .limit(1);
-
-    // Better approach: search auth users by email via RPC or direct lookup
+    // ── Find or create user ───────────────────────────────────────────────────
     let userId: string;
-    let userEmail = email;
+    let userPassword: string;
+    let isNewUser = false;
 
-    // Try to find existing user via admin API with email filter
-    const { data: existingUsersPage } = await adminClient.auth.admin.listUsers({ 
+    // Search existing user by email via admin API
+    const { data: existingUsersPage, error: listError } = await adminClient.auth.admin.listUsers({ 
       page: 1, 
       perPage: 1000 
     });
+    
+    if (listError) {
+      console.error(`[chat-login] Error listing users: ${listError.message}`);
+    }
     
     const existingUser = existingUsersPage?.users?.find((u: any) => 
       u.email?.toLowerCase() === email.toLowerCase()
@@ -128,15 +127,28 @@ Deno.serve(async (req) => {
 
     if (existingUser) {
       userId = existingUser.id;
+      userPassword = generateStablePassword(userId);
       console.log(`[chat-login] Existing user found: ${userId}`);
+      
+      // Update password to our stable password (in case it was different)
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
+        password: userPassword,
+        email_confirm: true,
+      });
+      if (updateError) {
+        console.error(`[chat-login] Error updating user password: ${updateError.message}`);
+      }
     } else {
       // Create new user
-      const userPassword = `Sede_${numero_documento || Math.random().toString(36).slice(2, 10)}_Chat!`;
+      isNewUser = true;
+      const tempId = crypto.randomUUID();
+      userPassword = generateStablePassword(tempId);
+      
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email,
         password: userPassword,
         email_confirm: true,
-        user_metadata: { full_name },
+        user_metadata: { full_name: full_name || email.split("@")[0] },
       });
 
       if (createError) {
@@ -146,11 +158,18 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      
       userId = newUser.user.id;
+      // Now update the password with the real stable password based on actual userId
+      userPassword = generateStablePassword(userId);
+      await adminClient.auth.admin.updateUserById(userId, {
+        password: userPassword,
+      });
+      
       console.log(`[chat-login] New user created: ${userId}`);
 
-      // Create profile
-      const username = email.split("@")[0] + "_" + Math.random().toString(36).slice(2, 6);
+      // Create profile for new user
+      const username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_") + "_" + Math.random().toString(36).slice(2, 6);
       const { error: profileError } = await adminClient.from("profiles").upsert({
         id: userId,
         username,
@@ -164,7 +183,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Handle institution
+    // ── Handle institution ────────────────────────────────────────────────────
     let instId = institution_id;
 
     if (institution_name && !instId) {
@@ -191,7 +210,6 @@ Deno.serve(async (req) => {
     }
 
     if (instId) {
-      // Add to institution
       await adminClient.from("institution_members").upsert({
         institution_id: instId,
         user_id: userId,
@@ -226,7 +244,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // ── CHAT GROUPS ──────────────────────────────────────────────────────────
+      // ── CHAT GROUPS ───────────────────────────────────────────────────────
       const role = member_role || "student";
 
       if (role === "student" && grupo) {
@@ -304,40 +322,42 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── Generate session using generateLink (magic link) ──────────────────────
-    // This is the correct way to get a session token without needing a password
-    console.log(`[chat-login] Generating magic link session for user: ${userId}`);
+    // ── Sign in with password to get a real session ───────────────────────────
+    // Use anon client for signInWithPassword (this is the correct approach)
+    console.log(`[chat-login] Signing in user ${email} to get session...`);
     
-    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
-      type: "magiclink",
-      email: userEmail,
-      options: {
-        shouldCreateUser: false,
-      },
+    const anonClient = createClient(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    
+    const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
+      email,
+      password: userPassword,
     });
 
-    if (linkError || !linkData?.properties) {
-      console.error(`[chat-login] generateLink error: ${linkError?.message}`);
-      return new Response(JSON.stringify({ error: `No se pudo generar sesión: ${linkError?.message}` }), {
+    if (signInError || !signInData?.session) {
+      console.error(`[chat-login] SignIn error: ${signInError?.message}`);
+      return new Response(JSON.stringify({ 
+        error: `No se pudo iniciar sesión: ${signInError?.message || "sin sesión"}` 
+      }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log(`[chat-login] Magic link generated, hashed_token available: ${!!linkData.properties.hashed_token}`);
+    console.log(`[chat-login] Session obtained for user: ${userId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         user_id: userId,
-        email: userEmail,
-        // Return the magic link properties so frontend can exchange them for a session
-        hashed_token: linkData.properties.hashed_token,
-        redirect_url: linkData.properties.redirect_to,
-        action_link: linkData.properties.action_link,
+        email,
+        access_token: signInData.session.access_token,
+        refresh_token: signInData.session.refresh_token,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (error: any) {
     console.error("Error in chat-login:", error);
     return new Response(
@@ -350,7 +370,7 @@ Deno.serve(async (req) => {
   }
 });
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function ensureDocentes(supabase: any, instId: string, sedeName: string, userId: string) {
   const chatName = `Docentes ${sedeName}`;
