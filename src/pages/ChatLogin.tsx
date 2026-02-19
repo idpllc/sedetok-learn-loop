@@ -8,6 +8,7 @@ const ChatLogin: React.FC = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statusMsg, setStatusMsg] = useState("Verificando acceso...");
 
   useEffect(() => {
     const processLogin = async () => {
@@ -19,43 +20,43 @@ const ChatLogin: React.FC = () => {
       }
 
       try {
-        console.log("[ChatLogin] Invoking chat-login edge function...");
+        setStatusMsg("Autenticando usuario...");
+        console.log("[ChatLogin] Calling chat-login edge function...");
+
         const { data, error: fnError } = await supabase.functions.invoke("chat-login", {
           body: { token },
         });
 
-        console.log("[ChatLogin] Edge function response:", JSON.stringify(data), "error:", fnError);
+        console.log("[ChatLogin] Response:", JSON.stringify(data), "fnError:", fnError);
 
-        if (fnError) throw new Error(fnError.message);
+        if (fnError) throw new Error(`Error del servidor: ${fnError.message}`);
         if (data?.error) throw new Error(data.error);
 
-        if (!data?.session?.access_token || !data?.session?.refresh_token) {
-          throw new Error(`No se recibió sesión del servidor. Respuesta: ${JSON.stringify(data)}`);
+        if (!data?.hashed_token) {
+          throw new Error(`Respuesta inesperada del servidor: ${JSON.stringify(data)}`);
         }
 
-        console.log("[ChatLogin] Setting session...");
-        const { data: sessionResult, error: sessionError } = await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
+        setStatusMsg("Iniciando sesión...");
+        console.log("[ChatLogin] Got hashed_token, verifying via OTP...");
+
+        // Exchange the hashed token for a real session using verifyOtp
+        const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
+          token_hash: data.hashed_token,
+          type: "magiclink",
         });
 
-        console.log("[ChatLogin] setSession result:", sessionResult?.session?.user?.id, "error:", sessionError);
+        console.log("[ChatLogin] verifyOtp result:", otpData?.session?.user?.id, "error:", otpError);
 
-        if (sessionError) throw new Error(sessionError.message);
+        if (otpError) throw new Error(`Error al verificar token: ${otpError.message}`);
+        if (!otpData?.session) throw new Error("No se pudo establecer la sesión");
 
-        // Verify the session is actually set before redirecting
-        const { data: { session: verifiedSession } } = await supabase.auth.getSession();
-        console.log("[ChatLogin] Verified session after setSession:", verifiedSession?.user?.id);
+        setStatusMsg("Redirigiendo al chat...");
+        console.log("[ChatLogin] Session established! Redirecting...");
 
-        if (!verifiedSession) {
-          throw new Error("La sesión no se pudo verificar después de establecerla");
-        }
-
-        console.log("[ChatLogin] Redirecting to /chat via hard reload...");
-        // Hard redirect so the page reloads with the session already in localStorage
+        // Hard redirect ensures the session in localStorage is picked up cleanly
         window.location.replace("/chat");
       } catch (err: any) {
-        console.error("[ChatLogin] Login error:", err);
+        console.error("[ChatLogin] Error:", err);
         setError(err.message || "Error al procesar el acceso");
         setLoading(false);
       }
@@ -68,7 +69,7 @@ const ChatLogin: React.FC = () => {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background gap-4">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Iniciando sesión...</p>
+        <p className="text-muted-foreground animate-pulse">{statusMsg}</p>
       </div>
     );
   }
@@ -76,17 +77,17 @@ const ChatLogin: React.FC = () => {
   if (error) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-background gap-4 px-4">
-        <div className="bg-destructive/10 rounded-xl p-6 max-w-md text-center space-y-2">
+        <div className="bg-destructive/10 rounded-xl p-6 max-w-md text-center space-y-3">
           <div className="h-12 w-12 mx-auto rounded-full bg-destructive/20 flex items-center justify-center">
             <span className="text-2xl">❌</span>
           </div>
-          <p className="text-destructive font-medium">Error de acceso</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-destructive font-semibold text-lg">Error de acceso</p>
+          <p className="text-sm text-muted-foreground break-words">{error}</p>
           <button
             onClick={() => navigate("/auth")}
-            className="text-sm text-primary underline mt-2"
+            className="text-sm text-primary underline mt-2 block"
           >
-            Ir al login
+            Ir al login manual
           </button>
         </div>
       </div>
