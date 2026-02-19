@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
       member_role,
       institution_name,
       institution_id,
+      institution_nit,
       numero_documento,
       grupo,
       course_name,
@@ -184,9 +185,39 @@ Deno.serve(async (req) => {
     }
 
     // ── Handle institution ────────────────────────────────────────────────────
+    // Priority: institution_id > institution_nit > institution_name
     let instId = institution_id;
 
-    if (institution_name && !instId) {
+    if (!instId && institution_nit) {
+      // Look up by NIT first (most reliable key for existing institutions)
+      const { data: existingInst } = await adminClient
+        .from("institutions")
+        .select("id")
+        .eq("nit", institution_nit)
+        .limit(1)
+        .single();
+
+      if (existingInst) {
+        instId = existingInst.id;
+        console.log(`[chat-login] Institution found by NIT ${institution_nit}: ${instId}`);
+      } else if (institution_name) {
+        // NIT not found → create institution with NIT + name
+        const { data: newInst, error: instError } = await adminClient
+          .from("institutions")
+          .insert({ name: institution_name, nit: institution_nit, admin_user_id: userId })
+          .select("id")
+          .single();
+        if (instError) {
+          console.error(`[chat-login] Institution creation error (by NIT): ${instError.message}`);
+        } else {
+          instId = newInst?.id;
+          console.log(`[chat-login] Institution created with NIT ${institution_nit}: ${instId}`);
+        }
+      } else {
+        console.warn(`[chat-login] institution_nit provided but institution_name missing — cannot create institution`);
+      }
+    } else if (!instId && institution_name) {
+      // Fallback: look up by name only (legacy / no NIT)
       const { data: existingInst } = await adminClient
         .from("institutions")
         .select("id")
@@ -196,6 +227,7 @@ Deno.serve(async (req) => {
 
       if (existingInst) {
         instId = existingInst.id;
+        console.log(`[chat-login] Institution found by name: ${instId}`);
       } else {
         const { data: newInst, error: instError } = await adminClient
           .from("institutions")
@@ -203,9 +235,10 @@ Deno.serve(async (req) => {
           .select("id")
           .single();
         if (instError) {
-          console.error(`[chat-login] Institution creation error: ${instError.message}`);
+          console.error(`[chat-login] Institution creation error (by name): ${instError.message}`);
         }
         instId = newInst?.id;
+        console.log(`[chat-login] Institution created by name: ${instId}`);
       }
     }
 
