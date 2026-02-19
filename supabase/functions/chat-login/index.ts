@@ -357,8 +357,87 @@ Deno.serve(async (req) => {
             }, { onConflict: "conversation_id,user_id" });
           }
         }
-      } else if (role === "teacher" && sede) {
-        await ensureDocentes(adminClient, instId, sede, userId);
+      } else if (role === "teacher") {
+        // 1. Siempre agregar al grupo de docentes de la sede (si tiene sede)
+        if (sede) {
+          await ensureDocentes(adminClient, instId, sede, userId);
+        }
+
+        // 2. Si es director de grupo, también añadirlo al grupo de estudiantes
+        if (es_director_grupo && grupo) {
+          const groupChatName = `${grupo}${course_name ? ` - ${course_name}` : ""}`;
+
+          // Buscar o crear el grupo académico
+          let { data: academicGroup } = await adminClient
+            .from("academic_groups")
+            .select("id")
+            .eq("institution_id", instId)
+            .eq("name", grupo)
+            .limit(1)
+            .single();
+
+          if (!academicGroup) {
+            const { data: newGroup } = await adminClient
+              .from("academic_groups")
+              .insert({
+                institution_id: instId,
+                name: grupo,
+                course_name: course_name || null,
+                sede_id: sedeId,
+                director_user_id: userId,
+              })
+              .select("id")
+              .single();
+            academicGroup = newGroup;
+          } else {
+            // Actualizar director si el grupo ya existía
+            await adminClient
+              .from("academic_groups")
+              .update({ director_user_id: userId })
+              .eq("id", academicGroup.id);
+          }
+
+          if (academicGroup) {
+            // Agregar al docente como miembro del grupo académico con rol teacher
+            await adminClient.from("academic_group_members").upsert({
+              group_id: academicGroup.id,
+              user_id: userId,
+              role: "teacher",
+            }, { onConflict: "group_id,user_id" });
+
+            // Buscar o crear la conversación de chat del grupo de estudiantes
+            let { data: groupConv } = await adminClient
+              .from("chat_conversations")
+              .select("id")
+              .eq("academic_group_id", academicGroup.id)
+              .eq("type", "group")
+              .limit(1)
+              .single();
+
+            if (!groupConv) {
+              const { data: newConv } = await adminClient
+                .from("chat_conversations")
+                .insert({
+                  type: "group",
+                  name: groupChatName,
+                  institution_id: instId,
+                  academic_group_id: academicGroup.id,
+                  created_by: userId,
+                })
+                .select("id")
+                .single();
+              groupConv = newConv;
+            }
+
+            if (groupConv) {
+              await adminClient.from("chat_participants").upsert({
+                conversation_id: groupConv.id,
+                user_id: userId,
+                role: "admin",
+              }, { onConflict: "conversation_id,user_id" });
+            }
+          }
+        }
       } else if (role === "admin") {
         await ensureSpecialGroup(adminClient, instId, "Grupo de admin", userId);
         await addToAllDocenteGroups(adminClient, instId, userId);
