@@ -56,7 +56,9 @@ const AutoLogin = () => {
           }
 
           toast.success("Sesión iniciada correctamente");
-          setTimeout(() => navigate(redirect), 1000);
+          // Hard redirect so the page reloads with the session already in localStorage,
+          // preventing the race condition where user=null on first render of the target page.
+          setTimeout(() => { window.location.replace(redirect); }, 500);
         } else {
           toast.error("No se pudo iniciar sesión");
           setStatus("error");
