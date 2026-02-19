@@ -49,6 +49,22 @@ function generateStablePassword(userId: string): string {
   return `SedeChat_${userId.replace(/-/g, "").slice(0, 16)}_!2024`;
 }
 
+// Map member_role string to valid tipo_usuario enum value (must match DB enum exactly)
+function mapRoleToTipoUsuario(role: string): string | null {
+  const map: Record<string, string> = {
+    "student": "Estudiante",
+    "estudiante": "Estudiante",
+    "teacher": "Docente",
+    "docente": "Docente",
+    "admin": "Institución",
+    "coordinator": "Docente",
+    "coordinador": "Docente",
+    "padre": "Padre",
+    "parent": "Padre",
+  };
+  return map[role?.toLowerCase()] || null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -97,6 +113,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    const role = (member_role || "student").toLowerCase();
+    const tipoUsuario = mapRoleToTipoUsuario(role);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -108,7 +127,6 @@ Deno.serve(async (req) => {
     // ── Find or create user ───────────────────────────────────────────────────
     let userId: string;
     let userPassword: string;
-    let isNewUser = false;
 
     // Use DB function to find user by email reliably (no pagination limits)
     const { data: foundUserId } = await adminClient
@@ -129,9 +147,26 @@ Deno.serve(async (req) => {
       if (updateError) {
         console.error(`[chat-login] Error updating user password: ${updateError.message}`);
       }
+
+      // ALWAYS update profile data for existing users (role, name, document)
+      const profileUpdate: Record<string, any> = {};
+      if (tipoUsuario) profileUpdate.tipo_usuario = tipoUsuario;
+      if (full_name) profileUpdate.full_name = full_name;
+      if (numero_documento) profileUpdate.numero_documento = numero_documento;
+
+      if (Object.keys(profileUpdate).length > 0) {
+        const { error: profileUpdateError } = await adminClient
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("id", userId);
+        if (profileUpdateError) {
+          console.error(`[chat-login] Profile update error for existing user: ${profileUpdateError.message}`);
+        } else {
+          console.log(`[chat-login] Profile updated for existing user: ${userId}, tipo_usuario=${tipoUsuario}`);
+        }
+      }
     } else {
       // User not found — try to create; handle race condition where user exists
-      isNewUser = true;
       const tempId = crypto.randomUUID();
       userPassword = generateStablePassword(tempId);
       
@@ -158,7 +193,6 @@ Deno.serve(async (req) => {
           
           userId = recoveredUser.id;
           userPassword = generateStablePassword(userId);
-          isNewUser = false;
           
           await adminClient.auth.admin.updateUserById(userId, {
             password: userPassword,
@@ -180,20 +214,20 @@ Deno.serve(async (req) => {
         console.log(`[chat-login] New user created: ${userId}`);
       }
 
-      if (isNewUser) {
-        // Create profile for new user
-        const username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_") + "_" + Math.random().toString(36).slice(2, 6);
-        const { error: profileError } = await adminClient.from("profiles").upsert({
-          id: userId,
-          username,
-          full_name: full_name || email.split("@")[0],
-          numero_documento: numero_documento || null,
-          tipo_usuario: member_role === "teacher" ? "docente" : member_role === "student" ? "estudiante" : null,
-        }, { onConflict: "id" });
-        
-        if (profileError) {
-          console.error(`[chat-login] Profile creation error: ${profileError.message}`);
-        }
+      // Create or update profile
+      const username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_") + "_" + Math.random().toString(36).slice(2, 6);
+      const { error: profileError } = await adminClient.from("profiles").upsert({
+        id: userId,
+        username,
+        full_name: full_name || email.split("@")[0],
+        numero_documento: numero_documento || null,
+        ...(tipoUsuario ? { tipo_usuario: tipoUsuario } : {}),
+      }, { onConflict: "id" });
+      
+      if (profileError) {
+        console.error(`[chat-login] Profile creation error: ${profileError.message}`);
+      } else {
+        console.log(`[chat-login] Profile created/updated: ${userId}, tipo_usuario=${tipoUsuario}`);
       }
     }
 
@@ -256,12 +290,16 @@ Deno.serve(async (req) => {
     }
 
     if (instId) {
-      await adminClient.from("institution_members").upsert({
+      // Ensure institution membership
+      const { error: memberError } = await adminClient.from("institution_members").upsert({
         institution_id: instId,
         user_id: userId,
-        member_role: member_role || "student",
+        member_role: role,
         status: "active",
       }, { onConflict: "institution_id,user_id" });
+      if (memberError) {
+        console.error(`[chat-login] Institution member upsert error: ${memberError.message}`);
+      }
 
       // Handle sede
       let sedeId: string | null = null;
@@ -277,178 +315,55 @@ Deno.serve(async (req) => {
         if (existingSede) {
           sedeId = existingSede.id;
         } else {
-          const { data: newSede } = await adminClient
+          const { data: newSede, error: sedeError } = await adminClient
             .from("institution_sedes")
             .insert({ institution_id: instId, name: sede })
             .select("id")
             .single();
+          if (sedeError) {
+            console.error(`[chat-login] Sede creation error: ${sedeError.message}`);
+          }
           sedeId = newSede?.id || null;
         }
 
         if (sedeId) {
           await adminClient.from("profiles").update({ id_sede: sedeId }).eq("id", userId);
         }
+        console.log(`[chat-login] Sede resolved: ${sede} => ${sedeId}`);
       }
 
       // ── CHAT GROUPS ───────────────────────────────────────────────────────
-      const role = member_role || "student";
+      console.log(`[chat-login] Assigning chat groups for role=${role}, sede=${sede}, grupo=${grupo}, es_director_grupo=${es_director_grupo}`);
 
-      if (role === "student" && grupo) {
-        const groupChatName = `${grupo}${course_name ? ` - ${course_name}` : ""}`;
-
-        let { data: academicGroup } = await adminClient
-          .from("academic_groups")
-          .select("id")
-          .eq("institution_id", instId)
-          .eq("name", grupo)
-          .limit(1)
-          .single();
-
-        if (!academicGroup) {
-          const { data: newGroup } = await adminClient
-            .from("academic_groups")
-            .insert({
-              institution_id: instId,
-              name: grupo,
-              course_name: course_name || null,
-              sede_id: sedeId,
-              director_user_id: es_director_grupo ? userId : null,
-            })
-            .select("id")
-            .single();
-          academicGroup = newGroup;
+      if (role === "student" || role === "estudiante") {
+        // Students → assign to their academic group chat
+        if (grupo) {
+          await ensureStudentGroupChat(adminClient, instId, sedeId, grupo, course_name, userId);
         }
-
-        if (academicGroup) {
-          await adminClient.from("academic_group_members").upsert({
-            group_id: academicGroup.id,
-            user_id: userId,
-            role: "student",
-          }, { onConflict: "group_id,user_id" });
-
-          let { data: groupConv } = await adminClient
-            .from("chat_conversations")
-            .select("id")
-            .eq("academic_group_id", academicGroup.id)
-            .eq("type", "group")
-            .limit(1)
-            .single();
-
-          if (!groupConv) {
-            const { data: newConv } = await adminClient
-              .from("chat_conversations")
-              .insert({
-                type: "group",
-                name: groupChatName,
-                institution_id: instId,
-                academic_group_id: academicGroup.id,
-                created_by: userId,
-              })
-              .select("id")
-              .single();
-            groupConv = newConv;
-          }
-
-          if (groupConv) {
-            await adminClient.from("chat_participants").upsert({
-              conversation_id: groupConv.id,
-              user_id: userId,
-              role: "member",
-            }, { onConflict: "conversation_id,user_id" });
-          }
-        }
-      } else if (role === "teacher") {
-        // 1. Siempre agregar al grupo de docentes de la sede (si tiene sede)
+      } else if (role === "teacher" || role === "docente") {
+        // Teachers → always add to "Docentes {sede}"
         if (sede) {
+          console.log(`[chat-login] Adding teacher to Docentes group for sede: ${sede}`);
           await ensureDocentes(adminClient, instId, sede, userId);
         }
 
-        // 2. Si es director de grupo, también añadirlo al grupo de estudiantes
+        // If director of group → also add to students' group chat as admin
         if (es_director_grupo && grupo) {
-          const groupChatName = `${grupo}${course_name ? ` - ${course_name}` : ""}`;
-
-          // Buscar o crear el grupo académico
-          let { data: academicGroup } = await adminClient
-            .from("academic_groups")
-            .select("id")
-            .eq("institution_id", instId)
-            .eq("name", grupo)
-            .limit(1)
-            .single();
-
-          if (!academicGroup) {
-            const { data: newGroup } = await adminClient
-              .from("academic_groups")
-              .insert({
-                institution_id: instId,
-                name: grupo,
-                course_name: course_name || null,
-                sede_id: sedeId,
-                director_user_id: userId,
-              })
-              .select("id")
-              .single();
-            academicGroup = newGroup;
-          } else {
-            // Actualizar director si el grupo ya existía
-            await adminClient
-              .from("academic_groups")
-              .update({ director_user_id: userId })
-              .eq("id", academicGroup.id);
-          }
-
-          if (academicGroup) {
-            // Agregar al docente como miembro del grupo académico con rol teacher
-            await adminClient.from("academic_group_members").upsert({
-              group_id: academicGroup.id,
-              user_id: userId,
-              role: "teacher",
-            }, { onConflict: "group_id,user_id" });
-
-            // Buscar o crear la conversación de chat del grupo de estudiantes
-            let { data: groupConv } = await adminClient
-              .from("chat_conversations")
-              .select("id")
-              .eq("academic_group_id", academicGroup.id)
-              .eq("type", "group")
-              .limit(1)
-              .single();
-
-            if (!groupConv) {
-              const { data: newConv } = await adminClient
-                .from("chat_conversations")
-                .insert({
-                  type: "group",
-                  name: groupChatName,
-                  institution_id: instId,
-                  academic_group_id: academicGroup.id,
-                  created_by: userId,
-                })
-                .select("id")
-                .single();
-              groupConv = newConv;
-            }
-
-            if (groupConv) {
-              await adminClient.from("chat_participants").upsert({
-                conversation_id: groupConv.id,
-                user_id: userId,
-                role: "admin",
-              }, { onConflict: "conversation_id,user_id" });
-            }
-          }
+          console.log(`[chat-login] Teacher is group director, adding to student group: ${grupo}`);
+          await ensureStudentGroupChat(adminClient, instId, sedeId, grupo, course_name, userId, "admin");
         }
       } else if (role === "admin") {
         await ensureSpecialGroup(adminClient, instId, "Grupo de admin", userId);
         await addToAllDocenteGroups(adminClient, instId, userId);
-      } else if (role === "coordinator") {
+      } else if (role === "coordinator" || role === "coordinador") {
         await ensureSpecialGroup(adminClient, instId, "Grupo de coordinadores", userId);
         await addToAllDocenteGroups(adminClient, instId, userId);
       }
+    } else {
+      console.warn(`[chat-login] No institution resolved — skipping group assignment`);
     }
 
     // ── Sign in with password to get a real session ───────────────────────────
-    // Use anon client for signInWithPassword (this is the correct approach)
     console.log(`[chat-login] Signing in user ${email} to get session...`);
     
     const anonClient = createClient(supabaseUrl, anonKey, {
@@ -497,9 +412,128 @@ Deno.serve(async (req) => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * Ensures a student group chat exists and adds the user to it.
+ * participantRole defaults to "member" for students, can be "admin" for directors.
+ */
+async function ensureStudentGroupChat(
+  supabase: any,
+  instId: string,
+  sedeId: string | null,
+  grupo: string,
+  course_name: string | undefined,
+  userId: string,
+  participantRole: string = "member"
+) {
+  const groupChatName = `${grupo}${course_name ? ` - ${course_name}` : ""}`;
+
+  // Find or create academic group
+  let { data: academicGroup, error: agError } = await supabase
+    .from("academic_groups")
+    .select("id")
+    .eq("institution_id", instId)
+    .eq("name", grupo)
+    .limit(1)
+    .single();
+
+  if (agError && agError.code !== "PGRST116") {
+    console.error(`[chat-login] Error fetching academic group: ${agError.message}`);
+  }
+
+  if (!academicGroup) {
+    const { data: newGroup, error: newGroupError } = await supabase
+      .from("academic_groups")
+      .insert({
+        institution_id: instId,
+        name: grupo,
+        course_name: course_name || null,
+        sede_id: sedeId,
+      })
+      .select("id")
+      .single();
+    if (newGroupError) {
+      console.error(`[chat-login] Error creating academic group: ${newGroupError.message}`);
+      return;
+    }
+    academicGroup = newGroup;
+    console.log(`[chat-login] Academic group created: ${grupo} => ${academicGroup.id}`);
+  } else {
+    console.log(`[chat-login] Academic group found: ${grupo} => ${academicGroup.id}`);
+  }
+
+  if (!academicGroup) return;
+
+  // Add user to academic_group_members
+  const memberRole = participantRole === "admin" ? "teacher" : "student";
+  const { error: memberError } = await supabase
+    .from("academic_group_members")
+    .upsert({
+      group_id: academicGroup.id,
+      user_id: userId,
+      role: memberRole,
+    }, { onConflict: "group_id,user_id" });
+  if (memberError) {
+    console.error(`[chat-login] Error upserting academic_group_member: ${memberError.message}`);
+  }
+
+  // Find or create the group chat conversation
+  let { data: groupConv, error: convError } = await supabase
+    .from("chat_conversations")
+    .select("id")
+    .eq("academic_group_id", academicGroup.id)
+    .eq("type", "group")
+    .limit(1)
+    .single();
+
+  if (convError && convError.code !== "PGRST116") {
+    console.error(`[chat-login] Error fetching group conversation: ${convError.message}`);
+  }
+
+  if (!groupConv) {
+    const { data: newConv, error: newConvError } = await supabase
+      .from("chat_conversations")
+      .insert({
+        type: "group",
+        name: groupChatName,
+        institution_id: instId,
+        academic_group_id: academicGroup.id,
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+    if (newConvError) {
+      console.error(`[chat-login] Error creating group conversation: ${newConvError.message}`);
+      return;
+    }
+    groupConv = newConv;
+    console.log(`[chat-login] Group conversation created: ${groupChatName} => ${groupConv.id}`);
+  } else {
+    console.log(`[chat-login] Group conversation found: ${groupChatName} => ${groupConv.id}`);
+  }
+
+  if (!groupConv) return;
+
+  // Add user as participant
+  const { error: partError } = await supabase
+    .from("chat_participants")
+    .upsert({
+      conversation_id: groupConv.id,
+      user_id: userId,
+      role: participantRole,
+    }, { onConflict: "conversation_id,user_id" });
+  if (partError) {
+    console.error(`[chat-login] Error upserting chat participant: ${partError.message}`);
+  } else {
+    console.log(`[chat-login] User ${userId} added to chat ${groupChatName} as ${participantRole}`);
+  }
+}
+
+/**
+ * Ensures "Docentes {sede}" group exists and adds the teacher to it.
+ */
 async function ensureDocentes(supabase: any, instId: string, sedeName: string, userId: string) {
   const chatName = `Docentes ${sedeName}`;
-  let { data: conv } = await supabase
+  let { data: conv, error: convError } = await supabase
     .from("chat_conversations")
     .select("id")
     .eq("institution_id", instId)
@@ -508,26 +542,45 @@ async function ensureDocentes(supabase: any, instId: string, sedeName: string, u
     .limit(1)
     .single();
 
+  if (convError && convError.code !== "PGRST116") {
+    console.error(`[chat-login] Error fetching Docentes conv: ${convError.message}`);
+  }
+
   if (!conv) {
-    const { data: newConv } = await supabase
+    const { data: newConv, error: newConvError } = await supabase
       .from("chat_conversations")
       .insert({ type: "group", name: chatName, institution_id: instId, created_by: userId })
       .select("id")
       .single();
+    if (newConvError) {
+      console.error(`[chat-login] Error creating Docentes conv: ${newConvError.message}`);
+      return;
+    }
     conv = newConv;
+    console.log(`[chat-login] Docentes group created: ${chatName} => ${conv.id}`);
+  } else {
+    console.log(`[chat-login] Docentes group found: ${chatName} => ${conv.id}`);
   }
 
   if (conv) {
-    await supabase.from("chat_participants").upsert({
+    const { error: partError } = await supabase.from("chat_participants").upsert({
       conversation_id: conv.id,
       user_id: userId,
       role: "member",
     }, { onConflict: "conversation_id,user_id" });
+    if (partError) {
+      console.error(`[chat-login] Error adding to Docentes group: ${partError.message}`);
+    } else {
+      console.log(`[chat-login] User ${userId} added to ${chatName}`);
+    }
   }
 }
 
+/**
+ * Ensures a named special group (e.g. "Grupo de admin") exists and adds the user.
+ */
 async function ensureSpecialGroup(supabase: any, instId: string, groupName: string, userId: string) {
-  let { data: conv } = await supabase
+  let { data: conv, error: convError } = await supabase
     .from("chat_conversations")
     .select("id")
     .eq("institution_id", instId)
@@ -536,39 +589,65 @@ async function ensureSpecialGroup(supabase: any, instId: string, groupName: stri
     .limit(1)
     .single();
 
+  if (convError && convError.code !== "PGRST116") {
+    console.error(`[chat-login] Error fetching special group ${groupName}: ${convError.message}`);
+  }
+
   if (!conv) {
-    const { data: newConv } = await supabase
+    const { data: newConv, error: newConvError } = await supabase
       .from("chat_conversations")
       .insert({ type: "group", name: groupName, institution_id: instId, created_by: userId })
       .select("id")
       .single();
+    if (newConvError) {
+      console.error(`[chat-login] Error creating special group ${groupName}: ${newConvError.message}`);
+      return;
+    }
     conv = newConv;
+    console.log(`[chat-login] Special group created: ${groupName}`);
   }
 
   if (conv) {
-    await supabase.from("chat_participants").upsert({
+    const { error: partError } = await supabase.from("chat_participants").upsert({
       conversation_id: conv.id,
       user_id: userId,
       role: "member",
     }, { onConflict: "conversation_id,user_id" });
+    if (partError) {
+      console.error(`[chat-login] Error adding to special group ${groupName}: ${partError.message}`);
+    } else {
+      console.log(`[chat-login] User ${userId} added to ${groupName}`);
+    }
   }
 }
 
+/**
+ * Adds user to ALL "Docentes {sede}" groups in the institution (for admins/coordinators).
+ */
 async function addToAllDocenteGroups(supabase: any, instId: string, userId: string) {
-  const { data: docenteConvs } = await supabase
+  const { data: docenteConvs, error } = await supabase
     .from("chat_conversations")
-    .select("id")
+    .select("id, name")
     .eq("institution_id", instId)
     .eq("type", "group")
     .like("name", "Docentes %");
 
-  if (docenteConvs) {
+  if (error) {
+    console.error(`[chat-login] Error fetching Docentes groups: ${error.message}`);
+    return;
+  }
+
+  if (docenteConvs && docenteConvs.length > 0) {
+    console.log(`[chat-login] Adding user to ${docenteConvs.length} Docentes groups`);
     for (const conv of docenteConvs) {
-      await supabase.from("chat_participants").upsert({
+      const { error: partError } = await supabase.from("chat_participants").upsert({
         conversation_id: conv.id,
         user_id: userId,
         role: "member",
       }, { onConflict: "conversation_id,user_id" });
+      if (partError) {
+        console.error(`[chat-login] Error adding to ${conv.name}: ${partError.message}`);
+      }
     }
   }
 }
