@@ -55,6 +55,7 @@ import PathEvaluationResults from "./pages/PathEvaluationResults";
 import ApiDocumentation from "./pages/ApiDocumentation";
 import Chat from "./pages/Chat";
 import ChatLogin from "./pages/ChatLogin";
+import ChatLoginTest from "./pages/ChatLoginTest";
 
 const queryClient = new QueryClient();
 
@@ -125,6 +126,7 @@ const App = () => (
           <Route path="/api-docs" element={<ApiDocumentation />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat/login" element={<ChatLogin />} />
+          <Route path="/chat/login-test" element={<ChatLoginTest />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
