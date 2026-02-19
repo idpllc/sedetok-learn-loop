@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useChat, ChatConversation, ChatMessage } from "@/hooks/useChat";
 import { useInstitution } from "@/hooks/useInstitution";
@@ -61,8 +62,18 @@ const ChatPage: React.FC = () => {
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
+    if (authLoading) return;
+    if (!user) {
+      // Small delay to let Supabase finish propagating the session from localStorage
+      // before concluding the user is truly unauthenticated.
+      const timer = setTimeout(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) {
+            navigate("/auth");
+          }
+        });
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [user, authLoading, navigate]);
 
