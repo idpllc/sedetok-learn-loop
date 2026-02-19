@@ -100,11 +100,13 @@ Deno.serve(async (req) => {
       institution_id,
       institution_nit,
       numero_documento,
-      grupo,
       course_name,
       sede,
-      es_director_grupo,
     } = payload;
+
+    // Support multiple field names for group and director flag
+    const grupo = payload.grupo || payload.group || payload.grupo_nombre || payload.academic_group || payload.group_name || null;
+    const es_director_grupo = payload.es_director_grupo ?? payload.director_grupo ?? payload.is_group_director ?? false;
 
     if (!email) {
       return new Response(JSON.stringify({ error: "Email requerido en el token" }), {
@@ -290,6 +292,9 @@ Deno.serve(async (req) => {
     }
 
     if (instId) {
+      // Update profile with institution reference
+      await adminClient.from("profiles").update({ institution: instId }).eq("id", userId);
+
       // Ensure institution membership
       const { error: memberError } = await adminClient.from("institution_members").upsert({
         institution_id: instId,
@@ -333,24 +338,32 @@ Deno.serve(async (req) => {
       }
 
       // ── CHAT GROUPS ───────────────────────────────────────────────────────
-      console.log(`[chat-login] Assigning chat groups for role=${role}, sede=${sede}, grupo=${grupo}, es_director_grupo=${es_director_grupo}`);
+      console.log(`[chat-login] Assigning chat groups for role=${role}, sede=${sede}, grupo=${grupo}, es_director_grupo=${es_director_grupo}, course_name=${course_name}`);
+      console.log(`[chat-login] Raw payload fields: grupo=${payload.grupo}, group=${payload.group}, academic_group=${payload.academic_group}`);
 
       if (role === "student" || role === "estudiante") {
         // Students → assign to their academic group chat
         if (grupo) {
+          console.log(`[chat-login] Adding student to group: ${grupo}`);
           await ensureStudentGroupChat(adminClient, instId, sedeId, grupo, course_name, userId);
+        } else {
+          console.warn(`[chat-login] Student has no grupo assigned — skipping student group assignment`);
         }
       } else if (role === "teacher" || role === "docente") {
         // Teachers → always add to "Docentes {sede}"
         if (sede) {
           console.log(`[chat-login] Adding teacher to Docentes group for sede: ${sede}`);
           await ensureDocentes(adminClient, instId, sede, userId);
+        } else {
+          console.warn(`[chat-login] Teacher has no sede — skipping Docentes group`);
         }
 
         // If director of group → also add to students' group chat as admin
         if (es_director_grupo && grupo) {
           console.log(`[chat-login] Teacher is group director, adding to student group: ${grupo}`);
           await ensureStudentGroupChat(adminClient, instId, sedeId, grupo, course_name, userId, "admin");
+        } else if (es_director_grupo && !grupo) {
+          console.warn(`[chat-login] Teacher is director but no grupo provided`);
         }
       } else if (role === "admin") {
         await ensureSpecialGroup(adminClient, instId, "Grupo de admin", userId);
