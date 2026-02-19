@@ -19,29 +19,43 @@ const ChatLogin: React.FC = () => {
       }
 
       try {
+        console.log("[ChatLogin] Invoking chat-login edge function...");
         const { data, error: fnError } = await supabase.functions.invoke("chat-login", {
           body: { token },
         });
 
+        console.log("[ChatLogin] Edge function response:", JSON.stringify(data), "error:", fnError);
+
         if (fnError) throw new Error(fnError.message);
         if (data?.error) throw new Error(data.error);
 
-        if (data?.session) {
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-          });
-
-          if (sessionError) throw new Error(sessionError.message);
-
-          // Hard redirect so the page reloads with the session already in localStorage,
-          // preventing the race condition in Chat.tsx where user=null on first render.
-          window.location.replace("/chat");
-        } else {
-          throw new Error("No se recibió sesión del servidor");
+        if (!data?.session?.access_token || !data?.session?.refresh_token) {
+          throw new Error(`No se recibió sesión del servidor. Respuesta: ${JSON.stringify(data)}`);
         }
+
+        console.log("[ChatLogin] Setting session...");
+        const { data: sessionResult, error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+
+        console.log("[ChatLogin] setSession result:", sessionResult?.session?.user?.id, "error:", sessionError);
+
+        if (sessionError) throw new Error(sessionError.message);
+
+        // Verify the session is actually set before redirecting
+        const { data: { session: verifiedSession } } = await supabase.auth.getSession();
+        console.log("[ChatLogin] Verified session after setSession:", verifiedSession?.user?.id);
+
+        if (!verifiedSession) {
+          throw new Error("La sesión no se pudo verificar después de establecerla");
+        }
+
+        console.log("[ChatLogin] Redirecting to /chat via hard reload...");
+        // Hard redirect so the page reloads with the session already in localStorage
+        window.location.replace("/chat");
       } catch (err: any) {
-        console.error("Login error:", err);
+        console.error("[ChatLogin] Login error:", err);
         setError(err.message || "Error al procesar el acceso");
         setLoading(false);
       }
