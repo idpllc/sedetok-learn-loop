@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
 
     const jwtSecret = Deno.env.get("CHAT_JWT_SECRET");
     if (!jwtSecret) {
-      return new Response(JSON.stringify({ error: "JWT secret no configurado" }), {
+      return new Response(JSON.stringify({ error: "JWT secret no configurado en el servidor" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -70,23 +70,6 @@ Deno.serve(async (req) => {
 
     // Verify and decode JWT
     const payload = await verifyJWT(token, jwtSecret);
-
-    /*
-    Payload esperado del JWT:
-    {
-      "email": "user@school.edu",
-      "full_name": "Juan Pérez",
-      "member_role": "teacher" | "student" | "admin" | "coordinator" | "parent",
-      "institution_name": "Colegio XYZ",
-      "institution_id": "optional-uuid",
-      "numero_documento": "123456",
-      "grupo": "5°A",
-      "course_name": "Quinto",
-      "sede": "Sede Norte",
-      "es_director_grupo": false,
-      "exp": 1234567890
-    }
-    */
 
     const {
       email,
@@ -110,21 +93,46 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Find or create user
-    const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-    const existingUser = existingUsers?.users?.find((u: any) => u.email === email);
+    // Find user by email using admin API (more reliable than listUsers)
+    const { data: userList, error: listError } = await adminClient.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+    });
+    
+    // Use direct query to find user by email
+    const { data: userByEmail } = await adminClient
+      .from("profiles")
+      .select("id")
+      .eq("username", email.split("@")[0])
+      .limit(1);
 
+    // Better approach: search auth users by email via RPC or direct lookup
     let userId: string;
+    let userEmail = email;
+
+    // Try to find existing user via admin API with email filter
+    const { data: existingUsersPage } = await adminClient.auth.admin.listUsers({ 
+      page: 1, 
+      perPage: 1000 
+    });
+    
+    const existingUser = existingUsersPage?.users?.find((u: any) => 
+      u.email?.toLowerCase() === email.toLowerCase()
+    );
+
+    console.log(`[chat-login] Looking for user: ${email}, found: ${existingUser?.id || 'not found'}`);
 
     if (existingUser) {
       userId = existingUser.id;
+      console.log(`[chat-login] Existing user found: ${userId}`);
     } else {
-      const userPassword = `Sede_${numero_documento || Math.random().toString(36).slice(2, 10)}`;
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+      // Create new user
+      const userPassword = `Sede_${numero_documento || Math.random().toString(36).slice(2, 10)}_Chat!`;
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email,
         password: userPassword,
         email_confirm: true,
@@ -132,29 +140,35 @@ Deno.serve(async (req) => {
       });
 
       if (createError) {
-        return new Response(JSON.stringify({ error: createError.message }), {
+        console.error(`[chat-login] Error creating user: ${createError.message}`);
+        return new Response(JSON.stringify({ error: `Error creando usuario: ${createError.message}` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       userId = newUser.user.id;
+      console.log(`[chat-login] New user created: ${userId}`);
 
-      // Update profile
+      // Create profile
       const username = email.split("@")[0] + "_" + Math.random().toString(36).slice(2, 6);
-      await supabase.from("profiles").upsert({
+      const { error: profileError } = await adminClient.from("profiles").upsert({
         id: userId,
         username,
         full_name: full_name || email.split("@")[0],
         numero_documento: numero_documento || null,
         tipo_usuario: member_role === "teacher" ? "docente" : member_role === "student" ? "estudiante" : null,
       }, { onConflict: "id" });
+      
+      if (profileError) {
+        console.error(`[chat-login] Profile creation error: ${profileError.message}`);
+      }
     }
 
     // Handle institution
     let instId = institution_id;
 
     if (institution_name && !instId) {
-      const { data: existingInst } = await supabase
+      const { data: existingInst } = await adminClient
         .from("institutions")
         .select("id")
         .eq("name", institution_name)
@@ -164,18 +178,21 @@ Deno.serve(async (req) => {
       if (existingInst) {
         instId = existingInst.id;
       } else {
-        const { data: newInst } = await supabase
+        const { data: newInst, error: instError } = await adminClient
           .from("institutions")
           .insert({ name: institution_name, admin_user_id: userId })
           .select("id")
           .single();
+        if (instError) {
+          console.error(`[chat-login] Institution creation error: ${instError.message}`);
+        }
         instId = newInst?.id;
       }
     }
 
     if (instId) {
       // Add to institution
-      await supabase.from("institution_members").upsert({
+      await adminClient.from("institution_members").upsert({
         institution_id: instId,
         user_id: userId,
         member_role: member_role || "student",
@@ -185,7 +202,7 @@ Deno.serve(async (req) => {
       // Handle sede
       let sedeId: string | null = null;
       if (sede) {
-        const { data: existingSede } = await supabase
+        const { data: existingSede } = await adminClient
           .from("institution_sedes")
           .select("id")
           .eq("institution_id", instId)
@@ -196,7 +213,7 @@ Deno.serve(async (req) => {
         if (existingSede) {
           sedeId = existingSede.id;
         } else {
-          const { data: newSede } = await supabase
+          const { data: newSede } = await adminClient
             .from("institution_sedes")
             .insert({ institution_id: instId, name: sede })
             .select("id")
@@ -204,22 +221,18 @@ Deno.serve(async (req) => {
           sedeId = newSede?.id || null;
         }
 
-        // Update profile with sede
         if (sedeId) {
-          await supabase.from("profiles").update({ id_sede: sedeId }).eq("id", userId);
+          await adminClient.from("profiles").update({ id_sede: sedeId }).eq("id", userId);
         }
       }
 
       // ── CHAT GROUPS ──────────────────────────────────────────────────────────
-
       const role = member_role || "student";
 
       if (role === "student" && grupo) {
-        // Group chat: "{grupo} - {course_name}"
         const groupChatName = `${grupo}${course_name ? ` - ${course_name}` : ""}`;
 
-        // Find or create academic_group
-        let { data: academicGroup } = await supabase
+        let { data: academicGroup } = await adminClient
           .from("academic_groups")
           .select("id")
           .eq("institution_id", instId)
@@ -228,7 +241,7 @@ Deno.serve(async (req) => {
           .single();
 
         if (!academicGroup) {
-          const { data: newGroup } = await supabase
+          const { data: newGroup } = await adminClient
             .from("academic_groups")
             .insert({
               institution_id: instId,
@@ -243,14 +256,13 @@ Deno.serve(async (req) => {
         }
 
         if (academicGroup) {
-          await supabase.from("academic_group_members").upsert({
+          await adminClient.from("academic_group_members").upsert({
             group_id: academicGroup.id,
             user_id: userId,
             role: "student",
           }, { onConflict: "group_id,user_id" });
 
-          // Find or create group chat conversation
-          let { data: groupConv } = await supabase
+          let { data: groupConv } = await adminClient
             .from("chat_conversations")
             .select("id")
             .eq("academic_group_id", academicGroup.id)
@@ -259,7 +271,7 @@ Deno.serve(async (req) => {
             .single();
 
           if (!groupConv) {
-            const { data: newConv } = await supabase
+            const { data: newConv } = await adminClient
               .from("chat_conversations")
               .insert({
                 type: "group",
@@ -274,7 +286,7 @@ Deno.serve(async (req) => {
           }
 
           if (groupConv) {
-            await supabase.from("chat_participants").upsert({
+            await adminClient.from("chat_participants").upsert({
               conversation_id: groupConv.id,
               user_id: userId,
               role: "member",
@@ -282,45 +294,54 @@ Deno.serve(async (req) => {
           }
         }
       } else if (role === "teacher" && sede) {
-        // Teacher: add to "Docentes {sede}"
-        await ensureDocentes(supabase, instId, sede, userId);
+        await ensureDocentes(adminClient, instId, sede, userId);
       } else if (role === "admin") {
-        // Admin: "Grupo de admin" + all "Docentes {sede}" in institution
-        await ensureSpecialGroup(supabase, instId, "Grupo de admin", userId);
-        await addToAllDocenteGroups(supabase, instId, userId);
+        await ensureSpecialGroup(adminClient, instId, "Grupo de admin", userId);
+        await addToAllDocenteGroups(adminClient, instId, userId);
       } else if (role === "coordinator") {
-        // Coordinator: "Grupo de coordinadores" + all "Docentes {sede}" in institution
-        await ensureSpecialGroup(supabase, instId, "Grupo de coordinadores", userId);
-        await addToAllDocenteGroups(supabase, instId, userId);
+        await ensureSpecialGroup(adminClient, instId, "Grupo de coordinadores", userId);
+        await addToAllDocenteGroups(adminClient, instId, userId);
       }
     }
 
-    // Generate session using admin API
-    const { data: sessionData, error: sessionError } = await supabase.auth.admin.createSession({ userId });
+    // ── Generate session using generateLink (magic link) ──────────────────────
+    // This is the correct way to get a session token without needing a password
+    console.log(`[chat-login] Generating magic link session for user: ${userId}`);
+    
+    const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+      type: "magiclink",
+      email: userEmail,
+      options: {
+        shouldCreateUser: false,
+      },
+    });
 
-    if (sessionError || !sessionData?.session) {
-      return new Response(JSON.stringify({ error: "No se pudo crear la sesión" }), {
+    if (linkError || !linkData?.properties) {
+      console.error(`[chat-login] generateLink error: ${linkError?.message}`);
+      return new Response(JSON.stringify({ error: `No se pudo generar sesión: ${linkError?.message}` }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    console.log(`[chat-login] Magic link generated, hashed_token available: ${!!linkData.properties.hashed_token}`);
+
     return new Response(
       JSON.stringify({
         success: true,
         user_id: userId,
-        email,
-        session: {
-          access_token: sessionData.session.access_token,
-          refresh_token: sessionData.session.refresh_token,
-        },
+        email: userEmail,
+        // Return the magic link properties so frontend can exchange them for a session
+        hashed_token: linkData.properties.hashed_token,
+        redirect_url: linkData.properties.redirect_to,
+        action_link: linkData.properties.action_link,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in chat-login:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Error interno" }),
+      JSON.stringify({ error: error.message || "Error interno del servidor" }),
       {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
