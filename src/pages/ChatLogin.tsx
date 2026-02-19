@@ -32,23 +32,23 @@ const ChatLogin: React.FC = () => {
         if (fnError) throw new Error(`Error del servidor: ${fnError.message}`);
         if (data?.error) throw new Error(data.error);
 
-        if (!data?.hashed_token) {
+        if (!data?.access_token || !data?.refresh_token) {
           throw new Error(`Respuesta inesperada del servidor: ${JSON.stringify(data)}`);
         }
 
         setStatusMsg("Iniciando sesión...");
-        console.log("[ChatLogin] Got hashed_token, verifying via OTP...");
+        console.log("[ChatLogin] Got tokens, setting session...");
 
-        // Exchange the hashed token for a real session using verifyOtp
-        const { data: otpData, error: otpError } = await supabase.auth.verifyOtp({
-          token_hash: data.hashed_token,
-          type: "magiclink",
+        // Set session directly with the tokens returned from the edge function
+        const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
         });
 
-        console.log("[ChatLogin] verifyOtp result:", otpData?.session?.user?.id, "error:", otpError);
+        console.log("[ChatLogin] setSession result:", sessionData?.session?.user?.id, "error:", sessionError);
 
-        if (otpError) throw new Error(`Error al verificar token: ${otpError.message}`);
-        if (!otpData?.session) throw new Error("No se pudo establecer la sesión");
+        if (sessionError) throw new Error(`Error al establecer sesión: ${sessionError.message}`);
+        if (!sessionData?.session) throw new Error("No se pudo establecer la sesión");
 
         setStatusMsg("Redirigiendo al chat...");
         console.log("[ChatLogin] Session established! Redirecting...");
