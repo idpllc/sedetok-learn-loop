@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sedefy-cache-v1';
+const CACHE_NAME = 'sedefy-cache-v3'; // Bumped to invalidate old JS caches causing dual React instances
 const urlsToCache = [
   '/',
   '/index.html',
@@ -34,37 +34,45 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Bypass caching for dev modules and source files
+  // Bypass caching for ALL JS/module files to prevent stale React instances
+  // that cause "Should have a queue" errors from two React copies
   if (
     url.pathname.startsWith('/@vite') ||
     url.pathname.startsWith('/node_modules/.vite') ||
-    url.pathname.startsWith('/src/')
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/assets/') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.mjs') ||
+    url.pathname.endsWith('.ts') ||
+    url.pathname.endsWith('.tsx')
   ) {
-    return;
+    return; // Always fetch fresh from network
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).then((networkResponse) => {
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+  // Only cache static assets (images, fonts, manifest)
+  if (
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.ico') ||
+    url.pathname.endsWith('.json') ||
+    url.pathname.endsWith('.woff') ||
+    url.pathname.endsWith('.woff2') ||
+    url.pathname === '/'
+  ) {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          if (response) return response;
+          return fetch(event.request).then((networkResponse) => {
+            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+              return networkResponse;
+            }
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
             return networkResponse;
-          }
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          return networkResponse;
-        }).catch(() => {
-          // Fallback offline
-          return caches.match('/');
-        });
-      })
-  );
+          }).catch(() => caches.match('/'));
+        })
+    );
+  }
 });
 
 // Push notification event
