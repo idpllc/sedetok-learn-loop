@@ -110,28 +110,18 @@ Deno.serve(async (req) => {
     let userPassword: string;
     let isNewUser = false;
 
-    // Search existing user by email via admin API
-    const { data: existingUsersPage, error: listError } = await adminClient.auth.admin.listUsers({ 
-      page: 1, 
-      perPage: 1000 
-    });
-    
-    if (listError) {
-      console.error(`[chat-login] Error listing users: ${listError.message}`);
-    }
-    
-    const existingUser = existingUsersPage?.users?.find((u: any) => 
-      u.email?.toLowerCase() === email.toLowerCase()
-    );
+    // Use DB function to find user by email reliably (no pagination limits)
+    const { data: foundUserId } = await adminClient
+      .rpc("find_user_by_email_or_username", { search_text: email });
 
-    console.log(`[chat-login] Looking for user: ${email}, found: ${existingUser?.id || 'not found'}`);
+    console.log(`[chat-login] Looking for user: ${email}, found via DB fn: ${foundUserId || 'not found'}`);
 
-    if (existingUser) {
-      userId = existingUser.id;
+    if (foundUserId) {
+      // User exists — update password and proceed
+      userId = foundUserId;
       userPassword = generateStablePassword(userId);
       console.log(`[chat-login] Existing user found: ${userId}`);
       
-      // Update password to our stable password (in case it was different)
       const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
         password: userPassword,
         email_confirm: true,
@@ -140,7 +130,7 @@ Deno.serve(async (req) => {
         console.error(`[chat-login] Error updating user password: ${updateError.message}`);
       }
     } else {
-      // Create new user
+      // User not found — try to create; handle race condition where user exists
       isNewUser = true;
       const tempId = crypto.randomUUID();
       userPassword = generateStablePassword(tempId);
@@ -153,34 +143,57 @@ Deno.serve(async (req) => {
       });
 
       if (createError) {
-        console.error(`[chat-login] Error creating user: ${createError.message}`);
-        return new Response(JSON.stringify({ error: `Error creando usuario: ${createError.message}` }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        // If email already registered, recover the user via admin list (fallback)
+        if (createError.message?.includes("already been registered") || createError.message?.includes("email_exists")) {
+          console.warn(`[chat-login] User already exists (race condition), recovering...`);
+          const { data: usersPage } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          const recoveredUser = usersPage?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+          
+          if (!recoveredUser) {
+            return new Response(JSON.stringify({ error: "Usuario existente pero no se pudo recuperar. Intente de nuevo." }), {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
+          userId = recoveredUser.id;
+          userPassword = generateStablePassword(userId);
+          isNewUser = false;
+          
+          await adminClient.auth.admin.updateUserById(userId, {
+            password: userPassword,
+            email_confirm: true,
+          });
+          console.log(`[chat-login] Recovered existing user: ${userId}`);
+        } else {
+          console.error(`[chat-login] Error creating user: ${createError.message}`);
+          return new Response(JSON.stringify({ error: `Error creando usuario: ${createError.message}` }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        userId = newUser.user.id;
+        // Update with stable password based on real userId
+        userPassword = generateStablePassword(userId);
+        await adminClient.auth.admin.updateUserById(userId, { password: userPassword });
+        console.log(`[chat-login] New user created: ${userId}`);
       }
-      
-      userId = newUser.user.id;
-      // Now update the password with the real stable password based on actual userId
-      userPassword = generateStablePassword(userId);
-      await adminClient.auth.admin.updateUserById(userId, {
-        password: userPassword,
-      });
-      
-      console.log(`[chat-login] New user created: ${userId}`);
 
-      // Create profile for new user
-      const username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_") + "_" + Math.random().toString(36).slice(2, 6);
-      const { error: profileError } = await adminClient.from("profiles").upsert({
-        id: userId,
-        username,
-        full_name: full_name || email.split("@")[0],
-        numero_documento: numero_documento || null,
-        tipo_usuario: member_role === "teacher" ? "docente" : member_role === "student" ? "estudiante" : null,
-      }, { onConflict: "id" });
-      
-      if (profileError) {
-        console.error(`[chat-login] Profile creation error: ${profileError.message}`);
+      if (isNewUser) {
+        // Create profile for new user
+        const username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_") + "_" + Math.random().toString(36).slice(2, 6);
+        const { error: profileError } = await adminClient.from("profiles").upsert({
+          id: userId,
+          username,
+          full_name: full_name || email.split("@")[0],
+          numero_documento: numero_documento || null,
+          tipo_usuario: member_role === "teacher" ? "docente" : member_role === "student" ? "estudiante" : null,
+        }, { onConflict: "id" });
+        
+        if (profileError) {
+          console.error(`[chat-login] Profile creation error: ${profileError.message}`);
+        }
       }
     }
 
