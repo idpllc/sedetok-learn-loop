@@ -684,7 +684,7 @@ const ChatPage: React.FC = () => {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
+                        <p className="text-sm font-medium text-foreground leading-snug break-words">
                           {member.profile?.full_name || member.profile?.username || "Usuario"}
                           {isMe && <span className="text-muted-foreground font-normal"> (tú)</span>}
                         </p>
