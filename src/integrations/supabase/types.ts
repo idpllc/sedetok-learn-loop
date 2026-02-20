@@ -3378,10 +3378,30 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_institution_internal_ranking: {
+        Args: { p_institution_id: string; p_limit?: number }
+        Returns: {
+          experience_points: number
+          full_name: string
+          member_role: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_institution_student_ids: {
         Args: { p_institution_id: string }
         Returns: {
           user_id: string
+        }[]
+      }
+      get_institutions_xp_ranking: {
+        Args: never
+        Returns: {
+          id: string
+          member_count: number
+          name: string
+          total_xp: number
+          xp_per_capita: number
         }[]
       }
       get_my_conversation_ids: { Args: never; Returns: string[] }

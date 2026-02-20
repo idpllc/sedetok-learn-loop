@@ -13,76 +13,53 @@ interface InstitutionAnalyticsProps {
 }
 
 export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProps) => {
-  // Get academic metrics
   const { data: academicMetrics, isLoading: loadingMetrics } = useInstitutionAcademicMetrics(institutionId);
 
-  // Get global ranking data
+  // Ranking global: una sola RPC en vez de N+1 queries
   const { data: globalRanking, isLoading: loadingGlobal } = useQuery({
-    queryKey: ["institution-global-ranking"],
+    queryKey: ["institution-global-ranking-v2"],
     queryFn: async () => {
-      const { data: institutions, error } = await supabase
-        .from("institutions")
-        .select("id, name, admin_user_id");
-
+      const { data, error } = await supabase.rpc("get_institutions_xp_ranking" as any);
       if (error) throw error;
-
-      const rankingsPromises = institutions.map(async (inst) => {
-        const { data: xpPerCapita } = await supabase
-          .rpc("calculate_institution_xp_per_capita", { p_institution_id: inst.id });
-
-        return {
-          id: inst.id,
-          name: inst.name,
-          xpPerCapita: Number(xpPerCapita) || 0
-        };
-      });
-
-      const rankings = await Promise.all(rankingsPromises);
-      return rankings.sort((a, b) => b.xpPerCapita - a.xpPerCapita);
-    }
+      return (data as any[]) ?? [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 min cache
   });
 
-  // Get internal rankings
+  // Ranking interno: una sola RPC con ORDER+LIMIT en DB
   const { data: internalRankings, isLoading: loadingStudents } = useQuery({
-    queryKey: ["institution-internal-rankings", institutionId],
+    queryKey: ["institution-internal-rankings-v2", institutionId],
     queryFn: async () => {
-      const { data: members, error } = await supabase
-        .from("institution_members")
-        .select(`
-          user_id,
-          member_role,
-          profile:profiles(username, full_name, experience_points)
-        `)
-        .eq("institution_id", institutionId)
-        .eq("status", "active");
-
+      const { data, error } = await supabase.rpc("get_institution_internal_ranking" as any, {
+        p_institution_id: institutionId,
+        p_limit: 10,
+      });
       if (error) throw error;
 
-      const students = members
-        .filter(m => m.member_role === "student")
-        .map(m => ({
-          id: m.user_id,
-          name: m.profile?.full_name || m.profile?.username || "Usuario",
-          xp: m.profile?.experience_points || 0
-        }))
-        .sort((a, b) => b.xp - a.xp)
-        .slice(0, 10);
+      const rows = (data as any[]) ?? [];
+      const students = rows
+        .filter((r) => r.member_role === "student")
+        .slice(0, 10)
+        .map((r) => ({
+          id: r.user_id,
+          name: r.full_name || r.username || "Usuario",
+          xp: r.experience_points || 0,
+        }));
 
-      const teachers = members
-        .filter(m => m.member_role === "teacher")
-        .map(m => ({
-          id: m.user_id,
-          name: m.profile?.full_name || m.profile?.username || "Usuario",
-          xp: m.profile?.experience_points || 0
-        }))
-        .sort((a, b) => b.xp - a.xp)
-        .slice(0, 10);
+      const teachers = rows
+        .filter((r) => r.member_role === "teacher")
+        .slice(0, 10)
+        .map((r) => ({
+          id: r.user_id,
+          name: r.full_name || r.username || "Usuario",
+          xp: r.experience_points || 0,
+        }));
 
       return { students, teachers };
-    }
+    },
+    staleTime: 2 * 60 * 1000,
   });
 
-  // Get achievements
   const { data: achievements, isLoading: loadingAchievements } = useQuery({
     queryKey: ["institution-achievements", institutionId],
     queryFn: async () => {
@@ -91,19 +68,16 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
         .select("*")
         .eq("institution_id", institutionId)
         .order("earned_at", { ascending: false });
-
       if (error) throw error;
       return data;
-    }
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const currentRank = globalRanking?.findIndex((inst: any) => inst.id === institutionId) ?? -1;
 
   const chartConfig = {
-    score: {
-      label: "Desempeño",
-      color: "hsl(var(--primary))",
-    },
+    score: { label: "Desempeño", color: "hsl(var(--primary))" },
   };
 
   const getPerformanceLevel = (score: number) => {
@@ -113,20 +87,14 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
     return { label: "Por mejorar", variant: "destructive" as const };
   };
 
-  if (loadingGlobal || loadingAchievements || loadingStudents || loadingMetrics) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-96 w-full" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Academic Performance Summary */}
-      {academicMetrics && (
+      {loadingMetrics ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
+        </div>
+      ) : academicMetrics ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-3">
@@ -184,10 +152,15 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
             </CardContent>
           </Card>
         </div>
-      )}
+      ) : null}
 
       {/* Radar Charts */}
-      {academicMetrics && (
+      {loadingMetrics ? (
+        <>
+          <Skeleton className="h-[450px] w-full" />
+          <Skeleton className="h-[550px] w-full" />
+        </>
+      ) : academicMetrics ? (
         <>
           <Card>
             <CardHeader>
@@ -201,22 +174,9 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={academicMetrics.radarData}>
                     <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis 
-                      dataKey="area" 
-                      tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 100]}
-                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    />
-                    <Radar
-                      name="Desempeño"
-                      dataKey="score"
-                      stroke="hsl(var(--primary))"
-                      fill="hsl(var(--primary))"
-                      fillOpacity={0.3}
-                    />
+                    <PolarAngleAxis dataKey="area" tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }} />
+                    <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                    <Radar name="Desempeño" dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.3} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -236,22 +196,9 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={academicMetrics.intelligenceRadarData}>
                     <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis 
-                      dataKey="intelligence" 
-                      tick={{ fill: 'hsl(var(--foreground))', fontSize: 11 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 100]}
-                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    />
-                    <Radar
-                      name="Nivel"
-                      dataKey="score"
-                      stroke="hsl(var(--secondary))"
-                      fill="hsl(var(--secondary))"
-                      fillOpacity={0.3}
-                    />
+                    <PolarAngleAxis dataKey="intelligence" tick={{ fill: "hsl(var(--foreground))", fontSize: 11 }} />
+                    <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                    <Radar name="Nivel" dataKey="score" stroke="hsl(var(--secondary))" fill="hsl(var(--secondary))" fillOpacity={0.3} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -259,7 +206,7 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
             </CardContent>
           </Card>
         </>
-      )}
+      ) : null}
 
       {/* Global Ranking */}
       <Card>
@@ -271,37 +218,46 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
           <CardDescription>Basado en XP per cápita</CardDescription>
         </CardHeader>
         <CardContent>
-          {currentRank >= 0 && globalRanking && (
-            <div className="mb-4 p-4 bg-primary/10 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Tu posición</p>
-                  <p className="text-2xl font-bold">#{currentRank + 1}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">XP per cápita</p>
-                  <p className="text-2xl font-bold">{globalRanking[currentRank].xpPerCapita.toFixed(0)}</p>
-                </div>
-              </div>
+          {loadingGlobal ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
             </div>
-          )}
-
-          <div className="space-y-2">
-            {globalRanking?.slice(0, 10).map((inst: any, index: number) => (
-              <div
-                key={inst.id}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  inst.id === institutionId ? 'bg-primary/20' : 'bg-muted/50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-lg w-8">#{index + 1}</span>
-                  <span>{inst.name}</span>
+          ) : (
+            <>
+              {currentRank >= 0 && globalRanking && (
+                <div className="mb-4 p-4 bg-primary/10 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Tu posición</p>
+                      <p className="text-2xl font-bold">#{currentRank + 1}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">XP per cápita</p>
+                      <p className="text-2xl font-bold">
+                        {Number(globalRanking[currentRank].xp_per_capita).toFixed(0)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <Badge variant="secondary">{inst.xpPerCapita.toFixed(0)} XP</Badge>
+              )}
+              <div className="space-y-2">
+                {globalRanking?.slice(0, 10).map((inst: any, index: number) => (
+                  <div
+                    key={inst.id}
+                    className={`flex items-center justify-between p-3 rounded-lg ${
+                      inst.id === institutionId ? "bg-primary/20" : "bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-lg w-8">#{index + 1}</span>
+                      <span>{inst.name}</span>
+                    </div>
+                    <Badge variant="secondary">{Number(inst.xp_per_capita).toFixed(0)} XP</Badge>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -315,7 +271,11 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
           <CardDescription>Hitos alcanzados por tu institución</CardDescription>
         </CardHeader>
         <CardContent>
-          {achievements && achievements.length > 0 ? (
+          {loadingAchievements ? (
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
+            </div>
+          ) : achievements && achievements.length > 0 ? (
             <div className="grid gap-3">
               {achievements.map((achievement) => (
                 <div key={achievement.id} className="flex items-start gap-3 p-3 border rounded-lg">
@@ -329,9 +289,7 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-8">
-              Aún no has desbloqueado logros
-            </p>
+            <p className="text-center text-muted-foreground py-8">Aún no has desbloqueado logros</p>
           )}
         </CardContent>
       </Card>
@@ -346,20 +304,26 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {internalRankings?.students.map((student, index) => (
-                <div key={student.id} className="flex items-center justify-between p-2 rounded">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold w-6">#{index + 1}</span>
-                    <span className="text-sm">{student.name}</span>
+            {loadingStudents ? (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {internalRankings?.students.map((student, index) => (
+                  <div key={student.id} className="flex items-center justify-between p-2 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold w-6">#{index + 1}</span>
+                      <span className="text-sm">{student.name}</span>
+                    </div>
+                    <Badge variant="secondary">{student.xp} XP</Badge>
                   </div>
-                  <Badge variant="secondary">{student.xp} XP</Badge>
-                </div>
-              ))}
-              {(!internalRankings?.students || internalRankings.students.length === 0) && (
-                <p className="text-center text-muted-foreground py-4">Sin estudiantes</p>
-              )}
-            </div>
+                ))}
+                {(!internalRankings?.students || internalRankings.students.length === 0) && (
+                  <p className="text-center text-muted-foreground py-4">Sin estudiantes</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -371,20 +335,26 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {internalRankings?.teachers.map((teacher, index) => (
-                <div key={teacher.id} className="flex items-center justify-between p-2 rounded">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold w-6">#{index + 1}</span>
-                    <span className="text-sm">{teacher.name}</span>
+            {loadingStudents ? (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {internalRankings?.teachers.map((teacher, index) => (
+                  <div key={teacher.id} className="flex items-center justify-between p-2 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold w-6">#{index + 1}</span>
+                      <span className="text-sm">{teacher.name}</span>
+                    </div>
+                    <Badge variant="secondary">{teacher.xp} XP</Badge>
                   </div>
-                  <Badge variant="secondary">{teacher.xp} XP</Badge>
-                </div>
-              ))}
-              {(!internalRankings?.teachers || internalRankings.teachers.length === 0) && (
-                <p className="text-center text-muted-foreground py-4">Sin profesores</p>
-              )}
-            </div>
+                ))}
+                {(!internalRankings?.teachers || internalRankings.teachers.length === 0) && (
+                  <p className="text-center text-muted-foreground py-4">Sin profesores</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
