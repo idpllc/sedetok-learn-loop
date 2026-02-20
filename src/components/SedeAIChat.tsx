@@ -316,7 +316,11 @@ const ItineraryCard = ({ itinerary }: { itinerary: ItineraryData }) => {
   );
 };
 
-export const SedeAIChat = () => {
+interface SedeAIChatProps {
+  embedded?: boolean;
+}
+
+export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -654,19 +658,169 @@ export const SedeAIChat = () => {
     </>
   );
 
+  // When embedded inside Chat.tsx, just render the chat area (no sidebar, no wrapper layout)
+  if (embedded) {
+    return (
+      <ErrorBoundary>
+        <audio ref={audioPlayerRef} className="hidden" />
+        <div className="flex flex-col h-full bg-background">
+          {/* Messages area */}
+          <ScrollArea className="flex-1 p-4">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {messages.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                    <Sparkles className="w-10 h-10 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-2">¡Hola! Soy SEDE AI</h2>
+                  <p className="text-muted-foreground mb-6">
+                    Estoy aquí para ayudarte con tus estudios, sugerirte rutas de aprendizaje y más.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                    <Card className="p-4 cursor-pointer hover:bg-accent transition-colors" onClick={() => sendMessage("¿Qué rutas de aprendizaje me recomiendas?")}>
+                      <p className="text-sm font-medium">¿Qué rutas me recomiendas?</p>
+                    </Card>
+                    <Card className="p-4 cursor-pointer hover:bg-accent transition-colors" onClick={() => sendMessage("Analiza mi progreso académico")}>
+                      <p className="text-sm font-medium">Analiza mi progreso</p>
+                    </Card>
+                    <Card className="p-4 cursor-pointer hover:bg-accent transition-colors" onClick={() => sendMessage("¿Qué cursos debo tomar para mejorar?")}>
+                      <p className="text-sm font-medium">¿Qué cursos me ayudarían?</p>
+                    </Card>
+                    <Card className="p-4 cursor-pointer hover:bg-accent transition-colors" onClick={() => sendMessage("Quiero un itinerario de estudio")}>
+                      <p className="text-sm font-medium">📚 Crear itinerario de estudio</p>
+                    </Card>
+                    <Card className="p-4 cursor-pointer hover:bg-accent transition-colors" onClick={() => sendMessage("Dame consejos para mi desarrollo profesional")}>
+                      <p className="text-sm font-medium">Consejos profesionales</p>
+                    </Card>
+                  </div>
+                </div>
+              ) : (
+                messages.map((message, idx) => {
+                  const pathsMatch = message.content.match(/\|\|\|PATHS_DATA:(.*?)\|\|\|/);
+                  const contentMatch = message.content.match(/\|\|\|CONTENT_DATA:(.*?)\|\|\|/);
+                  const itineraryMatch = message.content.match(/\|\|\|ITINERARY_DATA:(.*?)\|\|\|/);
+                  let messageContent = message.content;
+                  let pathsData: PathData[] = [];
+                  let contentData: ContentData[] = [];
+                  let itineraryData: ItineraryData | null = null;
+                  if (pathsMatch) { try { pathsData = JSON.parse(pathsMatch[1]); messageContent = messageContent.replace(/\|\|\|PATHS_DATA:.*?\|\|\|/, '').trim(); } catch (e) {} }
+                  if (contentMatch) { try { contentData = JSON.parse(contentMatch[1]); messageContent = messageContent.replace(/\|\|\|CONTENT_DATA:.*?\|\|\|/, '').trim(); } catch (e) {} }
+                  if (itineraryMatch) { try { itineraryData = JSON.parse(itineraryMatch[1]); messageContent = messageContent.replace(/\|\|\|ITINERARY_DATA:.*?\|\|\|/, '').trim(); } catch (e) {} }
+                  return (
+                    <div key={idx} className={cn("flex gap-3", message.role === "user" ? "justify-end" : "justify-start")}>
+                      {message.role === "assistant" && (
+                        <Avatar className="w-8 h-8 mt-1">
+                          <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600">
+                            <Sparkles className="w-4 h-4 text-white" />
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className="max-w-[80%]">
+                        <Card className={cn("p-3", message.role === "user" ? "bg-primary text-primary-foreground" : "bg-card")}>
+                          <p className="text-sm whitespace-pre-wrap">{messageContent}</p>
+                        </Card>
+                        {pathsData.length > 0 && <PathCards paths={pathsData} />}
+                        {contentData.length > 0 && <ContentCards content={contentData} />}
+                        {itineraryData && <ItineraryCard itinerary={itineraryData} />}
+                      </div>
+                      {message.role === "user" && (
+                        <Avatar className="w-8 h-8 mt-1">
+                          <AvatarImage src={user?.user_metadata?.avatar_url} />
+                          <AvatarFallback>{user?.user_metadata?.full_name?.[0] || "U"}</AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+              {isStreaming && (
+                <div className="flex gap-3 justify-start">
+                  <Avatar className="w-8 h-8 mt-1">
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600">
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Card className="p-3"><Loader2 className="w-4 h-4 animate-spin" /></Card>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Input */}
+          <div className="p-4 border-t bg-card shrink-0">
+            {attachments.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {attachments.map((att, idx) => (
+                  <div key={idx} className="relative group">
+                    <Card className="p-2 pr-8">
+                      <div className="flex items-center gap-2">
+                        {att.type === 'image' && <ImageIcon className="w-4 h-4" />}
+                        {att.type === 'audio' && <Mic className="w-4 h-4" />}
+                        {att.type === 'file' && <Paperclip className="w-4 h-4" />}
+                        <span className="text-xs">{att.name}</span>
+                      </div>
+                    </Card>
+                    <Button size="icon" variant="ghost" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => removeAttachment(idx)}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {audioBlob && (
+              <div className="mb-3">
+                <Card className="p-3 flex items-center justify-between">
+                  <span className="text-sm">Audio grabado</span>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleAudioSubmit} disabled={uploading}>Transcribir</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setAudioBlob(null)}><X className="w-4 h-4" /></Button>
+                  </div>
+                </Card>
+              </div>
+            )}
+            <form onSubmit={handleSubmit}>
+              <input ref={fileInputRef} type="file" multiple accept="image/*,audio/*,.pdf,.doc,.docx,.txt" onChange={handleFileUpload} className="hidden" />
+              <div className="flex items-center gap-2 bg-muted/50 rounded-full px-2 py-1.5">
+                <div className="flex items-center gap-0.5">
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading || uploading}>
+                    <Paperclip className="w-4 h-4" />
+                  </Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={isRecording ? stopRecording : startRecording} disabled={isLoading || uploading}>
+                    {isRecording ? <Square className="w-4 h-4 text-destructive" /> : <Mic className="w-4 h-4" />}
+                  </Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => setShowAgentSelector(true)} disabled={isLoading || uploading} title="Avatar de voz 3D">
+                    <User className="w-4 h-4" />
+                  </Button>
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq'); setShowVoiceAssistant(true); }} disabled={isLoading || uploading} title="Conversación de voz">
+                    <Phone className="w-4 h-4" />
+                  </Button>
+                </div>
+                <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Escribe tu pregunta..." disabled={isLoading || uploading} className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9" />
+                <Button type="submit" size="icon" className="h-9 w-9 rounded-full shrink-0" disabled={isLoading || uploading || (!input.trim() && attachments.length === 0)}>
+                  {isLoading || uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Voice modals */}
+        <AnimatePresence>
+          {showVoiceAssistant && <VoiceAssistant onClose={() => setShowVoiceAssistant(false)} agentId={voiceAgentId} />}
+        </AnimatePresence>
+        <AnimatePresence>
+          {showAgentSelector && <AgentSelector onSelectAgent={(agent) => { setSelectedAgent(agent); setShowAgentSelector(false); }} onClose={() => setShowAgentSelector(false)} />}
+        </AnimatePresence>
+        <AnimatePresence>
+          {selectedAgent && <VoiceAssistant3D agent={selectedAgent} onClose={() => setSelectedAgent(null)} />}
+        </AnimatePresence>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
-      {/* Temporarily disabled due to package compatibility issues */}
-      {/* {showVoiceConversation && (
-        <Suspense fallback={
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin" />
-          </div>
-        }>
-          <VoiceConversation onClose={() => setShowVoiceConversation(false)} />
-        </Suspense>
-      )} */}
-      
       <div className="flex h-[calc(100vh-4rem)] bg-background">
         {/* Hidden audio player for voice responses */}
         <audio ref={audioPlayerRef} className="hidden" />

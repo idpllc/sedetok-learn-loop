@@ -483,18 +483,21 @@ const ChatPage: React.FC = () => {
       <div className={`${(activeConversation || showSedeAI) ? "flex" : "hidden md:flex"} flex-col flex-1 bg-background min-w-0`}>
         {showSedeAI ? (
           <div className="flex flex-col h-full">
-            {/* AI chat header for mobile back button */}
-            <div className="md:hidden h-14 px-3 border-b border-border flex items-center gap-3 bg-card shrink-0">
-              <Button variant="ghost" size="icon" onClick={() => setShowSedeAI(false)}>
+            {/* AI chat header */}
+            <div className="h-14 px-3 border-b border-border flex items-center gap-3 bg-card shrink-0">
+              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setShowSedeAI(false)}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-white" />
               </div>
-              <p className="font-semibold text-foreground text-sm">Sedefy AI</p>
+              <div>
+                <p className="font-semibold text-foreground text-sm">Sedefy AI</p>
+                <p className="text-xs text-muted-foreground">Tu asistente educativo inteligente</p>
+              </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <SedeAIChat />
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <SedeAIChat embedded={true} />
             </div>
           </div>
         ) : !activeConversation ? (
