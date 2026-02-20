@@ -593,9 +593,14 @@ export const useChat = () => {
   }, [user, activeConversation]);
 
   // Realtime: track new messages in OTHER conversations to update unread counts
+  // Este efecto solo corre cuando hay un usuario autenticado Y cuando el componente
+  // que usa useChat está montado (solo Chat.tsx), evitando subscripciones globales.
+  const realtimeEnabledRef = useRef(true);
+
   useEffect(() => {
     if (!user) return;
 
+    // Suscripción global a mensajes nuevos (solo para actualizar contadores de no leídos)
     conversationsChannelRef.current = supabase
       .channel(`chat-convs-${user.id}`)
       .on(
@@ -606,6 +611,8 @@ export const useChat = () => {
           table: "chat_messages",
         },
         (payload) => {
+          if (!realtimeEnabledRef.current) return;
+
           const newMsg = payload.new as ChatMessage;
           const convId = newMsg.conversation_id;
 
@@ -640,6 +647,7 @@ export const useChat = () => {
       conversationsChannelRef.current?.unsubscribe();
     };
   }, [user]);
+
 
   // Initial fetch
   useEffect(() => {

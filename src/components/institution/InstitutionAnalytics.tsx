@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Users, GraduationCap, Target, BookOpen, Brain, TrendingUp, Award } from "lucide-react";
+import { Users, Target, BookOpen, Brain, TrendingUp, Award } from "lucide-react";
 import { useInstitutionAcademicMetrics } from "@/hooks/useInstitutionAcademicMetrics";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -15,18 +15,7 @@ interface InstitutionAnalyticsProps {
 export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProps) => {
   const { data: academicMetrics, isLoading: loadingMetrics } = useInstitutionAcademicMetrics(institutionId);
 
-  // Ranking global: una sola RPC en vez de N+1 queries
-  const { data: globalRanking, isLoading: loadingGlobal } = useQuery({
-    queryKey: ["institution-global-ranking-v2"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_institutions_xp_ranking" as any);
-      if (error) throw error;
-      return (data as any[]) ?? [];
-    },
-    staleTime: 5 * 60 * 1000, // 5 min cache
-  });
-
-  // Ranking interno: una sola RPC con ORDER+LIMIT en DB
+  // Ranking interno via RPC
   const { data: internalRankings, isLoading: loadingStudents } = useQuery({
     queryKey: ["institution-internal-rankings-v2", institutionId],
     queryFn: async () => {
@@ -57,7 +46,8 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
 
       return { students, teachers };
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 min — no necesita tiempo real
+    gcTime: 15 * 60 * 1000,
   });
 
   const { data: achievements, isLoading: loadingAchievements } = useQuery({
@@ -71,10 +61,9 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
       if (error) throw error;
       return data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
-
-  const currentRank = globalRanking?.findIndex((inst: any) => inst.id === institutionId) ?? -1;
 
   const chartConfig = {
     score: { label: "Desempeño", color: "hsl(var(--primary))" },
@@ -207,59 +196,6 @@ export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProp
           </Card>
         </>
       ) : null}
-
-      {/* Global Ranking */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
-            Ranking Global de Instituciones
-          </CardTitle>
-          <CardDescription>Basado en XP per cápita</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingGlobal ? (
-            <div className="space-y-2">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <>
-              {currentRank >= 0 && globalRanking && (
-                <div className="mb-4 p-4 bg-primary/10 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Tu posición</p>
-                      <p className="text-2xl font-bold">#{currentRank + 1}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">XP per cápita</p>
-                      <p className="text-2xl font-bold">
-                        {Number(globalRanking[currentRank].xp_per_capita).toFixed(0)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="space-y-2">
-                {globalRanking?.slice(0, 10).map((inst: any, index: number) => (
-                  <div
-                    key={inst.id}
-                    className={`flex items-center justify-between p-3 rounded-lg ${
-                      inst.id === institutionId ? "bg-primary/20" : "bg-muted/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-bold text-lg w-8">#{index + 1}</span>
-                      <span>{inst.name}</span>
-                    </div>
-                    <Badge variant="secondary">{Number(inst.xp_per_capita).toFixed(0)} XP</Badge>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Achievements */}
       <Card>
