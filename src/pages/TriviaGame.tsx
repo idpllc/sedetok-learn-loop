@@ -140,90 +140,76 @@ export default function TriviaGame() {
   // Menu Screen
   if (screen === "menu") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 p-4">
-        <div className="container max-w-4xl mx-auto py-8 space-y-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
+      <div className="min-h-screen bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20">
+        <div className="container max-w-4xl mx-auto px-4 pt-3 pb-6 space-y-3">
 
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-center space-y-4"
-          >
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+          {/* Header compacto */}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 -ml-2">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Volver
+            </Button>
+            <motion.h1
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight"
+            >
               🎯 Trivia Challenge
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              ¡Pon a prueba tus conocimientos!
-            </p>
-          </motion.div>
+            </motion.h1>
+          </div>
 
-          {/* Level Selection */}
-          <Card className="bg-card/50 backdrop-blur">
-            <CardHeader>
+          {/* Stats inline (si existen) */}
+          {userStats && (
+            <div className="grid grid-cols-4 gap-2 bg-card/60 backdrop-blur rounded-xl px-3 py-2 border border-border/40">
               <div className="text-center">
-                <h3 className="text-2xl font-bold">Selecciona tu Nivel</h3>
-                <p className="text-muted-foreground">Elige el nivel de dificultad de las preguntas</p>
+                <div className="text-lg font-bold text-primary leading-none">{userStats.total_points}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">Puntos</div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-lg font-bold text-green-600 leading-none">{userStats.total_correct}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">Correctas</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-orange-500 leading-none">{userStats.best_streak}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">Racha</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-secondary leading-none">{userStats.total_matches}</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">Partidas</div>
+              </div>
+            </div>
+          )}
+
+          {/* Level Selection compacto */}
+          <Card className="bg-card/50 backdrop-blur">
+            <CardContent className="pt-3 pb-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Nivel de dificultad</p>
+              <div className="grid grid-cols-4 gap-2">
                 {levels.map((level) => (
-                  <Button
+                  <button
                     key={level.value}
-                    variant={selectedLevel === level.value ? "default" : "outline"}
-                    className="h-auto py-4 px-3 flex flex-col gap-1.5 text-center"
                     onClick={() => setSelectedLevel(level.value)}
+                    className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 transition-all text-center
+                      ${selectedLevel === level.value
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-border/50 bg-background/60 hover:border-primary/40"}`}
                   >
-                    <span className="text-3xl">{level.label.split(" ")[0]}</span>
-                    <span className="text-xs font-semibold leading-tight">{level.label.split(" ").slice(1).join(" ")}</span>
-                    <span className="text-[10px] text-muted-foreground leading-tight line-clamp-2">{level.description}</span>
-                  </Button>
+                    <span className="text-xl">{level.label.split(" ")[0]}</span>
+                    <span className="text-[10px] font-semibold leading-tight text-foreground">{level.label.split(" ").slice(1).join(" ")}</span>
+                  </button>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* User Stats Card */}
-          {userStats && (
-            <Card className="bg-gradient-to-r from-primary/10 to-secondary/10">
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                  <div>
-                    <div className="text-3xl font-bold text-primary">{userStats.total_points}</div>
-                    <div className="text-sm text-muted-foreground">Puntos Totales</div>
-                  </div>
-                  <div>
-                    <div className="text-3xl font-bold text-green-600">{userStats.total_correct}</div>
-                    <div className="text-sm text-muted-foreground">Correctas</div>
-                  </div>
-                  <div>
-                    <div className="text-3xl font-bold text-orange-600">{userStats.best_streak}</div>
-                    <div className="text-sm text-muted-foreground">Mejor Racha</div>
-                  </div>
-                  <div>
-                    <div className="text-3xl font-bold text-secondary">{userStats.total_matches}</div>
-                    <div className="text-sm text-muted-foreground">Partidas</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Action Buttons */}
-          <div className="grid gap-4 md:grid-cols-3">
+          {/* Action Buttons — más compactos en móvil */}
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
             <Button
               size="lg"
               onClick={handleStartGame}
-              className="h-32 text-2xl font-bold"
+              className="h-14 md:h-24 text-lg md:text-xl font-bold"
             >
-              <Play className="w-8 h-8 mr-2" />
+              <Play className="w-5 h-5 mr-2" />
               Jugar Solo
             </Button>
 
@@ -231,9 +217,9 @@ export default function TriviaGame() {
               size="lg"
               variant="secondary"
               onClick={() => setScreen("lobby-1v1")}
-              className="h-32 text-2xl font-bold"
+              className="h-14 md:h-24 text-lg md:text-xl font-bold"
             >
-              <Users className="w-8 h-8 mr-2" />
+              <Users className="w-5 h-5 mr-2" />
               Jugar 1 vs 1
             </Button>
 
@@ -241,36 +227,37 @@ export default function TriviaGame() {
               size="lg"
               variant="outline"
               onClick={() => setShowChallengeModal(true)}
-              className="h-32 text-2xl font-bold border-2 border-primary hover:bg-primary hover:text-primary-foreground"
+              className="h-14 md:h-24 text-lg md:text-xl font-bold border-2 border-primary hover:bg-primary hover:text-primary-foreground"
             >
-              <Swords className="w-8 h-8 mr-2" />
+              <Swords className="w-5 h-5 mr-2" />
               Retar Amigos
             </Button>
           </div>
 
-          {/* Invitations Panel */}
-          <InvitationsPanel />
-
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => setScreen("ranking")}
-            className="h-20 text-xl font-bold w-full"
-          >
-            <Trophy className="w-6 h-6 mr-2" />
-            Ver Ranking
-          </Button>
-
-          {isSuperAdmin && (
+          {/* Fila inferior: Ranking + Admin */}
+          <div className="flex gap-2">
             <Button
-              variant="secondary"
-              onClick={() => setScreen("admin")}
-              className="w-full h-16 text-lg font-bold"
+              variant="outline"
+              onClick={() => setScreen("ranking")}
+              className="flex-1 h-11 text-sm font-semibold"
             >
-              <Crown className="w-6 h-6 mr-2" />
-              Panel de Administración
+              <Trophy className="w-4 h-4 mr-2" />
+              Ver Ranking
             </Button>
-          )}
+            {isSuperAdmin && (
+              <Button
+                variant="secondary"
+                onClick={() => setScreen("admin")}
+                className="flex-1 h-11 text-sm font-semibold"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Admin
+              </Button>
+            )}
+          </div>
+
+          {/* Invitations Panel — colapsado/compacto */}
+          <InvitationsPanel />
 
           {/* Challenge Modal */}
           <ChallengeFriendsModal 
