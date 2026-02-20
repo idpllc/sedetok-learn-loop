@@ -505,6 +505,24 @@ export const useChat = () => {
     }
   }, [user]);
 
+  // Delete message (soft delete)
+  const deleteMessage = useCallback(async (messageId: string) => {
+    if (!user) return false;
+    try {
+      const { error } = await supabase
+        .from("chat_messages")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", messageId)
+        .eq("sender_id", user.id);
+      if (error) throw error;
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      return false;
+    }
+  }, [user]);
+
   // Realtime subscription
   useEffect(() => {
     if (!user || !activeConversation) return;
@@ -574,5 +592,6 @@ export const useChat = () => {
     leaveConversation,
     updateGroupAvatar,
     getConversationMembers,
+    deleteMessage,
   };
 };
