@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useLiveGameDetails, useSubmitAnswer } from "@/hooks/useLiveGames";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -23,38 +22,44 @@ const LiveGamePlay = () => {
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [feedback, setFeedback] = useState<{ show: boolean; isCorrect: boolean; points: number } | null>(null);
   const [myPlayer, setMyPlayer] = useState<any>(null);
+  // Track last displayed question to avoid re-triggering on same question
+  const lastQuestionIdRef = useRef<string | null>(null);
 
-  // Force-refetch questions whenever the game transitions to in_progress
-  // (the initial query may have run before questions were fully committed)
+  // Aggressively invalidate questions cache when game becomes in_progress
   useEffect(() => {
     if (game?.status === 'in_progress') {
       queryClient.invalidateQueries({ queryKey: ["live-game-questions", gameId] });
     }
   }, [game?.status, gameId, queryClient]);
 
-  // Update currentQuestion whenever game index or questions change
+  // Update currentQuestion whenever game index or questions list change
   useEffect(() => {
-    if (game && questions && questions.length > 0) {
-      const idx = game.current_question_index || 0;
-      const newQuestion = questions[idx];
-      if (newQuestion && (!currentQuestion || newQuestion.id !== currentQuestion.id)) {
-        setCurrentQuestion(newQuestion);
-        setSelectedAnswer(null);
-        setHasAnswered(false);
-        setTimeLeft(newQuestion.time_limit || 20);
-        setStartTime(Date.now());
-        setFeedback(null);
-      }
+    if (!game || !questions || questions.length === 0) return;
+    if (game.status !== 'in_progress') return;
+
+    const idx = game.current_question_index ?? 0;
+    const newQuestion = questions[idx];
+
+    if (newQuestion && newQuestion.id !== lastQuestionIdRef.current) {
+      lastQuestionIdRef.current = newQuestion.id;
+      setCurrentQuestion(newQuestion);
+      setSelectedAnswer(null);
+      setHasAnswered(false);
+      setTimeLeft(newQuestion.time_limit || 20);
+      setStartTime(Date.now());
+      setFeedback(null);
     }
   }, [game?.current_question_index, game?.status, questions]);
 
+  // Keep myPlayer in sync with players list
   useEffect(() => {
     if (players && playerId) {
       const player = players.find(p => p.id === playerId);
-      setMyPlayer(player);
+      if (player) setMyPlayer(player);
     }
   }, [players, playerId]);
 
+  // Countdown timer
   useEffect(() => {
     if (!currentQuestion || hasAnswered) return;
     const timer = setInterval(() => {
@@ -64,7 +69,7 @@ const LiveGamePlay = () => {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [currentQuestion, hasAnswered]);
+  }, [currentQuestion?.id, hasAnswered]);
 
   const handleTimeout = () => {
     if (!hasAnswered) {
@@ -79,8 +84,22 @@ const LiveGamePlay = () => {
     setHasAnswered(true);
     const responseTime = Date.now() - startTime;
     submitAnswer.mutate(
-      { playerId, questionId: currentQuestion.id, selectedAnswer: answerIndex, responseTimeMs: responseTime, correctAnswer: currentQuestion.correct_answer, maxPoints: currentQuestion.points, timeLimitMs: (currentQuestion.time_limit || 20) * 1000 },
-      { onSuccess: (data) => { setFeedback({ show: true, isCorrect: data.isCorrect, points: data.pointsEarned }); } }
+      {
+        playerId,
+        questionId: currentQuestion.id,
+        selectedAnswer: answerIndex,
+        responseTimeMs: responseTime,
+        correctAnswer: currentQuestion.correct_answer,
+        maxPoints: currentQuestion.points,
+        timeLimitMs: (currentQuestion.time_limit || 20) * 1000,
+      },
+      {
+        onSuccess: (data) => {
+          setFeedback({ show: true, isCorrect: data.isCorrect, points: data.pointsEarned });
+          // Refresh player scores
+          queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
+        },
+      }
     );
   };
 
@@ -92,7 +111,7 @@ const LiveGamePlay = () => {
     );
   }
 
-  if (!game || !questions || !playerId) {
+  if (!game || !playerId) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="p-8 text-center w-full max-w-sm">
@@ -103,7 +122,12 @@ const LiveGamePlay = () => {
   }
 
   const getOptionColors = (index: number) => {
-    const colors = ["bg-red-500 active:bg-red-600", "bg-blue-500 active:bg-blue-600", "bg-yellow-500 active:bg-yellow-600", "bg-green-500 active:bg-green-600"];
+    const colors = [
+      "bg-red-500 active:bg-red-600",
+      "bg-blue-500 active:bg-blue-600",
+      "bg-yellow-500 active:bg-yellow-600",
+      "bg-green-500 active:bg-green-600",
+    ];
     return colors[index] || "bg-gray-500";
   };
 
@@ -134,7 +158,10 @@ const LiveGamePlay = () => {
               <div className="space-y-1">
                 <p className="text-base text-muted-foreground">Tu posición</p>
                 <p className="text-4xl font-black text-primary">#{myRank}</p>
-                <p className="text-2xl font-bold mt-2">{myPlayer.total_score} <span className="text-sm font-normal text-muted-foreground">puntos</span></p>
+                <p className="text-2xl font-bold mt-2">
+                  {myPlayer.total_score}{" "}
+                  <span className="text-sm font-normal text-muted-foreground">puntos</span>
+                </p>
               </div>
             )}
           </Card>
@@ -147,6 +174,7 @@ const LiveGamePlay = () => {
           <Card className="p-8 text-center w-full max-w-sm">
             <Loader2 className="w-10 h-10 mx-auto mb-3 text-primary animate-spin" />
             <p className="font-semibold">Cargando pregunta...</p>
+            <p className="text-xs text-muted-foreground mt-1">Conectando con el juego</p>
           </Card>
         </div>
       )}
@@ -164,9 +192,14 @@ const LiveGamePlay = () => {
             <div className="flex-1 space-y-1">
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Tiempo</span>
-                <span className={`font-bold tabular-nums ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : ''}`}>{timeLeft}s</span>
+                <span className={`font-bold tabular-nums ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : ''}`}>
+                  {timeLeft}s
+                </span>
               </div>
-              <Progress value={timePercent} className={`h-2 ${timeLeft <= 5 ? '[&>div]:bg-red-500' : ''}`} />
+              <Progress
+                value={timePercent}
+                className={`h-2 ${timeLeft <= 5 ? '[&>div]:bg-red-500' : ''}`}
+              />
             </div>
             <div className="text-center flex-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Posición</p>
@@ -182,7 +215,11 @@ const LiveGamePlay = () => {
             />
             {currentQuestion.image_url && (
               <div className="mt-3">
-                <img src={currentQuestion.image_url} alt="Question" className="w-full max-h-48 object-contain rounded-lg mx-auto" />
+                <img
+                  src={currentQuestion.image_url}
+                  alt="Question"
+                  className="w-full max-h-48 object-contain rounded-lg mx-auto"
+                />
               </div>
             )}
             {currentQuestion.video_url && (
@@ -192,10 +229,10 @@ const LiveGamePlay = () => {
             )}
           </Card>
 
-          {/* Options — 2 cols always on mobile, larger buttons */}
+          {/* Options — 2 cols on mobile */}
           <div className="grid grid-cols-2 gap-2.5">
             <AnimatePresence>
-              {currentQuestion.options.map((option: any, index: number) => (
+              {(currentQuestion.options as Array<{ text: string; image_url?: string }>).map((option, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 16 }}
@@ -207,10 +244,16 @@ const LiveGamePlay = () => {
                     disabled={hasAnswered}
                     className={`w-full rounded-xl p-3 text-white font-semibold text-sm leading-snug flex flex-col items-center justify-center gap-1.5 min-h-[72px] transition-transform active:scale-95 ${getOptionColors(index)} ${
                       selectedAnswer === index ? 'ring-4 ring-white/80 scale-[0.97]' : ''
-                    } ${hasAnswered && index === currentQuestion.correct_answer ? 'ring-4 ring-white' : ''} ${hasAnswered ? 'cursor-default' : 'cursor-pointer'}`}
+                    } ${hasAnswered && index === currentQuestion.correct_answer ? 'ring-4 ring-white' : ''} ${
+                      hasAnswered ? 'cursor-default' : 'cursor-pointer'
+                    }`}
                   >
                     {option.image_url && (
-                      <img src={option.image_url} alt={`Opción ${index + 1}`} className="w-full h-16 object-cover rounded-lg" />
+                      <img
+                        src={option.image_url}
+                        alt={`Opción ${index + 1}`}
+                        className="w-full h-16 object-cover rounded-lg"
+                      />
                     )}
                     <span className="text-center">{option.text}</span>
                   </button>
@@ -225,15 +268,21 @@ const LiveGamePlay = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`rounded-2xl px-5 py-4 text-center ${feedback.isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                className={`rounded-2xl px-5 py-4 text-center ${
+                  feedback.isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                }`}
               >
-                <p className="text-xl font-black">{feedback.isCorrect ? '¡Correcto! 🎉' : 'Incorrecto 😞'}</p>
-                <p className="text-base font-semibold mt-0.5">{feedback.isCorrect ? `+${feedback.points} puntos` : 'Sin puntos'}</p>
+                <p className="text-xl font-black">
+                  {feedback.isCorrect ? '¡Correcto! 🎉' : 'Incorrecto 😞'}
+                </p>
+                <p className="text-base font-semibold mt-0.5">
+                  {feedback.isCorrect ? `+${feedback.points} puntos` : 'Sin puntos'}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Feedback from question */}
+          {/* Question feedback */}
           {feedback?.show && currentQuestion.feedback && (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -241,8 +290,13 @@ const LiveGamePlay = () => {
               transition={{ delay: 0.4 }}
             >
               <Card className="p-3 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                <h3 className="text-xs font-semibold mb-1.5 text-blue-900 dark:text-blue-100">📚 Retroalimentación</h3>
-                <div className="prose prose-sm max-w-none dark:prose-invert text-xs" dangerouslySetInnerHTML={{ __html: currentQuestion.feedback }} />
+                <h3 className="text-xs font-semibold mb-1.5 text-blue-900 dark:text-blue-100">
+                  📚 Retroalimentación
+                </h3>
+                <div
+                  className="prose prose-sm max-w-none dark:prose-invert text-xs"
+                  dangerouslySetInnerHTML={{ __html: currentQuestion.feedback }}
+                />
               </Card>
             </motion.div>
           )}
