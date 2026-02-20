@@ -26,12 +26,23 @@ const LiveGamePlay = () => {
   // Track last displayed question to avoid re-triggering on same question
   const lastQuestionIdRef = useRef<string | null>(null);
 
-  // Redirect to results page when game finishes
+  // Redirect to results when game finishes
   useEffect(() => {
     if (game?.status === 'finished' && gameId) {
       navigate(`/live-games/results/${gameId}?playerId=${playerId || ''}`, { replace: true });
     }
   }, [game?.status, gameId, playerId, navigate]);
+
+  // Reset local state if host restarts the game (back to 'waiting')
+  useEffect(() => {
+    if (game?.status === 'waiting') {
+      setCurrentQuestion(null);
+      setSelectedAnswer(null);
+      setHasAnswered(false);
+      setFeedback(null);
+      lastQuestionIdRef.current = null;
+    }
+  }, [game?.status]);
 
   // Aggressively invalidate questions cache when game becomes in_progress
   useEffect(() => {

@@ -26,6 +26,13 @@ const LiveGameResults = () => {
     frame();
   }, []);
 
+  // If host restarts the game, redirect players back to the play page (waiting room)
+  useEffect(() => {
+    if (game?.status === 'waiting' && gameId && playerId) {
+      navigate(`/live-games/play/${gameId}?playerId=${playerId}`, { replace: true });
+    }
+  }, [game?.status, gameId, playerId, navigate]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen p-4 space-y-4">
