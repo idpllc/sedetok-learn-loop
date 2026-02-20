@@ -20,12 +20,14 @@ import {
   Clock,
   CheckCircle2,
   MessageSquare,
-  MessagesSquare
+  MessagesSquare,
+  Building2,
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { ApiConfiguration } from "@/components/admin/ApiConfiguration";
 import { VerificationManagement } from "@/components/admin/VerificationManagement";
+import { InstitutionManagement } from "@/components/admin/InstitutionManagement";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -77,26 +79,30 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-2">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 gap-2">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
-              Resumen
+              <span className="hidden sm:inline">Resumen</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
-              Contenido
+              <span className="hidden sm:inline">Contenido</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              Usuarios
+              <span className="hidden sm:inline">Usuarios</span>
+            </TabsTrigger>
+            <TabsTrigger value="institutions" className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Instituciones</span>
             </TabsTrigger>
             <TabsTrigger value="verification" className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
-              Verificación
+              <span className="hidden sm:inline">Verificación</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
-              Config
+              <span className="hidden sm:inline">Config</span>
             </TabsTrigger>
           </TabsList>
 
@@ -287,6 +293,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="institutions">
+            <InstitutionManagement />
           </TabsContent>
 
           <TabsContent value="verification">
