@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useToast } from "./use-toast";
+import { useChatSounds } from "./useChatSounds";
 
 export interface ChatConversation {
   id: string;
@@ -56,6 +57,7 @@ export interface ChatMessage {
 export const useChat = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { playMessageReceived, playMessageSent } = useChatSounds();
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -551,8 +553,9 @@ export const useChat = () => {
             { ...newMsg, sender: profile || undefined } as ChatMessage,
           ]);
 
-          // Mark as read if we're viewing the conversation
+          // Play sound and mark as read only for messages from others
           if (newMsg.sender_id !== user.id) {
+            playMessageReceived();
             await supabase
               .from("chat_participants")
               .update({ last_read_at: new Date().toISOString() })
@@ -593,5 +596,6 @@ export const useChat = () => {
     updateGroupAvatar,
     getConversationMembers,
     deleteMessage,
+    playMessageSent,
   };
 };
