@@ -497,20 +497,33 @@ async function ensureStudentGroupChat(
 ) {
   const groupChatName = `${grupo}${course_name ? ` - ${course_name}` : ""}`;
 
-  // Find or create academic group
-  let { data: academicGroup, error: agError } = await supabase
+  // ── 1. Find or create academic_group (ONE per institution+name+sede) ─────────
+  // Use maybeSingle() to avoid exceptions; if multiple exist (duplicates), take the first
+  let academicGroupId: string | null = null;
+
+  const agQuery = supabase
     .from("academic_groups")
     .select("id")
     .eq("institution_id", instId)
-    .eq("name", grupo)
-    .limit(1)
-    .single();
+    .eq("name", grupo);
 
-  if (agError && agError.code !== "PGRST116") {
-    console.error(`[chat-login] Error fetching academic group: ${agError.message}`);
+  // If we have a sedeId, filter by it for precision
+  if (sedeId) {
+    agQuery.eq("sede_id", sedeId);
   }
 
-  if (!academicGroup) {
+  const { data: agRows, error: agError } = await agQuery.order("created_at", { ascending: true }).limit(5);
+
+  if (agError) {
+    console.error(`[chat-login] Error fetching academic groups: ${agError.message}`);
+  }
+
+  if (agRows && agRows.length > 0) {
+    // Use the oldest group (first created) to avoid duplicates
+    academicGroupId = agRows[0].id;
+    console.log(`[chat-login] Academic group found (${agRows.length} total): ${grupo} => ${academicGroupId}`);
+  } else {
+    // Only create if truly doesn't exist
     const { data: newGroup, error: newGroupError } = await supabase
       .from("academic_groups")
       .insert({
@@ -525,20 +538,18 @@ async function ensureStudentGroupChat(
       console.error(`[chat-login] Error creating academic group: ${newGroupError.message}`);
       return;
     }
-    academicGroup = newGroup;
-    console.log(`[chat-login] Academic group created: ${grupo} => ${academicGroup.id}`);
-  } else {
-    console.log(`[chat-login] Academic group found: ${grupo} => ${academicGroup.id}`);
+    academicGroupId = newGroup.id;
+    console.log(`[chat-login] Academic group created: ${grupo} => ${academicGroupId}`);
   }
 
-  if (!academicGroup) return;
+  if (!academicGroupId) return;
 
-  // Add user to academic_group_members
+  // ── 2. Add user to academic_group_members ────────────────────────────────────
   const memberRole = participantRole === "admin" ? "teacher" : "student";
   const { error: memberError } = await supabase
     .from("academic_group_members")
     .upsert({
-      group_id: academicGroup.id,
+      group_id: academicGroupId,
       user_id: userId,
       role: memberRole,
     }, { onConflict: "group_id,user_id" });
@@ -546,27 +557,33 @@ async function ensureStudentGroupChat(
     console.error(`[chat-login] Error upserting academic_group_member: ${memberError.message}`);
   }
 
-  // Find or create the group chat conversation
-  let { data: groupConv, error: convError } = await supabase
+  // ── 3. Find or create the group chat conversation (ONE per academic_group_id) ─
+  const { data: convRows, error: convError } = await supabase
     .from("chat_conversations")
     .select("id")
-    .eq("academic_group_id", academicGroup.id)
+    .eq("academic_group_id", academicGroupId)
     .eq("type", "group")
-    .limit(1)
-    .single();
+    .order("created_at", { ascending: true })
+    .limit(5);
 
-  if (convError && convError.code !== "PGRST116") {
-    console.error(`[chat-login] Error fetching group conversation: ${convError.message}`);
+  if (convError) {
+    console.error(`[chat-login] Error fetching group conversations: ${convError.message}`);
   }
 
-  if (!groupConv) {
+  let groupConvId: string | null = null;
+
+  if (convRows && convRows.length > 0) {
+    // Always use the oldest conversation for this group
+    groupConvId = convRows[0].id;
+    console.log(`[chat-login] Group conversation found (${convRows.length} total): ${groupChatName} => ${groupConvId}`);
+  } else {
     const { data: newConv, error: newConvError } = await supabase
       .from("chat_conversations")
       .insert({
         type: "group",
         name: groupChatName,
         institution_id: instId,
-        academic_group_id: academicGroup.id,
+        academic_group_id: academicGroupId,
         created_by: userId,
       })
       .select("id")
@@ -575,19 +592,17 @@ async function ensureStudentGroupChat(
       console.error(`[chat-login] Error creating group conversation: ${newConvError.message}`);
       return;
     }
-    groupConv = newConv;
-    console.log(`[chat-login] Group conversation created: ${groupChatName} => ${groupConv.id}`);
-  } else {
-    console.log(`[chat-login] Group conversation found: ${groupChatName} => ${groupConv.id}`);
+    groupConvId = newConv.id;
+    console.log(`[chat-login] Group conversation created: ${groupChatName} => ${groupConvId}`);
   }
 
-  if (!groupConv) return;
+  if (!groupConvId) return;
 
-  // Add user as participant
+  // ── 4. Add user as participant ────────────────────────────────────────────────
   const { error: partError } = await supabase
     .from("chat_participants")
     .upsert({
-      conversation_id: groupConv.id,
+      conversation_id: groupConvId,
       user_id: userId,
       role: participantRole,
     }, { onConflict: "conversation_id,user_id" });
