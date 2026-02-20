@@ -14,7 +14,7 @@ import {
   ArrowLeft, Send, Image as ImageIcon, Paperclip, Search, Plus, Users,
   MessageCircle, Smile, X, CheckCheck, Hash, MoreVertical, Camera,
   LogOut, Home, Play, Sparkles, Map, BookOpen, Gamepad2, Radio, Award,
-  User, Trash2,
+  User, Trash2, Mic, MicOff, StopCircle,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -72,6 +72,17 @@ const ChatPage: React.FC = () => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // Following users list
+  const [followingUsers, setFollowingUsers] = useState<any[]>([]);
+  const [loadingFollowing, setLoadingFollowing] = useState(false);
+
+  // Voice message recording
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Group creation
   const [groupName, setGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
@@ -114,6 +125,87 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Load users that the current user follows
+  const loadFollowingUsers = useCallback(async () => {
+    if (!user) return;
+    setLoadingFollowing(true);
+    try {
+      const { data: followsData } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user.id)
+        .limit(50);
+      if (!followsData?.length) { setFollowingUsers([]); return; }
+      const ids = followsData.map((f) => f.following_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url")
+        .in("id", ids);
+      setFollowingUsers(profiles || []);
+    } catch (e) {
+      console.error("Error loading following users:", e);
+    } finally {
+      setLoadingFollowing(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (showSearch) loadFollowingUsers();
+  }, [showSearch, loadFollowingUsers]);
+
+  // Voice recording handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const file = new File([blob], `voice_${Date.now()}.webm`, { type: "audio/webm" });
+        setUploading(true);
+        const url = await uploadChatFile(file);
+        if (url) await sendMessage("🎤 Mensaje de voz", "audio", url, file.name);
+        setUploading(false);
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    } catch (e) {
+      console.error("No se pudo acceder al micrófono:", e);
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    mediaRecorderRef.current = null;
+    setIsRecording(false);
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+    setRecordingSeconds(0);
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+    setIsRecording(false);
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+    setRecordingSeconds(0);
+    audioChunksRef.current = [];
+  };
+
+  const formatRecordingTime = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const handleSearch = async (q: string) => {
     setSearchQuery(q);
@@ -346,7 +438,7 @@ const ChatPage: React.FC = () => {
                 <Input
                   placeholder={searchMode === "group" ? "Buscar personas..." : "Buscar usuario..."}
                   value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10" autoFocus={searchMode === "direct"}
+                  className="pl-10"
                 />
               </div>
               {searchMode === "group" && selectedMembers.length > 0 && (
@@ -363,35 +455,81 @@ const ChatPage: React.FC = () => {
               {searchResults.length === 0 && searchQuery && !searching && (
                 <p className="text-sm text-muted-foreground px-1 py-2 text-center">No se encontraron usuarios</p>
               )}
-              <div className="space-y-0.5 max-h-48 overflow-y-auto">
-                {searchResults.map((u) => {
-                  const isSelected = selectedMembers.some((m) => m.id === u.id);
-                  return (
-                    <button
-                      key={u.id}
-                      onClick={() => searchMode === "direct" ? handleStartDirectChat(u.id) : handleToggleMember(u)}
-                      className={`flex items-center gap-2.5 w-full p-2 rounded-lg transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted"}`}
-                    >
-                      <Avatar className="h-9 w-9 shrink-0">
-                        <AvatarImage src={u.avatar_url} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(u.full_name || u.username)}</AvatarFallback>
-                      </Avatar>
-                      <div className="text-left flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{u.full_name || u.username}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          @{u.username}
-                          {u.member_role && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">{getRoleBadgeLabel(u.member_role)}</Badge>}
-                        </p>
-                      </div>
-                      {searchMode === "group" && isSelected && (
-                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
-                          <CheckCheck className="h-3 w-3 text-primary-foreground" />
+              {/* Search results */}
+              {searchResults.length > 0 && (
+                <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                  {searchResults.map((u) => {
+                    const isSelected = selectedMembers.some((m) => m.id === u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        onClick={() => searchMode === "direct" ? handleStartDirectChat(u.id) : handleToggleMember(u)}
+                        className={`flex items-center gap-2.5 w-full p-2 rounded-lg transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted"}`}
+                      >
+                        <Avatar className="h-9 w-9 shrink-0">
+                          <AvatarImage src={u.avatar_url} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(u.full_name || u.username)}</AvatarFallback>
+                        </Avatar>
+                        <div className="text-left flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{u.full_name || u.username}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            @{u.username}
+                            {u.member_role && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">{getRoleBadgeLabel(u.member_role)}</Badge>}
+                          </p>
                         </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                        {searchMode === "group" && isSelected && (
+                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+                            <CheckCheck className="h-3 w-3 text-primary-foreground" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Following users - shown when no search query and mode is direct */}
+              {!searchQuery && searchMode === "direct" && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground px-1 mb-2">Siguiendo</p>
+                  {loadingFollowing ? (
+                    <div className="space-y-2">
+                      {[1,2,3].map((i) => (
+                        <div key={i} className="flex items-center gap-2 p-2">
+                          <Skeleton className="h-9 w-9 rounded-full" />
+                          <div className="flex-1 space-y-1">
+                            <Skeleton className="h-3 w-24" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : followingUsers.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">Aún no sigues a nadie</p>
+                  ) : (
+                    <div className="space-y-0.5 max-h-56 overflow-y-auto">
+                      {followingUsers.map((u) => (
+                        <button
+                          key={u.id}
+                          onClick={() => handleStartDirectChat(u.id)}
+                          className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-muted transition-colors"
+                        >
+                          <Avatar className="h-9 w-9 shrink-0">
+                            <AvatarImage src={u.avatar_url} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(u.full_name || u.username)}</AvatarFallback>
+                          </Avatar>
+                          <div className="text-left flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{u.full_name || u.username}</p>
+                            <p className="text-xs text-muted-foreground truncate">@{u.username}</p>
+                          </div>
+                          <MessageCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {searchMode === "group" && (
                 <Button onClick={handleCreateGroup} disabled={!groupName.trim() || selectedMembers.length === 0 || creatingGroup} className="w-full" size="sm">
                   <Users className="h-4 w-4 mr-1.5" />
@@ -588,8 +726,52 @@ const ChatPage: React.FC = () => {
                   ))}
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <p className="text-sm text-muted-foreground">No hay mensajes aún. ¡Envía el primero! 👋</p>
+                <div className="flex flex-col items-center justify-center py-10 px-6">
+                  {/* Avatar of the other person */}
+                  {activeConv?.type === "direct" && (() => {
+                    const other = activeConv.participants?.find(p => p.user_id !== user?.id);
+                    return (
+                      <div className="flex flex-col items-center gap-3 mb-6">
+                        <Avatar className="h-20 w-20 ring-4 ring-border">
+                          <AvatarImage src={other?.profile?.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-2xl">
+                            {getInitials(other?.profile?.full_name || other?.profile?.username)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="text-center">
+                          <p className="font-semibold text-foreground text-lg">{other?.profile?.full_name || other?.profile?.username}</p>
+                          <p className="text-sm text-muted-foreground">@{other?.profile?.username}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {activeConv?.type === "group" && (
+                    <div className="flex flex-col items-center gap-3 mb-6">
+                      <Avatar className="h-20 w-20 ring-4 ring-border">
+                        <AvatarImage src={getConvAvatar(activeConv!) || undefined} />
+                        <AvatarFallback className="bg-secondary/20 text-secondary"><Users className="h-8 w-8" /></AvatarFallback>
+                      </Avatar>
+                      <div className="text-center">
+                        <p className="font-semibold text-foreground text-lg">{getConvName(activeConv!)}</p>
+                        <p className="text-sm text-muted-foreground">{activeConv.participants?.length || 0} participantes</p>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground text-center mb-4">
+                    Aún no hay mensajes. ¡Sé el primero en escribir! 👋
+                  </p>
+                  {/* Suggested messages */}
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {["👋 ¡Hola!", "😊 ¿Cómo estás?", "📚 ¿Estudiamos juntos?", "🎉 ¡Me alegra conectar!"].map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        onClick={() => { setMessageInput(suggestion); }}
+                        className="text-sm bg-muted hover:bg-muted/80 text-foreground px-3 py-1.5 rounded-full border border-border transition-colors"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-1 py-2">
@@ -630,7 +812,15 @@ const ChatPage: React.FC = () => {
                                 <Paperclip className="h-3 w-3" />{msg.file_name || "Archivo"}
                               </a>
                             )}
-                            {msg.content && <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>}
+                            {msg.message_type === "audio" && msg.file_url && (
+                              <div className="flex items-center gap-2 py-1 min-w-[160px]">
+                                <Mic className="h-4 w-4 shrink-0 opacity-70" />
+                                <audio controls className="h-8 flex-1" style={{ minWidth: 0 }}>
+                                  <source src={msg.file_url} type="audio/webm" />
+                                </audio>
+                              </div>
+                            )}
+                            {msg.message_type !== "audio" && msg.content && <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>}
                             <div className={`flex items-center gap-1 mt-0.5 ${isMine ? "justify-end" : ""}`}>
                               <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                                 {formatMsgTime(msg.created_at)}
@@ -657,31 +847,80 @@ const ChatPage: React.FC = () => {
             )}
 
             {/* Input bar */}
-            <div className="p-3 border-t border-border bg-card flex items-end gap-2 shrink-0">
+            <div className="p-3 border-t border-border bg-card shrink-0">
               <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, "file")} />
               <input type="file" ref={imageInputRef} accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "image")} />
               <input type="file" ref={groupAvatarInputRef} accept="image/*" className="hidden" onChange={handleGroupAvatarChange} />
-              <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => setShowEmoji(!showEmoji)}>
-                <Smile className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => imageInputRef.current?.click()}>
-                <ImageIcon className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => fileInputRef.current?.click()}>
-                <Paperclip className="h-5 w-5" />
-              </Button>
-              <textarea
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Escribe un mensaje..."
-                rows={1}
-                className="flex-1 resize-none bg-muted rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary max-h-32 overflow-y-auto"
-                style={{ lineHeight: "1.4" }}
-              />
-              <Button onClick={handleSend} disabled={!messageInput.trim() || sending} size="icon" className="shrink-0 self-end rounded-full">
-                <Send className="h-4 w-4" />
-              </Button>
+
+              {/* Recording indicator */}
+              {isRecording && (
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                  <span className="text-sm text-destructive font-medium">{formatRecordingTime(recordingSeconds)}</span>
+                  <span className="text-xs text-muted-foreground">Grabando voz...</span>
+                  <button onClick={cancelRecording} className="ml-auto text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <X className="h-3 w-3" /> Cancelar
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-end gap-2">
+                {!isRecording && (
+                  <>
+                    <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => setShowEmoji(!showEmoji)}>
+                      <Smile className="h-5 w-5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => imageInputRef.current?.click()}>
+                      <ImageIcon className="h-5 w-5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => fileInputRef.current?.click()}>
+                      <Paperclip className="h-5 w-5" />
+                    </Button>
+                    <textarea
+                      value={messageInput}
+                      onChange={(e) => setMessageInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Escribe un mensaje..."
+                      rows={1}
+                      className="flex-1 resize-none bg-muted rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary max-h-32 overflow-y-auto"
+                      style={{ lineHeight: "1.4" }}
+                    />
+                  </>
+                )}
+
+                {isRecording && (
+                  <div className="flex-1 bg-muted rounded-2xl px-4 py-2.5 flex items-center gap-2">
+                    <div className="flex gap-1 items-center">
+                      {[1,2,3,4,5].map((i) => (
+                        <div key={i} className="w-1 bg-primary rounded-full animate-bounce" style={{ height: `${8 + (i % 3) * 4}px`, animationDelay: `${i * 0.1}s` }} />
+                      ))}
+                    </div>
+                    <span className="text-sm text-muted-foreground">Grabando...</span>
+                  </div>
+                )}
+
+                {messageInput.trim() || isRecording ? (
+                  isRecording ? (
+                    <Button onClick={stopRecording} size="icon" className="shrink-0 self-end rounded-full bg-destructive hover:bg-destructive/90">
+                      <StopCircle className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button onClick={handleSend} disabled={!messageInput.trim() || sending} size="icon" className="shrink-0 self-end rounded-full">
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  )
+                ) : (
+                  <Button
+                    variant="ghost" size="icon"
+                    className={`shrink-0 self-end rounded-full ${uploading ? "opacity-50" : ""}`}
+                    onClick={startRecording}
+                    disabled={uploading}
+                    title="Grabar mensaje de voz"
+                  >
+                    <Mic className="h-5 w-5" />
+                  </Button>
+                )}
+              </div>
             </div>
           </>
         )}
