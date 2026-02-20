@@ -252,6 +252,17 @@ export function InstitutionManagement() {
             <span>{totalItems} mostradas</span>
           </div>
 
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <PaginationControls
+              page={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
+          )}
+
           {/* Table */}
           {isLoading ? (
             <div className="space-y-3">
