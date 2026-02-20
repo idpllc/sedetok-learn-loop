@@ -60,8 +60,8 @@ export default function InstitutionDashboard() {
   const isStudent = currentUserRole === "student";
   const isParent = currentUserRole === "parent";
   
-  // Define permissions
-  const canViewMembers = isAdmin || isTeacher;
+  // Define permissions - all members can view members list and creators
+  const canViewMembers = !!myInstitution; // all institution members can see members
   const canEditMembers = isAdmin;
   const canViewSettings = isAdmin;
 
