@@ -131,19 +131,19 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
   if (!currentQuestion) return null;
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 space-y-4">
+    <div className="container max-w-2xl mx-auto px-3 space-y-3">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <Badge 
-          className="text-lg px-4 py-2"
+          className="text-sm px-3 py-1.5"
           style={{ backgroundColor: category.color }}
         >
           {category.icon} {category.name}
         </Badge>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-lg font-bold">
-            <Award className="w-5 h-5" />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 font-bold text-sm">
+            <Award className="w-4 h-4" />
             <span>{score} pts</span>
           </div>
           
@@ -151,9 +151,9 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="flex items-center gap-1 bg-orange-500 text-white px-3 py-1 rounded-full font-bold"
+              className="flex items-center gap-1 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold"
             >
-              <Zap className="w-4 h-4" />
+              <Zap className="w-3 h-3" />
               x{streak}
             </motion.div>
           )}
@@ -161,18 +161,18 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
       </div>
 
       {/* Progress */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>Pregunta {currentQuestionIndex + 1} de {questions.length}</span>
-          <div className={`flex items-center gap-2 font-bold ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : ''}`}>
-            <Clock className="w-4 h-4" />
+          <div className={`flex items-center gap-1.5 font-bold ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : ''}`}>
+            <Clock className="w-3.5 h-3.5" />
             {timeLeft}s
           </div>
         </div>
-        <Progress value={(currentQuestionIndex / questions.length) * 100} />
+        <Progress value={(currentQuestionIndex / questions.length) * 100} className="h-1.5" />
         <Progress 
           value={timePercentage} 
-          className={timeLeft <= 5 ? 'bg-red-100' : ''}
+          className={`h-1.5 ${timeLeft <= 5 ? 'bg-red-100' : ''}`}
         />
       </div>
 
@@ -186,12 +186,12 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
           transition={{ duration: 0.3 }}
         >
           <Card>
-            <CardContent className="p-6 space-y-6">
-              <h2 className="text-xl md:text-2xl font-bold text-center">
+            <CardContent className="p-4 space-y-4">
+              <h2 className="text-base md:text-xl font-bold text-center leading-snug">
                 {currentQuestion.question_text}
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {currentQuestion.options.map((option, index) => {
                   const isSelected = selectedAnswer === index;
                   const isCorrect = index === currentQuestion.correct_answer;
@@ -204,13 +204,13 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
                       onClick={() => handleAnswer(index)}
                       disabled={showFeedback || selectedAnswer !== null}
                       variant="outline"
-                      className={`h-auto min-h-[80px] text-base font-semibold whitespace-normal p-4 transition-all ${
+                      className={`h-auto min-h-[56px] text-sm font-semibold whitespace-normal p-3 transition-all ${
                         showCorrect ? '!bg-green-500 hover:!bg-green-600 !text-white !border-green-600' : 
                         showIncorrect ? '!bg-red-500 hover:!bg-red-600 !text-white !border-red-600' : 
-                        'bg-card text-foreground border-2 hover:scale-105'
+                        'bg-card text-foreground border-2 hover:scale-[1.02]'
                       }`}
                     >
-                      <span className="block w-full text-center">
+                      <span className="block w-full text-center leading-snug">
                         {option.option_text || `Opción ${index + 1}`}
                       </span>
                     </Button>
@@ -220,26 +220,26 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
 
               {showFeedback && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`text-center font-bold text-lg ${
+                  className={`text-center font-bold text-sm ${
                     selectedAnswer === currentQuestion.correct_answer ? 'text-green-600' : 'text-red-600'
                   }`}
                 >
                   {selectedAnswer === currentQuestion.correct_answer ? (
                     <>
-                      <div className="text-4xl mb-2">🎉</div>
+                      <div className="text-3xl mb-1">🎉</div>
                       <div>¡Correcto! +{currentQuestion.points} puntos</div>
                       {streak > 1 && (
-                        <div className="text-orange-500 mt-1">
+                        <div className="text-orange-500 mt-0.5">
                           ¡Racha de {streak}! Bonus: +{Math.floor(currentQuestion.points * (streak * 0.1))} pts
                         </div>
                       )}
                     </>
                   ) : (
                     <>
-                      <div className="text-4xl mb-2">😞</div>
-                      <div>Incorrecto. La respuesta correcta era: {currentQuestion.options[currentQuestion.correct_answer].option_text}</div>
+                      <div className="text-3xl mb-1">😞</div>
+                      <div className="text-xs">Respuesta correcta: {currentQuestion.options[currentQuestion.correct_answer].option_text}</div>
                     </>
                   )}
                 </motion.div>
@@ -249,25 +249,23 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
         </motion.div>
       </AnimatePresence>
 
-      {/* Stats */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-around text-center">
-            <div>
-              <div className="text-2xl font-bold text-green-600">{correctCount}</div>
-              <div className="text-xs text-muted-foreground">Correctas</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-red-600">{incorrectCount}</div>
-              <div className="text-xs text-muted-foreground">Incorrectas</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-orange-600">{bestStreak}</div>
-              <div className="text-xs text-muted-foreground">Mejor Racha</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Stats mini */}
+      <div className="flex items-center justify-around text-center bg-card/60 backdrop-blur rounded-xl px-4 py-2.5 border border-border/40">
+        <div>
+          <div className="text-lg font-bold text-green-600 leading-none">{correctCount}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Correctas</div>
+        </div>
+        <div className="w-px h-8 bg-border" />
+        <div>
+          <div className="text-lg font-bold text-red-600 leading-none">{incorrectCount}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Incorrectas</div>
+        </div>
+        <div className="w-px h-8 bg-border" />
+        <div>
+          <div className="text-lg font-bold text-orange-600 leading-none">{bestStreak}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Racha</div>
+        </div>
+      </div>
     </div>
   );
 };

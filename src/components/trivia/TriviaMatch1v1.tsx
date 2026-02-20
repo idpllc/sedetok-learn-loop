@@ -498,27 +498,29 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   if (match.status === 'waiting' || !match.current_player_id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full">
-          <CardContent className="pt-6 text-center space-y-6">
-            <div className="text-6xl animate-pulse">⏳</div>
-            <h2 className="text-2xl font-bold">Esperando al oponente</h2>
-            <p className="text-muted-foreground">
-              {waitingForOpponent 
-                ? "Esperando a que el otro jugador se una..."
-                : "Preparando la partida..."}
-            </p>
-            <div className="flex justify-center gap-4">
+        <Card className="max-w-sm w-full">
+          <CardContent className="pt-6 pb-6 text-center space-y-4">
+            <div className="text-5xl animate-pulse">⏳</div>
+            <div>
+              <h2 className="text-xl font-bold">Esperando al oponente</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {waitingForOpponent
+                  ? "Esperando a que el otro jugador se una..."
+                  : "Preparando la partida..."}
+              </p>
+            </div>
+            <div className="flex justify-center gap-6">
               {players?.map((player) => (
                 <div key={player.id} className="flex flex-col items-center gap-2">
-                  <Avatar className="w-16 h-16 border-4 border-primary">
+                  <Avatar className="w-14 h-14 border-4 border-primary">
                     <AvatarImage src={player.profiles?.avatar_url || undefined} />
                     <AvatarFallback>{player.profiles?.username?.[0] || '?'}</AvatarFallback>
                   </Avatar>
-                  <p className="text-sm font-medium">{player.profiles?.username || 'Jugador'}</p>
+                  <p className="text-xs font-medium truncate max-w-[80px]">{player.profiles?.username || 'Jugador'}</p>
                 </div>
               ))}
             </div>
-            <Button onClick={() => navigate('/trivia-game')} variant="outline">
+            <Button onClick={() => navigate('/trivia-game')} variant="outline" size="sm" className="w-full">
               Volver al menú
             </Button>
           </CardContent>
@@ -537,24 +539,20 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
+          className="w-full max-w-sm"
         >
-          <Card className="max-w-2xl w-full text-center">
-            <CardContent className="pt-8 space-y-6">
-              <div className="text-8xl mb-4">
-                {isWinner ? "🏆" : "😔"}
-              </div>
-              
-              <h2 className="text-4xl font-bold">
+          <Card className="text-center">
+            <CardContent className="pt-8 pb-8 space-y-4">
+              <div className="text-7xl">{isWinner ? "🏆" : "😔"}</div>
+              <h2 className="text-3xl font-bold">
                 {isWinner ? "¡Victoria!" : "Derrota"}
               </h2>
-
-              <p className="text-xl text-muted-foreground">
-                {isWinner 
-                  ? "¡Completaste todos los personajes!" 
+              <p className="text-muted-foreground text-sm px-4">
+                {isWinner
+                  ? "¡Completaste todos los personajes!"
                   : `${winner?.profiles?.username} completó todos los personajes`}
               </p>
-
-              <Button size="lg" onClick={() => window.location.reload()}>
+              <Button className="w-full" size="lg" onClick={() => window.location.reload()}>
                 Volver al Menú
               </Button>
             </CardContent>
@@ -566,9 +564,9 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
 
   // Exit button component (always visible)
   const ExitButton = () => (
-    <div className="container max-w-4xl mx-auto pt-4 px-4">
+    <div className="px-4 pt-3 pb-1">
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => {
           const confirmExit = window.confirm('¿Estás seguro de que quieres salir de la partida?');
@@ -576,9 +574,9 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
             window.location.href = '/trivia-game';
           }
         }}
-        className="mb-4"
+        className="text-muted-foreground hover:text-foreground h-8"
       >
-        <LogOut className="w-4 h-4 mr-2" />
+        <LogOut className="w-3.5 h-3.5 mr-1.5" />
         Salir
       </Button>
     </div>
@@ -596,13 +594,13 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         />
         <StreakIndicator streak={currentStreak} />
         {!isMyTurn && opponent && (
-          <div className="container max-w-4xl mx-auto text-center mb-4">
+          <div className="px-4 pb-3">
             <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-xl font-semibold text-muted-foreground">
-                  Turno de {opponent.profiles?.username}
+              <CardContent className="py-4 text-center">
+                <h3 className="text-base font-semibold text-muted-foreground">
+                  Turno de <span className="text-foreground">{opponent.profiles?.username}</span>
                 </h3>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="text-xs text-muted-foreground mt-1">
                   Espera a que termine su turno...
                 </p>
               </CardContent>
@@ -621,7 +619,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   // Character round
   if (phase === 'character-round' && isMyTurn) {
     return (
-      <div className="min-h-screen p-4">
+      <div className="min-h-screen">
         <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
@@ -644,7 +642,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   // Questions phase
   if (phase === 'questions' && currentQuestion) {
     return (
-      <div className="min-h-screen p-4 space-y-4">
+      <div className="min-h-screen space-y-3">
         <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
@@ -654,23 +652,22 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
 
         <StreakIndicator streak={currentStreak} />
 
-        <Card className="max-w-3xl mx-auto">
-          <CardContent className="pt-6 space-y-6">
-            {/* Category and timer */}
-            <div className="flex items-center justify-between">
-              <Badge variant="secondary" className="text-lg px-4 py-2">
-                {currentCategory?.icon} {currentCategory?.name}
-              </Badge>
-              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                <span className="text-2xl font-bold">{timeLeft}s</span>
+        <div className="px-3 pb-4">
+          <Card className="max-w-3xl mx-auto">
+            <CardContent className="p-4 space-y-4">
+              {/* Category and timer */}
+              <div className="flex items-center justify-between gap-2">
+                <Badge variant="secondary" className="text-sm px-3 py-1 shrink-0">
+                  {currentCategory?.icon} {currentCategory?.name}
+                </Badge>
+                <div className={`flex items-center gap-1.5 font-bold shrink-0 ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : ''}`}>
+                  <Clock className="w-4 h-4" />
+                  <span className="text-xl tabular-nums">{timeLeft}s</span>
+                </div>
               </div>
-            </div>
 
-
-            {/* Question */}
-            <div className="text-center space-y-6">
-              <h3 className="text-2xl font-bold">
+              {/* Question */}
+              <h3 className="text-base md:text-xl font-bold text-center leading-snug">
                 {currentQuestion.question_text}
               </h3>
 
@@ -678,12 +675,12 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
                 <img
                   src={currentQuestion.image_url}
                   alt="Question"
-                  className="max-w-md mx-auto rounded-lg"
+                  className="w-full max-w-xs mx-auto rounded-lg"
                 />
               )}
 
               {/* Options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {currentQuestion.options?.map((option, index) => {
                   const isSelected = selectedAnswer === index;
                   const showCorrect = showFeedback && option.is_correct;
@@ -692,33 +689,32 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
                   return (
                     <Button
                       key={index}
-                      size="lg"
                       variant="outline"
                       onClick={() => handleAnswer(index)}
                       disabled={!isMyTurn || selectedAnswer !== null}
-                      className={`h-auto py-4 px-6 text-lg whitespace-normal font-semibold ${
-                        showCorrect ? '!bg-green-500 !hover:bg-green-600 !text-white !border-green-600' : 
-                        showIncorrect ? '!bg-red-500 !hover:bg-red-600 !text-white !border-red-600' : 
+                      className={`h-auto py-3 px-4 text-sm md:text-base whitespace-normal font-semibold min-h-[56px] ${
+                        showCorrect ? '!bg-green-500 !text-white !border-green-600' : 
+                        showIncorrect ? '!bg-red-500 !text-white !border-red-600' : 
                         'bg-card text-foreground border-2'
                       }`}
                     >
-                      <span className="block w-full text-center">
+                      <span className="block w-full text-center leading-snug">
                         {option.option_text}
                       </span>
                     </Button>
                   );
                 })}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   // Waiting for turn or opponent
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen">
       <ExitButton />
       {currentPlayer && opponent && (
         <PlayerStats 
@@ -727,35 +723,39 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           categories={categories}
         />
       )}
-      <Card className="max-w-md w-full">
-        <CardContent className="pt-8 text-center space-y-4">
-          <div className="text-6xl mb-4">
-            {waitingForOpponent ? "🔍" : "⏳"}
-          </div>
-          <h2 className="text-2xl font-bold">
-            {waitingForOpponent 
-              ? "Buscando oponente..." 
-              : `Turno de ${opponent?.profiles?.username}`}
-          </h2>
-          <p className="text-muted-foreground">
-            {waitingForOpponent 
-              ? "Otro jugador se unirá pronto" 
-              : "Espera tu turno..."}
-          </p>
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              const confirmExit = window.confirm('¿Estás seguro de que quieres salir de la partida?');
-              if (confirmExit) {
-                window.location.href = '/trivia-game';
-              }
-            }}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Salir de la partida
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-4 pt-2">
+        <Card className="max-w-sm w-full">
+          <CardContent className="pt-6 pb-6 text-center space-y-3">
+            <div className="text-5xl">
+              {waitingForOpponent ? "🔍" : "⏳"}
+            </div>
+            <h2 className="text-xl font-bold">
+              {waitingForOpponent 
+                ? "Buscando oponente..." 
+                : `Turno de ${opponent?.profiles?.username}`}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {waitingForOpponent 
+                ? "Otro jugador se unirá pronto" 
+                : "Espera tu turno..."}
+            </p>
+            <Button 
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                const confirmExit = window.confirm('¿Estás seguro de que quieres salir de la partida?');
+                if (confirmExit) {
+                  window.location.href = '/trivia-game';
+                }
+              }}
+            >
+              <LogOut className="w-3.5 h-3.5 mr-1.5" />
+              Salir de la partida
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -770,28 +770,28 @@ function PlayerStats({
   categories: any[];
 }) {
   return (
-    <div className="container max-w-4xl mx-auto mb-6">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="px-3 pb-2">
+      <div className="grid grid-cols-2 gap-2">
         {/* Current Player */}
-        <Card className="bg-primary/5">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar>
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Avatar className="w-7 h-7 shrink-0">
                 <AvatarImage src={currentPlayer.profiles?.avatar_url || undefined} />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs">
                   {currentPlayer.profiles?.username?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <p className="font-semibold">{currentPlayer.profiles?.username}</p>
-                <p className="text-sm text-muted-foreground">Tú</p>
+              <div className="min-w-0">
+                <p className="font-semibold text-xs truncate">{currentPlayer.profiles?.username}</p>
+                <p className="text-[10px] text-muted-foreground">Tú</p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-0.5">
               {categories?.map(cat => (
-                <div
+                <span
                   key={cat.id}
-                  className={`text-2xl ${
+                  className={`text-lg leading-none ${
                     currentPlayer.characters_collected.includes(cat.id)
                       ? 'opacity-100'
                       : 'opacity-20 grayscale'
@@ -799,34 +799,34 @@ function PlayerStats({
                   title={cat.name}
                 >
                   {cat.icon}
-                </div>
+                </span>
               ))}
             </div>
           </CardContent>
         </Card>
 
         {/* Opponent */}
-        <Card className="bg-secondary/5">
-          <CardContent className="pt-4">
+        <Card className="bg-secondary/5 border-secondary/20">
+          <CardContent className="p-3">
             {opponent ? (
               <>
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar>
+                <div className="flex items-center gap-2 mb-2">
+                  <Avatar className="w-7 h-7 shrink-0">
                     <AvatarImage src={opponent.profiles?.avatar_url || undefined} />
-                    <AvatarFallback>
+                    <AvatarFallback className="text-xs">
                       {opponent.profiles?.username?.[0]?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <p className="font-semibold">{opponent.profiles?.username}</p>
-                    <p className="text-sm text-muted-foreground">Oponente</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-xs truncate">{opponent.profiles?.username}</p>
+                    <p className="text-[10px] text-muted-foreground">Oponente</p>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-0.5">
                   {categories?.map(cat => (
-                    <div
+                    <span
                       key={cat.id}
-                      className={`text-2xl ${
+                      className={`text-lg leading-none ${
                         opponent.characters_collected.includes(cat.id)
                           ? 'opacity-100'
                           : 'opacity-20 grayscale'
@@ -834,13 +834,13 @@ function PlayerStats({
                       title={cat.name}
                     >
                       {cat.icon}
-                    </div>
+                    </span>
                   ))}
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-sm text-muted-foreground text-center">
+              <div className="flex items-center justify-center h-full min-h-[60px]">
+                <p className="text-xs text-muted-foreground text-center">
                   Esperando oponente...
                 </p>
               </div>
