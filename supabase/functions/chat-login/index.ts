@@ -107,32 +107,57 @@ Deno.serve(async (req) => {
     }
 
     // Verify and decode JWT
-    const payload = await verifyJWT(token, jwtSecret);
+    const rawPayload = await verifyJWT(token, jwtSecret);
 
-    const {
-      email,
-      full_name,
-      member_role,
-      institution_name,
-      institution_id,
-      institution_nit,
-      numero_documento,
-      course_name,
-      sede,
-    } = payload;
+    console.log(`[chat-login] Raw payload received: ${JSON.stringify(rawPayload)}`);
 
-    // Support multiple field names for group and director flag
-    const grupo = payload.grupo || payload.group || payload.grupo_nombre || payload.academic_group || payload.group_name || null;
-    const es_director_grupo = payload.es_director_grupo ?? payload.director_grupo ?? payload.is_group_director ?? false;
+    // Support payload nested inside a "user" key (format from some integrations)
+    const payload = rawPayload.user ?? rawPayload;
+
+    // ── Normalize fields — support multiple naming conventions ────────────────
+    // Email: explicit > generate from documentNumber
+    const documentNumber = payload.documentNumber || payload.numero_documento || payload.document_number || null;
+    const rawEmail = payload.email || rawPayload.email || null;
+    const email = rawEmail || (documentNumber ? `${documentNumber}@sedefy.local` : null);
+
+    // Full name
+    const full_name = payload.full_name || payload.name 
+      || ((payload.name && payload.surname) ? `${payload.name} ${payload.surname}` : null)
+      || [payload.firstName, payload.lastName].filter(Boolean).join(" ") || null;
+
+    // Role
+    const member_role = payload.role || payload.member_role || rawPayload.member_role || rawPayload.role || "student";
+
+    // Institution
+    const institution_name = payload.institution_name || payload.institutionName || rawPayload.institution_name || rawPayload.institutionName || null;
+    const institution_id = payload.institution_id || payload.institutionId || rawPayload.institution_id || null;
+    const institution_nit = payload.institution_nit || payload.institutionNit || rawPayload.institution_nit || null;
+
+    // Sede / campus
+    const sede = payload.sede || payload.campusName || payload.campus_name || rawPayload.sede || null;
+    const sedeExternalId = payload.campusId || payload.campus_id || rawPayload.campusId || null;
+
+    // Academic group / class
+    const grupo = payload.grupo || payload.group || payload.className || payload.class_name 
+      || payload.grupo_nombre || payload.academic_group || payload.group_name || null;
+    const course_name = payload.course_name || payload.gradeName || payload.grade_name || payload.courseName || null;
+
+    // Director flag
+    const es_director_grupo = payload.es_director_grupo ?? payload.director_grupo ?? payload.is_group_director ?? rawPayload.es_director_grupo ?? false;
+
+    // Document number (normalized)
+    const numero_documento = documentNumber;
+
+    console.log(`[chat-login] Normalized: email=${email}, full_name=${full_name}, role=${member_role}, sede=${sede}, grupo=${grupo}, course=${course_name}, inst=${institution_name || institution_nit || institution_id}`);
 
     if (!email) {
-      return new Response(JSON.stringify({ error: "Email requerido en el token" }), {
+      return new Response(JSON.stringify({ error: "Email o número de documento requerido en el token" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const role = (member_role || "student").toLowerCase();
+    const role = (member_role || "student").toLowerCase().trim();
     const tipoUsuario = mapRoleToTipoUsuario(role);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -251,46 +276,34 @@ Deno.serve(async (req) => {
     }
 
     // ── Handle institution ────────────────────────────────────────────────────
-    // Priority: institution_id > institution_nit > institution_name
-    let instId = institution_id;
+    // Priority: institution_id > institution_nit > institution_name > lookup from existing member record
+    let instId = institution_id || null;
+    let resolvedInstName = institution_name || null;
 
     if (!instId && institution_nit) {
-      // Look up by NIT first (most reliable key for existing institutions)
       const { data: existingInst } = await adminClient
-        .from("institutions")
-        .select("id")
-        .eq("nit", institution_nit)
-        .limit(1)
-        .single();
-
+        .from("institutions").select("id, name").eq("nit", institution_nit).limit(1).single();
       if (existingInst) {
         instId = existingInst.id;
+        resolvedInstName = resolvedInstName || existingInst.name;
         console.log(`[chat-login] Institution found by NIT ${institution_nit}: ${instId}`);
       } else if (institution_name) {
-        // NIT not found → create institution with NIT + name
         const { data: newInst, error: instError } = await adminClient
           .from("institutions")
           .insert({ name: institution_name, nit: institution_nit, admin_user_id: userId })
-          .select("id")
-          .single();
+          .select("id").single();
         if (instError) {
           console.error(`[chat-login] Institution creation error (by NIT): ${instError.message}`);
         } else {
           instId = newInst?.id;
           console.log(`[chat-login] Institution created with NIT ${institution_nit}: ${instId}`);
         }
-      } else {
-        console.warn(`[chat-login] institution_nit provided but institution_name missing — cannot create institution`);
       }
-    } else if (!instId && institution_name) {
-      // Fallback: look up by name only (legacy / no NIT)
-      const { data: existingInst } = await adminClient
-        .from("institutions")
-        .select("id")
-        .eq("name", institution_name)
-        .limit(1)
-        .single();
+    }
 
+    if (!instId && institution_name) {
+      const { data: existingInst } = await adminClient
+        .from("institutions").select("id").eq("name", institution_name).limit(1).single();
       if (existingInst) {
         instId = existingInst.id;
         console.log(`[chat-login] Institution found by name: ${instId}`);
@@ -298,24 +311,39 @@ Deno.serve(async (req) => {
         const { data: newInst, error: instError } = await adminClient
           .from("institutions")
           .insert({ name: institution_name, admin_user_id: userId })
-          .select("id")
-          .single();
+          .select("id").single();
         if (instError) {
           console.error(`[chat-login] Institution creation error (by name): ${instError.message}`);
+        } else {
+          instId = newInst?.id;
+          console.log(`[chat-login] Institution created by name: ${instId}`);
         }
-        instId = newInst?.id;
-        console.log(`[chat-login] Institution created by name: ${instId}`);
+      }
+    }
+
+    // If still no institution, try to find it from the user's existing institution_members record
+    if (!instId) {
+      const { data: existingMembership } = await adminClient
+        .from("institution_members")
+        .select("institution_id, institutions(id, name)")
+        .eq("user_id", userId)
+        .eq("status", "active")
+        .limit(1)
+        .single();
+      if (existingMembership?.institution_id) {
+        instId = existingMembership.institution_id;
+        resolvedInstName = resolvedInstName || (existingMembership as any).institutions?.name || null;
+        console.log(`[chat-login] Institution resolved from existing membership: ${instId}`);
+      } else {
+        console.warn(`[chat-login] No institution resolved for user ${userId} — group assignment skipped`);
       }
     }
 
     if (instId) {
-      // Update profile with institution name (the 'institution' column is text, not UUID)
-      // Also store the institution_id via institution_members table
-      await adminClient.from("profiles").update({ 
-        institution: institution_name || instId 
+      await adminClient.from("profiles").update({
+        institution: resolvedInstName || instId,
       }).eq("id", userId);
 
-      // Ensure institution membership (member_role must be 'student','teacher','parent','admin')
       const validMemberRole = mapRoleToMemberRole(role);
       const { error: memberError } = await adminClient.from("institution_members").upsert({
         institution_id: instId,
@@ -329,7 +357,7 @@ Deno.serve(async (req) => {
         console.log(`[chat-login] Institution member upserted: ${userId} => ${instId}, role=${validMemberRole}`);
       }
 
-      // Handle sede
+      // ── Handle sede ───────────────────────────────────────────────────────
       let sedeId: string | null = null;
       if (sede) {
         const { data: existingSede } = await adminClient
@@ -345,9 +373,8 @@ Deno.serve(async (req) => {
         } else {
           const { data: newSede, error: sedeError } = await adminClient
             .from("institution_sedes")
-            .insert({ institution_id: instId, name: sede })
-            .select("id")
-            .single();
+            .insert({ institution_id: instId, name: sede, code: sedeExternalId ? String(sedeExternalId) : null })
+            .select("id").single();
           if (sedeError) {
             console.error(`[chat-login] Sede creation error: ${sedeError.message}`);
           }
@@ -361,34 +388,21 @@ Deno.serve(async (req) => {
       }
 
       // ── CHAT GROUPS ───────────────────────────────────────────────────────
-      // Log the full raw payload for debugging
-      console.log(`[chat-login] Full raw payload: ${JSON.stringify(payload)}`);
-      console.log(`[chat-login] Assigning chat groups: role=${role}, sede=${sede}, grupo=${grupo}, es_director_grupo=${es_director_grupo}, course_name=${course_name}`);
-
+      console.log(`[chat-login] Assigning chat groups: role=${role}, sede=${sede}, grupo=${grupo}, course_name=${course_name}, es_director=${es_director_grupo}`);
 
       if (role === "student" || role === "estudiante") {
-        // Students → assign to their academic group chat
         if (grupo) {
-          console.log(`[chat-login] Adding student to group: ${grupo}`);
+          console.log(`[chat-login] Adding student to group chat: ${grupo}`);
           await ensureStudentGroupChat(adminClient, instId, sedeId, grupo, course_name, userId);
         } else {
-          console.warn(`[chat-login] Student has no grupo assigned — skipping student group assignment`);
+          console.warn(`[chat-login] Student has no group assigned — skipping group chat`);
         }
       } else if (role === "teacher" || role === "docente") {
-        // Teachers → always add to "Docentes {sede}"
         if (sede) {
-          console.log(`[chat-login] Adding teacher to Docentes group for sede: ${sede}`);
           await ensureDocentes(adminClient, instId, sede, userId);
-        } else {
-          console.warn(`[chat-login] Teacher has no sede — skipping Docentes group`);
         }
-
-        // If director of group → also add to students' group chat as admin
         if (es_director_grupo && grupo) {
-          console.log(`[chat-login] Teacher is group director, adding to student group: ${grupo}`);
           await ensureStudentGroupChat(adminClient, instId, sedeId, grupo, course_name, userId, "admin");
-        } else if (es_director_grupo && !grupo) {
-          console.warn(`[chat-login] Teacher is director but no grupo provided`);
         }
       } else if (role === "admin") {
         await ensureSpecialGroup(adminClient, instId, "Grupo de admin", userId);
@@ -397,17 +411,14 @@ Deno.serve(async (req) => {
         await ensureSpecialGroup(adminClient, instId, "Grupo de coordinadores", userId);
         await addToAllDocenteGroups(adminClient, instId, userId);
       }
-    } else {
-      console.warn(`[chat-login] No institution resolved — skipping group assignment`);
     }
 
-    // ── Sign in with password to get a real session ───────────────────────────
+    // ── Sign in to get a real session ─────────────────────────────────────────
     console.log(`[chat-login] Signing in user ${email} to get session...`);
-    
     const anonClient = createClient(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
-    
+
     const { data: signInData, error: signInError } = await anonClient.auth.signInWithPassword({
       email,
       password: userPassword,
@@ -415,8 +426,8 @@ Deno.serve(async (req) => {
 
     if (signInError || !signInData?.session) {
       console.error(`[chat-login] SignIn error: ${signInError?.message}`);
-      return new Response(JSON.stringify({ 
-        error: `No se pudo iniciar sesión: ${signInError?.message || "sin sesión"}` 
+      return new Response(JSON.stringify({
+        error: `No se pudo iniciar sesión: ${signInError?.message || "sin sesión"}`,
       }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
