@@ -476,11 +476,10 @@ export default function InstitutionDashboard() {
                     <div key={member.id} className="flex items-center gap-3 p-3 border rounded hover:bg-muted/30 transition-colors">
                       <Avatar className="h-9 w-9 flex-shrink-0">
                         <AvatarImage src={member.profile?.avatar_url} />
-                        <AvatarFallback>{(member.profile?.username || "U")[0].toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>{(member.profile?.full_name || member.profile?.username || "U")[0].toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{member.profile?.username || "Usuario"}</p>
-                        <p className="text-sm text-muted-foreground truncate">{member.profile?.full_name}</p>
+                        <p className="font-medium truncate">{member.profile?.full_name || member.profile?.username || "Usuario"}</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {canEditMembers ? (
