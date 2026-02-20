@@ -4,12 +4,13 @@ import { useInstitution } from "@/hooks/useInstitution";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, BookOpen, UserPlus, Settings, Home, Calendar, Camera } from "lucide-react";
+import { Building2, Users, BookOpen, UserPlus, Settings, Home, Calendar, Camera, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +27,8 @@ export default function InstitutionDashboard() {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
   const [searchQuery, setSearchQuery] = useState("");
+  const [membersPage, setMembersPage] = useState(1);
+  const MEMBERS_PER_PAGE = 20;
   const { uploadFile, uploading } = useCloudinary();
   const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -181,6 +184,51 @@ export default function InstitutionDashboard() {
     const username = member.profile?.username?.toLowerCase() || "";
     const fullName = member.profile?.full_name?.toLowerCase() || "";
     return username.includes(query) || fullName.includes(query);
+  });
+
+  const totalPages = Math.ceil((filteredMembers?.length || 0) / MEMBERS_PER_PAGE);
+  const paginatedMembers = filteredMembers?.slice(
+    (membersPage - 1) * MEMBERS_PER_PAGE,
+    membersPage * MEMBERS_PER_PAGE
+  );
+
+  // Query content creators: institution members who have created content
+  const { data: contentCreators, isLoading: creatorsLoading } = useQuery({
+    queryKey: ["institution-content-creators", myInstitution?.id],
+    queryFn: async () => {
+      if (!myInstitution || !members) return [];
+
+      const memberUserIds = members.map((m: any) => m.user_id);
+      if (memberUserIds.length === 0) return [];
+
+      // Get profiles of members who have created content (content, quizzes, or games)
+      const [contentRes, quizzesRes, gamesRes] = await Promise.all([
+        supabase.from("content").select("creator_id").in("creator_id", memberUserIds),
+        supabase.from("quizzes").select("creator_id").in("creator_id", memberUserIds),
+        supabase.from("games").select("creator_id").in("creator_id", memberUserIds),
+      ]);
+
+      const creatorIds = new Set([
+        ...(contentRes.data || []).map((r: any) => r.creator_id),
+        ...(quizzesRes.data || []).map((r: any) => r.creator_id),
+        ...(gamesRes.data || []).map((r: any) => r.creator_id),
+      ]);
+
+      if (creatorIds.size === 0) return [];
+
+      return members
+        .filter((m: any) => creatorIds.has(m.user_id))
+        .map((m: any) => ({
+          userId: m.user_id,
+          profile: m.profile,
+          role: m.member_role,
+          contentCount:
+            (contentRes.data || []).filter((r: any) => r.creator_id === m.user_id).length +
+            (quizzesRes.data || []).filter((r: any) => r.creator_id === m.user_id).length +
+            (gamesRes.data || []).filter((r: any) => r.creator_id === m.user_id).length,
+        }));
+    },
+    enabled: !!myInstitution && !!members,
   });
 
   if (isLoading) {
@@ -342,14 +390,14 @@ export default function InstitutionDashboard() {
             Perfil
           </TabsTrigger>
           {canViewMembers && (
-            <TabsTrigger value="members">
+          <TabsTrigger value="members">
               <Users className="mr-2 h-4 w-4" />
               Miembros
             </TabsTrigger>
           )}
-          <TabsTrigger value="content">
+          <TabsTrigger value="creators">
             <BookOpen className="mr-2 h-4 w-4" />
-            Contenido
+            Creadores
           </TabsTrigger>
           {canViewSettings && (
             <TabsTrigger value="settings">
@@ -409,7 +457,7 @@ export default function InstitutionDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Miembros Actuales ({members?.length || 0})</CardTitle>
+                <CardTitle>Miembros Actuales ({filteredMembers?.length || 0})</CardTitle>
                 <CardDescription>
                   {canEditMembers ? "Busca y gestiona los miembros de tu institución" : "Lista de miembros de la institución"}
                 </CardDescription>
@@ -419,18 +467,22 @@ export default function InstitutionDashboard() {
                   <Input
                     placeholder="Buscar por nombre o username..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => { setSearchQuery(e.target.value); setMembersPage(1); }}
                     className="max-w-md"
                   />
                 </div>
                 <div className="space-y-2">
-                  {filteredMembers?.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-3 border rounded">
-                      <div className="flex-1">
-                        <p className="font-medium">{member.profile?.username || "Usuario"}</p>
-                        <p className="text-sm text-muted-foreground">{member.profile?.full_name}</p>
+                  {paginatedMembers?.map((member) => (
+                    <div key={member.id} className="flex items-center gap-3 p-3 border rounded hover:bg-muted/30 transition-colors">
+                      <Avatar className="h-9 w-9 flex-shrink-0">
+                        <AvatarImage src={member.profile?.avatar_url} />
+                        <AvatarFallback>{(member.profile?.username || "U")[0].toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{member.profile?.username || "Usuario"}</p>
+                        <p className="text-sm text-muted-foreground truncate">{member.profile?.full_name}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         {canEditMembers ? (
                           <Select
                             value={member.member_role}
@@ -452,31 +504,113 @@ export default function InstitutionDashboard() {
                       </div>
                     </div>
                   ))}
-                  {(!filteredMembers || filteredMembers.length === 0) && (
+                  {(!paginatedMembers || paginatedMembers.length === 0) && (
                     <p className="text-center text-muted-foreground py-8">
                       {searchQuery ? "No se encontraron miembros" : "No hay miembros vinculados aún"}
                     </p>
                   )}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Página {membersPage} de {totalPages} · {filteredMembers?.length} miembros
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMembersPage(p => Math.max(1, p - 1))}
+                        disabled={membersPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMembersPage(p => Math.min(totalPages, p + 1))}
+                        disabled={membersPage === totalPages}
+                      >
+                        Siguiente
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         )}
 
-        <TabsContent value="content">
+        {/* Creadores de Contenido */}
+        <TabsContent value="creators">
           <Card>
             <CardHeader>
-              <CardTitle>Contenido de la Institución</CardTitle>
-              <CardDescription>Crea y gestiona contenido educativo</CardDescription>
+              <CardTitle>Creadores de Contenido</CardTitle>
+              <CardDescription>Miembros de la institución que han publicado contenido educativo</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Button onClick={() => navigate("/create-content")} className="w-full">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Crear Nuevo Contenido
-              </Button>
-              <p className="text-center text-muted-foreground text-sm">
-                Total de contenidos: {stats?.contentCount || 0}
-              </p>
+            <CardContent>
+              {creatorsLoading ? (
+                <div className="space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full" />
+                  ))}
+                </div>
+              ) : contentCreators && contentCreators.length > 0 ? (
+                <div className="space-y-3">
+                  {contentCreators.map((creator: any) => (
+                    <div
+                      key={creator.userId}
+                      className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/30 transition-colors"
+                    >
+                      <Avatar className="h-11 w-11 flex-shrink-0">
+                        <AvatarImage src={creator.profile?.avatar_url} />
+                        <AvatarFallback>
+                          {(creator.profile?.username || "U")[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate">
+                          {creator.profile?.full_name || creator.profile?.username || "Usuario"}
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          @{creator.profile?.username}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-right">
+                          <p className="text-sm font-medium">{creator.contentCount}</p>
+                          <p className="text-xs text-muted-foreground">contenidos</p>
+                        </div>
+                        <Badge variant="outline" className="capitalize">
+                          {creator.role === "teacher" ? "Profesor" :
+                           creator.role === "admin" ? "Admin" :
+                           creator.role === "student" ? "Estudiante" : creator.role}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/profile/${creator.profile?.username}`)}
+                          className="gap-1"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Perfil
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="font-medium text-muted-foreground">Aún no hay creadores de contenido</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Los miembros que publiquen contenido aparecerán aquí
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
