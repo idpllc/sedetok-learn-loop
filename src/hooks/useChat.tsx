@@ -65,6 +65,10 @@ export const useChat = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const channelRef = useRef<any>(null);
+  const conversationsChannelRef = useRef<any>(null);
+  // Keep a stable ref of activeConversation for use inside callbacks without re-subscribing
+  const activeConversationRef = useRef<string | null>(null);
+  activeConversationRef.current = activeConversation;
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
@@ -525,12 +529,12 @@ export const useChat = () => {
     }
   }, [user]);
 
-  // Realtime subscription
+  // Realtime: messages for active conversation
   useEffect(() => {
     if (!user || !activeConversation) return;
 
     channelRef.current = supabase
-      .channel(`chat-${activeConversation}`)
+      .channel(`chat-msgs-${activeConversation}`)
       .on(
         "postgres_changes",
         {
@@ -541,6 +545,7 @@ export const useChat = () => {
         },
         async (payload) => {
           const newMsg = payload.new as ChatMessage;
+
           // Get sender profile
           const { data: profile } = await supabase
             .from("profiles")
@@ -548,10 +553,26 @@ export const useChat = () => {
             .eq("id", newMsg.sender_id)
             .single();
 
-          setMessages((prev) => [
-            ...prev,
-            { ...newMsg, sender: profile || undefined } as ChatMessage,
-          ]);
+          // Deduplicate: only add if not already present
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMsg.id)) return prev;
+            return [...prev, { ...newMsg, sender: profile || undefined } as ChatMessage];
+          });
+
+          // Update conversation list entry without full reload
+          setConversations((prev) =>
+            prev
+              .map((c) =>
+                c.id === newMsg.conversation_id
+                  ? {
+                      ...c,
+                      last_message: { ...newMsg, sender: profile || undefined } as ChatMessage,
+                      updated_at: newMsg.created_at,
+                    }
+                  : c
+              )
+              .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+          );
 
           // Play sound and mark as read only for messages from others
           if (newMsg.sender_id !== user.id) {
@@ -570,6 +591,55 @@ export const useChat = () => {
       channelRef.current?.unsubscribe();
     };
   }, [user, activeConversation]);
+
+  // Realtime: track new messages in OTHER conversations to update unread counts
+  useEffect(() => {
+    if (!user) return;
+
+    conversationsChannelRef.current = supabase
+      .channel(`chat-convs-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages",
+        },
+        (payload) => {
+          const newMsg = payload.new as ChatMessage;
+          const convId = newMsg.conversation_id;
+
+          // Only handle messages NOT in the currently active conversation
+          if (convId === activeConversationRef.current) return;
+          if (newMsg.sender_id === user.id) return;
+
+          // Surgically update only the affected conversation in the list
+          setConversations((prev) => {
+            const exists = prev.some((c) => c.id === convId);
+            if (!exists) return prev;
+            return prev
+              .map((c) =>
+                c.id === convId
+                  ? {
+                      ...c,
+                      last_message: newMsg as ChatMessage,
+                      unread_count: (c.unread_count || 0) + 1,
+                      updated_at: newMsg.created_at,
+                    }
+                  : c
+              )
+              .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+          });
+
+          playMessageReceived();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      conversationsChannelRef.current?.unsubscribe();
+    };
+  }, [user]);
 
   // Initial fetch
   useEffect(() => {
