@@ -56,6 +56,7 @@ import ApiDocumentation from "./pages/ApiDocumentation";
 import Chat from "./pages/Chat";
 import ChatLogin from "./pages/ChatLogin";
 import ChatLoginTest from "./pages/ChatLoginTest";
+import JoinGame from "./pages/JoinGame";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,8 @@ const App = () => (
           <Route path="/live-games/host/:gameId" element={<LiveGameHost />} />
           <Route path="/live-games/play/:gameId" element={<LiveGamePlay />} />
           <Route path="/live-games/results/:gameId" element={<LiveGameResults />} />
+          <Route path="/join" element={<JoinGame />} />
+          <Route path="/join/:pin" element={<JoinGame />} />
           <Route path="/path-evaluation-results/:eventId" element={<PathEvaluationResults />} />
           <Route path="/api-docs" element={<ApiDocumentation />} />
           <Route path="/chat" element={<Chat />} />

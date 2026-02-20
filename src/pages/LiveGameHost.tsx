@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Play, SkipForward, Trophy } from "lucide-react";
+import { Users, Play, SkipForward, Trophy, QrCode, Copy, Check, Link } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import confetti from "canvas-confetti";
+import QRCode from "react-qr-code";
+import { toast } from "sonner";
 
 const LiveGameHost = () => {
   const { gameId } = useParams<{ gameId: string }>();
@@ -18,6 +20,8 @@ const LiveGameHost = () => {
   const [showResults, setShowResults] = useState(false);
   const [answerStats, setAnswerStats] = useState<{ [key: number]: number }>({});
   const [isStarting, setIsStarting] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Answer stats are fetched manually via fetchAnswerStats(); no duplicate channel needed here.
   // The useLiveGameDetails hook already handles all realtime updates.
@@ -101,6 +105,17 @@ const LiveGameHost = () => {
     setShowResults(true);
   };
 
+  const joinUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/join/${game?.pin}`
+    : "";
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(joinUrl);
+    setCopied(true);
+    toast.success("¡Link copiado!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   if (isLoading) {
     return (
       <div className="container max-w-6xl mx-auto py-8 px-4">
@@ -134,47 +149,133 @@ const LiveGameHost = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 dark:from-purple-950 dark:via-pink-950 dark:to-blue-950">
       <div className="container max-w-7xl mx-auto py-8 px-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
           <div>
             <h1 className="text-3xl font-bold">{game.title}</h1>
-            <p className="text-lg text-muted-foreground mt-1">PIN: <span className="font-mono font-bold text-2xl text-primary">{game.pin}</span></p>
+            <p className="text-lg text-muted-foreground mt-1">
+              PIN: <span className="font-mono font-bold text-2xl text-primary">{game.pin}</span>
+            </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              <Users className="w-5 h-5 mr-2" />
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleCopyLink}>
+              {copied ? <Check className="w-4 h-4 mr-1.5 text-green-500" /> : <Link className="w-4 h-4 mr-1.5" />}
+              {copied ? "¡Copiado!" : "Copiar link"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowQR(!showQR)}>
+              <QrCode className="w-4 h-4 mr-1.5" />
+              {showQR ? "Ocultar QR" : "Mostrar QR"}
+            </Button>
+            <Badge variant="secondary" className="text-base px-3 py-1.5">
+              <Users className="w-4 h-4 mr-2" />
               {players?.length || 0} jugadores
             </Badge>
           </div>
         </div>
 
+        {/* QR Panel */}
+        {showQR && (
+          <Card className="p-6 mb-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="bg-white p-4 rounded-xl shadow-md flex-shrink-0">
+                <QRCode value={joinUrl} size={160} />
+              </div>
+              <div className="text-center md:text-left">
+                <h3 className="text-xl font-bold mb-2">Escanea para unirte</h3>
+                <p className="text-muted-foreground mb-3 text-sm">
+                  Los jugadores pueden escanear este código QR con la cámara de su teléfono para unirse directamente, sin necesidad de crear una cuenta.
+                </p>
+                <div className="font-mono text-sm bg-muted px-3 py-2 rounded-lg break-all text-muted-foreground">
+                  {joinUrl}
+                </div>
+                <Button variant="outline" size="sm" className="mt-3" onClick={handleCopyLink}>
+                  <Copy className="w-4 h-4 mr-1.5" />
+                  Copiar link
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Waiting Room */}
         {game.status === 'waiting' && (
-          <Card className="p-12 text-center">
-            <Users className="w-20 h-20 mx-auto mb-6 text-primary" />
-            <h2 className="text-2xl font-bold mb-4">Esperando jugadores...</h2>
-            <p className="text-muted-foreground mb-8">
-              {players?.length || 0} jugador(es) conectado(s)
-            </p>
-
-            {players && players.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                {players.map((player) => (
-                  <Card key={player.id} className="p-4">
-                    <p className="font-semibold">{player.player_name}</p>
-                  </Card>
-                ))}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Panel izquierdo: PIN + QR */}
+            <Card className="p-8 flex flex-col items-center text-center gap-5">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-1">
+                  Código PIN
+                </p>
+                <p className="font-mono font-black text-6xl text-primary tracking-widest">
+                  {game.pin}
+                </p>
               </div>
-            )}
 
-            <Button
-              onClick={handleStartGame}
-              size="lg"
-              disabled={!players || players.length === 0 || isStarting}
-            >
-              <Play className="w-5 h-5 mr-2" />
-              {isStarting ? "Iniciando..." : "Iniciar Juego"}
-            </Button>
-          </Card>
+              <div className="bg-white p-3 rounded-xl shadow-md">
+                <QRCode value={joinUrl} size={140} />
+              </div>
+
+              <div className="w-full">
+                <p className="text-xs text-muted-foreground mb-2">O comparte este link:</p>
+                <div className="flex gap-2">
+                  <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg truncate text-left">
+                    {joinUrl}
+                  </code>
+                  <Button variant="outline" size="sm" onClick={handleCopyLink} className="flex-shrink-0">
+                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                Los jugadores pueden entrar <strong>sin crear una cuenta</strong>
+              </p>
+            </Card>
+
+            {/* Panel derecho: jugadores */}
+            <Card className="p-6 flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Jugadores conectados
+                </h2>
+                <Badge variant="secondary" className="text-base px-3">
+                  {players?.length || 0}
+                </Badge>
+              </div>
+
+              <div className="flex-1 min-h-[200px]">
+                {!players || players.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+                    <Users className="w-12 h-12 opacity-30" />
+                    <p className="text-sm">Aún no hay jugadores...</p>
+                    <p className="text-xs">Comparte el PIN o el QR</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-64">
+                    {players.map((player, i) => (
+                      <div
+                        key={player.id}
+                        className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg"
+                      >
+                        <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
+                        <span className="font-medium text-sm truncate">{player.player_name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Button
+                onClick={handleStartGame}
+                size="lg"
+                disabled={!players || players.length === 0 || isStarting}
+                className="mt-4 w-full"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                {isStarting ? "Iniciando..." : `Iniciar Juego${players?.length ? ` (${players.length})` : ''}`}
+              </Button>
+            </Card>
+          </div>
         )}
 
         {/* Active Game */}
