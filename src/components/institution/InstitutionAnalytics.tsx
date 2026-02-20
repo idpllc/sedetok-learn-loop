@@ -15,39 +15,50 @@ interface InstitutionAnalyticsProps {
 export const InstitutionAnalytics = ({ institutionId }: InstitutionAnalyticsProps) => {
   const { data: academicMetrics, isLoading: loadingMetrics } = useInstitutionAcademicMetrics(institutionId);
 
-  // Ranking interno via RPC
+  // Ranking interno: consulta directa sin RPC para evitar problemas con parámetros
   const { data: internalRankings, isLoading: loadingStudents } = useQuery({
     queryKey: ["institution-internal-rankings-v2", institutionId],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_institution_internal_ranking" as any, {
-        p_institution_id: institutionId,
-        p_limit: 10,
-      });
+      const { data, error } = await (supabase as any)
+        .from("institution_members")
+        .select(`
+          user_id,
+          member_role,
+          profile:profiles(full_name, username, experience_points)
+        `)
+        .eq("institution_id", institutionId)
+        .eq("status", "active")
+        .in("member_role", ["student", "teacher"]);
+
       if (error) throw error;
 
       const rows = (data as any[]) ?? [];
+
       const students = rows
         .filter((r) => r.member_role === "student")
-        .slice(0, 10)
         .map((r) => ({
           id: r.user_id,
-          name: r.full_name || r.username || "Usuario",
-          xp: r.experience_points || 0,
-        }));
+          name: r.profile?.full_name || r.profile?.username || "Usuario",
+          xp: r.profile?.experience_points || 0,
+        }))
+        .sort((a, b) => b.xp - a.xp)
+        .slice(0, 10);
 
       const teachers = rows
         .filter((r) => r.member_role === "teacher")
-        .slice(0, 10)
         .map((r) => ({
           id: r.user_id,
-          name: r.full_name || r.username || "Usuario",
-          xp: r.experience_points || 0,
-        }));
+          name: r.profile?.full_name || r.profile?.username || "Usuario",
+          xp: r.profile?.experience_points || 0,
+        }))
+        .sort((a, b) => b.xp - a.xp)
+        .slice(0, 10);
 
       return { students, teachers };
     },
     staleTime: 10 * 60 * 1000, // 10 min — no necesita tiempo real
     gcTime: 15 * 60 * 1000,
+    enabled: !!institutionId,
   });
 
   const { data: achievements, isLoading: loadingAchievements } = useQuery({
