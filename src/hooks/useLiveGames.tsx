@@ -665,8 +665,17 @@ export const useSubmitAnswer = () => {
         throw fetchError;
       }
 
-      const newScore = (playerData.total_score ?? 0) + pointsEarned;
-      console.log('[Submit] Updating score:', { old: playerData.total_score, add: pointsEarned, new: newScore });
+      // Recalculate total score from ALL answers to avoid stale-value drift
+      const { data: allAnswers, error: answersError } = await supabase
+        .from("live_game_answers")
+        .select("points_earned")
+        .eq("player_id", playerId);
+
+      const newScore = answersError
+        ? (playerData.total_score ?? 0) + pointsEarned  // fallback
+        : (allAnswers || []).reduce((sum, a) => sum + (a.points_earned ?? 0), 0);
+
+      console.log('[Submit] Updating score (recalculated):', { newScore, pointsEarned });
 
       const { error: updateError } = await supabase
         .from("live_game_players")
