@@ -389,18 +389,21 @@ export const useLiveGameDetails = (gameId?: string) => {
         .eq("game_id", gameId)
         .order("order_index", { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[LiveGame] Error fetching questions:', error);
+        throw error;
+      }
       return (data || []).map(q => ({
         ...q,
         options: q.options as Array<{ text: string; image_url?: string }>,
       })) as LiveGameQuestion[];
     },
     enabled: !!gameId,
-    // Refetch questions every 3 seconds while game is in progress as a Realtime fallback
-    refetchInterval: (query) => {
-      const gameData = query.state.data;
-      return gameData && (gameData as LiveGameQuestion[]).length === 0 ? 3000 : false;
-    },
+    // Poll every 2 seconds while in_progress so players always get questions
+    // even if Realtime fails on mobile networks
+    refetchInterval: 2000,
+    refetchIntervalInBackground: false,
+    staleTime: 0,
   });
 
   const { data: players, isLoading: playersLoading } = useQuery({
