@@ -2,7 +2,7 @@
   "name": "SEDETOK - Aprende con Videos Educativos",
   "short_name": "SEDETOK",
   "description": "Plataforma educativa interactiva estilo TikTok. Descubre contenido educativo en video, documentos y quizzes de manera divertida y dinámica.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#0A0A0A",
   "theme_color": "#7C3AED",
@@ -10,18 +10,37 @@
   "scope": "/",
   "lang": "es",
   "dir": "ltr",
+  "id": "sedetok-app-v2",
   "icons": [
     {
-      "src": "/apple-touch-icon.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/apple-touch-icon.png",
-      "sizes": "512x512",
+      "sizes": "180x180",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["education", "learning"],
@@ -30,7 +49,21 @@
       "src": "/og-image.png",
       "sizes": "1200x630",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "wide",
+      "label": "SEDETOK - Feed de contenido educativo"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Explorar contenido",
+      "url": "/",
+      "description": "Ir al feed principal"
+    },
+    {
+      "name": "Trivia",
+      "url": "/trivia",
+      "description": "Jugar trivia educativa"
+    }
+  ],
+  "prefer_related_applications": false
 }
