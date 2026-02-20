@@ -20,15 +20,17 @@ import {
   MessageCircle,
   Smile,
   X,
-  Check,
   CheckCheck,
+  UserPlus,
+  Hash,
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { es } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 
-// Emoji picker data
 const EMOJI_LIST = ["😀","😂","😍","🥰","😎","🤔","👍","👏","🎉","❤️","🔥","💯","✅","📚","🎓","📝","👋","🙏","💪","⭐","😊","🤗","😢","😮","🫡","🤝","🥳","🏆","📖","🧠"];
+
+type SearchMode = "direct" | "group";
 
 const ChatPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
@@ -43,6 +45,7 @@ const ChatPage: React.FC = () => {
     openConversation,
     sendMessage,
     createDirectConversation,
+    createGroupConversation,
     uploadChatFile,
     searchUsers,
     searchInstitutionUsers,
@@ -52,11 +55,18 @@ const ChatPage: React.FC = () => {
 
   const [messageInput, setMessageInput] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  const [searchMode, setSearchMode] = useState<SearchMode>("direct");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Group creation state
+  const [groupName, setGroupName] = useState("");
+  const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -64,13 +74,9 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      // Small delay to let Supabase finish propagating the session from localStorage
-      // before concluding the user is truly unauthenticated.
       const timer = setTimeout(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!session) {
-            navigate("/auth");
-          }
+          if (!session) navigate("/auth");
         });
       }, 300);
       return () => clearTimeout(timer);
@@ -88,18 +94,45 @@ const ChatPage: React.FC = () => {
       return;
     }
     setSearching(true);
-    const results = myMembership
+    const results = myMembership?.institution_id
       ? await searchInstitutionUsers(q, myMembership.institution_id)
       : await searchUsers(q);
     setSearchResults(results);
     setSearching(false);
   };
 
-  const handleStartChat = async (userId: string) => {
+  const handleStartDirectChat = async (userId: string) => {
     await createDirectConversation(userId, myMembership?.institution_id);
+    resetSearch();
+  };
+
+  const handleToggleMember = (u: any) => {
+    setSelectedMembers((prev) =>
+      prev.find((m) => m.id === u.id)
+        ? prev.filter((m) => m.id !== u.id)
+        : [...prev, u]
+    );
+  };
+
+  const handleCreateGroup = async () => {
+    if (!groupName.trim() || selectedMembers.length === 0) return;
+    setCreatingGroup(true);
+    await createGroupConversation(
+      groupName.trim(),
+      selectedMembers.map((m) => m.id),
+      myMembership?.institution_id
+    );
+    setCreatingGroup(false);
+    resetSearch();
+  };
+
+  const resetSearch = () => {
     setShowSearch(false);
     setSearchQuery("");
     setSearchResults([]);
+    setGroupName("");
+    setSelectedMembers([]);
+    setSearchMode("direct");
   };
 
   const handleSend = async () => {
@@ -150,12 +183,7 @@ const ChatPage: React.FC = () => {
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "?";
-    return name
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
   };
 
   const getConvAvatar = (conv: ChatConversation) => {
@@ -175,6 +203,14 @@ const ChatPage: React.FC = () => {
 
   const activeConv = conversations.find((c) => c.id === activeConversation);
 
+  const getRoleBadgeLabel = (role: string) => {
+    const map: Record<string, string> = {
+      teacher: "Docente", admin: "Admin", coordinator: "Coordinador",
+      student: "Estudiante", parent: "Padre",
+    };
+    return map[role] || role;
+  };
+
   if (authLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
@@ -185,12 +221,8 @@ const ChatPage: React.FC = () => {
 
   return (
     <div className="h-screen flex bg-background">
-      {/* Sidebar - Conversations List */}
-      <div
-        className={`${
-          activeConversation ? "hidden md:flex" : "flex"
-        } flex-col w-full md:w-96 border-r border-border bg-card`}
-      >
+      {/* Sidebar */}
+      <div className={`${activeConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-96 border-r border-border bg-card`}>
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -199,56 +231,126 @@ const ChatPage: React.FC = () => {
             </Button>
             <h1 className="text-lg font-bold text-foreground">Chat</h1>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSearch(!showSearch)}
-          >
+          <Button variant="ghost" size="icon" onClick={() => { setShowSearch(!showSearch); setSearchMode("direct"); setSelectedMembers([]); setGroupName(""); }}>
             {showSearch ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
           </Button>
         </div>
 
-        {/* Search / New Chat */}
+        {/* New Chat / Group Panel */}
         {showSearch && (
-          <div className="p-3 border-b border-border space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar usuario..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10"
-                autoFocus
-              />
-            </div>
-            {searching && <p className="text-sm text-muted-foreground px-2">Buscando...</p>}
-            {searchResults.map((u) => (
+          <div className="border-b border-border">
+            {/* Mode selector */}
+            <div className="flex border-b border-border">
               <button
-                key={u.id}
-                onClick={() => handleStartChat(u.id)}
-                className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors"
+                onClick={() => { setSearchMode("direct"); setSelectedMembers([]); setSearchQuery(""); setSearchResults([]); }}
+                className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${searchMode === "direct" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={u.avatar_url} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {getInitials(u.full_name || u.username)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-left flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {u.full_name || u.username}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    @{u.username}
-                    {u.member_role && (
-                      <Badge variant="secondary" className="ml-2 text-[10px] px-1 py-0">
-                        {u.member_role === "teacher" ? "Docente" : u.member_role === "admin" ? "Admin" : u.member_role === "coordinator" ? "Coordinador" : u.member_role === "student" ? "Estudiante" : u.member_role}
-                      </Badge>
-                    )}
-                  </p>
-                </div>
+                <MessageCircle className="h-3.5 w-3.5" />
+                Chat directo
               </button>
-            ))}
+              <button
+                onClick={() => { setSearchMode("group"); setSearchQuery(""); setSearchResults([]); }}
+                className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${searchMode === "group" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Users className="h-3.5 w-3.5" />
+                Nuevo grupo
+              </button>
+            </div>
+
+            <div className="p-3 space-y-2">
+              {/* Group name input (only in group mode) */}
+              {searchMode === "group" && (
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Nombre del grupo..."
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              )}
+
+              {/* Search input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={searchMode === "group" ? "Buscar personas para agregar..." : "Buscar usuario..."}
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10"
+                  autoFocus={searchMode === "direct"}
+                />
+              </div>
+
+              {/* Selected members chips (group mode) */}
+              {searchMode === "group" && selectedMembers.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedMembers.map((m) => (
+                    <span key={m.id} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                      {m.full_name || m.username}
+                      <button onClick={() => handleToggleMember(m)} className="hover:text-destructive ml-0.5">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Search results */}
+              {searching && <p className="text-sm text-muted-foreground px-1">Buscando...</p>}
+              
+              {searchResults.length === 0 && searchQuery && !searching && (
+                <p className="text-sm text-muted-foreground px-1 py-2 text-center">No se encontraron usuarios</p>
+              )}
+
+              <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                {searchResults.map((u) => {
+                  const isSelected = selectedMembers.some((m) => m.id === u.id);
+                  return (
+                    <button
+                      key={u.id}
+                      onClick={() => searchMode === "direct" ? handleStartDirectChat(u.id) : handleToggleMember(u)}
+                      className={`flex items-center gap-2.5 w-full p-2 rounded-lg transition-colors ${isSelected ? "bg-primary/10" : "hover:bg-muted"}`}
+                    >
+                      <Avatar className="h-9 w-9 shrink-0">
+                        <AvatarImage src={u.avatar_url} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                          {getInitials(u.full_name || u.username)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="text-left flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{u.full_name || u.username}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          @{u.username}
+                          {u.member_role && (
+                            <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">{getRoleBadgeLabel(u.member_role)}</Badge>
+                          )}
+                        </p>
+                      </div>
+                      {searchMode === "group" && isSelected && (
+                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
+                          <CheckCheck className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Create group button */}
+              {searchMode === "group" && (
+                <Button
+                  onClick={handleCreateGroup}
+                  disabled={!groupName.trim() || selectedMembers.length === 0 || creatingGroup}
+                  className="w-full"
+                  size="sm"
+                >
+                  <Users className="h-4 w-4 mr-1.5" />
+                  {creatingGroup ? "Creando..." : `Crear grupo (${selectedMembers.length} personas)`}
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -270,9 +372,7 @@ const ChatPage: React.FC = () => {
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <MessageCircle className="h-16 w-16 text-muted-foreground/30 mb-4" />
               <p className="text-muted-foreground font-medium">No hay conversaciones</p>
-              <p className="text-sm text-muted-foreground/70 mt-1">
-                Toca el botón + para iniciar un chat
-              </p>
+              <p className="text-sm text-muted-foreground/70 mt-1">Toca el botón + para iniciar un chat</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -280,19 +380,13 @@ const ChatPage: React.FC = () => {
                 <button
                   key={conv.id}
                   onClick={() => openConversation(conv.id)}
-                  className={`flex items-center gap-3 w-full p-4 hover:bg-muted/50 transition-colors ${
-                    activeConversation === conv.id ? "bg-primary/5" : ""
-                  }`}
+                  className={`flex items-center gap-3 w-full p-4 hover:bg-muted/50 transition-colors ${activeConversation === conv.id ? "bg-primary/5" : ""}`}
                 >
                   <div className="relative">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={getConvAvatar(conv) || undefined} />
                       <AvatarFallback className={`${conv.type === "group" ? "bg-secondary/20 text-secondary" : "bg-primary/10 text-primary"} text-sm`}>
-                        {conv.type === "group" ? (
-                          <Users className="h-5 w-5" />
-                        ) : (
-                          getInitials(getConvName(conv))
-                        )}
+                        {conv.type === "group" ? <Users className="h-5 w-5" /> : getInitials(getConvName(conv))}
                       </AvatarFallback>
                     </Avatar>
                     {(conv.unread_count || 0) > 0 && (
@@ -303,9 +397,7 @@ const ChatPage: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {getConvName(conv)}
-                      </p>
+                      <p className="text-sm font-semibold text-foreground truncate">{getConvName(conv)}</p>
                       {conv.last_message && (
                         <span className="text-[10px] text-muted-foreground ml-2 flex-shrink-0">
                           {formatConvTime(conv.last_message.created_at)}
@@ -313,7 +405,7 @@ const ChatPage: React.FC = () => {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {conv.last_message?.content || "Sin mensajes"}
+                      {conv.last_message?.content || (conv.type === "group" ? `${conv.participants?.length || 0} participantes` : "Sin mensajes")}
                     </p>
                   </div>
                 </button>
@@ -324,53 +416,32 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div
-        className={`${
-          activeConversation ? "flex" : "hidden md:flex"
-        } flex-col flex-1 bg-background`}
-      >
+      <div className={`${activeConversation ? "flex" : "hidden md:flex"} flex-col flex-1 bg-background`}>
         {!activeConversation ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <div className="bg-primary/5 rounded-full p-6 mb-4">
               <MessageCircle className="h-16 w-16 text-primary/40" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground mb-2">
-              Bienvenido al Chat
-            </h2>
-            <p className="text-muted-foreground max-w-md">
-              Selecciona una conversación o busca un usuario para empezar a chatear
-            </p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Bienvenido al Chat</h2>
+            <p className="text-muted-foreground max-w-md">Selecciona una conversación o usa el botón + para iniciar un chat o crear un grupo</p>
           </div>
         ) : (
           <>
             {/* Chat Header */}
             <div className="p-3 border-b border-border flex items-center gap-3 bg-card">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="md:hidden"
-                onClick={() => setActiveConversation(null)}
-              >
+              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setActiveConversation(null)}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <Avatar className="h-10 w-10">
                 <AvatarImage src={getConvAvatar(activeConv!) || undefined} />
                 <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                  {activeConv?.type === "group" ? (
-                    <Users className="h-4 w-4" />
-                  ) : (
-                    getInitials(getConvName(activeConv!))
-                  )}
+                  {activeConv?.type === "group" ? <Users className="h-4 w-4" /> : getInitials(getConvName(activeConv!))}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground truncate text-sm">
-                  {getConvName(activeConv!)}
-                </p>
+                <p className="font-semibold text-foreground truncate text-sm">{getConvName(activeConv!)}</p>
                 {activeConv?.type === "group" && (
-                  <p className="text-xs text-muted-foreground">
-                    {activeConv.participants?.length || 0} participantes
-                  </p>
+                  <p className="text-xs text-muted-foreground">{activeConv.participants?.length || 0} participantes</p>
                 )}
               </div>
             </div>
@@ -387,9 +458,7 @@ const ChatPage: React.FC = () => {
                 </div>
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
-                  <p className="text-sm text-muted-foreground">
-                    No hay mensajes aún. ¡Envía el primero! 👋
-                  </p>
+                  <p className="text-sm text-muted-foreground">No hay mensajes aún. ¡Envía el primero! 👋</p>
                 </div>
               ) : (
                 <div className="space-y-1 py-2">
@@ -408,44 +477,22 @@ const ChatPage: React.FC = () => {
                           </p>
                         )}
                         <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                          <div
-                            className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${
-                              isMine
-                                ? "bg-primary text-primary-foreground rounded-br-md"
-                                : "bg-muted text-foreground rounded-bl-md"
-                            }`}
-                          >
+                          <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"}`}>
                             {msg.message_type === "image" && msg.file_url && (
-                              <img
-                                src={msg.file_url}
-                                alt="Imagen"
-                                className="rounded-lg max-w-full max-h-60 mb-1 cursor-pointer"
-                                onClick={() => window.open(msg.file_url!, "_blank")}
-                              />
+                              <img src={msg.file_url} alt="Imagen" className="rounded-lg max-w-full max-h-60 mb-1 cursor-pointer" onClick={() => window.open(msg.file_url!, "_blank")} />
                             )}
                             {msg.message_type === "file" && msg.file_url && (
-                              <a
-                                href={msg.file_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 underline text-sm"
-                              >
+                              <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline text-sm">
                                 <Paperclip className="h-3 w-3" />
                                 {msg.file_name || "Archivo"}
                               </a>
                             )}
-                            {msg.content && (
-                              <p className="text-sm whitespace-pre-wrap break-words">
-                                {msg.content}
-                              </p>
-                            )}
+                            {msg.content && <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>}
                             <div className={`flex items-center gap-1 mt-0.5 ${isMine ? "justify-end" : ""}`}>
                               <span className={`text-[10px] ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                                 {formatMsgTime(msg.created_at)}
                               </span>
-                              {isMine && (
-                                <CheckCheck className={`h-3 w-3 ${isMine ? "text-primary-foreground/60" : "text-muted-foreground"}`} />
-                              )}
+                              {isMine && <CheckCheck className="h-3 w-3 text-primary-foreground/60" />}
                             </div>
                           </div>
                         </div>
@@ -457,81 +504,40 @@ const ChatPage: React.FC = () => {
               )}
             </ScrollArea>
 
-            {/* Emoji Picker */}
+            {/* Emoji picker */}
             {showEmoji && (
-              <div className="border-t border-border bg-card px-4 py-2">
-                <div className="flex flex-wrap gap-1">
-                  {EMOJI_LIST.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        setMessageInput((prev) => prev + emoji);
-                        setShowEmoji(false);
-                      }}
-                      className="text-xl hover:bg-muted rounded p-1 transition-colors"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+              <div className="border-t border-border p-2 bg-card flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+                {EMOJI_LIST.map((e) => (
+                  <button key={e} onClick={() => setMessageInput((prev) => prev + e)} className="text-xl hover:scale-110 transition-transform">
+                    {e}
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Input Area */}
-            <div className="p-3 border-t border-border bg-card flex items-center gap-2">
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e, "image")}
-              />
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                onChange={(e) => handleFileUpload(e, "file")}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex-shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={() => setShowEmoji(!showEmoji)}
-              >
+            {/* Input */}
+            <div className="p-3 border-t border-border bg-card flex items-end gap-2">
+              <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, "file")} />
+              <input type="file" ref={imageInputRef} accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "image")} />
+              <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => setShowEmoji(!showEmoji)}>
                 <Smile className="h-5 w-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex-shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={() => imageInputRef.current?.click()}
-                disabled={uploading}
-              >
+              <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => imageInputRef.current?.click()}>
                 <ImageIcon className="h-5 w-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="flex-shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
+              <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => fileInputRef.current?.click()}>
                 <Paperclip className="h-5 w-5" />
               </Button>
-              <Input
-                placeholder="Escribe un mensaje..."
+              <textarea
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="flex-1 rounded-full"
-                disabled={sending || uploading}
+                placeholder="Escribe un mensaje..."
+                rows={1}
+                className="flex-1 resize-none bg-muted rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary max-h-32 overflow-y-auto"
+                style={{ lineHeight: "1.4" }}
               />
-              <Button
-                size="icon"
-                className="rounded-full flex-shrink-0"
-                onClick={handleSend}
-                disabled={!messageInput.trim() || sending || uploading}
-              >
+              <Button onClick={handleSend} disabled={!messageInput.trim() || sending} size="icon" className="shrink-0 self-end rounded-full">
                 <Send className="h-4 w-4" />
               </Button>
             </div>

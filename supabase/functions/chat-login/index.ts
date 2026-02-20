@@ -65,6 +65,23 @@ function mapRoleToTipoUsuario(role: string): string | null {
   return map[role?.toLowerCase()] || null;
 }
 
+// Map role to valid institution_members.member_role CHECK values
+// Allowed: 'student', 'teacher', 'parent', 'admin'
+function mapRoleToMemberRole(role: string): string {
+  const map: Record<string, string> = {
+    "student": "student",
+    "estudiante": "student",
+    "teacher": "teacher",
+    "docente": "teacher",
+    "admin": "admin",
+    "coordinator": "teacher",  // coordinators map to teacher in member_role
+    "coordinador": "teacher",
+    "padre": "parent",
+    "parent": "parent",
+  };
+  return map[role?.toLowerCase()] || "student";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -292,18 +309,24 @@ Deno.serve(async (req) => {
     }
 
     if (instId) {
-      // Update profile with institution reference
-      await adminClient.from("profiles").update({ institution: instId }).eq("id", userId);
+      // Update profile with institution name (the 'institution' column is text, not UUID)
+      // Also store the institution_id via institution_members table
+      await adminClient.from("profiles").update({ 
+        institution: institution_name || instId 
+      }).eq("id", userId);
 
-      // Ensure institution membership
+      // Ensure institution membership (member_role must be 'student','teacher','parent','admin')
+      const validMemberRole = mapRoleToMemberRole(role);
       const { error: memberError } = await adminClient.from("institution_members").upsert({
         institution_id: instId,
         user_id: userId,
-        member_role: role,
+        member_role: validMemberRole,
         status: "active",
       }, { onConflict: "institution_id,user_id" });
       if (memberError) {
         console.error(`[chat-login] Institution member upsert error: ${memberError.message}`);
+      } else {
+        console.log(`[chat-login] Institution member upserted: ${userId} => ${instId}, role=${validMemberRole}`);
       }
 
       // Handle sede
@@ -338,8 +361,10 @@ Deno.serve(async (req) => {
       }
 
       // ── CHAT GROUPS ───────────────────────────────────────────────────────
-      console.log(`[chat-login] Assigning chat groups for role=${role}, sede=${sede}, grupo=${grupo}, es_director_grupo=${es_director_grupo}, course_name=${course_name}`);
-      console.log(`[chat-login] Raw payload fields: grupo=${payload.grupo}, group=${payload.group}, academic_group=${payload.academic_group}`);
+      // Log the full raw payload for debugging
+      console.log(`[chat-login] Full raw payload: ${JSON.stringify(payload)}`);
+      console.log(`[chat-login] Assigning chat groups: role=${role}, sede=${sede}, grupo=${grupo}, es_director_grupo=${es_director_grupo}, course_name=${course_name}`);
+
 
       if (role === "student" || role === "estudiante") {
         // Students → assign to their academic group chat
