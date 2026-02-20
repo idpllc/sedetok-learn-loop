@@ -153,13 +153,9 @@ const ChatPage: React.FC = () => {
   const handleSend = async () => {
     if (!messageInput.trim()) return;
     const text = messageInput.trim();
-    setMessageInput(""); setShowEmoji(false);
+    setMessageInput("");
+    setShowEmoji(false);
     playMessageSent();
-    await sendMessage(text);
-  };
-    if (!messageInput.trim() && !uploading) return;
-    const text = messageInput.trim();
-    setMessageInput(""); setShowEmoji(false);
     await sendMessage(text);
   };
 
