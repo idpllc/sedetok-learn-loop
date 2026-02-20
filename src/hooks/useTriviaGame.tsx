@@ -267,41 +267,64 @@ export const useTriviaRankings = () => {
     },
   });
 
-  // Institutional Ranking - Get stats for users in the same institution
+  // Institutional Ranking - Get stats for users in the same institution (via institution_members)
   const { data: institutionalRanking, isLoading: loadingInstitutional } = useQuery({
     queryKey: ["trivia-rankings", "institutional", user?.id],
     queryFn: async () => {
       if (!user) return null;
 
-      // First get current user's institution
-      const { data: userProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("institution")
-        .eq("id", user.id)
+      // Find which institution the user belongs to (via institution_members)
+      const { data: membership, error: memberError } = await supabase
+        .from("institution_members")
+        .select("institution_id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
         .maybeSingle();
-      
-      if (profileError || !userProfile?.institution) return null;
 
-      // Then get all users from the same institution
-      const { data: institutionUsers, error: usersError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("institution", userProfile.institution);
+      // Fallback: check profiles.institution text field if no formal membership
+      let userIds: string[] = [];
 
-      if (usersError || !institutionUsers || institutionUsers.length === 0) return null;
+      if (!memberError && membership?.institution_id) {
+        // Use formal institution membership
+        const { data: members, error: membersError } = await supabase
+          .from("institution_members")
+          .select("user_id")
+          .eq("institution_id", membership.institution_id)
+          .eq("status", "active");
 
-      const userIds = institutionUsers.map(u => u.id);
+        if (membersError || !members || members.length === 0) return null;
+        userIds = members.map(m => m.user_id);
+      } else {
+        // Fallback: use institution text field in profiles
+        const { data: userProfile, error: profileError } = await supabase
+          .from("profiles")
+          .select("institution")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      // Get stats for those users (separate queries to avoid FK dependency)
+        if (profileError || !userProfile?.institution) return null;
+
+        const { data: institutionUsers, error: usersError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("institution", userProfile.institution);
+
+        if (usersError || !institutionUsers || institutionUsers.length === 0) return null;
+        userIds = institutionUsers.map(u => u.id);
+      }
+
+      if (userIds.length === 0) return null;
+
+      // Get stats for institution members
       const { data: stats, error: statsError } = await supabase
         .from("trivia_user_stats")
         .select("*")
         .in("user_id", userIds)
         .order("total_points", { ascending: false })
         .limit(100);
-      
+
       if (statsError) throw statsError;
-      
+
       const statUserIds = (stats || []).map((s: any) => s.user_id).filter(Boolean);
       if (statUserIds.length === 0) return [] as any[];
 
@@ -310,7 +333,7 @@ export const useTriviaRankings = () => {
         .from("profiles")
         .select("id, username, full_name, avatar_url, institution")
         .in("id", statUserIds);
-      
+
       if (profilesError) throw profilesError;
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));

@@ -13,7 +13,7 @@ import { StreakIndicator } from "./StreakIndicator";
 import { Trophy, Clock, Target, LogOut } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useGameSounds } from "@/hooks/useGameSounds";
@@ -29,6 +29,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { match, players, updatePlayer, recordTurn, updateMatch, fetchQuestions } = useTriviaMatch(matchId);
   const { playCorrect, playWrong, playQuestionAppear, playTimeWarning } = useGameSounds();
   
@@ -425,6 +426,10 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
             best_streak: maxStreak
           });
       }
+
+      // Invalidate ranking caches so they update immediately
+      queryClient.invalidateQueries({ queryKey: ["trivia-rankings"] });
+      queryClient.invalidateQueries({ queryKey: ["trivia-user-stats"] });
       
       toast({
         title: "🏆 ¡Victoria!",
@@ -478,6 +483,10 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
             best_streak: maxStreak
           });
       }
+
+      // Invalidate ranking caches
+      queryClient.invalidateQueries({ queryKey: ["trivia-rankings"] });
+      queryClient.invalidateQueries({ queryKey: ["trivia-user-stats"] });
     }
     
     setPhase('finished');
