@@ -35,103 +35,85 @@ export function InvitationsPanel() {
     );
   };
 
+  const totalReceived = receivedInvitations?.length || 0;
+  const totalSent = sentInvitations?.length || 0;
+
+  // Si no hay invitaciones y no está cargando, no mostramos el panel vacío gigante
+  if (!loadingReceived && !loadingSent && totalReceived === 0 && totalSent === 0) {
+    return (
+      <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+        <Mail className="w-3.5 h-3.5 opacity-50" />
+        <span>Sin invitaciones de trivia pendientes</span>
+      </div>
+    );
+  }
+
   if (loadingReceived || loadingSent) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        <span>Cargando invitaciones...</span>
+      </div>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mail className="w-5 h-5" />
+      <CardHeader className="py-3 px-4">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Mail className="w-4 h-4" />
           Invitaciones de Trivia
+          {totalReceived > 0 && (
+            <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 py-0.5">{totalReceived}</span>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="received" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="received" className="gap-2">
-              <Mail className="w-4 h-4" />
-              Recibidas ({receivedInvitations?.length || 0})
+      <CardContent className="px-4 pb-4 pt-0">
+        <Tabs defaultValue={totalReceived > 0 ? "received" : "sent"} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-8">
+            <TabsTrigger value="received" className="gap-1 text-xs h-7">
+              <Mail className="w-3 h-3" />
+              Recibidas ({totalReceived})
             </TabsTrigger>
-            <TabsTrigger value="sent" className="gap-2">
-              <MailCheck className="w-4 h-4" />
-              Enviadas ({sentInvitations?.length || 0})
+            <TabsTrigger value="sent" className="gap-1 text-xs h-7">
+              <MailCheck className="w-3 h-3" />
+              Enviadas ({totalSent})
             </TabsTrigger>
           </TabsList>
 
           {/* Received Invitations */}
-          <TabsContent value="received">
-            <ScrollArea className="h-[400px]">
-              {!receivedInvitations || receivedInvitations.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Mail className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <TabsContent value="received" className="mt-2">
+            <ScrollArea className="max-h-[200px]">
+              {!receivedInvitations || totalReceived === 0 ? (
+                <div className="text-center py-4 text-muted-foreground text-xs">
                   <p>No tienes invitaciones pendientes</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {receivedInvitations.map((invitation) => (
                     <div
                       key={invitation.id}
-                      className="p-4 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20"
+                      className="p-3 rounded-lg bg-primary/5 border border-primary/20 flex items-center gap-2"
                     >
-                      <div className="flex items-start gap-3">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={invitation.sender?.avatar_url || ''} />
-                          <AvatarFallback>
-                            {(invitation.sender?.full_name || invitation.sender?.username || 'U').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-bold">
-                                {invitation.sender?.full_name || invitation.sender?.username}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                te ha retado a una partida
-                              </p>
-                            </div>
-                            {getLevelBadge(invitation.level)}
-                          </div>
-
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            Hace {formatDistanceToNow(new Date(invitation.created_at), { 
-                              locale: es,
-                              addSuffix: false 
-                            })}
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => acceptInvitation.mutate(invitation.id)}
-                              disabled={acceptInvitation.isPending}
-                              className="flex-1 gap-2"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                              Aceptar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => rejectInvitation.mutate(invitation.id)}
-                              disabled={rejectInvitation.isPending}
-                              className="flex-1 gap-2"
-                            >
-                              <XCircle className="w-4 h-4" />
-                              Rechazar
-                            </Button>
-                          </div>
-                        </div>
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarImage src={invitation.sender?.avatar_url || ''} />
+                        <AvatarFallback className="text-xs">
+                          {(invitation.sender?.full_name || invitation.sender?.username || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate">
+                          {invitation.sender?.full_name || invitation.sender?.username}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">te retó · {getLevelBadge(invitation.level)}</p>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button size="sm" onClick={() => acceptInvitation.mutate(invitation.id)} disabled={acceptInvitation.isPending} className="h-7 px-2 text-xs">
+                          <CheckCircle className="w-3 h-3 mr-1" />Aceptar
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => rejectInvitation.mutate(invitation.id)} disabled={rejectInvitation.isPending} className="h-7 px-2 text-xs">
+                          <XCircle className="w-3 h-3" />
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -141,75 +123,40 @@ export function InvitationsPanel() {
           </TabsContent>
 
           {/* Sent Invitations */}
-          <TabsContent value="sent">
-            <ScrollArea className="h-[400px]">
-              {!sentInvitations || sentInvitations.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <MailCheck className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <TabsContent value="sent" className="mt-2">
+            <ScrollArea className="max-h-[200px]">
+              {!sentInvitations || totalSent === 0 ? (
+                <div className="text-center py-4 text-muted-foreground text-xs">
                   <p>No has enviado invitaciones</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {sentInvitations.map((invitation) => (
-                    <div
-                      key={invitation.id}
-                      className="p-4 rounded-lg bg-muted/50 border"
-                    >
-                      <div className="flex items-start gap-3">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={invitation.receiver?.avatar_url || ''} />
-                          <AvatarFallback>
-                            {(invitation.receiver?.full_name || invitation.receiver?.username || 'U').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-bold">
-                                {invitation.receiver?.full_name || invitation.receiver?.username}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {invitation.status === 'accepted' 
-                                  ? '✅ Aceptó tu reto' 
-                                  : '⏳ Esperando respuesta'}
-                              </p>
-                            </div>
-                            {getLevelBadge(invitation.level)}
-                          </div>
-
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            Hace {formatDistanceToNow(new Date(invitation.created_at), { 
-                              locale: es,
-                              addSuffix: false 
-                            })}
-                          </div>
-
-                          {invitation.status === 'pending' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => cancelInvitation.mutate(invitation.id)}
-                              disabled={cancelInvitation.isPending}
-                              className="w-full gap-2"
-                            >
-                              <X className="w-4 h-4" />
-                              Cancelar invitación
-                            </Button>
-                          )}
-
-                          {invitation.status === 'accepted' && invitation.match_id && (
-                            <Button
-                              size="sm"
-                              onClick={() => window.location.href = `/trivia-game?match=${invitation.match_id}`}
-                              className="w-full"
-                            >
-                              Ir a la partida
-                            </Button>
-                          )}
-                        </div>
+                    <div key={invitation.id} className="p-3 rounded-lg bg-muted/50 border flex items-center gap-2">
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarImage src={invitation.receiver?.avatar_url || ''} />
+                        <AvatarFallback className="text-xs">
+                          {(invitation.receiver?.full_name || invitation.receiver?.username || 'U').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold truncate">
+                          {invitation.receiver?.full_name || invitation.receiver?.username}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {invitation.status === 'accepted' ? '✅ Aceptó' : '⏳ Esperando'}
+                        </p>
                       </div>
+                      {invitation.status === 'pending' && (
+                        <Button size="sm" variant="outline" onClick={() => cancelInvitation.mutate(invitation.id)} disabled={cancelInvitation.isPending} className="h-7 px-2 text-xs shrink-0">
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                      {invitation.status === 'accepted' && invitation.match_id && (
+                        <Button size="sm" onClick={() => window.location.href = `/trivia-game?match=${invitation.match_id}`} className="h-7 px-2 text-xs shrink-0">
+                          Ir
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>
