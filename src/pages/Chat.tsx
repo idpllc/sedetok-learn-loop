@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SedeAIChat } from "@/components/SedeAIChat";
 import {
   ArrowLeft, Send, Image as ImageIcon, Paperclip, Search, Plus, Users,
   MessageCircle, Smile, X, CheckCheck, Hash, MoreVertical, Camera,
@@ -61,6 +62,7 @@ const ChatPage: React.FC = () => {
   } = useChat();
   const { myMembership } = useInstitution();
 
+  const [showSedeAI, setShowSedeAI] = useState(false);
   const [messageInput, setMessageInput] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [searchMode, setSearchMode] = useState<SearchMode>("direct");
@@ -400,6 +402,26 @@ const ChatPage: React.FC = () => {
 
         {/* Conversation list */}
         <ScrollArea className="flex-1">
+          {/* Sedefy AI - fixed at top */}
+          <button
+            onClick={() => { setShowSedeAI(true); setActiveConversation(null); }}
+            className={`flex items-center gap-3 w-full p-4 hover:bg-muted/50 transition-colors border-b border-border ${showSedeAI ? "bg-primary/5" : ""}`}
+          >
+            <div className="relative shrink-0">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-md">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-green-500 border-2 border-card" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-semibold text-foreground truncate">Sedefy AI</p>
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 shrink-0">IA</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground truncate mt-0.5">Tu asistente de aprendizaje</p>
+            </div>
+          </button>
+
           {loadingConversations ? (
             <div className="p-4 space-y-3">
               {[1,2,3,4].map((i) => (
@@ -423,7 +445,7 @@ const ChatPage: React.FC = () => {
               {conversations.map((conv) => (
                 <button
                   key={conv.id}
-                  onClick={() => openConversation(conv.id)}
+                  onClick={() => { openConversation(conv.id); setShowSedeAI(false); }}
                   className={`flex items-center gap-3 w-full p-4 hover:bg-muted/50 transition-colors ${activeConversation === conv.id ? "bg-primary/5" : ""}`}
                 >
                   <div className="relative shrink-0">
@@ -458,8 +480,24 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* ── Main Chat Area ── */}
-      <div className={`${activeConversation ? "flex" : "hidden md:flex"} flex-col flex-1 bg-background min-w-0`}>
-        {!activeConversation ? (
+      <div className={`${(activeConversation || showSedeAI) ? "flex" : "hidden md:flex"} flex-col flex-1 bg-background min-w-0`}>
+        {showSedeAI ? (
+          <div className="flex flex-col h-full">
+            {/* AI chat header for mobile back button */}
+            <div className="md:hidden h-14 px-3 border-b border-border flex items-center gap-3 bg-card shrink-0">
+              <Button variant="ghost" size="icon" onClick={() => setShowSedeAI(false)}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <p className="font-semibold text-foreground text-sm">Sedefy AI</p>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <SedeAIChat />
+            </div>
+          </div>
+        ) : !activeConversation ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <div className="bg-primary/5 rounded-full p-6 mb-4">
               <MessageCircle className="h-16 w-16 text-primary/40" />
