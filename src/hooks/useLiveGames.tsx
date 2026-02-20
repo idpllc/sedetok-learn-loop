@@ -591,6 +591,7 @@ export const useSubmitAnswer = () => {
       responseTimeMs,
       correctAnswer,
       maxPoints,
+      timeLimitMs,
     }: {
       playerId: string;
       questionId: string;
@@ -598,19 +599,36 @@ export const useSubmitAnswer = () => {
       responseTimeMs: number;
       correctAnswer: number;
       maxPoints: number;
+      timeLimitMs?: number;
     }) => {
       const isCorrect = selectedAnswer === correctAnswer;
-      
-      // Calculate points based on speed (faster = more points)
+
+      // Points: correct → between 50%–100% of maxPoints based on speed.
+      // At time=0 → 100% of maxPoints. At timeLimitMs → 50% of maxPoints.
       let pointsEarned = 0;
       if (isCorrect) {
-        const timeBonus = Math.max(0, 1 - (responseTimeMs / 20000)); // 20 seconds max
-        pointsEarned = Math.round(maxPoints * (0.5 + timeBonus * 0.5));
+        const allowedMs = timeLimitMs ?? 20000;
+        const clampedTime = Math.min(responseTimeMs, allowedMs);
+        const timeFraction = 1 - (clampedTime / allowedMs) * 0.5;
+        pointsEarned = Math.max(Math.round(maxPoints * timeFraction), Math.round(maxPoints * 0.5));
       }
 
-      console.log('Submitting answer:', { playerId, questionId, selectedAnswer, isCorrect, pointsEarned });
+      console.log('[Submit] answer:', { playerId, questionId, selectedAnswer, isCorrect, responseTimeMs, pointsEarned });
 
-      // Submit answer
+      // Guard: avoid duplicate submissions for the same question
+      const { data: existingAnswer } = await supabase
+        .from("live_game_answers")
+        .select("id")
+        .eq("player_id", playerId)
+        .eq("question_id", questionId)
+        .maybeSingle();
+
+      if (existingAnswer) {
+        console.warn('[Submit] Already answered this question, skipping.');
+        return { isCorrect, pointsEarned: 0 };
+      }
+
+      // Insert answer record
       const { error: answerError } = await supabase
         .from("live_game_answers")
         .insert({
@@ -623,11 +641,11 @@ export const useSubmitAnswer = () => {
         });
 
       if (answerError) {
-        console.error('Error inserting answer:', answerError);
+        console.error('[Submit] Error inserting answer:', answerError);
         throw answerError;
       }
 
-      // Get current player score
+      // Fetch current player data to compute new total
       const { data: playerData, error: fetchError } = await supabase
         .from("live_game_players")
         .select("total_score, game_id")
@@ -635,36 +653,43 @@ export const useSubmitAnswer = () => {
         .single();
 
       if (fetchError) {
-        console.error('Error fetching player:', fetchError);
+        console.error('[Submit] Error fetching player:', fetchError);
         throw fetchError;
       }
 
-      if (playerData) {
-        const newScore = playerData.total_score + pointsEarned;
-        console.log('Updating player score:', { playerId, oldScore: playerData.total_score, pointsEarned, newScore });
+      const newScore = (playerData.total_score ?? 0) + pointsEarned;
+      console.log('[Submit] Updating score:', { old: playerData.total_score, add: pointsEarned, new: newScore });
 
-        const { error: updateError } = await supabase
-          .from("live_game_players")
-          .update({ total_score: newScore })
-          .eq("id", playerId);
+      const { error: updateError } = await supabase
+        .from("live_game_players")
+        .update({ total_score: newScore })
+        .eq("id", playerId);
 
-        if (updateError) {
-          console.error('Error updating score:', updateError);
-          throw updateError;
-        }
-
-        // Force immediate refetch
-        queryClient.invalidateQueries({ queryKey: ["live-game-players", playerData.game_id] });
-        console.log('Score updated successfully');
+      if (updateError) {
+        console.error('[Submit] Error updating score:', updateError);
+        throw updateError;
       }
+
+      // Immediately update cache so the player sees their score right away
+      queryClient.setQueryData(
+        ["live-game-players", playerData.game_id],
+        (old: LiveGamePlayer[] | undefined) =>
+          old
+            ? old
+                .map((p) =>
+                  p.id === playerId ? { ...p, total_score: newScore } : p
+                )
+                .sort((a, b) => b.total_score - a.total_score)
+            : old
+      );
 
       return { isCorrect, pointsEarned };
     },
-    onSuccess: (data, variables) => {
-      console.log('Answer submitted successfully:', data);
+    onSuccess: (data) => {
+      console.log('[Submit] Success:', data);
     },
     onError: (error) => {
-      console.error('Error submitting answer:', error);
+      console.error('[Submit] Error:', error);
     },
   });
 
