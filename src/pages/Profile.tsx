@@ -603,7 +603,7 @@ const Profile = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => toggleFollow(userId!)}
+                  onClick={() => toggleFollow(profileData!.id)}
                   disabled={isProcessing}
                   className="flex items-center gap-2"
                 >
