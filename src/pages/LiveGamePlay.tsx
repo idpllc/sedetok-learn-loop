@@ -115,6 +115,7 @@ const LiveGamePlay = () => {
         responseTimeMs: responseTime,
         correctAnswer: currentQuestion.correct_answer,
         maxPoints: currentQuestion.points,
+        timeLimitMs: (currentQuestion.time_limit || 20) * 1000,
       },
       {
         onSuccess: (data) => {
