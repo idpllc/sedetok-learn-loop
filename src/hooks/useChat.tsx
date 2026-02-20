@@ -412,6 +412,67 @@ export const useChat = () => {
     }
   }, [user]);
 
+  // Leave conversation
+  const leaveConversation = useCallback(async (conversationId: string) => {
+    if (!user) return false;
+    try {
+      const { error } = await supabase
+        .from("chat_participants")
+        .delete()
+        .eq("conversation_id", conversationId)
+        .eq("user_id", user.id);
+      if (error) throw error;
+      setActiveConversation(null);
+      await fetchConversations();
+      toast({ title: "Saliste del chat" });
+      return true;
+    } catch (error) {
+      console.error("Error leaving conversation:", error);
+      toast({ title: "Error", description: "No se pudo salir del chat", variant: "destructive" });
+      return false;
+    }
+  }, [user, fetchConversations, toast]);
+
+  // Update group avatar
+  const updateGroupAvatar = useCallback(async (conversationId: string, file: File): Promise<string | null> => {
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `group-avatars/${conversationId}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("chat-files").upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from("chat-files").getPublicUrl(path);
+      const avatarUrl = data.publicUrl;
+      await supabase.from("chat_conversations").update({ avatar_url: avatarUrl }).eq("id", conversationId);
+      await fetchConversations();
+      return avatarUrl;
+    } catch (error) {
+      console.error("Error updating group avatar:", error);
+      toast({ title: "Error", description: "No se pudo actualizar la foto", variant: "destructive" });
+      return null;
+    }
+  }, [fetchConversations, toast]);
+
+  // Get conversation members with profiles and roles
+  const getConversationMembers = useCallback(async (conversationId: string) => {
+    try {
+      const { data: participants } = await supabase
+        .from("chat_participants")
+        .select("*")
+        .eq("conversation_id", conversationId);
+      if (!participants?.length) return [];
+      const userIds = participants.map((p) => p.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, tipo_usuario")
+        .in("id", userIds);
+      const profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));
+      return participants.map((p) => ({ ...p, profile: profileMap[p.user_id] }));
+    } catch (error) {
+      console.error("Error getting members:", error);
+      return [];
+    }
+  }, []);
+
   // Search institution users
   const searchInstitutionUsers = useCallback(async (query: string, institutionId: string) => {
     if (!institutionId) return [];
@@ -510,5 +571,8 @@ export const useChat = () => {
     searchInstitutionUsers,
     fetchConversations,
     setActiveConversation,
+    leaveConversation,
+    updateGroupAvatar,
+    getConversationMembers,
   };
 };

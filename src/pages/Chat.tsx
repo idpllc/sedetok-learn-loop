@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useChat, ChatConversation, ChatMessage } from "@/hooks/useChat";
@@ -10,46 +10,54 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft,
-  Send,
-  Image as ImageIcon,
-  Paperclip,
-  Search,
-  Plus,
-  Users,
-  MessageCircle,
-  Smile,
-  X,
-  CheckCheck,
-  UserPlus,
-  Hash,
+  ArrowLeft, Send, Image as ImageIcon, Paperclip, Search, Plus, Users,
+  MessageCircle, Smile, X, CheckCheck, Hash, MoreVertical, Camera,
+  LogOut, Home, Play, Sparkles, Map, BookOpen, Gamepad2, Radio, Award,
+  User, UserPlus, Info,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format, isToday, isYesterday } from "date-fns";
 import { es } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const EMOJI_LIST = ["😀","😂","😍","🥰","😎","🤔","👍","👏","🎉","❤️","🔥","💯","✅","📚","🎓","📝","👋","🙏","💪","⭐","😊","🤗","😢","😮","🫡","🤝","🥳","🏆","📖","🧠"];
 
 type SearchMode = "direct" | "group";
 
+// Thin sidebar nav items
+const NAV_ITEMS = [
+  { id: "home", icon: Home, label: "Inicio", path: "/" },
+  { id: "sedetok", icon: Play, label: "Sede Tok", path: "/sedetok" },
+  { id: "sede-ai", icon: Sparkles, label: "SEDE AI", path: "/sede-ai" },
+  { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
+  { id: "courses", icon: BookOpen, label: "Cursos", path: "/courses" },
+  { id: "trivia", icon: Gamepad2, label: "Trivia", path: "/trivia-game" },
+  { id: "live-games", icon: Radio, label: "Live", path: "/live-games" },
+  { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
+  { id: "profile", icon: User, label: "Perfil", path: "/profile" },
+  { id: "chat", icon: MessageCircle, label: "Chat", path: "/chat" },
+];
+
 const ChatPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const {
-    conversations,
-    activeConversation,
-    messages,
-    loadingConversations,
-    loadingMessages,
-    sending,
-    openConversation,
-    sendMessage,
-    createDirectConversation,
-    createGroupConversation,
-    uploadChatFile,
-    searchUsers,
-    searchInstitutionUsers,
-    setActiveConversation,
+    conversations, activeConversation, messages, loadingConversations, loadingMessages, sending,
+    openConversation, sendMessage, createDirectConversation, createGroupConversation,
+    uploadChatFile, searchUsers, searchInstitutionUsers, setActiveConversation,
+    leaveConversation, updateGroupAvatar, getConversationMembers,
   } = useChat();
   const { myMembership } = useInstitution();
 
@@ -62,10 +70,23 @@ const ChatPage: React.FC = () => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Group creation state
+  // Group creation
   const [groupName, setGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
   const [creatingGroup, setCreatingGroup] = useState(false);
+
+  // Right panel - members
+  const [showMembersPanel, setShowMembersPanel] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+
+  // Leave dialog
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [leavingChat, setLeavingChat] = useState(false);
+
+  // Group avatar upload
+  const groupAvatarInputRef = useRef<HTMLInputElement>(null);
+  const [updatingAvatar, setUpdatingAvatar] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,10 +110,7 @@ const ChatPage: React.FC = () => {
 
   const handleSearch = async (q: string) => {
     setSearchQuery(q);
-    if (!q.trim()) {
-      setSearchResults([]);
-      return;
-    }
+    if (!q.trim()) { setSearchResults([]); return; }
     setSearching(true);
     const results = myMembership?.institution_id
       ? await searchInstitutionUsers(q, myMembership.institution_id)
@@ -108,46 +126,32 @@ const ChatPage: React.FC = () => {
 
   const handleToggleMember = (u: any) => {
     setSelectedMembers((prev) =>
-      prev.find((m) => m.id === u.id)
-        ? prev.filter((m) => m.id !== u.id)
-        : [...prev, u]
+      prev.find((m) => m.id === u.id) ? prev.filter((m) => m.id !== u.id) : [...prev, u]
     );
   };
 
   const handleCreateGroup = async () => {
     if (!groupName.trim() || selectedMembers.length === 0) return;
     setCreatingGroup(true);
-    await createGroupConversation(
-      groupName.trim(),
-      selectedMembers.map((m) => m.id),
-      myMembership?.institution_id
-    );
+    await createGroupConversation(groupName.trim(), selectedMembers.map((m) => m.id), myMembership?.institution_id);
     setCreatingGroup(false);
     resetSearch();
   };
 
   const resetSearch = () => {
-    setShowSearch(false);
-    setSearchQuery("");
-    setSearchResults([]);
-    setGroupName("");
-    setSelectedMembers([]);
-    setSearchMode("direct");
+    setShowSearch(false); setSearchQuery(""); setSearchResults([]);
+    setGroupName(""); setSelectedMembers([]); setSearchMode("direct");
   };
 
   const handleSend = async () => {
     if (!messageInput.trim() && !uploading) return;
     const text = messageInput.trim();
-    setMessageInput("");
-    setShowEmoji(false);
+    setMessageInput(""); setShowEmoji(false);
     await sendMessage(text);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "file") => {
@@ -155,16 +159,36 @@ const ChatPage: React.FC = () => {
     if (!file) return;
     setUploading(true);
     const url = await uploadChatFile(file);
-    if (url) {
-      await sendMessage(
-        type === "image" ? "📷 Imagen" : `📎 ${file.name}`,
-        type === "image" ? "image" : "file",
-        url,
-        file.name
-      );
-    }
+    if (url) await sendMessage(type === "image" ? "📷 Imagen" : `📎 ${file.name}`, type === "image" ? "image" : "file", url, file.name);
     setUploading(false);
     e.target.value = "";
+  };
+
+  const handleOpenMembers = useCallback(async (convId: string) => {
+    setShowMembersPanel(true);
+    setLoadingMembers(true);
+    const m = await getConversationMembers(convId);
+    setMembers(m);
+    setLoadingMembers(false);
+  }, [getConversationMembers]);
+
+  const handleGroupAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeConversation) return;
+    setUpdatingAvatar(true);
+    await updateGroupAvatar(activeConversation, file);
+    setUpdatingAvatar(false);
+    toast({ title: "Foto actualizada" });
+    e.target.value = "";
+  };
+
+  const handleLeaveChat = async () => {
+    if (!activeConversation) return;
+    setLeavingChat(true);
+    await leaveConversation(activeConversation);
+    setLeavingChat(false);
+    setShowLeaveDialog(false);
+    setShowMembersPanel(false);
   };
 
   const formatMsgTime = (dateStr: string) => {
@@ -211,6 +235,14 @@ const ChatPage: React.FC = () => {
     return map[role] || role;
   };
 
+  const getMemberRoleLabel = (role: string) => {
+    if (role === "admin") return "Admin";
+    return "Miembro";
+  };
+
+  const currentUserRole = activeConv?.participants?.find(p => p.user_id === user?.id)?.role;
+  const isGroupAdmin = currentUserRole === "admin";
+
   if (authLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
@@ -220,18 +252,49 @@ const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className="h-screen flex bg-background">
-      {/* Sidebar */}
-      <div className={`${activeConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-96 border-r border-border bg-card`}>
+    <div className="h-screen flex bg-background overflow-hidden">
+
+      {/* ── Thin nav sidebar (web only) ── */}
+      <aside className="hidden md:flex flex-col w-14 shrink-0 border-r border-border bg-card z-10">
+        <div className="flex items-center justify-center h-14 border-b border-border">
+          <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-xs">S</span>
+          </div>
+        </div>
+        <nav className="flex-1 flex flex-col items-center gap-1 py-2 overflow-y-auto">
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.path)}
+                title={item.label}
+                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
+                  isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* ── Conversation list ── */}
+      <div className={`${activeConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 lg:w-96 border-r border-border bg-card shrink-0`}>
         {/* Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="p-4 border-b border-border flex items-center justify-between h-14">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-lg font-bold text-foreground">Chat</h1>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => { setShowSearch(!showSearch); setSearchMode("direct"); setSelectedMembers([]); setGroupName(""); }}>
+          <Button
+            variant="ghost" size="icon"
+            onClick={() => { setShowSearch(!showSearch); setSearchMode("direct"); setSelectedMembers([]); setGroupName(""); }}
+          >
             {showSearch ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
           </Button>
         </div>
@@ -239,71 +302,50 @@ const ChatPage: React.FC = () => {
         {/* New Chat / Group Panel */}
         {showSearch && (
           <div className="border-b border-border">
-            {/* Mode selector */}
             <div className="flex border-b border-border">
               <button
                 onClick={() => { setSearchMode("direct"); setSelectedMembers([]); setSearchQuery(""); setSearchResults([]); }}
                 className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${searchMode === "direct" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Chat directo
+                <MessageCircle className="h-3.5 w-3.5" /> Chat directo
               </button>
               <button
                 onClick={() => { setSearchMode("group"); setSearchQuery(""); setSearchResults([]); }}
                 className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${searchMode === "group" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <Users className="h-3.5 w-3.5" />
-                Nuevo grupo
+                <Users className="h-3.5 w-3.5" /> Nuevo grupo
               </button>
             </div>
 
             <div className="p-3 space-y-2">
-              {/* Group name input (only in group mode) */}
               {searchMode === "group" && (
                 <div className="relative">
                   <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Nombre del grupo..."
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
-                    className="pl-10"
-                  />
+                  <Input placeholder="Nombre del grupo..." value={groupName} onChange={(e) => setGroupName(e.target.value)} className="pl-10" />
                 </div>
               )}
-
-              {/* Search input */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={searchMode === "group" ? "Buscar personas para agregar..." : "Buscar usuario..."}
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
-                  autoFocus={searchMode === "direct"}
+                  placeholder={searchMode === "group" ? "Buscar personas..." : "Buscar usuario..."}
+                  value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
+                  className="pl-10" autoFocus={searchMode === "direct"}
                 />
               </div>
-
-              {/* Selected members chips (group mode) */}
               {searchMode === "group" && selectedMembers.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {selectedMembers.map((m) => (
                     <span key={m.id} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
                       {m.full_name || m.username}
-                      <button onClick={() => handleToggleMember(m)} className="hover:text-destructive ml-0.5">
-                        <X className="h-3 w-3" />
-                      </button>
+                      <button onClick={() => handleToggleMember(m)} className="hover:text-destructive ml-0.5"><X className="h-3 w-3" /></button>
                     </span>
                   ))}
                 </div>
               )}
-
-              {/* Search results */}
               {searching && <p className="text-sm text-muted-foreground px-1">Buscando...</p>}
-              
               {searchResults.length === 0 && searchQuery && !searching && (
                 <p className="text-sm text-muted-foreground px-1 py-2 text-center">No se encontraron usuarios</p>
               )}
-
               <div className="space-y-0.5 max-h-48 overflow-y-auto">
                 {searchResults.map((u) => {
                   const isSelected = selectedMembers.some((m) => m.id === u.id);
@@ -315,17 +357,13 @@ const ChatPage: React.FC = () => {
                     >
                       <Avatar className="h-9 w-9 shrink-0">
                         <AvatarImage src={u.avatar_url} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                          {getInitials(u.full_name || u.username)}
-                        </AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(u.full_name || u.username)}</AvatarFallback>
                       </Avatar>
                       <div className="text-left flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{u.full_name || u.username}</p>
                         <p className="text-xs text-muted-foreground truncate">
                           @{u.username}
-                          {u.member_role && (
-                            <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">{getRoleBadgeLabel(u.member_role)}</Badge>
-                          )}
+                          {u.member_role && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">{getRoleBadgeLabel(u.member_role)}</Badge>}
                         </p>
                       </div>
                       {searchMode === "group" && isSelected && (
@@ -337,17 +375,10 @@ const ChatPage: React.FC = () => {
                   );
                 })}
               </div>
-
-              {/* Create group button */}
               {searchMode === "group" && (
-                <Button
-                  onClick={handleCreateGroup}
-                  disabled={!groupName.trim() || selectedMembers.length === 0 || creatingGroup}
-                  className="w-full"
-                  size="sm"
-                >
+                <Button onClick={handleCreateGroup} disabled={!groupName.trim() || selectedMembers.length === 0 || creatingGroup} className="w-full" size="sm">
                   <Users className="h-4 w-4 mr-1.5" />
-                  {creatingGroup ? "Creando..." : `Crear grupo (${selectedMembers.length} personas)`}
+                  {creatingGroup ? "Creando..." : `Crear grupo (${selectedMembers.length})`}
                 </Button>
               )}
             </div>
@@ -358,7 +389,7 @@ const ChatPage: React.FC = () => {
         <ScrollArea className="flex-1">
           {loadingConversations ? (
             <div className="p-4 space-y-3">
-              {[1, 2, 3, 4].map((i) => (
+              {[1,2,3,4].map((i) => (
                 <div key={i} className="flex items-center gap-3">
                   <Skeleton className="h-12 w-12 rounded-full" />
                   <div className="flex-1 space-y-1">
@@ -382,7 +413,7 @@ const ChatPage: React.FC = () => {
                   onClick={() => openConversation(conv.id)}
                   className={`flex items-center gap-3 w-full p-4 hover:bg-muted/50 transition-colors ${activeConversation === conv.id ? "bg-primary/5" : ""}`}
                 >
-                  <div className="relative">
+                  <div className="relative shrink-0">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={getConvAvatar(conv) || undefined} />
                       <AvatarFallback className={`${conv.type === "group" ? "bg-secondary/20 text-secondary" : "bg-primary/10 text-primary"} text-sm`}>
@@ -399,9 +430,7 @@ const ChatPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-foreground truncate">{getConvName(conv)}</p>
                       {conv.last_message && (
-                        <span className="text-[10px] text-muted-foreground ml-2 flex-shrink-0">
-                          {formatConvTime(conv.last_message.created_at)}
-                        </span>
+                        <span className="text-[10px] text-muted-foreground ml-2 flex-shrink-0">{formatConvTime(conv.last_message.created_at)}</span>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -415,34 +444,80 @@ const ChatPage: React.FC = () => {
         </ScrollArea>
       </div>
 
-      {/* Main Chat Area */}
-      <div className={`${activeConversation ? "flex" : "hidden md:flex"} flex-col flex-1 bg-background`}>
+      {/* ── Main Chat Area ── */}
+      <div className={`${activeConversation ? "flex" : "hidden md:flex"} flex-col flex-1 bg-background min-w-0`}>
         {!activeConversation ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <div className="bg-primary/5 rounded-full p-6 mb-4">
               <MessageCircle className="h-16 w-16 text-primary/40" />
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2">Bienvenido al Chat</h2>
-            <p className="text-muted-foreground max-w-md">Selecciona una conversación o usa el botón + para iniciar un chat o crear un grupo</p>
+            <p className="text-muted-foreground max-w-md">Selecciona una conversación o usa el botón + para iniciar un chat</p>
           </div>
         ) : (
           <>
             {/* Chat Header */}
-            <div className="p-3 border-b border-border flex items-center gap-3 bg-card">
-              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setActiveConversation(null)}>
+            <div className="h-14 px-3 border-b border-border flex items-center gap-3 bg-card shrink-0">
+              <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setActiveConversation(null)}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={getConvAvatar(activeConv!) || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                  {activeConv?.type === "group" ? <Users className="h-4 w-4" /> : getInitials(getConvName(activeConv!))}
-                </AvatarFallback>
-              </Avatar>
+
+              {/* Avatar - clickable to open members for groups */}
+              <div
+                className={`relative shrink-0 ${activeConv?.type === "group" ? "cursor-pointer" : ""}`}
+                onClick={() => activeConv?.type === "group" && handleOpenMembers(activeConversation)}
+              >
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={getConvAvatar(activeConv!) || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    {activeConv?.type === "group" ? <Users className="h-4 w-4" /> : getInitials(getConvName(activeConv!))}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-foreground truncate text-sm">{getConvName(activeConv!)}</p>
                 {activeConv?.type === "group" && (
                   <p className="text-xs text-muted-foreground">{activeConv.participants?.length || 0} participantes</p>
                 )}
+              </div>
+
+              {/* Header actions */}
+              <div className="flex items-center gap-1 shrink-0">
+                {activeConv?.type === "group" && (
+                  <Button variant="ghost" size="icon" onClick={() => handleOpenMembers(activeConversation)} title="Ver miembros">
+                    <Users className="h-4 w-4" />
+                  </Button>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {activeConv?.type === "group" && (
+                      <>
+                        <DropdownMenuItem onClick={() => handleOpenMembers(activeConversation)}>
+                          <Users className="h-4 w-4 mr-2" /> Ver miembros
+                        </DropdownMenuItem>
+                        {isGroupAdmin && (
+                          <DropdownMenuItem onClick={() => groupAvatarInputRef.current?.click()}>
+                            <Camera className="h-4 w-4 mr-2" />
+                            {updatingAvatar ? "Actualizando..." : "Cambiar foto del grupo"}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setShowLeaveDialog(true)}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" /> Salir del chat
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -450,7 +525,7 @@ const ChatPage: React.FC = () => {
             <ScrollArea className="flex-1 px-4 py-2">
               {loadingMessages ? (
                 <div className="space-y-4 py-4">
-                  {[1, 2, 3].map((i) => (
+                  {[1,2,3].map((i) => (
                     <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : ""}`}>
                       <Skeleton className="h-12 w-48 rounded-2xl" />
                     </div>
@@ -464,11 +539,8 @@ const ChatPage: React.FC = () => {
                 <div className="space-y-1 py-2">
                   {messages.map((msg, idx) => {
                     const isMine = msg.sender_id === user?.id;
-                    const showSender =
-                      activeConv?.type === "group" &&
-                      !isMine &&
+                    const showSender = activeConv?.type === "group" && !isMine &&
                       (idx === 0 || messages[idx - 1].sender_id !== msg.sender_id);
-
                     return (
                       <div key={msg.id}>
                         {showSender && (
@@ -483,8 +555,7 @@ const ChatPage: React.FC = () => {
                             )}
                             {msg.message_type === "file" && msg.file_url && (
                               <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 underline text-sm">
-                                <Paperclip className="h-3 w-3" />
-                                {msg.file_name || "Archivo"}
+                                <Paperclip className="h-3 w-3" />{msg.file_name || "Archivo"}
                               </a>
                             )}
                             {msg.content && <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>}
@@ -506,19 +577,18 @@ const ChatPage: React.FC = () => {
 
             {/* Emoji picker */}
             {showEmoji && (
-              <div className="border-t border-border p-2 bg-card flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
+              <div className="border-t border-border p-2 bg-card flex flex-wrap gap-1.5 max-h-32 overflow-y-auto shrink-0">
                 {EMOJI_LIST.map((e) => (
-                  <button key={e} onClick={() => setMessageInput((prev) => prev + e)} className="text-xl hover:scale-110 transition-transform">
-                    {e}
-                  </button>
+                  <button key={e} onClick={() => setMessageInput((prev) => prev + e)} className="text-xl hover:scale-110 transition-transform">{e}</button>
                 ))}
               </div>
             )}
 
-            {/* Input */}
-            <div className="p-3 border-t border-border bg-card flex items-end gap-2">
+            {/* Input bar */}
+            <div className="p-3 border-t border-border bg-card flex items-end gap-2 shrink-0">
               <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, "file")} />
               <input type="file" ref={imageInputRef} accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "image")} />
+              <input type="file" ref={groupAvatarInputRef} accept="image/*" className="hidden" onChange={handleGroupAvatarChange} />
               <Button variant="ghost" size="icon" className="shrink-0 self-end" onClick={() => setShowEmoji(!showEmoji)}>
                 <Smile className="h-5 w-5" />
               </Button>
@@ -544,6 +614,119 @@ const ChatPage: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* ── Members Sheet (panel lateral derecho) ── */}
+      <Sheet open={showMembersPanel} onOpenChange={setShowMembersPanel}>
+        <SheetContent side="right" className="w-80 p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b border-border">
+            <SheetTitle className="text-left">Miembros del grupo</SheetTitle>
+          </SheetHeader>
+
+          {/* Group info section */}
+          {activeConv?.type === "group" && (
+            <div className="p-4 border-b border-border flex flex-col items-center gap-3">
+              <div className="relative">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={getConvAvatar(activeConv!) || undefined} />
+                  <AvatarFallback className="bg-secondary/20 text-secondary text-xl">
+                    <Users className="h-8 w-8" />
+                  </AvatarFallback>
+                </Avatar>
+                {isGroupAdmin && (
+                  <button
+                    onClick={() => groupAvatarInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-md hover:bg-primary/90 transition-colors"
+                    title="Cambiar foto"
+                  >
+                    <Camera className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-foreground">{getConvName(activeConv!)}</p>
+                <p className="text-xs text-muted-foreground">{members.length} miembros</p>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={() => { setShowMembersPanel(false); setShowLeaveDialog(true); }}
+              >
+                <LogOut className="h-4 w-4 mr-2" /> Salir del grupo
+              </Button>
+            </div>
+          )}
+
+          {/* Member list */}
+          <ScrollArea className="flex-1">
+            {loadingMembers ? (
+              <div className="p-4 space-y-3">
+                {[1,2,3,4].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-1">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-3 space-y-0.5">
+                {members.map((member) => {
+                  const isMe = member.user_id === user?.id;
+                  return (
+                    <div key={member.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarImage src={member.profile?.avatar_url} />
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                          {getInitials(member.profile?.full_name || member.profile?.username)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {member.profile?.full_name || member.profile?.username || "Usuario"}
+                          {isMe && <span className="text-muted-foreground font-normal"> (tú)</span>}
+                        </p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {member.role === "admin" && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Admin</Badge>
+                          )}
+                          {member.profile?.tipo_usuario && (
+                            <span className="text-[10px] text-muted-foreground">{getRoleBadgeLabel(member.profile.tipo_usuario)}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Leave confirmation dialog ── */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Salir del chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ya no podrás ver ni enviar mensajes en esta conversación.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={leavingChat}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLeaveChat}
+              disabled={leavingChat}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {leavingChat ? "Saliendo..." : "Salir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
