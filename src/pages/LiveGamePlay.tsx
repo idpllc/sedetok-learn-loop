@@ -26,37 +26,19 @@ const LiveGamePlay = () => {
 
   useEffect(() => {
     if (!gameId || !playerId) return;
-
-    // Subscribe to game updates
     const channel = supabase
       .channel(`game-player-${gameId}-${playerId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'live_games',
-          filter: `id=eq.${gameId}`,
-        },
-        (payload: any) => {
-          console.log('Game updated:', payload);
-          if (payload.new.status === 'finished') {
-            // Game finished
-          }
-        }
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_games', filter: `id=eq.${gameId}` },
+        (payload: any) => { console.log('Game updated:', payload); }
       )
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [gameId, playerId]);
 
   useEffect(() => {
     if (game && questions && questions.length > 0) {
       const idx = game.current_question_index || 0;
       const newQuestion = questions[idx];
-      
       if (!currentQuestion || newQuestion.id !== currentQuestion.id) {
         setCurrentQuestion(newQuestion);
         setSelectedAnswer(null);
@@ -77,18 +59,12 @@ const LiveGamePlay = () => {
 
   useEffect(() => {
     if (!currentQuestion || hasAnswered) return;
-
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleTimeout();
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timer); handleTimeout(); return 0; }
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, [currentQuestion, hasAnswered]);
 
@@ -101,46 +77,27 @@ const LiveGamePlay = () => {
 
   const handleSelectAnswer = async (answerIndex: number) => {
     if (hasAnswered || !currentQuestion || !playerId) return;
-
     setSelectedAnswer(answerIndex);
     setHasAnswered(true);
-
     const responseTime = Date.now() - startTime;
-
     submitAnswer.mutate(
-      {
-        playerId,
-        questionId: currentQuestion.id,
-        selectedAnswer: answerIndex,
-        responseTimeMs: responseTime,
-        correctAnswer: currentQuestion.correct_answer,
-        maxPoints: currentQuestion.points,
-        timeLimitMs: (currentQuestion.time_limit || 20) * 1000,
-      },
-      {
-        onSuccess: (data) => {
-          setFeedback({
-            show: true,
-            isCorrect: data.isCorrect,
-            points: data.pointsEarned,
-          });
-        },
-      }
+      { playerId, questionId: currentQuestion.id, selectedAnswer: answerIndex, responseTimeMs: responseTime, correctAnswer: currentQuestion.correct_answer, maxPoints: currentQuestion.points, timeLimitMs: (currentQuestion.time_limit || 20) * 1000 },
+      { onSuccess: (data) => { setFeedback({ show: true, isCorrect: data.isCorrect, points: data.pointsEarned }); } }
     );
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!game || !questions || !playerId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="p-12 text-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="p-8 text-center w-full max-w-sm">
           <p className="text-muted-foreground">Error al cargar el juego</p>
         </Card>
       </div>
@@ -148,180 +105,151 @@ const LiveGamePlay = () => {
   }
 
   const getOptionColors = (index: number) => {
-    const colors = [
-      "bg-red-500 hover:bg-red-600",
-      "bg-blue-500 hover:bg-blue-600",
-      "bg-yellow-500 hover:bg-yellow-600",
-      "bg-green-500 hover:bg-green-600",
-    ];
+    const colors = ["bg-red-500 active:bg-red-600", "bg-blue-500 active:bg-blue-600", "bg-yellow-500 active:bg-yellow-600", "bg-green-500 active:bg-green-600"];
     return colors[index] || "bg-gray-500";
   };
 
   const myRank = players?.findIndex(p => p.id === playerId) + 1 || 0;
+  const timePercent = (timeLeft / (currentQuestion?.time_limit || 20)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 dark:from-purple-950 dark:via-pink-950 dark:to-blue-950">
-      <div className="container max-w-4xl mx-auto py-8 px-4">
-        {/* Waiting Room */}
-        {game.status === 'waiting' && (
-          <Card className="p-12 text-center">
-            <Loader2 className="w-16 h-16 mx-auto mb-6 text-primary animate-spin" />
-            <h2 className="text-2xl font-bold mb-4">Esperando a que inicie el juego...</h2>
-            <p className="text-muted-foreground">
-              El profesor iniciará el juego pronto
-            </p>
-          </Card>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 dark:from-purple-950 dark:via-pink-950 dark:to-blue-950 flex flex-col">
 
-        {/* Game Finished */}
-        {game.status === 'finished' && (
-          <Card className="p-12 text-center">
-            <Trophy className="w-20 h-20 mx-auto mb-6 text-yellow-500" />
-            <h2 className="text-3xl font-bold mb-4">¡Juego Terminado!</h2>
+      {/* ── WAITING ROOM ── */}
+      {game.status === 'waiting' && (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="p-8 text-center w-full max-w-sm">
+            <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+            <h2 className="text-xl font-bold mb-2">Esperando inicio...</h2>
+            <p className="text-sm text-muted-foreground">El profesor iniciará el juego pronto</p>
+          </Card>
+        </div>
+      )}
+
+      {/* ── FINISHED ── */}
+      {game.status === 'finished' && (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="p-8 text-center w-full max-w-sm">
+            <Trophy className="w-16 h-16 mx-auto mb-4 text-yellow-500" />
+            <h2 className="text-2xl font-bold mb-3">¡Juego Terminado!</h2>
             {myPlayer && (
-              <>
-                <p className="text-xl mb-2">Tu posición: <span className="font-bold text-primary">#{myRank}</span></p>
-                <p className="text-2xl font-bold text-primary">{myPlayer.total_score} puntos</p>
-              </>
+              <div className="space-y-1">
+                <p className="text-base text-muted-foreground">Tu posición</p>
+                <p className="text-4xl font-black text-primary">#{myRank}</p>
+                <p className="text-2xl font-bold mt-2">{myPlayer.total_score} <span className="text-sm font-normal text-muted-foreground">puntos</span></p>
+              </div>
             )}
           </Card>
-        )}
+        </div>
+      )}
 
-        {/* Loading Question */}
-        {game.status === 'in_progress' && !currentQuestion && (
-          <Card className="p-12 text-center">
-            <Loader2 className="w-16 h-16 mx-auto mb-6 text-primary animate-spin" />
-            <h2 className="text-2xl font-bold mb-4">Cargando pregunta...</h2>
+      {/* ── LOADING QUESTION ── */}
+      {game.status === 'in_progress' && !currentQuestion && (
+        <div className="flex-1 flex items-center justify-center p-4">
+          <Card className="p-8 text-center w-full max-w-sm">
+            <Loader2 className="w-10 h-10 mx-auto mb-3 text-primary animate-spin" />
+            <p className="font-semibold">Cargando pregunta...</p>
           </Card>
-        )}
+        </div>
+      )}
 
-        {/* Active Game */}
-        {game.status === 'in_progress' && currentQuestion && (
-          <>
-            {/* Timer & Score */}
-            <div className="mb-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="text-center flex-1">
-                  <p className="text-sm text-muted-foreground">Tu Puntuación</p>
-                  <p className="text-3xl font-bold text-primary">{myPlayer?.total_score || 0}</p>
-                </div>
-                <div className="text-center flex-1">
-                  <p className="text-sm text-muted-foreground">Posición</p>
-                  <p className="text-3xl font-bold">#{myRank}</p>
-                </div>
-              </div>
+      {/* ── ACTIVE GAME ── */}
+      {game.status === 'in_progress' && currentQuestion && (
+        <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-3 py-3 gap-3">
 
-              {/* Timer */}
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Tiempo</span>
-                  <span className="font-bold">{timeLeft}s</span>
-                </div>
-                <Progress value={(timeLeft / (currentQuestion.time_limit || 20)) * 100} />
-              </div>
+          {/* Score + timer bar — sticky mini header */}
+          <div className="bg-card/90 backdrop-blur rounded-2xl px-4 py-2.5 shadow-sm flex items-center gap-4">
+            <div className="text-center flex-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Puntos</p>
+              <p className="text-xl font-black text-primary leading-none">{myPlayer?.total_score || 0}</p>
             </div>
-
-            {/* Question */}
-            <Card className="p-6 mb-6">
-              <div
-                className="text-2xl font-bold text-center mb-8 prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: currentQuestion.question_text }}
-              />
-
-              {/* Question Image/Video */}
-              {currentQuestion.image_url && (
-                <div className="mb-6">
-                  <img
-                    src={currentQuestion.image_url}
-                    alt="Question"
-                    className="w-full max-h-64 object-contain rounded-lg mx-auto"
-                  />
-                </div>
-              )}
-              {currentQuestion.video_url && (
-                <div className="mb-6">
-                  <video
-                    src={currentQuestion.video_url}
-                    controls
-                    className="w-full max-h-64 rounded-lg mx-auto"
-                  />
-                </div>
-              )}
-
-              {/* Options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <AnimatePresence>
-                  {currentQuestion.options.map((option: any, index: number) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Button
-                        onClick={() => handleSelectAnswer(index)}
-                        disabled={hasAnswered}
-                        className={`w-full min-h-20 text-lg flex flex-col gap-2 p-4 ${getOptionColors(index)} text-white ${
-                          selectedAnswer === index ? 'ring-4 ring-white' : ''
-                        } ${hasAnswered && index === currentQuestion.correct_answer ? 'ring-4 ring-green-400' : ''}`}
-                      >
-                        {option.image_url && (
-                          <img
-                            src={option.image_url}
-                            alt={`Opción ${index + 1}`}
-                            className="w-full h-20 object-cover rounded"
-                          />
-                        )}
-                        {option.text}
-                      </Button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+            <div className="flex-1 space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Tiempo</span>
+                <span className={`font-bold tabular-nums ${timeLeft <= 5 ? 'text-red-500 animate-pulse' : ''}`}>{timeLeft}s</span>
               </div>
+              <Progress value={timePercent} className={`h-2 ${timeLeft <= 5 ? '[&>div]:bg-red-500' : ''}`} />
+            </div>
+            <div className="text-center flex-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Posición</p>
+              <p className="text-xl font-black leading-none">#{myRank}</p>
+            </div>
+          </div>
 
-              {/* Feedback after answer */}
-              {feedback?.show && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className={`mt-6 p-6 rounded-lg text-center ${
-                    feedback.isCorrect
-                      ? 'bg-green-500 text-white'
-                      : 'bg-red-500 text-white'
-                  }`}
-                >
-                  <p className="text-2xl font-bold mb-2">
-                    {feedback.isCorrect ? '¡Correcto!' : 'Incorrecto'}
-                  </p>
-                  <p className="text-xl">
-                    {feedback.isCorrect ? `+${feedback.points} puntos` : '0 puntos'}
-                  </p>
-                </motion.div>
-              )}
+          {/* Question */}
+          <Card className="p-4">
+            <div
+              className="text-base sm:text-xl font-bold text-center leading-snug prose prose-sm max-w-none dark:prose-invert"
+              dangerouslySetInnerHTML={{ __html: currentQuestion.question_text }}
+            />
+            {currentQuestion.image_url && (
+              <div className="mt-3">
+                <img src={currentQuestion.image_url} alt="Question" className="w-full max-h-48 object-contain rounded-lg mx-auto" />
+              </div>
+            )}
+            {currentQuestion.video_url && (
+              <div className="mt-3">
+                <video src={currentQuestion.video_url} controls className="w-full max-h-48 rounded-lg mx-auto" />
+              </div>
+            )}
+          </Card>
 
-              {/* Feedback from question */}
-              {feedback?.show && currentQuestion.feedback && (
+          {/* Options — 2 cols always on mobile, larger buttons */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <AnimatePresence>
+              {currentQuestion.options.map((option: any, index: number) => (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  key={index}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="mt-4"
+                  transition={{ delay: index * 0.07 }}
                 >
-                  <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                    <h3 className="text-sm font-semibold mb-2 text-blue-900 dark:text-blue-100">
-                      📚 Retroalimentación
-                    </h3>
-                    <div
-                      className="prose prose-sm max-w-none dark:prose-invert text-sm"
-                      dangerouslySetInnerHTML={{ __html: currentQuestion.feedback }}
-                    />
-                  </Card>
+                  <button
+                    onClick={() => handleSelectAnswer(index)}
+                    disabled={hasAnswered}
+                    className={`w-full rounded-xl p-3 text-white font-semibold text-sm leading-snug flex flex-col items-center justify-center gap-1.5 min-h-[72px] transition-transform active:scale-95 ${getOptionColors(index)} ${
+                      selectedAnswer === index ? 'ring-4 ring-white/80 scale-[0.97]' : ''
+                    } ${hasAnswered && index === currentQuestion.correct_answer ? 'ring-4 ring-white' : ''} ${hasAnswered ? 'cursor-default' : 'cursor-pointer'}`}
+                  >
+                    {option.image_url && (
+                      <img src={option.image_url} alt={`Opción ${index + 1}`} className="w-full h-16 object-cover rounded-lg" />
+                    )}
+                    <span className="text-center">{option.text}</span>
+                  </button>
                 </motion.div>
-              )}
-            </Card>
-          </>
-        )}
-      </div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {/* Feedback after answer */}
+          <AnimatePresence>
+            {feedback?.show && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`rounded-2xl px-5 py-4 text-center ${feedback.isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+              >
+                <p className="text-xl font-black">{feedback.isCorrect ? '¡Correcto! 🎉' : 'Incorrecto 😞'}</p>
+                <p className="text-base font-semibold mt-0.5">{feedback.isCorrect ? `+${feedback.points} puntos` : 'Sin puntos'}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Feedback from question */}
+          {feedback?.show && currentQuestion.feedback && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="p-3 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                <h3 className="text-xs font-semibold mb-1.5 text-blue-900 dark:text-blue-100">📚 Retroalimentación</h3>
+                <div className="prose prose-sm max-w-none dark:prose-invert text-xs" dangerouslySetInnerHTML={{ __html: currentQuestion.feedback }} />
+              </Card>
+            </motion.div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
