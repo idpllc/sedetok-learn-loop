@@ -19,44 +19,8 @@ const LiveGameHost = () => {
   const [answerStats, setAnswerStats] = useState<{ [key: number]: number }>({});
   const [isStarting, setIsStarting] = useState(false);
 
-  useEffect(() => {
-    if (!gameId) return;
-
-    // Subscribe to game updates
-    const channel = supabase
-      .channel(`game-${gameId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'live_games',
-          filter: `id=eq.${gameId}`,
-        },
-        (payload) => {
-          console.log('Game updated:', payload);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'live_game_answers',
-        },
-        () => {
-          // Refetch answer stats
-          if (currentQuestion) {
-            fetchAnswerStats();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [gameId, currentQuestion]);
+  // Answer stats are fetched manually via fetchAnswerStats(); no duplicate channel needed here.
+  // The useLiveGameDetails hook already handles all realtime updates.
 
   useEffect(() => {
     if (game && questions && questions.length > 0) {
