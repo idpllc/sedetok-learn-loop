@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useLiveGameDetails, useSubmitAnswer } from "@/hooks/useLiveGames";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Loader2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 
 const LiveGamePlay = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
   const playerId = searchParams.get("playerId");
+  const queryClient = useQueryClient();
   const { game, questions, players, isLoading } = useLiveGameDetails(gameId);
   const { submitAnswer } = useSubmitAnswer();
   
@@ -24,22 +24,20 @@ const LiveGamePlay = () => {
   const [feedback, setFeedback] = useState<{ show: boolean; isCorrect: boolean; points: number } | null>(null);
   const [myPlayer, setMyPlayer] = useState<any>(null);
 
+  // Force-refetch questions whenever the game transitions to in_progress
+  // (the initial query may have run before questions were fully committed)
   useEffect(() => {
-    if (!gameId || !playerId) return;
-    const channel = supabase
-      .channel(`game-player-${gameId}-${playerId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_games', filter: `id=eq.${gameId}` },
-        (payload: any) => { console.log('Game updated:', payload); }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [gameId, playerId]);
+    if (game?.status === 'in_progress') {
+      queryClient.invalidateQueries({ queryKey: ["live-game-questions", gameId] });
+    }
+  }, [game?.status, gameId, queryClient]);
 
+  // Update currentQuestion whenever game index or questions change
   useEffect(() => {
     if (game && questions && questions.length > 0) {
       const idx = game.current_question_index || 0;
       const newQuestion = questions[idx];
-      if (!currentQuestion || newQuestion.id !== currentQuestion.id) {
+      if (newQuestion && (!currentQuestion || newQuestion.id !== currentQuestion.id)) {
         setCurrentQuestion(newQuestion);
         setSelectedAnswer(null);
         setHasAnswered(false);
@@ -48,7 +46,7 @@ const LiveGamePlay = () => {
         setFeedback(null);
       }
     }
-  }, [game, questions]);
+  }, [game?.current_question_index, game?.status, questions]);
 
   useEffect(() => {
     if (players && playerId) {
