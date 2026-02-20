@@ -1,11 +1,9 @@
-const CACHE_NAME = 'sedetok-cache-v5'; // v5 - forzar actualizacion PWA
+const CACHE_NAME = 'sedetok-cache-v6'; // v6 - actualizar icono PWA
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png'
+  '/pwa-icon.png'
 ];
 
 // Install event - cache resources
