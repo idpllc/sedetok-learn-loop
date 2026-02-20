@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Save, CheckCircle2, User, GraduationCap, Briefcase, Brain, Target } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2, User, GraduationCap, Briefcase, Brain, Target, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ import { ProjectsEditor } from "@/components/profile/ProjectsEditor";
 import { AwardsEditor } from "@/components/profile/AwardsEditor";
 import { TagInput } from "@/components/profile/TagInput";
 import { Sidebar } from "@/components/Sidebar";
+import { supabase } from "@/integrations/supabase/client";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -36,6 +37,12 @@ const EditProfile = () => {
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
   const previousStateRef = useRef<any>(null);
   const [activeTab, setActiveTab] = useState("personal");
+  const [newEmail, setNewEmail] = useState("");
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const isLocalEmail = user?.email?.endsWith("@sedefy.local");
+  const currentEmail = isLocalEmail ? "" : (user?.email || "");
 
   // Calcular completitud de cada tab
   const getPersonalCompletion = () => {
@@ -258,6 +265,28 @@ const EditProfile = () => {
       toast({ title: "Error", description: "No se pudo guardar la información", variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Función para actualizar el correo electrónico
+  const updateEmail = async () => {
+    if (!newEmail || !newEmail.includes("@")) {
+      toast({ title: "Correo inválido", description: "Por favor ingresa un correo válido", variant: "destructive" });
+      return;
+    }
+    setEmailSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      setEmailSent(true);
+      toast({
+        title: "Correo de confirmación enviado",
+        description: `Revisa tu bandeja en ${newEmail} para confirmar el cambio.`,
+      });
+    } catch (error: any) {
+      toast({ title: "Error al actualizar correo", description: error.message || "Intenta de nuevo", variant: "destructive" });
+    } finally {
+      setEmailSaving(false);
     }
   };
 
@@ -636,14 +665,73 @@ const saveAwards = async (next?: any[]) => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Correo Electrónico</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={user?.email || ""}
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">El correo no puede ser modificado</p>
+                  {isLocalEmail ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Ingresa tu correo real"
+                          value={newEmail}
+                          onChange={(e) => { setNewEmail(e.target.value); setEmailSent(false); }}
+                          disabled={emailSaving || emailSent}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={updateEmail}
+                          disabled={emailSaving || emailSent || !newEmail}
+                          className="shrink-0"
+                        >
+                          {emailSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                      {emailSent ? (
+                        <p className="text-xs text-primary flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Correo de confirmación enviado. Revisa tu bandeja.
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Tu cuenta usa un correo temporal. Actualízalo con tu correo real.</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Input
+                        id="email"
+                        type="email"
+                        value={currentEmail}
+                        disabled
+                        className="bg-muted"
+                      />
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          type="email"
+                          placeholder="Nuevo correo electrónico"
+                          value={newEmail}
+                          onChange={(e) => { setNewEmail(e.target.value); setEmailSent(false); }}
+                          disabled={emailSaving || emailSent}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={updateEmail}
+                          disabled={emailSaving || emailSent || !newEmail}
+                          className="shrink-0"
+                        >
+                          {emailSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                      {emailSent ? (
+                        <p className="text-xs text-primary flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Correo de confirmación enviado. Revisa tu bandeja.
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Ingresa un nuevo correo y haz clic en el ícono para solicitar el cambio.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
