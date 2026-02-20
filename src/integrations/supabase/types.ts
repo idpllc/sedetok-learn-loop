@@ -3384,6 +3384,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_conversation_ids: { Args: never; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
