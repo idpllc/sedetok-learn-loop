@@ -36,6 +36,16 @@ export const useAdminStats = () => {
         .from("user_quiz_results")
         .select("*", { count: "exact", head: true });
 
+      // Get chat conversations count
+      const { count: chatGroupsCount } = await supabase
+        .from("chat_conversations")
+        .select("*", { count: "exact", head: true });
+
+      // Get total chat messages count
+      const { count: chatMessagesCount } = await supabase
+        .from("chat_messages")
+        .select("*", { count: "exact", head: true });
+
       // Calculate stats from content
       let videosCount = 0;
       let documentsCount = 0;
@@ -63,6 +73,8 @@ export const useAdminStats = () => {
         estimatedViewingHours,
         completedPathsCount: completedPathsCount || 0,
         completedQuizzesCount: completedQuizzesCount || 0,
+        chatGroupsCount: chatGroupsCount || 0,
+        chatMessagesCount: chatMessagesCount || 0,
       };
     },
   });
