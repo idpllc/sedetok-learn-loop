@@ -25,7 +25,7 @@ export default function InstitutionDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { myInstitution, members, isLoading, addMember } = useInstitution();
+  const { myInstitution, members, isLoading, membersLoading, addMember } = useInstitution();
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
   const [searchQuery, setSearchQuery] = useState("");

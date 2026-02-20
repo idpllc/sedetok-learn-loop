@@ -210,7 +210,10 @@ export const useInstitution = () => {
     myInstitution: myInstitution as any,
     myMembership: myMembership as any,
     members: (members as any[]),
-    isLoading: institutionLoading || membershipLoading || membersLoading,
+    // isLoading solo refleja la carga de la institución principal, NO de los miembros
+    // para evitar bloquear la UI con skeleton mientras se cargan los miembros secundarios
+    isLoading: institutionLoading || membershipLoading,
+    membersLoading,
     addMember,
     removeMember
   };
