@@ -58,7 +58,7 @@ const ChatPage: React.FC = () => {
     conversations, activeConversation, messages, loadingConversations, loadingMessages, sending,
     openConversation, sendMessage, createDirectConversation, createGroupConversation,
     uploadChatFile, searchUsers, searchInstitutionUsers, setActiveConversation,
-    leaveConversation, updateGroupAvatar, getConversationMembers, deleteMessage,
+    leaveConversation, updateGroupAvatar, getConversationMembers, deleteMessage, playMessageSent,
   } = useChat();
   const { myMembership } = useInstitution();
 
@@ -151,6 +151,12 @@ const ChatPage: React.FC = () => {
   };
 
   const handleSend = async () => {
+    if (!messageInput.trim()) return;
+    const text = messageInput.trim();
+    setMessageInput(""); setShowEmoji(false);
+    playMessageSent();
+    await sendMessage(text);
+  };
     if (!messageInput.trim() && !uploading) return;
     const text = messageInput.trim();
     setMessageInput(""); setShowEmoji(false);
