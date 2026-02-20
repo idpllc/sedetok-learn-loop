@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Share, Plus, Download, Smartphone, Check } from "lucide-react";
+import { Share, Plus, Download, Smartphone, Check, Zap, WifiOff, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -13,28 +12,22 @@ const Install = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    const installed = window.matchMedia('(display-mode: standalone)').matches || 
-                     (window.navigator as any).standalone === true;
+    const installed = window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
     setIsInstalled(installed);
 
-    // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
-    const iOS = /iphone|ipad|ipod/.test(userAgent);
-    setIsIOS(iOS);
+    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
 
-    // For Android/Chrome: Capture the beforeinstallprompt event
     const handler = (e: Event) => {
       e.preventDefault();
-      const bip = e as BeforeInstallPromptEvent;
-      setDeferredPrompt(bip);
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
-
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Hide prompt once app is installed
     const installedHandler = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
@@ -49,142 +42,178 @@ const Install = () => {
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-      setIsInstalled(true);
+    setIsInstalling(true);
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+      }
+      setDeferredPrompt(null);
+    } finally {
+      setIsInstalling(false);
     }
-
-    setDeferredPrompt(null);
   };
 
+  const benefits = [
+    {
+      icon: Zap,
+      title: "Carga instantánea",
+      desc: "Abre la app en menos de un segundo desde tu pantalla de inicio"
+    },
+    {
+      icon: WifiOff,
+      title: "Funciona offline",
+      desc: "Accede a tu contenido guardado sin conexión a internet"
+    },
+    {
+      icon: Smartphone,
+      title: "Experiencia nativa",
+      desc: "Pantalla completa sin barras del navegador"
+    },
+    {
+      icon: Bell,
+      title: "Notificaciones",
+      desc: "Recibe alertas de nuevos contenidos y resultados"
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="max-w-2xl w-full">
-        <CardHeader className="text-center space-y-6">
-          <div className="flex justify-center">
-            <div className="w-24 h-24 rounded-full bg-gradient-primary flex items-center justify-center">
-              <img 
-                src={sedefyLogo} 
-                alt="Sedefy - logo" 
-                className="w-16 h-16 object-contain"
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      {/* Hero */}
+      <div className="w-full max-w-sm text-center mb-8">
+        <div className="flex justify-center mb-5">
+          <div className="relative">
+            <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-2xl shadow-primary/30">
+              <img
+                src={sedefyLogo}
+                alt="SEDETOK"
+                className="w-18 h-18 object-contain"
+                style={{ width: '4.5rem', height: '4.5rem' }}
               />
             </div>
+            {isInstalled && (
+              <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+            )}
           </div>
-          <div>
-            <CardTitle className="text-3xl font-bold mb-3">
-              Instalar SEDETOK
-            </CardTitle>
-            <CardDescription className="text-lg">
-              Obtén la mejor experiencia de aprendizaje instalando nuestra app
-            </CardDescription>
-          </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="space-y-6">
-          {isInstalled ? (
-            <div className="text-center space-y-4 py-6">
-              <div className="flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
-                  <Check className="w-8 h-8 text-green-500" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-2">¡Ya está instalada!</h3>
-                <p className="text-muted-foreground">
-                  SEDETOK ya está instalada en tu dispositivo
-                </p>
-              </div>
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          {isInstalled ? '¡Ya está instalada!' : 'Instala SEDETOK'}
+        </h1>
+        <p className="text-muted-foreground">
+          {isInstalled
+            ? 'SEDETOK ya está en tu pantalla de inicio. ¡A aprender!'
+            : 'La mejor plataforma educativa, ahora como app en tu dispositivo'}
+        </p>
+      </div>
+
+      {isInstalled ? (
+        /* Estado instalado */
+        <div className="w-full max-w-sm space-y-4">
+          <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 text-center">
+            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Check className="w-8 h-8 text-green-500" />
             </div>
-          ) : (
-            <>
-              {/* Benefits section */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg">Beneficios de instalar:</h3>
-                <ul className="space-y-2 text-muted-foreground">
-                  <li className="flex items-start gap-3">
-                    <Smartphone className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
-                    <span>Acceso rápido desde tu pantalla de inicio</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Download className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
-                    <span>Funciona sin conexión a internet</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
-                    <span>Experiencia optimizada como aplicación nativa</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Install button for Android/Chrome */}
-              {!isIOS && deferredPrompt && (
-                <Button
-                  onClick={handleInstall}
-                  size="lg"
-                  className="w-full h-14 text-lg font-semibold"
-                >
+            <p className="text-green-500 font-semibold">Instalación completa</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Busca el icono de SEDETOK en tu pantalla de inicio
+            </p>
+          </div>
+          <Button
+            onClick={() => window.location.href = '/'}
+            size="lg"
+            className="w-full h-12 font-semibold"
+          >
+            Ir a SEDETOK
+          </Button>
+        </div>
+      ) : (
+        <div className="w-full max-w-sm space-y-4">
+          {/* Botón de instalación principal */}
+          {!isIOS && deferredPrompt && (
+            <Button
+              onClick={handleInstall}
+              disabled={isInstalling}
+              size="lg"
+              className="w-full h-14 text-lg font-bold shadow-lg shadow-primary/25"
+            >
+              {isInstalling ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-primary-foreground/50 border-t-primary-foreground rounded-full animate-spin mr-2" />
+                  Instalando...
+                </>
+              ) : (
+                <>
                   <Download className="w-5 h-5 mr-2" />
-                  Instalar SEDETOK
-                </Button>
+                  Instalar SEDETOK gratis
+                </>
               )}
+            </Button>
+          )}
 
-              {/* Instructions for iOS */}
-              {isIOS && (
-                <Card className="bg-muted/50">
-                  <CardContent className="pt-6 space-y-4">
-                    <h3 className="font-semibold text-lg">Instrucciones para iOS:</h3>
-                    <div className="space-y-4 text-sm">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                          <Share className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium mb-1">1. Toca el botón de compartir</p>
-                          <p className="text-xs text-muted-foreground">(ubicado en la parte inferior de Safari)</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                          <Plus className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium mb-1">2. Selecciona "Añadir a pantalla de inicio"</p>
-                          <p className="text-xs text-muted-foreground">Busca esta opción en el menú</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                          <Check className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-medium mb-1">3. Confirma la instalación</p>
-                          <p className="text-xs text-muted-foreground">Toca "Añadir" en la esquina superior derecha</p>
-                        </div>
+          {/* Instrucciones iOS */}
+          {isIOS && (
+            <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+              <p className="font-semibold text-foreground text-center">Cómo instalar en iPhone / iPad</p>
+              <div className="space-y-3">
+                {[
+                  { num: 1, icon: Share, text: 'Toca el botón de Compartir', sub: 'En la barra inferior de Safari' },
+                  { num: 2, icon: Plus, text: '"Añadir a pantalla de inicio"', sub: 'Desplázate abajo en el menú' },
+                  { num: 3, icon: Check, text: 'Confirma tocando "Añadir"', sub: 'Esquina superior derecha' },
+                ].map(({ num, icon: Icon, text, sub }) => (
+                  <div key={num} className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-primary">{num}</span>
+                    </div>
+                    <div className="flex items-start gap-2 flex-1">
+                      <Icon className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{text}</p>
+                        <p className="text-xs text-muted-foreground">{sub}</p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Fallback for browsers without install prompt */}
-              {!isIOS && !deferredPrompt && (
-                <Card className="bg-muted/50">
-                  <CardContent className="pt-6">
-                    <p className="text-sm text-muted-foreground text-center">
-                      Para instalar SEDETOK, abre el menú de tu navegador y busca la opción 
-                      "Instalar aplicación" o "Añadir a pantalla de inicio"
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Fallback sin prompt */}
+          {!isIOS && !deferredPrompt && (
+            <div className="bg-card border border-border rounded-2xl p-5 text-center">
+              <p className="text-sm text-muted-foreground mb-1">
+                Para instalar SEDETOK, abre el menú de tu navegador
+              </p>
+              <p className="text-sm font-medium text-foreground">
+                y selecciona "Instalar aplicación" o "Añadir a pantalla de inicio"
+              </p>
+            </div>
+          )}
+
+          {/* Beneficios */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            {benefits.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                className="bg-card border border-border/50 rounded-xl p-4 space-y-2"
+              >
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-primary" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">{title}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-center text-xs text-muted-foreground pt-2">
+            Gratuita · Sin publicidad · Segura
+          </p>
+        </div>
+      )}
     </div>
   );
 };
