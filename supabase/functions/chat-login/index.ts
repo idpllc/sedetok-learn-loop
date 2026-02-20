@@ -120,10 +120,25 @@ Deno.serve(async (req) => {
     const rawEmail = payload.email || rawPayload.email || null;
     const email = rawEmail || (documentNumber ? `${documentNumber}@sedefy.local` : null);
 
-    // Full name
-    const full_name = payload.full_name || payload.name 
-      || ((payload.name && payload.surname) ? `${payload.name} ${payload.surname}` : null)
-      || [payload.firstName, payload.lastName].filter(Boolean).join(" ") || null;
+    // Full name — prefer explicit full_name, then combine name+surname only if full_name is absent
+    let full_name = payload.full_name
+      || (payload.name && payload.surname ? `${payload.name} ${payload.surname}`.trim() : null)
+      || [payload.firstName, payload.lastName].filter(Boolean).join(" ")
+      || payload.name
+      || null;
+
+    // Deduplicate name if the second half is a repeat of the first (e.g. "JUAN PEREZ JUAN PEREZ")
+    if (full_name) {
+      const words = full_name.trim().split(/\s+/);
+      const half = Math.floor(words.length / 2);
+      if (words.length >= 4 && words.length % 2 === 0) {
+        const firstHalf = words.slice(0, half).join(" ");
+        const secondHalf = words.slice(half).join(" ");
+        if (firstHalf === secondHalf) {
+          full_name = firstHalf;
+        }
+      }
+    }
 
     // Role
     const member_role = payload.role || payload.member_role || rawPayload.member_role || rawPayload.role || "student";
@@ -259,7 +274,13 @@ Deno.serve(async (req) => {
       }
 
       // Create or update profile
-      const username = email.split("@")[0].replace(/[^a-zA-Z0-9_]/g, "_") + "_" + Math.random().toString(36).slice(2, 6);
+      // Username: use numero_documento if available (guaranteed unique per student),
+      // otherwise use first 8 chars of userId (no collision risk)
+      const usernameBase = numero_documento
+        ? `u${numero_documento}`
+        : `u${userId.replace(/-/g, "").slice(0, 12)}`;
+      const username = usernameBase.replace(/[^a-zA-Z0-9_]/g, "_");
+
       const { error: profileError } = await adminClient.from("profiles").upsert({
         id: userId,
         username,
