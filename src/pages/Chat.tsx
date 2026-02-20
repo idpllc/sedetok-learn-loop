@@ -410,7 +410,7 @@ const ChatPage: React.FC = () => {
 
         {/* New Chat / Group Panel */}
         {showSearch && (
-          <div className="border-b border-border">
+          <div className="border-b border-border max-h-[70vh] overflow-y-auto">
             <div className="flex border-b border-border">
               <button
                 onClick={() => { setSearchMode("direct"); setSelectedMembers([]); setSearchQuery(""); setSearchResults([]); }}
@@ -491,38 +491,56 @@ const ChatPage: React.FC = () => {
               {/* Following users - shown when no search query and mode is direct */}
               {!searchQuery && searchMode === "direct" && (
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground px-1 mb-2">Siguiendo</p>
+                  <div className="flex items-center gap-1.5 px-1 mb-2">
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Siguiendo
+                    </p>
+                    {followingUsers.length > 0 && (
+                      <span className="ml-auto text-xs text-muted-foreground">{followingUsers.length}</span>
+                    )}
+                  </div>
                   {loadingFollowing ? (
-                    <div className="space-y-2">
-                      {[1,2,3].map((i) => (
-                        <div key={i} className="flex items-center gap-2 p-2">
-                          <Skeleton className="h-9 w-9 rounded-full" />
-                          <div className="flex-1 space-y-1">
-                            <Skeleton className="h-3 w-24" />
+                    <div className="space-y-1">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-3 px-2 py-2">
+                          <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                          <div className="flex-1 space-y-1.5">
+                            <Skeleton className="h-3 w-28" />
                             <Skeleton className="h-3 w-16" />
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : followingUsers.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">Aún no sigues a nadie</p>
+                    <div className="text-center py-6 px-4">
+                      <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground font-medium">Aún no sigues a nadie</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">Sigue usuarios para chatear con ellos directamente</p>
+                    </div>
                   ) : (
-                    <div className="space-y-0.5 max-h-56 overflow-y-auto">
+                    <div className="space-y-0.5 max-h-64 overflow-y-auto">
                       {followingUsers.map((u) => (
                         <button
                           key={u.id}
                           onClick={() => handleStartDirectChat(u.id)}
-                          className="flex items-center gap-2.5 w-full p-2 rounded-lg hover:bg-muted transition-colors"
+                          className="flex items-center gap-3 w-full px-2 py-2.5 rounded-xl hover:bg-muted transition-colors group"
                         >
-                          <Avatar className="h-9 w-9 shrink-0">
-                            <AvatarImage src={u.avatar_url} />
-                            <AvatarFallback className="bg-primary/10 text-primary text-xs">{getInitials(u.full_name || u.username)}</AvatarFallback>
-                          </Avatar>
+                          <div className="relative shrink-0">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={u.avatar_url} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                                {getInitials(u.full_name || u.username)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
                           <div className="text-left flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{u.full_name || u.username}</p>
+                            <p className="text-sm font-semibold text-foreground truncate leading-tight">
+                              {u.full_name || u.username}
+                            </p>
                             <p className="text-xs text-muted-foreground truncate">@{u.username}</p>
                           </div>
-                          <MessageCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <MessageCircle className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                         </button>
                       ))}
                     </div>
