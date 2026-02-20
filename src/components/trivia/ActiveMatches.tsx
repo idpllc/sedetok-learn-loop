@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, Play } from "lucide-react";
+import { Clock, Users, Play, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ActiveMatchesProps {
@@ -14,7 +14,6 @@ interface ActiveMatchesProps {
 export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
   const { user } = useAuth();
 
-  // User's active matches
   const { data: activeMatches, isLoading } = useQuery({
     queryKey: ['user-active-matches', user?.id],
     queryFn: async () => {
@@ -63,8 +62,8 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">Cargando partidas...</p>
+        <CardContent className="py-6 text-center">
+          <p className="text-sm text-muted-foreground">Cargando partidas...</p>
         </CardContent>
       </Card>
     );
@@ -78,73 +77,81 @@ export function ActiveMatches({ onMatchSelect }: ActiveMatchesProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
     >
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="w-4 h-4 shrink-0" />
             Partidas en Curso
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2 p-3 pt-0">
           {activeMatches.map((match) => {
             const matchData = match.matches as any;
             const isMyTurn = matchData.current_player_id === user?.id;
             const isWaiting = matchData.status === 'waiting' || match.playerCount < 2;
+            const isCreatedByMe = match.players[0]?.user_id === user?.id;
             const creator = match.players?.find((p: any) => p.user_id !== user?.id);
             const creatorName = creator?.profiles?.username || 'Jugador';
-            
+
             return (
-              <motion.div
+              <motion.button
                 key={match.match_id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                onClick={() => onMatchSelect(match.match_id)}
+                className="w-full flex items-center justify-between p-3 border rounded-xl hover:bg-accent/50 active:bg-accent/70 transition-colors text-left gap-2"
               >
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-lg font-bold">
+                {/* Left: info */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-sm font-bold tracking-wider shrink-0">
                       {matchData.match_code}
                     </span>
-                    <Badge variant={isMyTurn ? "default" : "secondary"}>
+                    <Badge
+                      variant={isWaiting ? "outline" : isMyTurn ? "default" : "secondary"}
+                      className="text-xs px-2 py-0 h-5 shrink-0"
+                    >
                       {isWaiting ? (
-                        <>
-                          <Users className="w-3 h-3 mr-1" />
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
                           Esperando oponente
-                        </>
+                        </span>
                       ) : isMyTurn ? (
-                        "Tu turno"
+                        "Tu turno ⚡"
                       ) : (
                         "Esperando"
                       )}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                     <span className="capitalize">Nivel: {matchData.level}</span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      {match.playerCount}/2 jugadores
+                      {match.playerCount}/2
                     </span>
                     {isWaiting && match.playerCount === 1 && (
                       <>
                         <span>•</span>
-                        <span>Creada por: {match.players[0]?.user_id === user?.id ? 'Ti' : creatorName}</span>
+                        <span className="truncate">
+                          {isCreatedByMe ? "Creada por ti" : `Creada por: ${creatorName}`}
+                        </span>
                       </>
                     )}
                   </div>
                 </div>
-                
-                <Button
-                  onClick={() => onMatchSelect(match.match_id)}
-                  variant={isMyTurn ? "default" : "outline"}
-                  size="sm"
-                >
-                  <Play className="w-4 h-4 mr-1" />
+
+                {/* Right: action */}
+                <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold shrink-0 ${
+                  isMyTurn
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                }`}>
+                  <Play className="w-3 h-3" />
                   {isWaiting ? "Entrar" : "Continuar"}
-                </Button>
-              </motion.div>
+                </div>
+              </motion.button>
             );
           })}
         </CardContent>

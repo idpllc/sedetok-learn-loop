@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTriviaMatch } from "@/hooks/useTriviaMatch";
-import { Loader2, Copy, Users } from "lucide-react";
+import { Loader2, Copy, Users, Shuffle, Lock, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { ActiveMatches } from "./ActiveMatches";
@@ -24,14 +24,6 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
       const match = await createMatch.mutateAsync(selectedLevel);
       setCreatedMatch(match);
       toast.success("¡Partida creada! Comparte el código con tu oponente");
-      
-      // Poll for second player
-      const checkInterval = setInterval(async () => {
-        // This will be handled by realtime subscription
-      }, 2000);
-
-      // Store interval to clear later
-      (window as any).matchCheckInterval = checkInterval;
     } catch (error: any) {
       toast.error(error.message || "Error al crear la partida");
     }
@@ -42,7 +34,6 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
       toast.error("Ingresa un código de partida");
       return;
     }
-
     try {
       const match = await joinMatch.mutateAsync(matchCode.toUpperCase());
       toast.success("¡Te uniste a la partida!");
@@ -74,40 +65,32 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
   if (createdMatch) {
     return (
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="max-w-md mx-auto"
+        className="max-w-sm mx-auto"
       >
         <Card className="bg-gradient-to-br from-primary/10 to-secondary/10">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl">
-              Esperando Oponente
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center">
-              <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
-              <p className="text-muted-foreground mb-4">
-                Comparte este código con tu oponente
+          <CardContent className="pt-6 pb-6 space-y-5 text-center">
+            <Loader2 className="w-10 h-10 animate-spin mx-auto text-primary" />
+            <div>
+              <h2 className="text-xl font-bold mb-1">Esperando Oponente</h2>
+              <p className="text-sm text-muted-foreground">
+                Comparte este código con tu rival
               </p>
-              
-              <div className="flex items-center gap-2 justify-center">
-                <div className="text-4xl font-bold tracking-wider bg-background/50 px-6 py-3 rounded-lg">
-                  {createdMatch.match_code}
-                </div>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={copyMatchCode}
-                >
-                  <Copy className="w-5 h-5" />
-                </Button>
+            </div>
+
+            <div className="flex items-center gap-2 justify-center">
+              <div className="text-3xl font-bold tracking-widest bg-background/80 px-5 py-3 rounded-xl border-2 border-primary/30 font-mono">
+                {createdMatch.match_code}
               </div>
+              <Button size="icon" variant="outline" onClick={copyMatchCode} className="shrink-0">
+                <Copy className="w-4 h-4" />
+              </Button>
             </div>
 
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Users className="w-4 h-4" />
-              <span>1/2 jugadores</span>
+              <span>1/2 jugadores conectados</span>
             </div>
           </CardContent>
         </Card>
@@ -117,115 +100,105 @@ export function TriviaMatchLobby({ onMatchStart, selectedLevel }: TriviaMatchLob
 
   return (
     <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
+      initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="max-w-md mx-auto space-y-6"
+      className="max-w-md mx-auto space-y-4"
     >
       {/* Active matches */}
       <ActiveMatches onMatchSelect={onMatchStart} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center">Jugar Aleatorio</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={handleJoinRandom}
-            disabled={joinRandomMatch.isPending || searchingRandom}
-          >
-            {joinRandomMatch.isPending || searchingRandom ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Iniciando partida...
-              </>
-            ) : (
-              <>
-                <Users className="w-5 h-5 mr-2" />
-                Empezar Partida Aleatoria
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Action cards — stacked compact */}
+      <div className="grid grid-cols-1 gap-3">
+        {/* Random */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Shuffle className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Partida Aleatoria</p>
+                <p className="text-xs text-muted-foreground">Encuentra un oponente al azar</p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleJoinRandom}
+                disabled={joinRandomMatch.isPending || searchingRandom}
+                className="shrink-0"
+              >
+                {joinRandomMatch.isPending || searchingRandom ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Jugar"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            O
-          </span>
-        </div>
+        {/* Create private */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5 text-secondary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Partida Privada</p>
+                <p className="text-xs text-muted-foreground">Crea con código para invitar</p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCreateMatch}
+                disabled={createMatch.isPending}
+                className="shrink-0"
+              >
+                {createMatch.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Crear"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Join by code */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-accent/30 flex items-center justify-center shrink-0">
+                <LogIn className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">Unirse con Código</p>
+                <p className="text-xs text-muted-foreground">Ingresa el código de tu oponente</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="XXXXXX"
+                value={matchCode}
+                onChange={(e) => setMatchCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                className="text-center text-base tracking-widest font-mono font-bold uppercase"
+              />
+              <Button
+                onClick={handleJoinMatch}
+                disabled={joinMatch.isPending || !matchCode.trim()}
+                className="shrink-0"
+              >
+                {joinMatch.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Entrar"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center">Crear Partida Privada</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full"
-            onClick={handleCreateMatch}
-            disabled={createMatch.isPending}
-          >
-            {createMatch.isPending ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Creando...
-              </>
-            ) : (
-              "Crear con Código"
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            O
-          </span>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center">Unirse a Partida</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input
-            placeholder="Código de partida"
-            value={matchCode}
-            onChange={(e) => setMatchCode(e.target.value.toUpperCase())}
-            maxLength={6}
-            className="text-center text-lg tracking-wider"
-          />
-          <Button
-            size="lg"
-            variant="outline"
-            className="w-full"
-            onClick={handleJoinMatch}
-            disabled={joinMatch.isPending || !matchCode.trim()}
-          >
-            {joinMatch.isPending ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Uniéndose...
-              </>
-            ) : (
-              "Unirse"
-            )}
-          </Button>
-        </CardContent>
-      </Card>
     </motion.div>
   );
 }

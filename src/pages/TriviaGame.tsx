@@ -374,16 +374,18 @@ export default function TriviaGame() {
   // 1v1 Lobby
   if (screen === "lobby-1v1") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
-        <div className="container max-w-4xl mx-auto py-8 space-y-6">
-          <Button variant="ghost" onClick={() => setScreen("menu")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver al Menú
-          </Button>
+      <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10">
+        <div className="container max-w-lg mx-auto px-4 pt-4 pb-8 space-y-4">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setScreen("menu")} className="-ml-2">
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Volver
+            </Button>
+          </div>
           
-          <div className="text-center space-y-2 mb-8">
-            <h1 className="text-4xl font-bold">Modo 1 vs 1</h1>
-            <p className="text-muted-foreground">
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl font-bold">Modo 1 vs 1</h1>
+            <p className="text-sm text-muted-foreground">
               Compite contra otro jugador y colecciona todos los personajes
             </p>
           </div>
