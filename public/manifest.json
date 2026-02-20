@@ -65,5 +65,11 @@
       "description": "Jugar trivia educativa"
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://sedetok-learn-loop.lovable.app/manifest.json"
+    }
+  ]
 }

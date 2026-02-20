@@ -5,6 +5,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAOpenInAppBanner } from "@/components/PWAOpenInAppBanner";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -136,6 +137,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <PWAInstallPrompt />
+        <PWAOpenInAppBanner />
       </BrowserRouter>
     </QueryClientProvider>
   </HelmetProvider>
