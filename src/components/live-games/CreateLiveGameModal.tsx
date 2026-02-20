@@ -8,7 +8,7 @@ import { useLiveGames, LiveGameQuestion } from "@/hooks/useLiveGames";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Search, Eye, Sparkles, Loader2, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Search, Eye, Sparkles, Loader2, Image as ImageIcon, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +17,65 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/quiz/RichTextEditor";
 import { OptionEditor } from "./OptionEditor";
+import { useCloudinary } from "@/hooks/useCloudinary";
+
+// Inline component for uploading an image for the question itself
+const QuestionImageUploader = ({
+  imageUrl,
+  onImageChange,
+}: {
+  imageUrl?: string;
+  onImageChange: (url: string) => void;
+}) => {
+  const { uploadFile, uploading } = useCloudinary();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      toast({ title: "Subiendo imagen...", description: "Por favor espera" });
+      const url = await uploadFile(file, "image");
+      onImageChange(url);
+      toast({ title: "Imagen agregada", description: "La imagen se subió exitosamente" });
+    } catch {
+      toast({ title: "Error", description: "No se pudo subir la imagen", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <input type="file" ref={fileInputRef} onChange={handleUpload} accept="image/*" className="hidden" />
+      {imageUrl ? (
+        <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+          <img src={imageUrl} alt="Imagen de la pregunta" className="w-full h-full object-cover" />
+          <Button
+            type="button"
+            variant="destructive"
+            size="icon"
+            className="absolute top-1 right-1 h-6 w-6"
+            onClick={() => onImageChange("")}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+        >
+          <ImageIcon className="w-4 h-4 mr-2" />
+          {uploading ? "Subiendo..." : "Agregar imagen a la pregunta"}
+        </Button>
+      )}
+    </div>
+  );
+};
+
 
 interface CreateLiveGameModalProps {
   open: boolean;
@@ -529,7 +588,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                 <>
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between mb-3">
-                      <Label>Preguntas Generadas ({customQuestions.length})</Label>
+                      <Label>Preguntas Generadas ({customQuestions.length}) — Puedes editarlas</Label>
                       <Button
                         variant="outline"
                         size="sm"
@@ -538,35 +597,120 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                         Limpiar
                       </Button>
                     </div>
-                    <ScrollArea className="h-[300px]">
-                      <div className="space-y-2">
-                        {customQuestions.map((q, idx) => (
-                          <Card key={idx} className="p-3">
-                            <p className="text-sm font-medium mb-2">
-                              {idx + 1}. {q.question_text}
-                            </p>
-                            <div className="space-y-1 mt-2">
-                              {q.options.map((option, optIdx) => (
-                                <div 
-                                  key={optIdx} 
-                                  className={`text-xs px-2 py-1 rounded flex items-center gap-2 ${
-                                    q.correct_answer === optIdx 
-                                      ? 'bg-green-500/10 text-green-700 dark:text-green-400 font-medium' 
-                                      : 'bg-muted/50 text-muted-foreground'
-                                  }`}
-                                >
-                                  <span className="font-semibold">{String.fromCharCode(65 + optIdx)}.</span>
-                                  <span>{typeof option === 'string' ? option : option.text}</span>
-                                  {q.correct_answer === optIdx && (
-                                    <span className="ml-auto text-green-600 dark:text-green-400">✓</span>
-                                  )}
-                                </div>
+                    <ScrollArea className="h-[500px] pr-2">
+                      <div className="space-y-4">
+                        {customQuestions.map((question, qIndex) => (
+                          <Card key={qIndex} className="p-4 space-y-3">
+                            <div className="flex justify-between items-start">
+                              <Label className="text-sm font-semibold">Pregunta {qIndex + 1}</Label>
+                              <Button
+                                onClick={() => handleRemoveQuestion(qIndex)}
+                                variant="ghost"
+                                size="icon"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+
+                            {/* Question text */}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Enunciado (Texto Enriquecido)</Label>
+                              <RichTextEditor
+                                content={question.question_text}
+                                onChange={(content) =>
+                                  handleQuestionChange(qIndex, "question_text", content)
+                                }
+                                placeholder="Edita la pregunta con formato..."
+                              />
+                            </div>
+
+                            {/* Question image */}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Imagen de la Pregunta (opcional)</Label>
+                              <QuestionImageUploader
+                                imageUrl={question.image_url}
+                                onImageChange={(url) => handleQuestionChange(qIndex, "image_url", url)}
+                              />
+                            </div>
+
+                            {/* Options */}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Opciones de Respuesta</Label>
+                              {question.options.map((option, oIndex) => (
+                                <OptionEditor
+                                  key={oIndex}
+                                  option={option}
+                                  index={oIndex}
+                                  onTextChange={(value) =>
+                                    handleOptionChange(qIndex, oIndex, 'text', value)
+                                  }
+                                  onImageChange={(value) =>
+                                    handleOptionChange(qIndex, oIndex, 'image_url', value)
+                                  }
+                                />
                               ))}
                             </div>
-                            <div className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
-                              <span>{q.points} pts</span>
-                              <span>•</span>
-                              <span>{q.time_limit}s</span>
+
+                            {/* Correct answer */}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Respuesta Correcta</Label>
+                              <Select
+                                value={String(question.correct_answer)}
+                                onValueChange={(value) =>
+                                  handleQuestionChange(qIndex, "correct_answer", parseInt(value))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona la respuesta correcta" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {question.options.map((_, idx) => (
+                                    <SelectItem key={idx} value={String(idx)}>
+                                      Opción {idx + 1}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {/* Feedback */}
+                            <div className="space-y-2">
+                              <Label className="text-xs">Retroalimentación (opcional)</Label>
+                              <RichTextEditor
+                                content={question.feedback || ""}
+                                onChange={(content) =>
+                                  handleQuestionChange(qIndex, "feedback", content)
+                                }
+                                placeholder="Retroalimentación que se mostrará tras la pregunta..."
+                              />
+                            </div>
+
+                            {/* Points & time */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs">Puntos</Label>
+                                <Input
+                                  type="number"
+                                  value={question.points}
+                                  onChange={(e) =>
+                                    handleQuestionChange(qIndex, "points", parseInt(e.target.value))
+                                  }
+                                  min={100}
+                                  step={100}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Tiempo (segundos)</Label>
+                                <Input
+                                  type="number"
+                                  value={question.time_limit}
+                                  onChange={(e) =>
+                                    handleQuestionChange(qIndex, "time_limit", parseInt(e.target.value))
+                                  }
+                                  min={5}
+                                  max={120}
+                                />
+                              </div>
                             </div>
                           </Card>
                         ))}
@@ -579,7 +723,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                     disabled={!title || createGame.isPending}
                     className="w-full"
                   >
-                    {createGame.isPending ? "Creando..." : "Crear Juego con Preguntas"}
+                    {createGame.isPending ? "Creando..." : `Crear Juego con ${customQuestions.length} Preguntas`}
                   </Button>
                 </>
               )}
