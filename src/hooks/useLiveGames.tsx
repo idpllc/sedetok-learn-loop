@@ -373,6 +373,9 @@ export const useLiveGameDetails = (gameId?: string) => {
       return data as LiveGame;
     },
     enabled: !!gameId,
+    // Poll every 2 seconds as a fallback for Realtime — ensures players always see current question
+    refetchInterval: 2000,
+    refetchIntervalInBackground: false,
   });
 
   const { data: questions, isLoading: questionsLoading } = useQuery({
@@ -393,6 +396,11 @@ export const useLiveGameDetails = (gameId?: string) => {
       })) as LiveGameQuestion[];
     },
     enabled: !!gameId,
+    // Refetch questions every 3 seconds while game is in progress as a Realtime fallback
+    refetchInterval: (query) => {
+      const gameData = query.state.data;
+      return gameData && (gameData as LiveGameQuestion[]).length === 0 ? 3000 : false;
+    },
   });
 
   const { data: players, isLoading: playersLoading } = useQuery({
