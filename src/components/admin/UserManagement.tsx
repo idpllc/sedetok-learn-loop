@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,10 @@ import { Search, Shield, UserCog, Crown, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+
+const PAGE_SIZE = 20;
 
 export function UserManagement() {
   const { toast } = useToast();
@@ -181,6 +185,12 @@ export function UserManagement() {
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const { page, setPage, totalPages, totalItems, paged: pagedUsers, pageSize } = usePagination(filteredUsers, PAGE_SIZE);
+
+  // Reset page when search changes
+  useEffect(() => { setPage(1); }, [searchTerm]);
+
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "superadmin":
@@ -224,11 +234,13 @@ export function UserManagement() {
               className="pl-10"
             />
           </div>
+          <span className="text-sm text-muted-foreground self-center">{totalItems} usuarios</span>
         </div>
 
         {isLoading ? (
           <div className="text-center py-8">Cargando...</div>
         ) : (
+          <>
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -244,7 +256,7 @@ export function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers?.map((user) => (
+                {pagedUsers?.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">@{user.username}</TableCell>
                     <TableCell>{user.full_name || 'Sin nombre'}</TableCell>
@@ -325,6 +337,14 @@ export function UserManagement() {
               </TableBody>
             </Table>
           </div>
+          <PaginationControls
+            page={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+          />
+          </>
         )}
       </CardContent>
 

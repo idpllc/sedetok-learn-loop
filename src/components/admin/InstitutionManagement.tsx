@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 import { supabase } from "@/integrations/supabase/client";
 import { useS3Upload } from "@/hooks/useS3Upload";
 import { useToast } from "@/hooks/use-toast";
@@ -217,6 +219,8 @@ export function InstitutionManagement() {
     (inst.city || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const { page, setPage, totalPages, totalItems, paged, pageSize } = usePagination(filtered, 20);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -245,7 +249,7 @@ export function InstitutionManagement() {
           <div className="flex gap-4 text-sm text-muted-foreground">
             <span>{institutions?.length || 0} instituciones en total</span>
             <span>•</span>
-            <span>{filtered.length} mostradas</span>
+            <span>{totalItems} mostradas</span>
           </div>
 
           {/* Table */}
@@ -275,7 +279,7 @@ export function InstitutionManagement() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map((inst) => (
+                    paged.map((inst) => (
                       <TableRow key={inst.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
