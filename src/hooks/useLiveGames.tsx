@@ -416,10 +416,33 @@ export const useLiveGameDetails = (gameId?: string) => {
   useEffect(() => {
     if (!gameId) return;
 
-    console.log('Setting up realtime subscriptions for game:', gameId);
+    console.log('[LiveGame] Setting up realtime for game:', gameId);
 
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase
+        .from("live_game_players")
+        .select("*")
+        .eq("game_id", gameId)
+        .order("total_score", { ascending: false });
+      if (!error && data) {
+        queryClient.setQueryData(["live-game-players", gameId], data as LiveGamePlayer[]);
+      }
+    };
+
+    const fetchGame = async () => {
+      const { data, error } = await supabase
+        .from("live_games")
+        .select("*")
+        .eq("id", gameId)
+        .single();
+      if (!error && data) {
+        queryClient.setQueryData(["live-game", gameId], data as LiveGame);
+      }
+    };
+
+    const channelName = `live-game-host-${gameId}`;
     const channel = supabase
-      .channel(`live-game-${gameId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -429,21 +452,42 @@ export const useLiveGameDetails = (gameId?: string) => {
           filter: `id=eq.${gameId}`,
         },
         (payload) => {
-          console.log('Game update received:', payload);
-          queryClient.invalidateQueries({ queryKey: ["live-game", gameId] });
+          console.log('[LiveGame] Game update:', payload.eventType);
+          // Update cache directly with new data to avoid refetch delay
+          if (payload.new) {
+            queryClient.setQueryData(["live-game", gameId], payload.new as LiveGame);
+          } else {
+            fetchGame();
+          }
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'live_game_players',
-          filter: `game_id=eq.${gameId}`,
         },
         (payload) => {
-          console.log('Players update received:', payload);
-          queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
+          console.log('[LiveGame] Player joined:', payload.new);
+          // Only update if this player belongs to our game
+          if (payload.new && (payload.new as any).game_id === gameId) {
+            fetchPlayers();
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'live_game_players',
+        },
+        (payload) => {
+          console.log('[LiveGame] Player updated:', payload.new);
+          if (payload.new && (payload.new as any).game_id === gameId) {
+            fetchPlayers();
+          }
         }
       )
       .on(
@@ -453,18 +497,17 @@ export const useLiveGameDetails = (gameId?: string) => {
           schema: 'public',
           table: 'live_game_answers',
         },
-        (payload) => {
-          console.log('Answer inserted:', payload);
-          // Force immediate refetch of players to update scores
-          queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
+        () => {
+          // Refetch players to get updated scores
+          fetchPlayers();
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
+      .subscribe((status, err) => {
+        console.log('[LiveGame] Channel status:', status, err ?? '');
       });
 
     return () => {
-      console.log('Removing channel for game:', gameId);
+      console.log('[LiveGame] Removing channel for game:', gameId);
       supabase.removeChannel(channel);
     };
   }, [gameId, queryClient]);
