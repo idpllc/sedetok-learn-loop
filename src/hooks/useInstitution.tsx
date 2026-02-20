@@ -3,6 +3,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useToast } from "./use-toast";
 
+// --- SessionStorage helpers ---
+const INSTITUTION_CACHE_KEY = (userId: string) => `institution_profile_${userId}`;
+const MEMBERSHIP_CACHE_KEY = (userId: string) => `institution_membership_${userId}`;
+
+function readCache<T>(key: string): T | undefined {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return undefined;
+    return JSON.parse(raw) as T;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeCache(key: string, value: unknown) {
+  try {
+    if (value === null || value === undefined) {
+      sessionStorage.removeItem(key);
+    } else {
+      sessionStorage.setItem(key, JSON.stringify(value));
+    }
+  } catch {
+    // sessionStorage puede fallar en modo privado con cuota llena — ignorar
+  }
+}
+
 export const useInstitution = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -27,7 +53,10 @@ export const useInstitution = () => {
         console.error("Error fetching institution (admin):", errAdmin);
         throw errAdmin;
       }
-      if (instAdmin) return instAdmin;
+      if (instAdmin) {
+        writeCache(INSTITUTION_CACHE_KEY(user.id), instAdmin);
+        return instAdmin;
+      }
 
       // Fallback: institution where user is member
       const { data: membership, error: errMember } = await sb
@@ -44,12 +73,18 @@ export const useInstitution = () => {
         throw errMember;
       }
 
-      return membership?.institution ?? null;
+      const result = membership?.institution ?? null;
+      writeCache(INSTITUTION_CACHE_KEY(user.id), result);
+      return result;
     },
     enabled: !!user,
-    staleTime: 0,
+    // Datos frescos por 5 min; mientras tanto usa caché de sessionStorage
+    staleTime: 5 * 60 * 1000,
+    // Datos pre-cargados desde sessionStorage — aparecen INMEDIATAMENTE sin skeleton
+    initialData: user ? readCache(INSTITUTION_CACHE_KEY(user.id)) : undefined,
+    initialDataUpdatedAt: 0, // Marca como stale para re-validar en background
     refetchOnMount: true,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: false,
   });
 
   // Get user's institution membership
@@ -70,9 +105,14 @@ export const useInstitution = () => {
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") throw error;
+      writeCache(MEMBERSHIP_CACHE_KEY(user.id), data);
       return data;
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+    initialData: user ? readCache(MEMBERSHIP_CACHE_KEY(user.id)) : undefined,
+    initialDataUpdatedAt: 0,
+    refetchOnWindowFocus: false,
   });
 
   // Get institution members

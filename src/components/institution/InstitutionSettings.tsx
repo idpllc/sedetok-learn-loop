@@ -63,7 +63,16 @@ export function InstitutionSettings({
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidar queries de React Query
       queryClient.invalidateQueries({ queryKey: ["institution", institutionId] });
+      queryClient.invalidateQueries({ queryKey: ["my-institution"] });
+      queryClient.invalidateQueries({ queryKey: ["my-membership"] });
+      // Limpiar caché de sessionStorage para forzar re-fetch fresco
+      try {
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith("institution_")) sessionStorage.removeItem(key);
+        });
+      } catch {}
       toast({
         title: "Configuración actualizada",
         description: "Los cambios se guardaron correctamente"

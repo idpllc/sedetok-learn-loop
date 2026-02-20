@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useInstitution } from "@/hooks/useInstitution";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +24,7 @@ import { useCloudinary } from "@/hooks/useCloudinary";
 export default function InstitutionDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { myInstitution, members, isLoading, addMember } = useInstitution();
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
@@ -165,8 +167,16 @@ export default function InstitutionDashboard() {
 
         if (error) throw error;
 
+        // Limpiar sessionStorage y re-fetch en lugar de recargar la página
+        try {
+          Object.keys(sessionStorage).forEach((key) => {
+            if (key.startsWith("institution_")) sessionStorage.removeItem(key);
+          });
+        } catch {}
+        queryClient.invalidateQueries({ queryKey: ["my-institution"] });
+        queryClient.invalidateQueries({ queryKey: ["my-membership"] });
+
         toast({ title: "Portada actualizada correctamente" });
-        window.location.reload();
       }
     } catch (error) {
       console.error("Error uploading cover:", error);
