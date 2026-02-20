@@ -1,8 +1,8 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useLiveGameDetails } from "@/hooks/useLiveGames";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Medal, Home, ArrowLeft, RotateCcw } from "lucide-react";
+import { Trophy, Medal, Home, RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -11,6 +11,8 @@ import { useEffect } from "react";
 const LiveGameResults = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const playerId = searchParams.get("playerId");
   const { game, players, isLoading } = useLiveGameDetails(gameId);
 
   useEffect(() => {
@@ -45,6 +47,8 @@ const LiveGameResults = () => {
 
   const topPlayers = players.slice(0, 3);
   const otherPlayers = players.slice(3);
+  const myPlayer = playerId ? players.find(p => p.id === playerId) : null;
+  const myRank = playerId ? players.findIndex(p => p.id === playerId) + 1 : 0;
 
   const podiumOrder = [topPlayers[1], topPlayers[0], topPlayers[2]].filter(Boolean);
 
@@ -64,6 +68,24 @@ const LiveGameResults = () => {
           <h1 className="text-2xl font-black truncate px-4">{game.title}</h1>
           <p className="text-sm text-muted-foreground">Resultados Finales</p>
         </div>
+
+        {/* My result card — shown only if playerId is known */}
+        {myPlayer && myRank > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.05 }}
+          >
+            <Card className="p-4 border-2 border-primary/40 bg-primary/5 text-center">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Tu resultado</p>
+              <p className="text-4xl font-black text-primary">#{myRank}</p>
+              <p className="text-lg font-bold mt-0.5">{myPlayer.player_name}</p>
+              <p className="text-2xl font-black mt-1">
+                {myPlayer.total_score} <span className="text-sm font-normal text-muted-foreground">puntos</span>
+              </p>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Podium */}
         {topPlayers.length > 0 && (
@@ -124,12 +146,8 @@ const LiveGameResults = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-2"
         >
-          <Button variant="outline" onClick={() => navigate(-1)} className="w-full">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
           <Button onClick={() => navigate("/live-games")} className="w-full">
             <Home className="w-4 h-4 mr-2" />
             Juegos en Vivo

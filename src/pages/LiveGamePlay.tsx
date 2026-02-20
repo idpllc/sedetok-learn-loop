@@ -1,15 +1,16 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useLiveGameDetails, useSubmitAnswer } from "@/hooks/useLiveGames";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trophy, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const LiveGamePlay = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const playerId = searchParams.get("playerId");
   const queryClient = useQueryClient();
   const { game, questions, players, isLoading } = useLiveGameDetails(gameId);
@@ -24,6 +25,13 @@ const LiveGamePlay = () => {
   const [myPlayer, setMyPlayer] = useState<any>(null);
   // Track last displayed question to avoid re-triggering on same question
   const lastQuestionIdRef = useRef<string | null>(null);
+
+  // Redirect to results page when game finishes
+  useEffect(() => {
+    if (game?.status === 'finished' && gameId) {
+      navigate(`/live-games/results/${gameId}?playerId=${playerId || ''}`, { replace: true });
+    }
+  }, [game?.status, gameId, playerId, navigate]);
 
   // Aggressively invalidate questions cache when game becomes in_progress
   useEffect(() => {
@@ -148,22 +156,12 @@ const LiveGamePlay = () => {
         </div>
       )}
 
-      {/* ── FINISHED ── */}
+      {/* ── FINISHED — redirect is handled by useEffect, this is a fallback ── */}
       {game.status === 'finished' && (
         <div className="flex-1 flex items-center justify-center p-4">
           <Card className="p-8 text-center w-full max-w-sm">
-            <Trophy className="w-16 h-16 mx-auto mb-4 text-yellow-500" />
-            <h2 className="text-2xl font-bold mb-3">¡Juego Terminado!</h2>
-            {myPlayer && (
-              <div className="space-y-1">
-                <p className="text-base text-muted-foreground">Tu posición</p>
-                <p className="text-4xl font-black text-primary">#{myRank}</p>
-                <p className="text-2xl font-bold mt-2">
-                  {myPlayer.total_score}{" "}
-                  <span className="text-sm font-normal text-muted-foreground">puntos</span>
-                </p>
-              </div>
-            )}
+            <Loader2 className="w-10 h-10 mx-auto mb-3 text-primary animate-spin" />
+            <p className="font-semibold">Cargando resultados...</p>
           </Card>
         </div>
       )}
