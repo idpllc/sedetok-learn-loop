@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLiveGameDetails } from "@/hooks/useLiveGames";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Medal, Home } from "lucide-react";
+import { Trophy, Medal, Home, ArrowLeft, RotateCcw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
@@ -185,12 +185,36 @@ const LiveGameResults = () => {
         )}
 
         {/* Actions */}
-        <div className="flex justify-center gap-4">
-          <Button onClick={() => navigate("/live-games")} size="lg">
-            <Home className="w-5 h-5 mr-2" />
-            Volver a Juegos
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="flex flex-wrap justify-center gap-4"
+        >
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            size="lg"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Volver
           </Button>
-        </div>
+          <Button
+            onClick={() => navigate("/live-games")}
+            size="lg"
+          >
+            <Home className="w-5 h-5 mr-2" />
+            Juegos en Vivo
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/")}
+            size="lg"
+          >
+            <RotateCcw className="w-5 h-5 mr-2" />
+            Ir al Inicio
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
