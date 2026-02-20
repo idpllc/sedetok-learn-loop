@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLiveGameDetails } from "@/hooks/useLiveGames";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 const LiveGameHost = () => {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { game, questions, players, isLoading } = useLiveGameDetails(gameId);
   const [currentQuestion, setCurrentQuestion] = useState<any>(null);
   const [showResults, setShowResults] = useState(false);
@@ -80,6 +82,8 @@ const LiveGameHost = () => {
 
   const handleShowResults = () => {
     fetchAnswerStats();
+    // Force-refresh players to get latest scores before showing leaderboard
+    queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
     setShowResults(true);
   };
 
