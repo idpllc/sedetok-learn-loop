@@ -13,7 +13,7 @@ import {
   ArrowLeft, Send, Image as ImageIcon, Paperclip, Search, Plus, Users,
   MessageCircle, Smile, X, CheckCheck, Hash, MoreVertical, Camera,
   LogOut, Home, Play, Sparkles, Map, BookOpen, Gamepad2, Radio, Award,
-  User, UserPlus, Info,
+  User, Trash2,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
@@ -57,7 +57,7 @@ const ChatPage: React.FC = () => {
     conversations, activeConversation, messages, loadingConversations, loadingMessages, sending,
     openConversation, sendMessage, createDirectConversation, createGroupConversation,
     uploadChatFile, searchUsers, searchInstitutionUsers, setActiveConversation,
-    leaveConversation, updateGroupAvatar, getConversationMembers,
+    leaveConversation, updateGroupAvatar, getConversationMembers, deleteMessage,
   } = useChat();
   const { myMembership } = useInstitution();
 
@@ -83,6 +83,11 @@ const ChatPage: React.FC = () => {
   // Leave dialog
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [leavingChat, setLeavingChat] = useState(false);
+
+  // Delete message
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [deleteMessageId, setDeleteMessageId] = useState<string | null>(null);
+  const [deletingMessage, setDeletingMessage] = useState(false);
 
   // Group avatar upload
   const groupAvatarInputRef = useRef<HTMLInputElement>(null);
@@ -189,6 +194,14 @@ const ChatPage: React.FC = () => {
     setLeavingChat(false);
     setShowLeaveDialog(false);
     setShowMembersPanel(false);
+  };
+
+  const handleDeleteMessage = async () => {
+    if (!deleteMessageId) return;
+    setDeletingMessage(true);
+    await deleteMessage(deleteMessageId);
+    setDeletingMessage(false);
+    setDeleteMessageId(null);
   };
 
   const formatMsgTime = (dateStr: string) => {
@@ -541,6 +554,7 @@ const ChatPage: React.FC = () => {
                     const isMine = msg.sender_id === user?.id;
                     const showSender = activeConv?.type === "group" && !isMine &&
                       (idx === 0 || messages[idx - 1].sender_id !== msg.sender_id);
+                    const isHovered = hoveredMessageId === msg.id;
                     return (
                       <div key={msg.id}>
                         {showSender && (
@@ -548,7 +562,22 @@ const ChatPage: React.FC = () => {
                             {msg.sender?.full_name || msg.sender?.username}
                           </p>
                         )}
-                        <div className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`flex items-end gap-1.5 ${isMine ? "justify-end" : "justify-start"}`}
+                          onMouseEnter={() => setHoveredMessageId(msg.id)}
+                          onMouseLeave={() => setHoveredMessageId(null)}
+                        >
+                          {/* Delete button - left side for own msgs */}
+                          {isMine && isHovered && (
+                            <button
+                              onClick={() => setDeleteMessageId(msg.id)}
+                              className="mb-1 p-1 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                              style={{ opacity: isHovered ? 1 : 0 }}
+                              title="Eliminar mensaje"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 ${isMine ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"}`}>
                             {msg.message_type === "image" && msg.file_url && (
                               <img src={msg.file_url} alt="Imagen" className="rounded-lg max-w-full max-h-60 mb-1 cursor-pointer" onClick={() => window.open(msg.file_url!, "_blank")} />
@@ -723,6 +752,27 @@ const ChatPage: React.FC = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {leavingChat ? "Saliendo..." : "Salir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* ── Delete message confirmation dialog ── */}
+      <AlertDialog open={!!deleteMessageId} onOpenChange={(open) => !open && setDeleteMessageId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar mensaje?</AlertDialogTitle>
+            <AlertDialogDescription>
+              El mensaje será eliminado y ya no podrá verse.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingMessage}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMessage}
+              disabled={deletingMessage}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingMessage ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
