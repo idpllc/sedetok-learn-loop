@@ -421,6 +421,9 @@ export const useLiveGameDetails = (gameId?: string) => {
       return data as LiveGamePlayer[];
     },
     enabled: !!gameId,
+    // Poll every 3 seconds so the scoreboard stays up-to-date in real time
+    refetchInterval: 3000,
+    refetchIntervalInBackground: false,
   });
 
   // Real-time subscriptions
