@@ -391,7 +391,7 @@ const ChatPage: React.FC = () => {
       </aside>
 
       {/* ── Conversation list ── */}
-      <div className={`${activeConversation ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 lg:w-96 border-r border-border bg-card shrink-0`}>
+      <div className={`${(activeConversation || showSedeAI) ? "hidden md:flex" : "flex"} flex-col w-full md:w-80 lg:w-96 border-r border-border bg-card shrink-0`}>
         {/* Header */}
         <div className="p-4 border-b border-border flex items-center justify-between h-14">
           <div className="flex items-center gap-2">
