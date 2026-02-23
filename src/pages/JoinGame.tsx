@@ -125,7 +125,7 @@ const JoinGame = () => {
   };
 
   const handlePinChange = (val: string) => {
-    const cleaned = val.replace(/\D/g, "").slice(0, 6);
+    const cleaned = val.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
     setPin(cleaned);
     if (cleaned.length === 6) {
       lookupGame(cleaned);
@@ -173,9 +173,8 @@ const JoinGame = () => {
                     value={pin}
                     onChange={(e) => handlePinChange(e.target.value)}
                     placeholder="000000"
-                    className="text-center text-3xl font-mono tracking-widest h-14"
+                    className="text-center text-3xl font-mono tracking-widest h-14 uppercase"
                     maxLength={6}
-                    inputMode="numeric"
                     autoFocus={!pinFromUrl}
                     readOnly={!!pinFromUrl}
                   />
