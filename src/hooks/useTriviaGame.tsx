@@ -157,7 +157,7 @@ export const useTriviaGame = () => {
           total_incorrect: currentStats.total_incorrect + matchData.incorrect_answers,
           best_streak: Math.max(currentStats.best_streak, matchData.best_streak),
           current_streak: newStreak,
-        });
+        }, { onConflict: 'user_id' });
       
       if (statsError) throw statsError;
 
