@@ -122,6 +122,7 @@ const JoinGame = () => {
           game_id: game.id,
           player_name: playerName.trim(),
           total_score: 0,
+          ...(user ? { user_id: user.id } : {}),
         }])
         .select()
         .single();
