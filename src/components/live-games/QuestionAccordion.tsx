@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, AlertCircle, Trash2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/quiz/RichTextEditor";
 import { OptionEditor } from "./OptionEditor";
-import { useRef } from "react";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
@@ -80,8 +80,21 @@ const QuestionImageUploader = ({ imageUrl, onImageChange }: { imageUrl?: string;
 };
 
 export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange, onRemoveQuestion }: QuestionAccordionProps) => {
+  const [openItems, setOpenItems] = useState<string[]>(() => 
+    questions.map((_, i) => `q-${i}`)
+  );
+  const prevLengthRef = useRef(questions.length);
+
+  useEffect(() => {
+    if (questions.length > prevLengthRef.current) {
+      const newKey = `q-${questions.length - 1}`;
+      setOpenItems(prev => [...prev, newKey]);
+    }
+    prevLengthRef.current = questions.length;
+  }, [questions.length]);
+
   return (
-    <Accordion type="multiple" className="space-y-2">
+    <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="space-y-2">
       {questions.map((q, qIndex) => {
         const missing = getQuestionStatus(q);
         const isComplete = missing.length === 0;
@@ -158,7 +171,7 @@ export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange,
                 <Label className="text-xs mb-2 block">Opciones de respuesta</Label>
                 <div className="space-y-2">
                   {q.options.map((opt, oIndex) => (
-                    <div key={oIndex} className="flex items-center gap-2">
+                    <div key={oIndex} className="flex items-center gap-2 w-full">
                       <input
                         type="radio"
                         name={`correct-${qIndex}`}
@@ -166,12 +179,14 @@ export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange,
                         onChange={() => onQuestionChange(qIndex, "correct_answer", oIndex)}
                         className="shrink-0"
                       />
-                      <OptionEditor
-                        option={opt}
-                        index={oIndex}
-                        onTextChange={(val) => onOptionChange(qIndex, oIndex, "text", val)}
-                        onImageChange={(val) => onOptionChange(qIndex, oIndex, "image_url", val)}
-                      />
+                      <div className="flex-1 min-w-0">
+                        <OptionEditor
+                          option={opt}
+                          index={oIndex}
+                          onTextChange={(val) => onOptionChange(qIndex, oIndex, "text", val)}
+                          onImageChange={(val) => onOptionChange(qIndex, oIndex, "image_url", val)}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
