@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLiveGames } from "@/hooks/useLiveGames";
-import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft } from "lucide-react";
+import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft, Pencil, RotateCcw, History } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import CreateLiveGameModal from "@/components/live-games/CreateLiveGameModal";
@@ -123,14 +123,24 @@ const LiveGames = () => {
 
                       <div className="flex gap-2">
                         {game.status === 'waiting' && (
-                          <Button
-                            onClick={() => navigate(`/live-games/host/${game.id}`)}
-                            className="flex-1"
-                            size="sm"
-                          >
-                            <Play className="w-4 h-4 mr-1.5" />
-                            Iniciar
-                          </Button>
+                          <>
+                            <Button
+                              onClick={() => navigate(`/live-games/host/${game.id}`)}
+                              className="flex-1"
+                              size="sm"
+                            >
+                              <Play className="w-4 h-4 mr-1.5" />
+                              Iniciar
+                            </Button>
+                            <Button
+                              onClick={() => navigate(`/live-games/edit/${game.id}`)}
+                              variant="outline"
+                              size="sm"
+                              className="px-3"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
                         {game.status === 'in_progress' && (
                           <Button
@@ -209,7 +219,16 @@ const LiveGames = () => {
                           size="sm"
                           className="flex-1"
                         >
-                          Ver Resultados
+                          <History className="w-4 h-4 mr-1.5" />
+                          Resultados
+                        </Button>
+                        <Button
+                          onClick={() => navigate(`/live-games/edit/${game.id}`)}
+                          variant="outline"
+                          size="sm"
+                          className="px-3"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           onClick={() => handleReplayGame(game.id)}
@@ -217,8 +236,8 @@ const LiveGames = () => {
                           className="flex-1"
                           disabled={replayGame.isPending}
                         >
-                          <Play className="w-4 h-4 mr-1.5" />
-                          Repetir
+                          <RotateCcw className="w-4 h-4 mr-1.5" />
+                          Reusar
                         </Button>
                       </div>
                     </Card>

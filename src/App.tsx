@@ -52,6 +52,7 @@ import LiveGames from "./pages/LiveGames";
 import LiveGameHost from "./pages/LiveGameHost";
 import LiveGamePlay from "./pages/LiveGamePlay";
 import LiveGameResults from "./pages/LiveGameResults";
+import EditLiveGame from "./pages/EditLiveGame";
 import PathEvaluationResults from "./pages/PathEvaluationResults";
 import ApiDocumentation from "./pages/ApiDocumentation";
 import Chat from "./pages/Chat";
@@ -121,6 +122,7 @@ const App = () => (
           <Route path="/trivia-game" element={<TriviaGame />} />
           <Route path="/sede-ai" element={<SedeAI />} />
           <Route path="/live-games" element={<LiveGames />} />
+          <Route path="/live-games/edit/:gameId" element={<EditLiveGame />} />
           <Route path="/live-games/host/:gameId" element={<LiveGameHost />} />
           <Route path="/live-games/play/:gameId" element={<LiveGamePlay />} />
           <Route path="/live-games/results/:gameId" element={<LiveGameResults />} />
