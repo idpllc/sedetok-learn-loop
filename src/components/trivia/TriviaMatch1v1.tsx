@@ -448,28 +448,17 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       const newTotalIncorrect = (stats?.total_incorrect || 0) + incorrectAnswers;
       const newBestStreak = Math.max(stats?.best_streak || 0, maxStreak);
       
-      if (stats) {
-        await supabase
-          .from('trivia_user_stats')
-          .update({
-            total_matches: newTotalMatches,
-            total_correct: newTotalCorrect,
-            total_incorrect: newTotalIncorrect,
-            best_streak: newBestStreak,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', user!.id);
-      } else {
-        await supabase
-          .from('trivia_user_stats')
-          .insert({
-            user_id: user!.id,
-            total_matches: 1,
-            total_correct: correctAnswers,
-            total_incorrect: incorrectAnswers,
-            best_streak: maxStreak
-          });
-      }
+      await supabase
+        .from('trivia_user_stats')
+        .upsert({
+          user_id: user!.id,
+          total_points: stats?.total_points || 0,
+          total_matches: newTotalMatches,
+          total_correct: newTotalCorrect,
+          total_incorrect: newTotalIncorrect,
+          best_streak: newBestStreak,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
 
       // Invalidate ranking caches
       queryClient.invalidateQueries({ queryKey: ["trivia-rankings"] });
