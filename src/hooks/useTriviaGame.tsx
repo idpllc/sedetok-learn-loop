@@ -251,7 +251,6 @@ export const useTriviaRankings = () => {
       const activeStats = (stats || [])
         .filter((s: any) =>
           (s.total_points || 0) > 0 ||
-          (s.total_matches || 0) > 0 ||
           (s.total_correct || 0) > 0
         )
         .sort((a: any, b: any) => {
