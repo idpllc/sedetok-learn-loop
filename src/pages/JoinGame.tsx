@@ -25,6 +25,23 @@ const JoinGame = () => {
   const [gameInfo, setGameInfo] = useState<{ id: string; title: string; status: string } | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
 
+  // Auto-fill name from profile if user is logged in
+  useEffect(() => {
+    if (!user || autoNameLoaded) return;
+    const fetchName = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, username")
+        .eq("id", user.id)
+        .single();
+      if (data) {
+        setPlayerName(data.full_name || data.username || "");
+        setAutoNameLoaded(true);
+      }
+    };
+    fetchName();
+  }, [user, autoNameLoaded]);
+
   // Auto-lookup game if PIN comes from URL
   useEffect(() => {
     if (pinFromUrl) {
