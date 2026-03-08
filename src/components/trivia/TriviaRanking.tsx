@@ -149,8 +149,8 @@ export const TriviaRanking = () => {
       return (
         <div className="text-center py-10 text-muted-foreground">
           <Building2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No hay instituciones en el ranking aún.</p>
-          <p className="text-sm mt-1">Las instituciones aparecerán cuando sus estudiantes jueguen.</p>
+          <p className="font-medium">No hay instituciones con puntos o aciertos aún.</p>
+          <p className="text-sm mt-1">Las instituciones aparecerán cuando sus estudiantes puntúen.</p>
         </div>
       );
     }
