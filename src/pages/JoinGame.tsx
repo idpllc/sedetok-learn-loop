@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -15,10 +16,12 @@ const JoinGame = () => {
   const { pin: pinFromUrl } = useParams<{ pin?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [pin, setPin] = useState(pinFromUrl || "");
   const [playerName, setPlayerName] = useState("");
   const [step, setStep] = useState<Step>("name");
+  const [autoNameLoaded, setAutoNameLoaded] = useState(false);
   const [gameInfo, setGameInfo] = useState<{ id: string; title: string; status: string } | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
 
