@@ -497,9 +497,9 @@ const LiveGameHost = () => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleRestartGame}>
-                        Sí, reiniciar
-                      </AlertDialogAction>
+                    <AlertDialogAction onClick={handleRestartGame}>
+                      Sí, crear nueva sesión
+                    </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
