@@ -77,29 +77,49 @@ const EditLiveGame = () => {
   }, [gameId, user, navigate]);
 
   const handleAddQuestion = () => {
-    setQuestions([...questions, {
-      question_text: "", question_type: "multiple_choice",
-      options: [{ text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }],
-      correct_answer: 0, points: 1000, time_limit: 20, order_index: questions.length,
-    }]);
+    setQuestions((prev) => [
+      ...prev,
+      {
+        local_id: createDraftId(),
+        question_text: "",
+        question_type: "multiple_choice",
+        options: [
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+        ],
+        correct_answer: 0,
+        points: 1000,
+        time_limit: 20,
+        order_index: prev.length,
+        feedback: "",
+      },
+    ]);
   };
 
   const handleQuestionChange = (index: number, field: string, value: any) => {
-    const updated = [...questions];
-    updated[index] = { ...updated[index], [field]: value };
-    setQuestions(updated);
+    setQuestions((prev) => {
+      if (!prev[index]) return prev;
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const handleOptionChange = (qIndex: number, oIndex: number, field: 'text' | 'image_url', value: string) => {
-    const updated = [...questions];
-    const options = [...updated[qIndex].options];
-    options[oIndex] = { ...options[oIndex], [field]: value };
-    updated[qIndex] = { ...updated[qIndex], options };
-    setQuestions(updated);
+    setQuestions((prev) => {
+      if (!prev[qIndex]) return prev;
+      const updated = [...prev];
+      const options = [...updated[qIndex].options];
+      options[oIndex] = { ...options[oIndex], [field]: value };
+      updated[qIndex] = { ...updated[qIndex], options };
+      return updated;
+    });
   };
 
   const handleRemoveQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index));
+    setQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
