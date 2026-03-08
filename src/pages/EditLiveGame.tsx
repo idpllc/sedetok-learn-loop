@@ -194,6 +194,7 @@ const EditLiveGame = () => {
             onQuestionChange={handleQuestionChange}
             onOptionChange={handleOptionChange}
             onRemoveQuestion={handleRemoveQuestion}
+            accordionStateKey={`edit-live-game-${gameId ?? "unknown"}`}
           />
 
           {questions.length === 0 && (
