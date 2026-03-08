@@ -114,9 +114,9 @@ export const QuestionAccordion = ({
       const filtered = prev.filter((item) => questionKeys.includes(item));
 
       if (questionKeys.length > prevLengthRef.current) {
-        const newest = questionKeys[questionKeys.length - 1];
-        if (newest && !filtered.includes(newest)) {
-          return [...filtered, newest];
+        const newKeys = questionKeys.slice(prevLengthRef.current);
+        if (newKeys.length > 0) {
+          return [...new Set([...filtered, ...newKeys])];
         }
       }
 
