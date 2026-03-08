@@ -21,6 +21,11 @@ interface CreateLiveGameModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const createDraftId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
