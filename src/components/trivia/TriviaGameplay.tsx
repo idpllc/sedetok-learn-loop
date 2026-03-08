@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { TriviaQuestion, TriviaCategory } from "@/hooks/useTriviaGame";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Award, Zap } from "lucide-react";
+import { Clock, Award, Zap, LogOut } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface TriviaGameplayProps {
