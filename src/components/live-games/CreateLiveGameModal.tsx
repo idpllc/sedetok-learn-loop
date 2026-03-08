@@ -370,6 +370,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                   onQuestionChange={handleQuestionChange}
                   onOptionChange={handleOptionChange}
                   onRemoveQuestion={handleRemoveQuestion}
+                  accordionStateKey="create-live-game"
                 />
                 <div className="mt-3">
                   <Button onClick={handleAddQuestion} variant="outline" className="w-full">
