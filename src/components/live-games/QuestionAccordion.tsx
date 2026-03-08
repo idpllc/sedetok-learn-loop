@@ -171,7 +171,7 @@ export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange,
                 <Label className="text-xs mb-2 block">Opciones de respuesta</Label>
                 <div className="space-y-2">
                   {q.options.map((opt, oIndex) => (
-                    <div key={oIndex} className="flex items-center gap-2">
+                    <div key={oIndex} className="flex items-center gap-2 w-full">
                       <input
                         type="radio"
                         name={`correct-${qIndex}`}
@@ -179,12 +179,14 @@ export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange,
                         onChange={() => onQuestionChange(qIndex, "correct_answer", oIndex)}
                         className="shrink-0"
                       />
-                      <OptionEditor
-                        option={opt}
-                        index={oIndex}
-                        onTextChange={(val) => onOptionChange(qIndex, oIndex, "text", val)}
-                        onImageChange={(val) => onOptionChange(qIndex, oIndex, "image_url", val)}
-                      />
+                      <div className="flex-1 min-w-0">
+                        <OptionEditor
+                          option={opt}
+                          index={oIndex}
+                          onTextChange={(val) => onOptionChange(qIndex, oIndex, "text", val)}
+                          onImageChange={(val) => onOptionChange(qIndex, oIndex, "image_url", val)}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
