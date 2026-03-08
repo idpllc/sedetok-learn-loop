@@ -1,19 +1,18 @@
-import { useState, useEffect, useRef } from "react";
-import { CheckCircle2, AlertCircle, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, AlertCircle, Trash2, Image as ImageIcon, X } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/quiz/RichTextEditor";
 import { OptionEditor } from "./OptionEditor";
 import { useCloudinary } from "@/hooks/useCloudinary";
-import { Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuestionData {
   id?: string;
+  local_id?: string;
   question_text: string;
   question_type: string;
   options: Array<{ text: string; image_url?: string }>;
@@ -29,11 +28,13 @@ interface QuestionData {
 interface QuestionAccordionProps {
   questions: QuestionData[];
   onQuestionChange: (index: number, field: string, value: any) => void;
-  onOptionChange: (qIndex: number, oIndex: number, field: 'text' | 'image_url', value: string) => void;
+  onOptionChange: (qIndex: number, oIndex: number, field: "text" | "image_url", value: string) => void;
   onRemoveQuestion: (index: number) => void;
+  accordionStateKey?: string;
 }
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim();
+const getQuestionKey = (q: QuestionData, index: number) => q.id ?? q.local_id ?? `q-${index}`;
 
 const getQuestionStatus = (q: QuestionData) => {
   const missing: string[] = [];
@@ -48,6 +49,7 @@ const getQuestionStatus = (q: QuestionData) => {
 const QuestionImageUploader = ({ imageUrl, onImageChange }: { imageUrl?: string; onImageChange: (url: string) => void }) => {
   const { uploadFile, uploading } = useCloudinary();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -59,11 +61,12 @@ const QuestionImageUploader = ({ imageUrl, onImageChange }: { imageUrl?: string;
       toast.error("No se pudo subir la imagen");
     }
   };
+
   return (
     <div className="space-y-2">
       <input type="file" ref={fileInputRef} onChange={handleUpload} accept="image/*" className="hidden" />
       {imageUrl ? (
-        <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+        <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
           <img src={imageUrl} alt="Imagen de la pregunta" className="w-full h-full object-cover" />
           <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => onImageChange("")}>
             <X className="w-3 h-3" />
@@ -79,50 +82,78 @@ const QuestionImageUploader = ({ imageUrl, onImageChange }: { imageUrl?: string;
   );
 };
 
-export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange, onRemoveQuestion }: QuestionAccordionProps) => {
-  const [openItems, setOpenItems] = useState<string[]>(() => 
-    questions.map((_, i) => `q-${i}`)
-  );
-  const prevLengthRef = useRef(questions.length);
+export const QuestionAccordion = ({
+  questions,
+  onQuestionChange,
+  onOptionChange,
+  onRemoveQuestion,
+  accordionStateKey,
+}: QuestionAccordionProps) => {
+  const storageKey = accordionStateKey ? `live-game-accordion:${accordionStateKey}` : undefined;
+  const questionKeys = useMemo(() => questions.map((q, index) => getQuestionKey(q, index)), [questions]);
+
+  const [openItems, setOpenItems] = useState<string[]>(() => {
+    if (!storageKey || typeof window === "undefined") return questionKeys;
+
+    try {
+      const raw = window.sessionStorage.getItem(storageKey);
+      if (!raw) return questionKeys;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return questionKeys;
+      const validKeys = parsed.filter((value) => questionKeys.includes(value));
+      return validKeys.length > 0 ? validKeys : questionKeys;
+    } catch {
+      return questionKeys;
+    }
+  });
+
+  const prevLengthRef = useRef(questionKeys.length);
 
   useEffect(() => {
-    if (questions.length > prevLengthRef.current) {
-      const newKey = `q-${questions.length - 1}`;
-      setOpenItems(prev => [...prev, newKey]);
-    }
-    prevLengthRef.current = questions.length;
-  }, [questions.length]);
+    setOpenItems((prev) => {
+      const filtered = prev.filter((item) => questionKeys.includes(item));
+
+      if (questionKeys.length > prevLengthRef.current) {
+        const newest = questionKeys[questionKeys.length - 1];
+        if (newest && !filtered.includes(newest)) {
+          return [...filtered, newest];
+        }
+      }
+
+      return filtered.length === 0 && questionKeys.length > 0 ? questionKeys : filtered;
+    });
+
+    prevLengthRef.current = questionKeys.length;
+  }, [questionKeys]);
+
+  useEffect(() => {
+    if (!storageKey || typeof window === "undefined") return;
+    window.sessionStorage.setItem(storageKey, JSON.stringify(openItems));
+  }, [openItems, storageKey]);
 
   return (
     <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="space-y-2">
       {questions.map((q, qIndex) => {
+        const questionKey = questionKeys[qIndex];
         const missing = getQuestionStatus(q);
         const isComplete = missing.length === 0;
+
         return (
-          <AccordionItem key={qIndex} value={`q-${qIndex}`} className="border rounded-lg px-4 overflow-hidden">
+          <AccordionItem key={questionKey} value={questionKey} className="border rounded-lg px-4 overflow-hidden">
             <AccordionTrigger className="hover:no-underline py-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {isComplete ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-muted-foreground shrink-0" />
                 )}
-                <span className="font-semibold text-sm truncate">
-                  Pregunta {qIndex + 1}
-                </span>
-                {!isComplete && (
-                  <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600 dark:text-amber-400 shrink-0">
-                    Falta: {missing.join(", ")}
-                  </Badge>
-                )}
-                {isComplete && (
-                  <Badge variant="outline" className="text-[10px] border-green-300 text-green-600 dark:text-green-400 shrink-0">
-                    Completa
-                  </Badge>
-                )}
+                <span className="font-semibold text-sm truncate">Pregunta {qIndex + 1}</span>
+                <Badge variant={isComplete ? "default" : "secondary"} className="text-[10px] shrink-0">
+                  {isComplete ? "Completa" : `Falta: ${missing.join(", ")}`}
+                </Badge>
               </div>
             </AccordionTrigger>
-            <AccordionContent className="space-y-4 pb-4">
+            <AccordionContent forceMount className="space-y-4 pb-4">
               <div className="flex justify-end">
                 <Button variant="ghost" size="sm" className="text-destructive h-8" onClick={() => onRemoveQuestion(qIndex)}>
                   <Trash2 className="w-4 h-4 mr-1" />
@@ -139,10 +170,7 @@ export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange,
                 />
               </div>
 
-              <QuestionImageUploader
-                imageUrl={q.image_url}
-                onImageChange={(url) => onQuestionChange(qIndex, "image_url", url)}
-              />
+              <QuestionImageUploader imageUrl={q.image_url} onImageChange={(url) => onQuestionChange(qIndex, "image_url", url)} />
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
