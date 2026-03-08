@@ -490,10 +490,10 @@ const LiveGameHost = () => {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>¿Reiniciar el juego?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Se reiniciará desde la primera pregunta y se borrarán todas las puntuaciones actuales. Los jugadores conectados verán la sala de espera.
-                      </AlertDialogDescription>
+                    <AlertDialogTitle>¿Crear nueva sesión?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Se creará una nueva sesión del juego con un nuevo PIN. Los resultados actuales se conservarán en el historial.
+                    </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
