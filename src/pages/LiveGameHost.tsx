@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Play, SkipForward, Trophy, QrCode, Copy, Check, Link, ArrowLeft, RefreshCw, StopCircle, Loader2 } from "lucide-react";
+import { Users, Play, SkipForward, Trophy, QrCode, Copy, Check, Link, ArrowLeft, RefreshCw, StopCircle, Loader2, Pencil } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import confetti from "canvas-confetti";
 import QRCode from "react-qr-code";
