@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -15,12 +16,31 @@ const JoinGame = () => {
   const { pin: pinFromUrl } = useParams<{ pin?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [pin, setPin] = useState(pinFromUrl || "");
   const [playerName, setPlayerName] = useState("");
   const [step, setStep] = useState<Step>("name");
+  const [autoNameLoaded, setAutoNameLoaded] = useState(false);
   const [gameInfo, setGameInfo] = useState<{ id: string; title: string; status: string } | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
+
+  // Auto-fill name from profile if user is logged in
+  useEffect(() => {
+    if (!user || autoNameLoaded) return;
+    const fetchName = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, username")
+        .eq("id", user.id)
+        .single();
+      if (data) {
+        setPlayerName(data.full_name || data.username || "");
+        setAutoNameLoaded(true);
+      }
+    };
+    fetchName();
+  }, [user, autoNameLoaded]);
 
   // Auto-lookup game if PIN comes from URL
   useEffect(() => {
@@ -102,6 +122,7 @@ const JoinGame = () => {
           game_id: game.id,
           player_name: playerName.trim(),
           total_score: 0,
+          ...(user ? { user_id: user.id } : {}),
         }])
         .select()
         .single();

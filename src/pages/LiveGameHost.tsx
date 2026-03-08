@@ -64,10 +64,22 @@ const LiveGameHost = () => {
     if (!gameId || isStarting) return;
     setIsStarting(true);
     try {
-      await supabase
+      const { error } = await supabase
         .from("live_games")
         .update({ status: 'in_progress', started_at: new Date().toISOString() })
         .eq('id', gameId);
+
+      if (error) {
+        console.error("Error starting game:", error);
+        toast.error("Error al iniciar el juego: " + error.message);
+        return;
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["live-game", gameId] });
+      toast.success("¡Juego iniciado!");
+    } catch (err: any) {
+      console.error("Error starting game:", err);
+      toast.error("Error al iniciar el juego");
     } finally {
       setIsStarting(false);
     }
