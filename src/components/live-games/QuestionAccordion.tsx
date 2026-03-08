@@ -80,8 +80,21 @@ const QuestionImageUploader = ({ imageUrl, onImageChange }: { imageUrl?: string;
 };
 
 export const QuestionAccordion = ({ questions, onQuestionChange, onOptionChange, onRemoveQuestion }: QuestionAccordionProps) => {
+  const [openItems, setOpenItems] = useState<string[]>(() => 
+    questions.map((_, i) => `q-${i}`)
+  );
+  const prevLengthRef = useRef(questions.length);
+
+  useEffect(() => {
+    if (questions.length > prevLengthRef.current) {
+      const newKey = `q-${questions.length - 1}`;
+      setOpenItems(prev => [...prev, newKey]);
+    }
+    prevLengthRef.current = questions.length;
+  }, [questions.length]);
+
   return (
-    <Accordion type="multiple" className="space-y-2">
+    <Accordion type="multiple" value={openItems} onValueChange={setOpenItems} className="space-y-2">
       {questions.map((q, qIndex) => {
         const missing = getQuestionStatus(q);
         const isComplete = missing.length === 0;

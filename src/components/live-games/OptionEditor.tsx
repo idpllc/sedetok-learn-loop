@@ -39,12 +39,12 @@ export const OptionEditor = ({ option, index, onTextChange, onImageChange }: Opt
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-2 items-start">
+      <div className="flex gap-2 items-center w-full">
         <Input
           value={option.text}
           onChange={(e) => onTextChange(e.target.value)}
           placeholder={`Opción ${index + 1}`}
-          className="flex-1"
+          className="flex-1 min-w-0"
         />
         <input
           type="file"
