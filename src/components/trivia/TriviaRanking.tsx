@@ -267,7 +267,7 @@ export const TriviaRanking = () => {
               Ranking Institucional
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Criterio: puntos acumulados → aciertos → partidas de sus estudiantes
+              Criterio: puntos acumulados → aciertos → partidas (solo instituciones con rendimiento)
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
