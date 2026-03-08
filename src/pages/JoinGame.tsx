@@ -115,6 +115,10 @@ const JoinGame = () => {
         return;
       }
 
+      // Get actual session from Supabase to avoid race condition with React state
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentUserId = currentSession?.user?.id ?? null;
+
       // Join as player
       const { data: player, error: playerError } = await supabase
         .from("live_game_players")
@@ -122,7 +126,7 @@ const JoinGame = () => {
           game_id: game.id,
           player_name: playerName.trim(),
           total_score: 0,
-          ...(user ? { user_id: user.id } : {}),
+          ...(currentUserId ? { user_id: currentUserId } : {}),
         }])
         .select()
         .single();
