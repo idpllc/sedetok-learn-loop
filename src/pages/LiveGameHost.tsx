@@ -109,43 +109,70 @@ const LiveGameHost = () => {
   };
 
   const handleRestartGame = async () => {
-    if (!gameId || isRestarting) return;
+    if (!gameId || isRestarting || !game) return;
     setIsRestarting(true);
     try {
-      // Reset game to waiting state and index 0
-      await supabase
+      // Get current questions
+      const { data: currentQuestions, error: qError } = await supabase
+        .from("live_game_questions")
+        .select("*")
+        .eq("game_id", gameId)
+        .order("order_index", { ascending: true });
+
+      if (qError) throw qError;
+
+      // Generate new PIN
+      const { data: pinData, error: pinError } = await supabase.rpc('generate_game_pin');
+      if (pinError) throw pinError;
+
+      // Create a new game instance (preserving old results)
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const { data: newGame, error: newGameError } = await supabase
         .from("live_games")
-        .update({
-          status: 'waiting',
-          current_question_index: 0,
-          started_at: null,
-          finished_at: null,
-        })
-        .eq('id', gameId);
+        .insert([{
+          creator_id: currentUser!.id,
+          quiz_id: game.quiz_id || null,
+          game_id: game.game_id || null,
+          title: game.title,
+          pin: pinData,
+          status: 'waiting' as const,
+          institution_id: game.institution_id || null,
+          subject: game.subject || null,
+          ...(game.grade_level && { grade_level: game.grade_level }),
+        }])
+        .select()
+        .single();
 
-      // Reset all player scores to 0
-      const { data: playerIds } = await supabase
-        .from("live_game_players")
-        .select("id")
-        .eq("game_id", gameId);
+      if (newGameError) throw newGameError;
 
-      if (playerIds && playerIds.length > 0) {
-        for (const p of playerIds) {
-          await supabase
-            .from("live_game_players")
-            .update({ total_score: 0 })
-            .eq("id", p.id);
-        }
+      // Copy questions to new game
+      if (currentQuestions && currentQuestions.length > 0) {
+        const newQuestions = currentQuestions.map((q) => ({
+          game_id: newGame.id,
+          question_text: q.question_text,
+          question_type: q.question_type,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          points: q.points,
+          time_limit: q.time_limit,
+          order_index: q.order_index,
+          image_url: q.image_url,
+          video_url: q.video_url,
+          feedback: q.feedback,
+        }));
+
+        const { error: insertError } = await supabase
+          .from("live_game_questions")
+          .insert(newQuestions);
+        if (insertError) throw insertError;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["live-game", gameId] });
-      queryClient.invalidateQueries({ queryKey: ["live-game-players", gameId] });
-      setShowResults(false);
-      setAnswerStats({});
-      setCurrentQuestion(questions?.[0] || null);
-      toast.success("Juego reiniciado — los jugadores deben esperar a que lo inicies de nuevo");
-    } catch {
-      toast.error("Error al reiniciar el juego");
+      queryClient.invalidateQueries({ queryKey: ["live-games"] });
+      toast.success("Nueva sesión creada — los resultados anteriores se conservan");
+      navigate(`/live-games/host/${newGame.id}`);
+    } catch (error) {
+      console.error("Error creating new session:", error);
+      toast.error("Error al crear nueva sesión");
     } finally {
       setIsRestarting(false);
     }

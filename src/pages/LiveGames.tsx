@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLiveGames } from "@/hooks/useLiveGames";
-import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft } from "lucide-react";
+import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft, Pencil, RotateCcw, History } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import CreateLiveGameModal from "@/components/live-games/CreateLiveGameModal";
