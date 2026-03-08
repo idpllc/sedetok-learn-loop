@@ -357,7 +357,6 @@ export const useTriviaRankings = () => {
       return Object.values(instAggregated)
         .filter((inst) =>
           (inst.total_points || 0) > 0 ||
-          (inst.total_matches || 0) > 0 ||
           (inst.total_correct || 0) > 0
         )
         .sort((a, b) => {
