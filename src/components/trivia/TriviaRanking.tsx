@@ -249,7 +249,7 @@ export const TriviaRanking = () => {
               Ranking 1 vs 1
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Jugadores con más victorias en partidas 1 contra 1
+              Criterio: victorias totales (si hay empate, se mantiene orden de registro)
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
