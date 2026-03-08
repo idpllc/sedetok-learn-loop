@@ -231,7 +231,7 @@ export const TriviaRanking = () => {
               Ranking Global
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Los mejores jugadores de Trivia de todos los tiempos
+              Criterio: puntos totales → aciertos → partidas jugadas
             </p>
           </CardHeader>
           <CardContent className="space-y-2">

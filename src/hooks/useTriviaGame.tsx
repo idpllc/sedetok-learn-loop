@@ -356,7 +356,17 @@ export const useTriviaRankings = () => {
       }
 
       return Object.values(instAggregated)
-        .sort((a, b) => b.total_points - a.total_points)
+        .filter((inst) =>
+          (inst.total_points || 0) > 0 ||
+          (inst.total_matches || 0) > 0 ||
+          (inst.total_correct || 0) > 0
+        )
+        .sort((a, b) => {
+          if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+          if (b.total_correct !== a.total_correct) return b.total_correct - a.total_correct;
+          if (b.total_matches !== a.total_matches) return b.total_matches - a.total_matches;
+          return b.best_streak - a.best_streak;
+        })
         .slice(0, 50);
     },
   });
