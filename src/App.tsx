@@ -52,6 +52,7 @@ import LiveGames from "./pages/LiveGames";
 import LiveGameHost from "./pages/LiveGameHost";
 import LiveGamePlay from "./pages/LiveGamePlay";
 import LiveGameResults from "./pages/LiveGameResults";
+import EditLiveGame from "./pages/EditLiveGame";
 import PathEvaluationResults from "./pages/PathEvaluationResults";
 import ApiDocumentation from "./pages/ApiDocumentation";
 import Chat from "./pages/Chat";
