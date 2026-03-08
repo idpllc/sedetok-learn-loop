@@ -231,7 +231,7 @@ export const TriviaRanking = () => {
               Ranking Global
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Criterio: puntos totales → aciertos → partidas jugadas
+              Criterio: puntos totales → aciertos → partidas (solo con puntos o aciertos)
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
