@@ -97,11 +97,10 @@ export const QuestionAccordion = ({
 
     try {
       const raw = window.sessionStorage.getItem(storageKey);
-      if (!raw) return questionKeys;
+      if (raw === null) return questionKeys;
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return questionKeys;
-      const validKeys = parsed.filter((value) => questionKeys.includes(value));
-      return validKeys.length > 0 ? validKeys : questionKeys;
+      return parsed.filter((value) => questionKeys.includes(value));
     } catch {
       return questionKeys;
     }
