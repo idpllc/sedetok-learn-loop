@@ -52,6 +52,7 @@ const EditLiveGame = () => {
         setQuestions(
           (qData || []).map((q) => ({
             id: q.id,
+            local_id: q.id,
             question_text: q.question_text,
             question_type: q.question_type,
             options: q.options as Array<{ text: string; image_url?: string }>,
