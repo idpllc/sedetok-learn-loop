@@ -10,6 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QuestionAccordion, QuestionData } from "@/components/live-games/QuestionAccordion";
 
+const createDraftId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 const EditLiveGame = () => {
   const navigate = useNavigate();
   const { gameId } = useParams<{ gameId: string }>();
@@ -47,6 +52,7 @@ const EditLiveGame = () => {
         setQuestions(
           (qData || []).map((q) => ({
             id: q.id,
+            local_id: q.id,
             question_text: q.question_text,
             question_type: q.question_type,
             options: q.options as Array<{ text: string; image_url?: string }>,
@@ -71,29 +77,49 @@ const EditLiveGame = () => {
   }, [gameId, user, navigate]);
 
   const handleAddQuestion = () => {
-    setQuestions([...questions, {
-      question_text: "", question_type: "multiple_choice",
-      options: [{ text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }],
-      correct_answer: 0, points: 1000, time_limit: 20, order_index: questions.length,
-    }]);
+    setQuestions((prev) => [
+      ...prev,
+      {
+        local_id: createDraftId(),
+        question_text: "",
+        question_type: "multiple_choice",
+        options: [
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+        ],
+        correct_answer: 0,
+        points: 1000,
+        time_limit: 20,
+        order_index: prev.length,
+        feedback: "",
+      },
+    ]);
   };
 
   const handleQuestionChange = (index: number, field: string, value: any) => {
-    const updated = [...questions];
-    updated[index] = { ...updated[index], [field]: value };
-    setQuestions(updated);
+    setQuestions((prev) => {
+      if (!prev[index]) return prev;
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const handleOptionChange = (qIndex: number, oIndex: number, field: 'text' | 'image_url', value: string) => {
-    const updated = [...questions];
-    const options = [...updated[qIndex].options];
-    options[oIndex] = { ...options[oIndex], [field]: value };
-    updated[qIndex] = { ...updated[qIndex], options };
-    setQuestions(updated);
+    setQuestions((prev) => {
+      if (!prev[qIndex]) return prev;
+      const updated = [...prev];
+      const options = [...updated[qIndex].options];
+      options[oIndex] = { ...options[oIndex], [field]: value };
+      updated[qIndex] = { ...updated[qIndex], options };
+      return updated;
+    });
   };
 
   const handleRemoveQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index));
+    setQuestions((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -168,6 +194,7 @@ const EditLiveGame = () => {
             onQuestionChange={handleQuestionChange}
             onOptionChange={handleOptionChange}
             onRemoveQuestion={handleRemoveQuestion}
+            accordionStateKey={`edit-live-game-${gameId ?? "unknown"}`}
           />
 
           {questions.length === 0 && (

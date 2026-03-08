@@ -1,10 +1,10 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLiveGames, LiveGameQuestion } from "@/hooks/useLiveGames";
+import { useLiveGames } from "@/hooks/useLiveGames";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +20,11 @@ interface CreateLiveGameModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const createDraftId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) => {
   const navigate = useNavigate();
@@ -60,27 +65,49 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
   });
 
   const handleAddQuestion = () => {
-    setCustomQuestions([...customQuestions, {
-      question_text: "", question_type: "multiple_choice",
-      options: [{ text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }],
-      correct_answer: 0, points: 1000, time_limit: 20, order_index: customQuestions.length, feedback: "",
-    }]);
+    setCustomQuestions((prev) => [
+      ...prev,
+      {
+        local_id: createDraftId(),
+        question_text: "",
+        question_type: "multiple_choice",
+        options: [
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+        ],
+        correct_answer: 0,
+        points: 1000,
+        time_limit: 20,
+        order_index: prev.length,
+        feedback: "",
+      },
+    ]);
   };
 
-  const handleRemoveQuestion = (index: number) => setCustomQuestions(customQuestions.filter((_, i) => i !== index));
+  const handleRemoveQuestion = (index: number) => {
+    setCustomQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleQuestionChange = (index: number, field: string, value: any) => {
-    const updated = [...customQuestions];
-    updated[index] = { ...updated[index], [field]: value };
-    setCustomQuestions(updated);
+    setCustomQuestions((prev) => {
+      if (!prev[index]) return prev;
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const handleOptionChange = (qIndex: number, oIndex: number, field: 'text' | 'image_url', value: string) => {
-    const updated = [...customQuestions];
-    const options = [...updated[qIndex].options];
-    options[oIndex] = { ...options[oIndex], [field]: value };
-    updated[qIndex] = { ...updated[qIndex], options };
-    setCustomQuestions(updated);
+    setCustomQuestions((prev) => {
+      if (!prev[qIndex]) return prev;
+      const updated = [...prev];
+      const options = [...updated[qIndex].options];
+      options[oIndex] = { ...options[oIndex], [field]: value };
+      updated[qIndex] = { ...updated[qIndex], options };
+      return updated;
+    });
   };
 
   const handleCreateFromQuiz = async () => {
@@ -129,7 +156,13 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
     },
     onSuccess: (data) => {
       if (data.questions) {
-        setCustomQuestions(data.questions);
+        setCustomQuestions(
+          data.questions.map((question: QuestionData, index: number) => ({
+            ...question,
+            local_id: question.id ?? createDraftId(),
+            order_index: index,
+          }))
+        );
         toast({ title: "¡Preguntas generadas!", description: `Se generaron ${data.questions.length} preguntas con IA` });
       }
     },
@@ -314,6 +347,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                         onQuestionChange={handleQuestionChange}
                         onOptionChange={handleOptionChange}
                         onRemoveQuestion={handleRemoveQuestion}
+                        accordionStateKey="create-live-game"
                       />
                       <div className="mt-3">
                         <Button onClick={handleAddQuestion} variant="outline" className="w-full" size="sm">
@@ -336,6 +370,7 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
                   onQuestionChange={handleQuestionChange}
                   onOptionChange={handleOptionChange}
                   onRemoveQuestion={handleRemoveQuestion}
+                  accordionStateKey="create-live-game"
                 />
                 <div className="mt-3">
                   <Button onClick={handleAddQuestion} variant="outline" className="w-full">
