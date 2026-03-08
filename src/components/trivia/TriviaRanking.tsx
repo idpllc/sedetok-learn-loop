@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTriviaRankings } from "@/hooks/useTriviaGame";
-import { Trophy, Medal, Award, Building2, Swords, Star } from "lucide-react";
+import { Trophy, Medal, Building2, Swords, Star, Users } from "lucide-react";
 
 export const TriviaRanking = () => {
   const { globalRanking, institutionalRanking, matchRanking, isLoading } = useTriviaRankings();
@@ -61,7 +61,7 @@ export const TriviaRanking = () => {
     );
   }
 
-  const renderRankingList = (data: any[], showInstitution: boolean = false, is1v1: boolean = false) => {
+  const renderPlayerRankingList = (data: any[], showInstitution: boolean = false, is1v1: boolean = false) => {
     if (!data || data.length === 0) {
       return (
         <div className="text-center py-10 text-muted-foreground">
@@ -87,12 +87,10 @@ export const TriviaRanking = () => {
               : "bg-muted/30 border-transparent"
           }`}
         >
-          {/* Rank icon */}
           <div className="flex-shrink-0 w-8 flex items-center justify-center">
             {getRankIcon(position)}
           </div>
 
-          {/* Avatar */}
           <Avatar className={`w-10 h-10 flex-shrink-0 ${position <= 3 ? `ring-2 ring-offset-1 ${position === 1 ? 'ring-yellow-500' : position === 2 ? 'ring-gray-400' : 'ring-amber-700'}` : ''}`}>
             <AvatarImage src={profile?.avatar_url} />
             <AvatarFallback className="text-sm font-bold">
@@ -100,7 +98,6 @@ export const TriviaRanking = () => {
             </AvatarFallback>
           </Avatar>
 
-          {/* Info */}
           <div className="flex-1 min-w-0">
             <h4 className="font-semibold text-sm truncate leading-tight">
               {displayName}
@@ -112,7 +109,7 @@ export const TriviaRanking = () => {
                 </span>
               ) : (
                 <>
-                  <span>{entry.total_matches} partidas</span>
+                  <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
                   <span>·</span>
                   <span className="text-green-600 font-medium">
                     {entry.total_correct} ✓
@@ -136,10 +133,70 @@ export const TriviaRanking = () => {
             </div>
           </div>
 
-          {/* Points badge */}
           <div className={`flex-shrink-0 flex flex-col items-center justify-center rounded-full w-14 h-14 text-white font-bold ${getPointsBg(position)}`}>
             <span className="text-base leading-none">{is1v1 ? entry.wins : (points >= 1000 ? `${(points / 1000).toFixed(1)}k` : points)}</span>
             <span className="text-[10px] opacity-90 leading-none mt-0.5">{is1v1 ? '🏆' : 'pts'}</span>
+          </div>
+        </div>
+      );
+    });
+  };
+
+  const renderInstitutionalRanking = (data: any[]) => {
+    if (!data || data.length === 0) {
+      return (
+        <div className="text-center py-10 text-muted-foreground">
+          <Building2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No hay instituciones en el ranking aún.</p>
+          <p className="text-sm mt-1">Las instituciones aparecerán cuando sus estudiantes jueguen.</p>
+        </div>
+      );
+    }
+
+    return data.map((entry, index) => {
+      const position = index + 1;
+
+      return (
+        <div
+          key={entry.institution_id}
+          className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+            position <= 3
+              ? `bg-gradient-to-r from-primary/5 to-secondary/5 ${getCardBorder(position)}`
+              : "bg-muted/30 border-transparent"
+          }`}
+        >
+          <div className="flex-shrink-0 w-8 flex items-center justify-center">
+            {getRankIcon(position)}
+          </div>
+
+          <Avatar className={`w-10 h-10 flex-shrink-0 ${position <= 3 ? `ring-2 ring-offset-1 ${position === 1 ? 'ring-yellow-500' : position === 2 ? 'ring-gray-400' : 'ring-amber-700'}` : ''}`}>
+            <AvatarImage src={entry.logo_url} />
+            <AvatarFallback className="text-sm font-bold">
+              {entry.name.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-sm truncate leading-tight">
+              {entry.name}
+            </h4>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap mt-0.5">
+              <span className="flex items-center gap-0.5">
+                <Users className="w-2.5 h-2.5" />
+                {entry.total_students} estudiante{entry.total_students !== 1 ? 's' : ''}
+              </span>
+              <span>·</span>
+              <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
+              <span>·</span>
+              <span className="text-green-600 font-medium">
+                {entry.total_correct} ✓
+              </span>
+            </div>
+          </div>
+
+          <div className={`flex-shrink-0 flex flex-col items-center justify-center rounded-full w-14 h-14 text-white font-bold ${getPointsBg(position)}`}>
+            <span className="text-base leading-none">{entry.total_points >= 1000 ? `${(entry.total_points / 1000).toFixed(1)}k` : entry.total_points}</span>
+            <span className="text-[10px] opacity-90 leading-none mt-0.5">pts</span>
           </div>
         </div>
       );
@@ -176,7 +233,7 @@ export const TriviaRanking = () => {
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
-            {renderRankingList(globalRanking || [], false, false)}
+            {renderPlayerRankingList(globalRanking || [], false, false)}
           </CardContent>
         </Card>
       </TabsContent>
@@ -194,7 +251,7 @@ export const TriviaRanking = () => {
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
-            {renderRankingList(matchRanking || [], false, true)}
+            {renderPlayerRankingList(matchRanking || [], false, true)}
           </CardContent>
         </Card>
       </TabsContent>
@@ -208,19 +265,11 @@ export const TriviaRanking = () => {
               Ranking Institucional
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Los mejores jugadores de tu institución
+              Las instituciones con más puntos acumulados por sus estudiantes
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
-            {institutionalRanking === null ? (
-              <div className="text-center py-10 text-muted-foreground">
-                <Building2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium">No estás asociado a ninguna institución.</p>
-                <p className="text-sm mt-1">Completa tu perfil para ver el ranking institucional.</p>
-              </div>
-            ) : (
-              renderRankingList(institutionalRanking, true, false)
-            )}
+            {renderInstitutionalRanking(institutionalRanking || [])}
           </CardContent>
         </Card>
       </TabsContent>

@@ -1,0 +1,1 @@
+ALTER TABLE public.trivia_user_stats ALTER COLUMN user_id SET NOT NULL;
