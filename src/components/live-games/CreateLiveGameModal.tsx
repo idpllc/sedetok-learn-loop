@@ -156,7 +156,13 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
     },
     onSuccess: (data) => {
       if (data.questions) {
-        setCustomQuestions(data.questions);
+        setCustomQuestions(
+          data.questions.map((question: QuestionData, index: number) => ({
+            ...question,
+            local_id: question.id ?? createDraftId(),
+            order_index: index,
+          }))
+        );
         toast({ title: "¡Preguntas generadas!", description: `Se generaron ${data.questions.length} preguntas con IA` });
       }
     },
