@@ -109,6 +109,8 @@ export const TriviaRanking = () => {
                 </span>
               ) : (
                 <>
+                  <span className="font-medium">{points} pts</span>
+                  <span>·</span>
                   <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
                   <span>·</span>
                   <span className="text-green-600 font-medium">
