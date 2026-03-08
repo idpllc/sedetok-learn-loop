@@ -320,15 +320,25 @@ const LiveGameHost = () => {
                   ))}
                 </div>
               )}
-              <Button
-                onClick={handleStartGame}
-                size="lg"
-                disabled={!players || players.length === 0 || isStarting}
-                className="mt-4 w-full"
-              >
-                {isStarting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Play className="w-5 h-5 mr-2" />}
-                {isStarting ? "Iniciando..." : `Iniciar Juego${players?.length ? ` (${players.length})` : ''}`}
-              </Button>
+              <div className="flex gap-2 mt-4">
+                <Button
+                  onClick={() => navigate(`/live-games/edit/${gameId}`)}
+                  variant="outline"
+                  size="lg"
+                  className="shrink-0"
+                >
+                  <Pencil className="w-5 h-5" />
+                </Button>
+                <Button
+                  onClick={handleStartGame}
+                  size="lg"
+                  disabled={!players || players.length === 0 || isStarting}
+                  className="flex-1"
+                >
+                  {isStarting ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Play className="w-5 h-5 mr-2" />}
+                  {isStarting ? "Iniciando..." : `Iniciar Juego${players?.length ? ` (${players.length})` : ''}`}
+                </Button>
+              </div>
             </Card>
           </div>
         )}
