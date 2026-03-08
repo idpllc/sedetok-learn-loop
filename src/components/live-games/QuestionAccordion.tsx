@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle2, AlertCircle, Trash2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/quiz/RichTextEditor";
 import { OptionEditor } from "./OptionEditor";
-import { useRef } from "react";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { Image as ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
