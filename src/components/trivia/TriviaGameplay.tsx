@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { TriviaQuestion, TriviaCategory } from "@/hooks/useTriviaGame";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Award, Zap } from "lucide-react";
+import { Clock, Award, Zap, LogOut } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface TriviaGameplayProps {
@@ -134,12 +134,22 @@ export const TriviaGameplay = ({ questions, category, onGameEnd }: TriviaGamepla
     <div className="container max-w-2xl mx-auto px-3 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <Badge 
-          className="text-sm px-3 py-1.5"
-          style={{ backgroundColor: category.color }}
-        >
-          {category.icon} {category.name}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            onClick={endGame}
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
+          <Badge 
+            className="text-sm px-3 py-1.5"
+            style={{ backgroundColor: category.color }}
+          >
+            {category.icon} {category.name}
+          </Badge>
+        </div>
         
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 font-bold text-sm">
