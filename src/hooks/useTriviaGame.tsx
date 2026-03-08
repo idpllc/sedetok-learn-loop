@@ -267,82 +267,85 @@ export const useTriviaRankings = () => {
     },
   });
 
-  // Institutional Ranking - Get stats for users in the same institution (via institution_members)
+  // Institutional Ranking - Show institutions ranked by total student points
   const { data: institutionalRanking, isLoading: loadingInstitutional } = useQuery({
-    queryKey: ["trivia-rankings", "institutional", user?.id],
+    queryKey: ["trivia-rankings", "institutional"],
     queryFn: async () => {
-      if (!user) return null;
-
-      // Find which institution the user belongs to (via institution_members)
-      const { data: membership, error: memberError } = await supabase
+      // Get all institution members with their stats
+      const { data: members, error: membersError } = await supabase
         .from("institution_members")
-        .select("institution_id")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .maybeSingle();
+        .select("user_id, institution_id")
+        .eq("status", "active");
 
-      // Fallback: check profiles.institution text field if no formal membership
-      let userIds: string[] = [];
+      if (membersError || !members || members.length === 0) return [];
 
-      if (!memberError && membership?.institution_id) {
-        // Use formal institution membership
-        const { data: members, error: membersError } = await supabase
-          .from("institution_members")
-          .select("user_id")
-          .eq("institution_id", membership.institution_id)
-          .eq("status", "active");
-
-        if (membersError || !members || members.length === 0) return null;
-        userIds = members.map(m => m.user_id);
-      } else {
-        // Fallback: use institution text field in profiles
-        const { data: userProfile, error: profileError } = await supabase
-          .from("profiles")
-          .select("institution")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (profileError || !userProfile?.institution) return null;
-
-        const { data: institutionUsers, error: usersError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("institution", userProfile.institution);
-
-        if (usersError || !institutionUsers || institutionUsers.length === 0) return null;
-        userIds = institutionUsers.map(u => u.id);
-      }
-
-      if (userIds.length === 0) return null;
-
-      // Get stats for institution members
+      // Get all stats
+      const userIds = members.map(m => m.user_id);
       const { data: stats, error: statsError } = await supabase
         .from("trivia_user_stats")
         .select("*")
-        .in("user_id", userIds)
-        .order("total_points", { ascending: false })
-        .limit(100);
+        .in("user_id", userIds);
 
       if (statsError) throw statsError;
 
-      const statUserIds = (stats || []).map((s: any) => s.user_id).filter(Boolean);
-      if (statUserIds.length === 0) return [] as any[];
+      const statsMap = new Map((stats || []).map((s: any) => [s.user_id, s]));
 
-      // Get profiles separately
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, username, full_name, avatar_url, institution")
-        .in("id", statUserIds);
+      // Get institution details
+      const institutionIds = [...new Set(members.map(m => m.institution_id))];
+      const { data: institutions, error: instError } = await supabase
+        .from("institutions")
+        .select("id, name, logo_url");
 
-      if (profilesError) throw profilesError;
+      if (instError) throw instError;
 
-      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-      return (stats || []).map((s: any) => ({
-        ...s,
-        profiles: profileMap.get(s.user_id) || null,
-      }));
+      const instMap = new Map((institutions || []).map((i: any) => [i.id, i]));
+
+      // Aggregate stats per institution
+      const instAggregated: Record<string, {
+        institution_id: string;
+        name: string;
+        logo_url: string | null;
+        total_points: number;
+        total_matches: number;
+        total_correct: number;
+        total_students: number;
+        best_streak: number;
+      }> = {};
+
+      for (const member of members) {
+        const inst = instMap.get(member.institution_id);
+        if (!inst) continue;
+
+        if (!instAggregated[member.institution_id]) {
+          instAggregated[member.institution_id] = {
+            institution_id: member.institution_id,
+            name: inst.name,
+            logo_url: inst.logo_url,
+            total_points: 0,
+            total_matches: 0,
+            total_correct: 0,
+            total_students: 0,
+            best_streak: 0,
+          };
+        }
+
+        const userStat = statsMap.get(member.user_id);
+        instAggregated[member.institution_id].total_students += 1;
+        if (userStat) {
+          instAggregated[member.institution_id].total_points += userStat.total_points || 0;
+          instAggregated[member.institution_id].total_matches += userStat.total_matches || 0;
+          instAggregated[member.institution_id].total_correct += userStat.total_correct || 0;
+          instAggregated[member.institution_id].best_streak = Math.max(
+            instAggregated[member.institution_id].best_streak,
+            userStat.best_streak || 0
+          );
+        }
+      }
+
+      return Object.values(instAggregated)
+        .sort((a, b) => b.total_points - a.total_points)
+        .slice(0, 50);
     },
-    enabled: !!user,
   });
 
   // 1v1 Ranking - based on wins
