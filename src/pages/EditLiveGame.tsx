@@ -10,6 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QuestionAccordion, QuestionData } from "@/components/live-games/QuestionAccordion";
 
+const createDraftId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
 const EditLiveGame = () => {
   const navigate = useNavigate();
   const { gameId } = useParams<{ gameId: string }>();
