@@ -123,14 +123,24 @@ const LiveGames = () => {
 
                       <div className="flex gap-2">
                         {game.status === 'waiting' && (
-                          <Button
-                            onClick={() => navigate(`/live-games/host/${game.id}`)}
-                            className="flex-1"
-                            size="sm"
-                          >
-                            <Play className="w-4 h-4 mr-1.5" />
-                            Iniciar
-                          </Button>
+                          <>
+                            <Button
+                              onClick={() => navigate(`/live-games/host/${game.id}`)}
+                              className="flex-1"
+                              size="sm"
+                            >
+                              <Play className="w-4 h-4 mr-1.5" />
+                              Iniciar
+                            </Button>
+                            <Button
+                              onClick={() => navigate(`/live-games/edit/${game.id}`)}
+                              variant="outline"
+                              size="sm"
+                              className="px-3"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
                         {game.status === 'in_progress' && (
                           <Button
