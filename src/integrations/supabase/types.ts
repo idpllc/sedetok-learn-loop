@@ -2735,7 +2735,7 @@ export type Database = {
           total_matches: number | null
           total_points: number | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           best_streak?: number | null
@@ -2747,7 +2747,7 @@ export type Database = {
           total_matches?: number | null
           total_points?: number | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           best_streak?: number | null
@@ -2759,7 +2759,7 @@ export type Database = {
           total_matches?: number | null
           total_points?: number | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
