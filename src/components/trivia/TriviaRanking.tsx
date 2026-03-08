@@ -66,8 +66,8 @@ export const TriviaRanking = () => {
       return (
         <div className="text-center py-10 text-muted-foreground">
           <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No hay jugadores en el ranking aún.</p>
-          <p className="text-sm mt-1">¡Sé el primero en jugar!</p>
+          <p className="font-medium">Aún no hay jugadores con puntos o aciertos.</p>
+          <p className="text-sm mt-1">Responde correctamente para entrar al ranking.</p>
         </div>
       );
     }
