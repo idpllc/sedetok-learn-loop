@@ -219,7 +219,16 @@ const LiveGames = () => {
                           size="sm"
                           className="flex-1"
                         >
-                          Ver Resultados
+                          <History className="w-4 h-4 mr-1.5" />
+                          Resultados
+                        </Button>
+                        <Button
+                          onClick={() => navigate(`/live-games/edit/${game.id}`)}
+                          variant="outline"
+                          size="sm"
+                          className="px-3"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           onClick={() => handleReplayGame(game.id)}
@@ -227,8 +236,8 @@ const LiveGames = () => {
                           className="flex-1"
                           disabled={replayGame.isPending}
                         >
-                          <Play className="w-4 h-4 mr-1.5" />
-                          Repetir
+                          <RotateCcw className="w-4 h-4 mr-1.5" />
+                          Reusar
                         </Button>
                       </div>
                     </Card>
