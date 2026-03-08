@@ -65,27 +65,49 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
   });
 
   const handleAddQuestion = () => {
-    setCustomQuestions([...customQuestions, {
-      question_text: "", question_type: "multiple_choice",
-      options: [{ text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }, { text: "", image_url: "" }],
-      correct_answer: 0, points: 1000, time_limit: 20, order_index: customQuestions.length, feedback: "",
-    }]);
+    setCustomQuestions((prev) => [
+      ...prev,
+      {
+        local_id: createDraftId(),
+        question_text: "",
+        question_type: "multiple_choice",
+        options: [
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+          { text: "", image_url: "" },
+        ],
+        correct_answer: 0,
+        points: 1000,
+        time_limit: 20,
+        order_index: prev.length,
+        feedback: "",
+      },
+    ]);
   };
 
-  const handleRemoveQuestion = (index: number) => setCustomQuestions(customQuestions.filter((_, i) => i !== index));
+  const handleRemoveQuestion = (index: number) => {
+    setCustomQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleQuestionChange = (index: number, field: string, value: any) => {
-    const updated = [...customQuestions];
-    updated[index] = { ...updated[index], [field]: value };
-    setCustomQuestions(updated);
+    setCustomQuestions((prev) => {
+      if (!prev[index]) return prev;
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const handleOptionChange = (qIndex: number, oIndex: number, field: 'text' | 'image_url', value: string) => {
-    const updated = [...customQuestions];
-    const options = [...updated[qIndex].options];
-    options[oIndex] = { ...options[oIndex], [field]: value };
-    updated[qIndex] = { ...updated[qIndex], options };
-    setCustomQuestions(updated);
+    setCustomQuestions((prev) => {
+      if (!prev[qIndex]) return prev;
+      const updated = [...prev];
+      const options = [...updated[qIndex].options];
+      options[oIndex] = { ...options[oIndex], [field]: value };
+      updated[qIndex] = { ...updated[qIndex], options };
+      return updated;
+    });
   };
 
   const handleCreateFromQuiz = async () => {
