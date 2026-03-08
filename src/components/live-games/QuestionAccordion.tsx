@@ -119,7 +119,7 @@ export const QuestionAccordion = ({
         }
       }
 
-      return filtered.length === 0 && questionKeys.length > 0 ? questionKeys : filtered;
+      return filtered;
     });
 
     prevLengthRef.current = questionKeys.length;
