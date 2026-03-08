@@ -61,9 +61,41 @@ ${Object.entries(intelligenceMetrics || {}).map(([intelligence, metrics]: [strin
 ).join('\n')}
 `;
 
+    // Identificar inteligencias dominantes y débiles para el prompt
+    const sortedIntelligences = Object.entries(intelligenceMetrics || {})
+      .map(([key, metrics]: [string, any]) => ({ key, name: metrics.name, score: metrics.averageScore, quizzes: metrics.totalQuizzes }))
+      .sort((a, b) => b.score - a.score);
+    
+    const dominantIntelligences = sortedIntelligences.filter(i => i.score >= 50);
+    const weakIntelligences = sortedIntelligences.filter(i => i.score < 30);
+
+    const sortedAreas = Object.entries(areaMetrics || {})
+      .map(([area, metrics]: [string, any]) => ({ area, score: metrics.averageScore, quizzes: metrics.totalQuizzes }))
+      .sort((a, b) => b.score - a.score);
+
+    const strongAreas = sortedAreas.filter(a => a.score >= 50);
+    const weakAreas = sortedAreas.filter(a => a.score < 30);
+
     const systemPrompt = `Eres un consejero vocacional experto que ayuda a estudiantes a descubrir carreras profesionales basándote en su perfil académico y de inteligencias múltiples.
 
-Tu tarea es analizar el perfil del estudiante y generar recomendaciones personalizadas de carreras, incluyendo:
+REGLAS CRÍTICAS QUE DEBES SEGUIR ESTRICTAMENTE:
+
+1. **PRIORIZAR las inteligencias dominantes del estudiante**: Las carreras recomendadas DEBEN estar fuertemente alineadas con las inteligencias donde el estudiante tiene mayor desarrollo (puntuación más alta).
+
+2. **EXCLUIR ABSOLUTAMENTE áreas con rendimiento muy bajo**: Si una inteligencia o área académica tiene un puntaje menor al 30%, NO recomiendes carreras relacionadas con esa área. Por ejemplo:
+   - Si "Musical" tiene 0% o puntaje muy bajo → NO recomendar ingeniería de sonido, producción musical, musicoterapia ni nada relacionado con música.
+   - Si "Kinestésica" tiene puntaje muy bajo → NO recomendar carreras deportivas ni de movimiento corporal.
+   - Si "Lógico-Matemática" tiene puntaje muy bajo → NO recomendar ingenierías de alta matemática.
+
+3. **Las inteligencias dominantes del estudiante son**: ${dominantIntelligences.map(i => `${i.name} (${i.score}%)`).join(', ') || 'No hay datos suficientes'}
+
+4. **Las inteligencias DÉBILES que debes EVITAR son**: ${weakIntelligences.map(i => `${i.name} (${i.score}%)`).join(', ') || 'Ninguna identificada'}
+
+5. **Áreas académicas FUERTES**: ${strongAreas.map(a => `${a.area} (${a.score}%)`).join(', ') || 'No hay datos suficientes'}
+
+6. **Áreas académicas DÉBILES que debes EVITAR**: ${weakAreas.map(a => `${a.area} (${a.score}%)`).join(', ') || 'Ninguna identificada'}
+
+Tu tarea es analizar el perfil y generar recomendaciones que SOLO se basen en las fortalezas reales del estudiante. Incluye:
 1. Carreras de investigación (pregrado y posgrado)
 2. Carreras técnicas
 3. Carreras tecnológicas
@@ -71,14 +103,14 @@ Tu tarea es analizar el perfil del estudiante y generar recomendaciones personal
 Para cada carrera recomendada, debes incluir:
 - Nombre de la carrera
 - Tipo (investigativa, técnica, tecnológica)
-- Descripción breve (por qué se recomienda basado en el perfil)
-- Nivel de coincidencia con el perfil (alto, medio)
+- Descripción breve que EXPLIQUE CLARAMENTE por qué se recomienda basándose en las inteligencias y áreas fuertes del estudiante
+- Nivel de coincidencia con el perfil (alto solo si coincide con inteligencias dominantes, medio si coincide parcialmente)
 - Universidades recomendadas en Colombia (mínimo 2)
 - Universidades recomendadas internacionales (mínimo 2)
-- Áreas de inteligencia que se desarrollan
+- Áreas de inteligencia que se desarrollan (deben coincidir con las fortalezas)
 - Oportunidades laborales
 
-Genera entre 6 y 10 recomendaciones variadas que cubran diferentes tipos de carreras.`;
+Genera entre 6 y 10 recomendaciones variadas que cubran diferentes tipos de carreras, TODAS alineadas con las fortalezas del estudiante.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
