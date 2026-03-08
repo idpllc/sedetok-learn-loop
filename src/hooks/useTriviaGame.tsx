@@ -245,10 +245,24 @@ export const useTriviaRankings = () => {
         .from("trivia_user_stats")
         .select("*")
         .order("total_points", { ascending: false })
-        .limit(100);
+        .limit(300);
       if (statsError) throw statsError;
 
-      const userIds = (stats || []).map((s: any) => s.user_id).filter(Boolean);
+      const activeStats = (stats || [])
+        .filter((s: any) =>
+          (s.total_points || 0) > 0 ||
+          (s.total_matches || 0) > 0 ||
+          (s.total_correct || 0) > 0
+        )
+        .sort((a: any, b: any) => {
+          if ((b.total_points || 0) !== (a.total_points || 0)) return (b.total_points || 0) - (a.total_points || 0);
+          if ((b.total_correct || 0) !== (a.total_correct || 0)) return (b.total_correct || 0) - (a.total_correct || 0);
+          if ((b.total_matches || 0) !== (a.total_matches || 0)) return (b.total_matches || 0) - (a.total_matches || 0);
+          return (b.best_streak || 0) - (a.best_streak || 0);
+        })
+        .slice(0, 100);
+
+      const userIds = activeStats.map((s: any) => s.user_id).filter(Boolean);
       if (userIds.length === 0) return [] as any[];
 
       // Fetch profiles separately (no FK join dependency)
@@ -259,8 +273,7 @@ export const useTriviaRankings = () => {
       if (profilesError) throw profilesError;
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-      // Attach profile under the same shape the UI expects (profiles can be object or array)
-      return (stats || []).map((s: any) => ({
+      return activeStats.map((s: any) => ({
         ...s,
         profiles: profileMap.get(s.user_id) || null,
       }));
@@ -343,7 +356,17 @@ export const useTriviaRankings = () => {
       }
 
       return Object.values(instAggregated)
-        .sort((a, b) => b.total_points - a.total_points)
+        .filter((inst) =>
+          (inst.total_points || 0) > 0 ||
+          (inst.total_matches || 0) > 0 ||
+          (inst.total_correct || 0) > 0
+        )
+        .sort((a, b) => {
+          if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+          if (b.total_correct !== a.total_correct) return b.total_correct - a.total_correct;
+          if (b.total_matches !== a.total_matches) return b.total_matches - a.total_matches;
+          return b.best_streak - a.best_streak;
+        })
         .slice(0, 50);
     },
   });

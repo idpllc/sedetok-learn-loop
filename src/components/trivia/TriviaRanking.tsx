@@ -109,6 +109,8 @@ export const TriviaRanking = () => {
                 </span>
               ) : (
                 <>
+                  <span className="font-medium">{points} pts</span>
+                  <span>·</span>
                   <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
                   <span>·</span>
                   <span className="text-green-600 font-medium">
@@ -229,7 +231,7 @@ export const TriviaRanking = () => {
               Ranking Global
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Los mejores jugadores de Trivia de todos los tiempos
+              Criterio: puntos totales → aciertos → partidas jugadas
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -247,7 +249,7 @@ export const TriviaRanking = () => {
               Ranking 1 vs 1
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Jugadores con más victorias en partidas 1 contra 1
+              Criterio: victorias totales (si hay empate, se mantiene orden de registro)
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -265,7 +267,7 @@ export const TriviaRanking = () => {
               Ranking Institucional
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Las instituciones con más puntos acumulados por sus estudiantes
+              Criterio: puntos acumulados → aciertos → partidas de sus estudiantes
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
