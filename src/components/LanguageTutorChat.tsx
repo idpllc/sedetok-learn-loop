@@ -216,10 +216,10 @@ export const LanguageTutorChat = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={linguaAvatar} />
-                <AvatarFallback>L</AvatarFallback>
+                <AvatarImage src={alexAvatar} />
+                <AvatarFallback>A</AvatarFallback>
               </Avatar>
-              <span className="font-semibold text-foreground">Lingua</span>
+              <span className="font-semibold text-foreground">Alex</span>
             </div>
           </div>
           <ConversationSidebar />
