@@ -28,8 +28,8 @@ import { getQuizScientistIcon } from "@/lib/quizScientists";
 type ContentType = Database["public"]["Enums"]["content_type"];
 type GradeLevel = Database["public"]["Enums"]["grade_level"];
 type SearchContentType = ContentType | "learning_path" | "all";
-
-const isMobile = useIsMobile();
+const Index = () => {
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
