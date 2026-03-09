@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAOpenInAppBanner } from "@/components/PWAOpenInAppBanner";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
+import { FloatingTutorChat } from "@/components/FloatingTutorChat";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -138,7 +139,9 @@ const App = () => (
         </Routes>
         <Toaster />
         <Sonner />
+        <FloatingTutorChat />
         <PWAInstallPrompt />
+        <PWAOpenInAppBanner />
         <PWAOpenInAppBanner />
       </BrowserRouter>
     </QueryClientProvider>
