@@ -85,7 +85,7 @@ export const LanguageTutorChat = () => {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       const { data, error } = await supabase.functions.invoke("elevenlabs-signed-url", {
-        body: { agent_id: "agent_5201kc59xc30ew7s7vsnxcsr10gj" }, // Sofia agent for now
+        body: { agent_id: "agent_8401kk8r0436fwkv2shkbzj5m3aj" },
       });
       if (error || !data?.signed_url) throw new Error("No signed URL");
       await voiceConversation.startSession({ signedUrl: data.signed_url });
