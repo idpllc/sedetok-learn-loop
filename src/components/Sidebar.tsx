@@ -192,7 +192,7 @@ export const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 p-4 space-y-1 transition-all ${isMinified ? 'px-3' : ''}`}>
+      <nav className={`flex-1 overflow-y-auto p-4 space-y-1 transition-all ${isMinified ? 'px-3' : ''}`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
