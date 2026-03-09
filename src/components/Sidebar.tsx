@@ -61,7 +61,6 @@ export const Sidebar = () => {
     { id: "home", icon: Home, label: "Inicio", path: "/" },
     { id: "sedetok", icon: Play, label: "Sede tok", path: "/sedetok" },
     { id: "chat", icon: MessageCircle, label: "Chat", path: "/chat" },
-    // { id: "search", icon: Search, label: "Explorar", path: "/search" },
     { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
     { id: "courses", icon: BookOpen, label: "Cursos", path: "/courses" },
     { id: "trivia", icon: Gamepad2, label: "Trivia Game", path: "/trivia-game" },
@@ -69,6 +68,71 @@ export const Sidebar = () => {
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ], []);
+
+  // Route to page name mapping for breadcrumb
+  const currentPageName = useMemo(() => {
+    const routeMap: Record<string, string> = {
+      "/": "Inicio",
+      "/sedetok": "Sede tok",
+      "/chat": "Chat",
+      "/search": "Explorar",
+      "/learning-paths": "Rutas",
+      "/courses": "Cursos",
+      "/trivia-game": "Trivia",
+      "/live-games": "En Vivo",
+      "/achievements": "Logros",
+      "/profile": "Perfil",
+      "/create": "Crear",
+      "/edit-profile": "Editar Perfil",
+      "/notifications": "Notificaciones",
+      "/sede-ai": "Sede AI",
+      "/buy-educoins": "Educoins",
+      "/about": "Acerca de",
+      "/terms": "Términos",
+      "/privacy": "Privacidad",
+      "/institution-dashboard": "Institución",
+      "/vocational-profile": "Vocacional",
+      "/professional-profile": "Profesional",
+      "/cv-variations": "CV",
+      "/xp-history": "Historial XP",
+      "/educoins-history": "Historial Educoins",
+      "/creator-content": "Mi Contenido",
+      "/creator-program": "Creadores",
+      "/install": "Instalar",
+    };
+    const exactMatch = routeMap[location.pathname];
+    if (exactMatch) return exactMatch;
+    // Check prefix matches for dynamic routes
+    if (location.pathname.startsWith("/learning-paths/")) return "Ruta";
+    if (location.pathname.startsWith("/courses/")) return "Curso";
+    if (location.pathname.startsWith("/live-games/")) return "En Vivo";
+    if (location.pathname.startsWith("/quiz-evaluation")) return "Evaluación";
+    if (location.pathname.startsWith("/game-evaluation")) return "Evaluación";
+    if (location.pathname.startsWith("/profile/")) return "Perfil";
+    return "Sedefy";
+  }, [location.pathname]);
+
+  // Fetch user XP and ranking for mobile header badge
+  const { data: userStats } = useQuery({
+    queryKey: ["mobile-header-stats", user?.id],
+    queryFn: async () => {
+      if (!user) return { xp: 0, rank: 0 };
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("experience_points")
+        .eq("id", user.id)
+        .single();
+      const xp = profile?.experience_points || 0;
+      // Get ranking
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .gt("experience_points", xp);
+      return { xp, rank: (count || 0) + 1 };
+    },
+    enabled: !!user,
+    staleTime: 60000,
+  });
 
   const handleNavigate = useCallback((path: string) => {
     navigate(path);
