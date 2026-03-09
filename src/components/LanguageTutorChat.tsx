@@ -88,7 +88,14 @@ export const LanguageTutorChat = () => {
         body: { agent_id: "agent_8401kk8r0436fwkv2shkbzj5m3aj" },
       });
       if (error || !data?.signed_url) throw new Error("No signed URL");
-      await voiceConversation.startSession({ signedUrl: data.signed_url });
+      await voiceConversation.startSession({ 
+        signedUrl: data.signed_url,
+        overrides: {
+          agent: {
+            language: "en",
+          },
+        },
+      });
       setIsVoiceMode(true);
     } catch (err: any) {
       if (err.name === "NotAllowedError") {
