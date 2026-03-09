@@ -89,13 +89,12 @@ const Index = () => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const contentTypes = [
-    { id: "all" as const, label: "Todo", icon: "🎯" },
     { id: "video" as ContentType, label: "Videos", icon: "🎥" },
+    { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
+    { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
+    { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
     { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
     { id: "document" as ContentType, label: "Documentos", icon: "📄" },
-    { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
-    { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
-    { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
   ];
 
   const gradeLevels = [
