@@ -73,12 +73,15 @@ export const MoreModal = ({ open, onOpenChange }: MoreModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-background border-border p-0 gap-0">
-        <div className="flex items-center p-4 border-b border-border">
+      <DialogContent className="sm:max-w-md bg-background border-border p-0 gap-0 max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0">
           <h2 className="text-xl font-semibold">Más</h2>
+          <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-md hover:bg-muted transition-colors">
+            <X className="w-5 h-5 text-muted-foreground" />
+          </button>
         </div>
         
-        <div className="py-2">
+        <div className="py-2 overflow-y-auto flex-1">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             return (

@@ -323,7 +323,7 @@ export const Sidebar = () => {
                   <PanelLeft className="w-5 h-5 text-foreground" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[280px] p-0 flex flex-col">
+              <SheetContent side="left" className="w-[280px] p-0 flex flex-col overflow-y-auto">
                 <SidebarContent />
               </SheetContent>
             </Sheet>
