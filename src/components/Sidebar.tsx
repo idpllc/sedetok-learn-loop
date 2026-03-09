@@ -310,7 +310,7 @@ export const Sidebar = () => {
     <>
       {/* Desktop Sidebar */}
       <aside 
-        className={`hidden md:flex fixed left-0 top-0 h-screen bg-card border-r border-border flex-col z-50 transition-all duration-300 ${
+        className={`hidden md:flex fixed left-0 top-0 h-screen bg-card border-r border-border flex-col z-[60] transition-all duration-300 ${
           searchModalOpen ? 'w-16' : 'w-64'
         }`}
       >
