@@ -177,7 +177,7 @@ const SedeTok = () => {
           return;
         }
 
-        const related = await fetchRelatedContent(currentId, mainItem.subject, 10);
+        const related = await fetchRelatedContent([currentId], mainItem.subject, 10);
         setFeed([mainItem, ...related]);
       } catch (err) {
         console.error("Error loading SedeTok feed:", err);
