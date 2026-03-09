@@ -82,7 +82,7 @@ const VocationalProfile = () => {
     return (
       <>
         <Sidebar />
-        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-20 md:pt-0">
+        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-14 md:pt-0">
           <div className="text-center space-y-4">
             <div className="text-6xl mb-4 animate-pulse">🎓</div>
             <p className="text-muted-foreground">Cargando perfil vocacional...</p>
