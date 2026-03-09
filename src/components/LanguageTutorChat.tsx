@@ -255,7 +255,7 @@ export const LanguageTutorChat = () => {
             <AvatarFallback>A</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-foreground text-sm">Lingua</h2>
+            <h2 className="font-semibold text-foreground text-sm">Alex</h2>
             <p className="text-xs text-muted-foreground truncate">
               {assessment?.current_level
                 ? `Nivel: ${assessment.current_level} - ${CEFR_LABELS[assessment.current_level] || ''}`
