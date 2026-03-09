@@ -36,6 +36,17 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     ttsVoiceId: 'XgQWNZcJ8SRkxXwwhPTo',
     avatarImageUrl: '/src/assets/avatars/alejandro-avatar.png',
   },
+  {
+    id: 'lingua',
+    name: 'Lingua',
+    description: 'Tutor especialista en inglés',
+    agentId: 'agent_8401kk8r0436fwkv2shkbzj5m3aj',
+    avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit',
+    personality: 'Especialista en enseñanza de inglés. Evalúa tu nivel CEFR y te guía con paciencia.',
+    color: 'hsl(280 89% 40%)',
+    ttsVoiceId: 'IdhxxSTaAg80CTeSgScm',
+    avatarImageUrl: '/src/assets/avatars/lingua-avatar.png',
+  },
 ];
 
 // Viseme mapping for lip-sync
