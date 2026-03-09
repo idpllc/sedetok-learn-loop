@@ -75,8 +75,8 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
     setIsGenerating(true);
 
     const agent = VOICE_AGENTS.find(a => a.id === agentId);
-    if (!agent?.ttsVoiceId) {
-      toast.error('Voz no configurada para este tutor');
+    if (!agent) {
+      toast.error('Tutor no encontrado');
       setIsGenerating(false);
       return;
     }
@@ -95,7 +95,7 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text: textToRead, voice: agent.ttsVoiceId }),
+          body: JSON.stringify({ text: textToRead, agentId: agent.agentId }),
         }
       );
 
