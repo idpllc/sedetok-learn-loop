@@ -346,19 +346,27 @@ export const Sidebar = () => {
             </div>
           </div>
 
-          {/* Right: XP + Ranking badge */}
-          {user && userStats && (
+          {/* Right: Search + XP + Ranking badge */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <button
-              onClick={() => navigate("/xp-history")}
-              className="flex-shrink-0 flex items-center gap-1.5 bg-muted/60 rounded-full px-3 py-1.5 border border-border/50"
+              onClick={handleSearchClick}
+              className="p-1.5 rounded-md hover:bg-muted transition-colors"
             >
-              <Star className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-semibold text-foreground">{userStats.xp}</span>
-              <div className="h-3.5 w-px bg-border" />
-              <Trophy className="w-4 h-4 text-amber-600" />
-              <span className="text-sm font-semibold text-foreground">#{userStats.rank}</span>
+              <Search className="w-5 h-5 text-foreground" />
             </button>
-          )}
+            {user && userStats && (
+              <button
+                onClick={() => navigate("/achievements")}
+                className="flex items-center gap-1.5 bg-muted/60 rounded-full px-3 py-1.5 border border-border/50"
+              >
+                <Star className="w-4 h-4 text-amber-500" />
+                <span className="text-sm font-semibold text-foreground">{userStats.xp}</span>
+                <div className="h-3.5 w-px bg-border" />
+                <Trophy className="w-4 h-4 text-amber-600" />
+                <span className="text-sm font-semibold text-foreground">#{userStats.rank}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
