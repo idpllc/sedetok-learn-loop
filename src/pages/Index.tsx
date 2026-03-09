@@ -248,7 +248,7 @@ const Index = () => {
                     key={type.id}
                     variant={selectedType === type.id ? "default" : "outline"}
                     className="cursor-pointer whitespace-nowrap py-1.5"
-                    onClick={() => setSelectedType(type.id)}
+                    onClick={() => setSelectedType(selectedType === type.id ? 'all' : type.id)}
                   >
                     <span className="mr-1">{type.icon}</span>
                     {type.label}
