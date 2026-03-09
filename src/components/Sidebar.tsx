@@ -346,14 +346,8 @@ export const Sidebar = () => {
             </div>
           </div>
 
-          {/* Right: Search + XP + Ranking badge */}
+          {/* Right: XP + Ranking badge + Search */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={handleSearchClick}
-              className="p-1.5 rounded-md hover:bg-muted transition-colors"
-            >
-              <Search className="w-5 h-5 text-foreground" />
-            </button>
             {user && userStats && (
               <button
                 onClick={() => navigate("/achievements")}
@@ -366,6 +360,12 @@ export const Sidebar = () => {
                 <span className="text-sm font-semibold text-foreground">#{userStats.rank}</span>
               </button>
             )}
+            <button
+              onClick={handleSearchClick}
+              className="p-1.5 rounded-md hover:bg-muted transition-colors"
+            >
+              <Search className="w-5 h-5 text-foreground" />
+            </button>
           </div>
         </div>
       </div>
