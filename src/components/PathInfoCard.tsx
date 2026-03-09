@@ -96,7 +96,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-3 md:mb-6 text-foreground leading-tight">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-center mb-2 md:mb-6 text-foreground leading-tight">
           {title}
         </h1>
 
