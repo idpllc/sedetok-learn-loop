@@ -439,16 +439,42 @@ const Index = () => {
                       }}
                     >
                       <CardContent className="p-0">
-                        <div className="relative aspect-[16/10] bg-gradient-to-br from-primary/20 to-secondary/20">
+                        <div className={`relative aspect-[16/10] ${
+                          isQuiz 
+                            ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800' 
+                            : item.content_type === 'lectura' && !item.cover_url && !item.thumbnail_url
+                            ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40'
+                            : item.content_type === 'game' && !item.cover_url && !item.thumbnail_url
+                            ? 'bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/20'
+                            : 'bg-gradient-to-br from-primary/20 to-secondary/20'
+                        }`}>
                           {(item.cover_url || item.thumbnail_url) ? (
                             <img 
                               src={item.cover_url || item.thumbnail_url} 
                               alt={item.title}
                               className="w-full h-full object-cover"
                             />
-                          ) : scientist ? (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <img src={scientist.icon} alt={scientist.name} className="w-24 h-24 object-contain" />
+                          ) : isQuiz && scientist ? (
+                            <>
+                              {/* Question mark pattern background */}
+                              <div className="absolute inset-0 opacity-10 flex flex-wrap items-center justify-center overflow-hidden select-none pointer-events-none text-white text-4xl font-bold leading-tight tracking-widest">
+                                {'? '.repeat(60)}
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <img src={scientist.icon} alt={scientist.name} className="w-24 h-24 object-contain rounded-full border-2 border-white/20 shadow-xl" />
+                              </div>
+                            </>
+                          ) : item.content_type === 'lectura' && item.rich_text ? (
+                            <div className="absolute inset-0 p-4 overflow-hidden">
+                              <p className="text-xs leading-relaxed text-muted-foreground line-clamp-[8] whitespace-pre-wrap font-serif">
+                                {item.rich_text}
+                              </p>
+                              <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-amber-50 dark:from-amber-950/40 to-transparent" />
+                            </div>
+                          ) : item.content_type === 'game' && !item.cover_url && !item.thumbnail_url ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                              <span className="text-5xl">🎮</span>
+                              <span className="text-xs font-medium text-muted-foreground capitalize">{item.game_type?.replace('_', ' ') || 'Juego'}</span>
                             </div>
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
