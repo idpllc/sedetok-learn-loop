@@ -161,24 +161,30 @@ const SedeTok = () => {
   const currentId = contentId || quizId || gameId;
   const currentType: "content" | "quiz" | "game" = quizId ? "quiz" : gameId ? "game" : "content";
 
-  // Initial load: fetch the target item + related content
+  // Initial load: fetch the target item + related content, or general feed if no ID
   useEffect(() => {
-    if (!currentId || currentInitId.current === currentId) return;
-    currentInitId.current = currentId;
+    if (currentId && currentInitId.current === currentId) return;
+    if (!currentId && loadedInitial.current) return;
+    currentInitId.current = currentId || "__general__";
     loadedInitial.current = true;
 
     const load = async () => {
       setIsLoading(true);
       try {
-        const mainItem = await fetchSingleItem(currentId, currentType);
-        if (!mainItem) {
-          setFeed([]);
-          setIsLoading(false);
-          return;
+        if (currentId) {
+          const mainItem = await fetchSingleItem(currentId, currentType);
+          if (!mainItem) {
+            setFeed([]);
+            setIsLoading(false);
+            return;
+          }
+          const related = await fetchRelatedContent([currentId], mainItem.subject, 10);
+          setFeed([mainItem, ...related]);
+        } else {
+          // No specific item — load general feed
+          const generalFeed = await fetchRelatedContent([], null, 15);
+          setFeed(generalFeed);
         }
-
-        const related = await fetchRelatedContent([currentId], mainItem.subject, 10);
-        setFeed([mainItem, ...related]);
       } catch (err) {
         console.error("Error loading SedeTok feed:", err);
       } finally {
