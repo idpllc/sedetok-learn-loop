@@ -378,8 +378,8 @@ export const LanguageTutorChat = () => {
                   <div key={i} className={cn("flex gap-3 px-4", msg.role === "user" ? "flex-row-reverse" : "")}>
                     {msg.role === "assistant" && (
                       <Avatar className="w-8 h-8 shrink-0">
-                        <AvatarImage src={linguaAvatar} />
-                        <AvatarFallback>L</AvatarFallback>
+                      <AvatarImage src={alexAvatar} />
+                      <AvatarFallback>A</AvatarFallback>
                       </Avatar>
                     )}
                     <div className={cn(
