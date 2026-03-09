@@ -251,8 +251,8 @@ export const LanguageTutorChat = () => {
             </Button>
           )}
           <Avatar className="w-9 h-9 ring-2 ring-primary/20">
-            <AvatarImage src={linguaAvatar} />
-            <AvatarFallback>L</AvatarFallback>
+            <AvatarImage src={alexAvatar} />
+            <AvatarFallback>A</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-foreground text-sm">Lingua</h2>
