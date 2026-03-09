@@ -1,0 +1,1 @@
+ALTER TABLE public.trivia_1v1_invitations DROP CONSTRAINT IF EXISTS unique_pending_invitation;
