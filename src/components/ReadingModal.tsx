@@ -101,10 +101,8 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
 
       if (!response.ok) throw new Error('Error generando audio');
 
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
