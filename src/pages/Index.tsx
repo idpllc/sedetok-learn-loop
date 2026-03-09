@@ -218,9 +218,9 @@ const Index = () => {
       <Sidebar />
       <div className="min-h-screen bg-background pb-20 md:ml-64 pt-14 md:pt-0">
         <header className="sticky top-0 z-10 bg-card border-b border-border">
-          <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
-            {/* Search Bar */}
-            <div className="relative">
+          <div className="max-w-7xl mx-auto px-4 py-3 space-y-3">
+            {/* Search Bar - hidden on mobile, visible on desktop */}
+            <div className="relative hidden md:block">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 type="search"
@@ -231,79 +231,97 @@ const Index = () => {
               />
             </div>
 
-            {/* Subjects Carousel */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                onClick={() => scrollSubjects('left')}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              
-              <ScrollArea className="w-full whitespace-nowrap" ref={subjectsScrollRef}>
-                <div className="flex gap-2 px-8">
-                  <Button
-                    variant={selectedSubject === "all" ? "default" : "outline"}
-                    className="rounded-full whitespace-nowrap"
-                    onClick={() => setSelectedSubject("all")}
-                  >
-                    Todos
-                  </Button>
-                  {subjects.map((subject) => (
-                    <Button
-                      key={subject.value}
-                      variant={selectedSubject === subject.value ? "default" : "outline"}
-                      className="rounded-full whitespace-nowrap"
-                      onClick={() => setSelectedSubject(subject.value)}
-                    >
-                      {subject.label}
-                    </Button>
-                  ))}
-                </div>
-                <ScrollBar orientation="horizontal" className="invisible" />
-              </ScrollArea>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                onClick={() => scrollSubjects('right')}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Grade Levels */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {gradeLevels.map((level) => (
+            {/* Content Types row + Filter toggle button on mobile */}
+            <div className="flex items-center gap-2">
+              {isMobile && (
                 <Button
-                  key={level.value}
-                  variant={selectedGrade === level.value ? "default" : "outline"}
-                  size="sm"
-                  className="whitespace-nowrap rounded-full"
-                  onClick={() => setSelectedGrade(level.value as GradeLevel | "all")}
+                  variant={showExtraFilters ? "default" : "outline"}
+                  size="icon"
+                  className="flex-shrink-0 h-8 w-8 rounded-full"
+                  onClick={() => setShowExtraFilters(!showExtraFilters)}
                 >
-                  {level.label}
+                  <SlidersHorizontal className="h-4 w-4" />
                 </Button>
-              ))}
+              )}
+              <div className="flex gap-2 overflow-x-auto pb-0.5 flex-1">
+                {contentTypes.map((type) => (
+                  <Badge
+                    key={type.id}
+                    variant={selectedType === type.id ? "default" : "outline"}
+                    className="cursor-pointer whitespace-nowrap py-1.5"
+                    onClick={() => setSelectedType(type.id)}
+                  >
+                    <span className="mr-1">{type.icon}</span>
+                    {type.label}
+                  </Badge>
+                ))}
+              </div>
             </div>
 
-            {/* Content Types */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {contentTypes.map((type) => (
-                <Badge
-                  key={type.id}
-                  variant={selectedType === type.id ? "default" : "outline"}
-                  className="cursor-pointer whitespace-nowrap py-1.5"
-                  onClick={() => setSelectedType(type.id)}
+            {/* Subjects Carousel - always on desktop, toggle on mobile */}
+            {(!isMobile || showExtraFilters) && (
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                  onClick={() => scrollSubjects('left')}
                 >
-                  <span className="mr-1">{type.icon}</span>
-                  {type.label}
-                </Badge>
-              ))}
-            </div>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <ScrollArea className="w-full whitespace-nowrap" ref={subjectsScrollRef}>
+                  <div className="flex gap-2 px-8">
+                    <Button
+                      variant={selectedSubject === "all" ? "default" : "outline"}
+                      className="rounded-full whitespace-nowrap"
+                      size="sm"
+                      onClick={() => setSelectedSubject("all")}
+                    >
+                      Todos
+                    </Button>
+                    {subjects.map((subject) => (
+                      <Button
+                        key={subject.value}
+                        variant={selectedSubject === subject.value ? "default" : "outline"}
+                        className="rounded-full whitespace-nowrap"
+                        size="sm"
+                        onClick={() => setSelectedSubject(subject.value)}
+                      >
+                        {subject.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" className="invisible" />
+                </ScrollArea>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                  onClick={() => scrollSubjects('right')}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Grade Levels - always on desktop, toggle on mobile */}
+            {(!isMobile || showExtraFilters) && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {gradeLevels.map((level) => (
+                  <Button
+                    key={level.value}
+                    variant={selectedGrade === level.value ? "default" : "outline"}
+                    size="sm"
+                    className="whitespace-nowrap rounded-full"
+                    onClick={() => setSelectedGrade(level.value as GradeLevel | "all")}
+                  >
+                    {level.label}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         </header>
 
