@@ -208,4 +208,8 @@ All colors MUST be HSL.
     top: var(--mobile-header-h);
     transition: top 0.3s ease;
   }
+  .mobile-header-pad {
+    padding-top: var(--mobile-header-h);
+    transition: padding-top 0.3s ease;
+  }
 }
