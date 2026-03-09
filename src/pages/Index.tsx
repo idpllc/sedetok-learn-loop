@@ -230,18 +230,16 @@ const Index = () => {
               />
             </div>
 
-            {/* Content Types row + Filter toggle button on mobile */}
+            {/* Content Types row + Filter toggle button */}
             <div className="flex items-center gap-2">
-              {isMobile && (
-                <Button
-                  variant={showExtraFilters ? "default" : "outline"}
-                  size="icon"
-                  className="flex-shrink-0 h-8 w-8 rounded-full"
-                  onClick={() => setShowExtraFilters(!showExtraFilters)}
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                </Button>
-              )}
+              <Button
+                variant={showExtraFilters ? "default" : "outline"}
+                size="icon"
+                className="flex-shrink-0 h-8 w-8 rounded-full"
+                onClick={() => setShowExtraFilters(!showExtraFilters)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
               <div className="flex gap-2 overflow-x-auto pb-0.5 flex-1">
                 {contentTypes.map((type) => (
                   <Badge
