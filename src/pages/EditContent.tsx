@@ -35,7 +35,7 @@ const EditContent = () => {
 
   if (authLoading || !user || isLoading || !content) {
     return (
-      <div className="min-h-screen bg-background pb-20 flex items-center justify-center pt-20 md:pt-0">
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center pt-14 md:pt-0">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
