@@ -235,9 +235,9 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             variant="ghost"
             size="icon"
             onClick={onNext}
-            className="absolute bottom-8 right-8 rounded-full w-14 h-14 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+            className="absolute bottom-4 right-4 md:bottom-8 md:right-8 rounded-full w-10 h-10 md:w-14 md:h-14 bg-background/50 backdrop-blur-sm hover:bg-background/80"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
           </Button>
         )}
       </div>
