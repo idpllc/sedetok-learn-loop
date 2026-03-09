@@ -98,7 +98,7 @@ async function fetchRelatedContent(
     ];
 
     const subjectPromises = tables.map(async ({ table, type, extra }) => {
-      let q = (supabase.from(table) as any)
+      let q = (supabase.from(table as any) as any)
         .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
         .ilike("subject", `%${subject}%`)
         .order("created_at", { ascending: false })
