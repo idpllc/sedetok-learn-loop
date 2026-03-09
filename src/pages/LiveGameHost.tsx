@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLiveGameDetails } from "@/hooks/useLiveGames";
 import { useQueryClient } from "@tanstack/react-query";
@@ -37,6 +37,65 @@ const LiveGameHost = () => {
   const [isRestarting, setIsRestarting] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const playTickSound = useCallback((isLastTick = false) => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+      const ctx = audioContextRef.current;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.value = isLastTick ? 880 : 660;
+      gainNode.gain.value = 0.3;
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (isLastTick ? 0.3 : 0.15));
+      oscillator.stop(ctx.currentTime + (isLastTick ? 0.3 : 0.15));
+    } catch (e) {
+      // Audio not supported
+    }
+  }, []);
+
+  // Timer countdown for host
+  useEffect(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (game?.status === 'in_progress' && currentQuestion && !showResults) {
+      const limit = currentQuestion.time_limit || 20;
+      setTimeLeft(limit);
+
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev === null || prev <= 0) {
+            if (timerRef.current) clearInterval(timerRef.current);
+            return 0;
+          }
+          const next = prev - 1;
+          if (next <= 5 && next > 0) {
+            playTickSound(false);
+          } else if (next === 0) {
+            playTickSound(true);
+          }
+          return next;
+        });
+      }, 1000);
+    } else {
+      setTimeLeft(null);
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [game?.status, currentQuestion?.id, showResults, playTickSound]);
 
   useEffect(() => {
     if (game && questions && questions.length > 0) {
@@ -366,7 +425,20 @@ const LiveGameHost = () => {
               <Progress value={((game.current_question_index || 0) + 1) / questions.length * 100} />
             </div>
 
-            {/* Emergency controls */}
+            {/* Countdown timer for host */}
+            {timeLeft !== null && !showResults && (
+              <div className="flex justify-center">
+                <div className={`flex items-center justify-center w-20 h-20 rounded-full border-4 ${
+                  timeLeft <= 5 ? 'border-destructive animate-pulse' : 'border-primary'
+                } bg-card shadow-lg`}>
+                  <span className={`text-3xl font-black ${
+                    timeLeft <= 5 ? 'text-destructive' : 'text-foreground'
+                  }`}>
+                    {timeLeft}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
