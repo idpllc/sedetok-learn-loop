@@ -254,21 +254,25 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
               )}
             </TabsList>
 
-            <ScrollArea className="h-[400px] mt-4">
-              <TabsContent value="followers" className="mt-0">
+            <TabsContent value="followers" className="mt-4">
+              <ScrollArea className="h-[400px]">
                 {renderUserList(followers || [], "No tienes seguidores aún")}
-              </TabsContent>
+              </ScrollArea>
+            </TabsContent>
 
-              <TabsContent value="following" className="mt-0">
+            <TabsContent value="following" className="mt-4">
+              <ScrollArea className="h-[400px]">
                 {renderUserList(following || [], "No sigues a nadie aún")}
-              </TabsContent>
+              </ScrollArea>
+            </TabsContent>
 
-              {institutionMembers && institutionMembers.length > 0 && (
-                <TabsContent value="institution" className="mt-0">
+            {institutionMembers && institutionMembers.length > 0 && (
+              <TabsContent value="institution" className="mt-4">
+                <ScrollArea className="h-[400px]">
                   {renderUserList(institutionMembers, "No hay compañeros en tu institución")}
-                </TabsContent>
-              )}
-            </ScrollArea>
+                </ScrollArea>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </DialogContent>
