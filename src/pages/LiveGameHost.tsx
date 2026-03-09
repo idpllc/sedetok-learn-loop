@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLiveGameDetails } from "@/hooks/useLiveGames";
 import { useQueryClient } from "@tanstack/react-query";
