@@ -89,13 +89,12 @@ const Index = () => {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const contentTypes = [
-    { id: "all" as const, label: "Todo", icon: "🎯" },
     { id: "video" as ContentType, label: "Videos", icon: "🎥" },
+    { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
+    { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
+    { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
     { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
     { id: "document" as ContentType, label: "Documentos", icon: "📄" },
-    { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
-    { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
-    { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
   ];
 
   const gradeLevels = [
@@ -249,7 +248,7 @@ const Index = () => {
                     key={type.id}
                     variant={selectedType === type.id ? "default" : "outline"}
                     className="cursor-pointer whitespace-nowrap py-1.5"
-                    onClick={() => setSelectedType(type.id)}
+                    onClick={() => setSelectedType(selectedType === type.id ? 'all' : type.id)}
                   >
                     <span className="mr-1">{type.icon}</span>
                     {type.label}
