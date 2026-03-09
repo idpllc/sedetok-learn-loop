@@ -139,7 +139,9 @@ const App = () => (
         </Routes>
         <Toaster />
         <Sonner />
+        <FloatingTutorChat />
         <PWAInstallPrompt />
+        <PWAOpenInAppBanner />
         <PWAOpenInAppBanner />
       </BrowserRouter>
     </QueryClientProvider>

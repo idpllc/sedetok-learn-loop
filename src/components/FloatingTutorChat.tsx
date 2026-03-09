@@ -69,7 +69,7 @@ export const FloatingTutorChat = () => {
         await navigator.mediaDevices.getUserMedia({ audio: true });
 
         const { data, error } = await supabase.functions.invoke("elevenlabs-signed-url", {
-          body: { agentId: agent.agentId },
+          body: { agent_id: agent.agentId },
         });
 
         if (error || !data?.signed_url) {
