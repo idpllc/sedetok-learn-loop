@@ -243,42 +243,41 @@ const ViewLearningPath = () => {
   if (viewMode === "map") {
     return (
       <div className="relative">
-        {/* Back button */}
-        <div className="absolute top-4 left-4 z-50">
+        {/* Top navigation bar */}
+        <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-3 md:p-4">
           <Button
             variant="secondary"
             size="icon"
             onClick={() => navigate("/learning-paths")}
-            className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
+            className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
-        </div>
 
-        {/* Action buttons */}
-        <div className="absolute top-4 right-4 z-50 flex gap-2">
-          <SharePathSheet
-            pathId={id!}
-            pathTitle={pathTitle}
-            isPublic={pathInfo?.is_public ?? true}
-            trigger={
-              <Button
-                variant="secondary"
-                size="icon"
-                className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
-              >
-                <Share2 className="w-5 h-5" />
-              </Button>
-            }
-          />
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => setViewMode("cards")}
-            className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70"
-          >
-            <List className="w-5 h-5" />
-          </Button>
+          <div className="flex gap-2">
+            <SharePathSheet
+              pathId={id!}
+              pathTitle={pathTitle}
+              isPublic={pathInfo?.is_public ?? true}
+              trigger={
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+                >
+                  <Share2 className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+              }
+            />
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => setViewMode("cards")}
+              className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+            >
+              <List className="w-4 h-4 md:w-5 md:h-5" />
+            </Button>
+          </div>
         </div>
 
         <PathMapView
@@ -288,8 +287,6 @@ const ViewLearningPath = () => {
           completedIds={completedIds}
           onContentClick={handleContentClick}
         />
-        
-        <BottomNav />
       </div>
     );
   }
