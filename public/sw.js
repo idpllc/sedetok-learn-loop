@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sedetok-cache-v6'; // v6 - actualizar icono PWA
+const CACHE_NAME = 'sedetok-cache-v7'; // v7 - navegación NetworkFirst para evitar versiones viejas en PWA
 const urlsToCache = [
   '/',
   '/index.html',
@@ -9,7 +9,8 @@ const urlsToCache = [
 // Install event - cache resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
       .then(() => self.skipWaiting())
   );
@@ -18,25 +19,58 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Eliminando cache antigua:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('[SW] Eliminando cache antigua:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => self.clients.claim())
   );
 });
 
 // Fetch event
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  const url = new URL(req.url);
 
   // Nunca cachear rutas de OAuth
   if (url.pathname.startsWith('/~oauth')) {
+    return;
+  }
+
+  // SPA navigations (HTML): NetworkFirst para evitar quedar en una versión vieja
+  // y para soportar rutas profundas como /live-games/results/:id
+  const accept = req.headers.get('accept') || '';
+  const isNavigation = req.mode === 'navigate' || accept.includes('text/html');
+  if (isNavigation) {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(req);
+
+          // Cachea el app-shell bajo una key estable
+          const cache = await caches.open(CACHE_NAME);
+          cache.put('/index.html', networkResponse.clone());
+          cache.put('/', networkResponse.clone());
+
+          return networkResponse;
+        } catch (err) {
+          const cache = await caches.open(CACHE_NAME);
+          const cached =
+            (await cache.match(req)) ||
+            (await cache.match('/index.html')) ||
+            (await cache.match('/'));
+          return cached || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+        }
+      })()
+    );
     return;
   }
 
@@ -60,22 +94,22 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.ico') ||
     url.pathname.endsWith('.json') ||
     url.pathname.endsWith('.woff') ||
-    url.pathname.endsWith('.woff2') ||
-    url.pathname === '/'
+    url.pathname.endsWith('.woff2')
   ) {
     event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          if (response) return response;
-          return fetch(event.request).then((networkResponse) => {
+      caches.match(req).then((response) => {
+        if (response) return response;
+        return fetch(req)
+          .then((networkResponse) => {
             if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
               return networkResponse;
             }
             const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, responseToCache));
             return networkResponse;
-          }).catch(() => caches.match('/'));
-        })
+          })
+          .catch(() => caches.match('/index.html'));
+      })
     );
   }
 });
