@@ -33,7 +33,7 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     avatarUrl: 'https://models.readyplayer.me/693a028814ff705000c68122.glb?morphTargets=Oculus%20Visemes,ARKit',
     personality: 'Analítico, preciso y entusiasta. Le encanta resolver problemas paso a paso.',
     color: 'hsl(200 89% 40%)',
-    ttsVoiceId: 'onwK4e9ZLuTAKqWW03F9', // Daniel - clear male voice
+    ttsVoiceId: 'XgQWNZcJ8SRkxXwwhPTo',
     avatarImageUrl: '/src/assets/avatars/alejandro-avatar.png',
   },
 ];
