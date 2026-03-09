@@ -251,11 +251,11 @@ const LiveGamePlay = () => {
                   <button
                     onClick={() => handleSelectAnswer(index)}
                     disabled={hasAnswered}
-                    className={`w-full rounded-xl p-3 text-white font-semibold text-sm leading-snug flex flex-col items-center justify-center gap-1.5 min-h-[72px] transition-transform active:scale-95 ${getOptionColors(index)} ${
-                      selectedAnswer === index ? 'ring-4 ring-white/80 scale-[0.97]' : ''
-                    } ${hasAnswered && index === currentQuestion.correct_answer ? 'ring-4 ring-white' : ''} ${
-                      hasAnswered ? 'cursor-default' : 'cursor-pointer'
-                    }`}
+                    className={`w-full rounded-xl p-3 text-white font-semibold text-sm leading-snug flex flex-col items-center justify-center gap-1.5 min-h-[72px] transition-all duration-200 active:scale-95 ${getOptionColors(index)} ${
+                      selectedAnswer === index ? 'ring-4 ring-white shadow-[0_0_20px_rgba(255,255,255,0.5)] scale-105 brightness-110' : ''
+                    } ${hasAnswered && selectedAnswer !== index ? 'opacity-50 scale-95' : ''} ${hasAnswered && index === currentQuestion.correct_answer ? 'ring-4 ring-green-300 shadow-[0_0_20px_rgba(74,222,128,0.6)]' : ''} ${
+                      hasAnswered && selectedAnswer === index && index !== currentQuestion.correct_answer ? 'ring-4 ring-red-400 shadow-[0_0_20px_rgba(248,113,113,0.6)]' : ''
+                    } ${hasAnswered ? 'cursor-default' : 'cursor-pointer'}`}
                   >
                     {option.image_url && (
                       <img
