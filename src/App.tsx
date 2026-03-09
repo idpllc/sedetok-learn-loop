@@ -60,6 +60,7 @@ import Chat from "./pages/Chat";
 import ChatLogin from "./pages/ChatLogin";
 import ChatLoginTest from "./pages/ChatLoginTest";
 import JoinGame from "./pages/JoinGame";
+import LanguageTutor from "./pages/LanguageTutor";
 
 const queryClient = new QueryClient();
 
