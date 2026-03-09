@@ -157,34 +157,33 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
 
   const fetchQuizData = async () => {
     try {
-      // Fetch quiz info to get subject and time limit
-      const { data: quizData, error: quizError } = await supabase
-        .from("quizzes")
-        .select("subject, category, time_limit")
-        .eq("id", quizId)
-        .maybeSingle();
+      // Fetch quiz info and questions in parallel
+      const [quizResult, questionsResult] = await Promise.all([
+        supabase
+          .from("quizzes")
+          .select("subject, category, time_limit")
+          .eq("id", quizId)
+          .maybeSingle(),
+        supabase
+          .from("quiz_questions")
+          .select("*, quiz_options(*)")
+          .eq("content_id", quizId)
+          .order("order_index", { ascending: true }),
+      ]);
 
-      if (quizError) throw quizError;
+      if (quizResult.error) throw quizResult.error;
+      if (questionsResult.error) throw questionsResult.error;
+
+      const quizData = quizResult.data;
       setQuizSubject(quizData?.subject || quizData?.category || null);
       
-      // Set time limit if exists
       if (quizData?.time_limit) {
         setQuizTimeLimit(quizData.time_limit);
-        setTimeRemaining(quizData.time_limit * 60); // Convert minutes to seconds
+        setTimeRemaining(quizData.time_limit * 60);
         setTimerActive(true);
       }
 
-      // Fetch questions
-      const { data, error } = await supabase
-        .from("quiz_questions")
-        .select("*, quiz_options(*)")
-        .eq("content_id", quizId)
-        .order("order_index", { ascending: true });
-
-      if (error) throw error;
-
-      setQuestions(data as Question[]);
-      // Initialize start time when quiz is loaded and ready
+      setQuestions(questionsResult.data as Question[]);
       setStartTime(Date.now());
     } catch (error) {
       console.error("Error loading questions:", error);
