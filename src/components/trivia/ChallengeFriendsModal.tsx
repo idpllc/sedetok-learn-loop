@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Swords, Search, Users, UserCheck } from "lucide-react";
+import { Swords, Search, Users, UserCheck, Building2 } from "lucide-react";
 import {
   Select,
   SelectContent,
