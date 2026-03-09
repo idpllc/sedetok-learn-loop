@@ -255,8 +255,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Subjects Carousel - always on desktop, toggle on mobile */}
-            {(!isMobile || showExtraFilters) && (
+            {/* Subjects Carousel - toggled by filter button */}
+            {showExtraFilters && (
               <div className="relative">
                 <Button
                   variant="ghost"
@@ -303,8 +303,8 @@ const Index = () => {
               </div>
             )}
 
-            {/* Grade Levels - always on desktop, toggle on mobile */}
-            {(!isMobile || showExtraFilters) && (
+            {/* Grade Levels - toggled by filter button */}
+            {showExtraFilters && (
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {gradeLevels.map((level) => (
                   <Button
