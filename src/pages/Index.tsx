@@ -42,6 +42,7 @@ const Index = () => {
   const [selectedType, setSelectedType] = useState<SearchContentType>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">('all');
+  const [showExtraFilters, setShowExtraFilters] = useState(false);
   
   // Onboarding hook
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
