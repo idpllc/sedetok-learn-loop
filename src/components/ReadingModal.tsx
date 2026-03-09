@@ -95,7 +95,7 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text: textToRead, agentId: agent.agentId }),
+          body: JSON.stringify({ text: textToRead, voice: agent.ttsVoiceId }),
         }
       );
 
