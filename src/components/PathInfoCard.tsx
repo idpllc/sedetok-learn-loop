@@ -80,23 +80,23 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
       )}
 
       {/* Main content container */}
-      <div className="relative z-10 max-w-4xl w-full mx-auto px-6 py-8 md:px-12 md:py-16 lg:px-16 flex flex-col items-center justify-center">
+      <div className="relative z-10 max-w-4xl w-full mx-auto px-4 pt-14 pb-4 md:px-12 md:py-16 lg:px-16 flex flex-col items-center justify-center overflow-y-auto max-h-screen">
         {/* Icon/Badge section */}
-        <div className="mb-4 md:mb-8 flex flex-wrap items-center justify-center gap-2">
-          <Badge className="bg-primary text-primary-foreground text-xs md:text-sm px-2 py-1 md:px-4 md:py-2">
+        <div className="mb-3 md:mb-8 flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
+          <Badge className="bg-primary text-primary-foreground text-[10px] md:text-sm px-2 py-0.5 md:px-4 md:py-2">
             <BookOpen className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-            Ruta de Aprendizaje
+            Ruta
           </Badge>
-          <Badge variant="secondary" className="text-xs md:text-sm px-2 py-1 md:px-4 md:py-2 capitalize">
+          <Badge variant="secondary" className="text-[10px] md:text-sm px-2 py-0.5 md:px-4 md:py-2 capitalize">
             {category}
           </Badge>
-          <Badge variant="outline" className="text-xs md:text-sm px-2 py-1 md:px-4 md:py-2 capitalize">
+          <Badge variant="outline" className="text-[10px] md:text-sm px-2 py-0.5 md:px-4 md:py-2 capitalize">
             {gradeLevel}
           </Badge>
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-3 md:mb-6 text-foreground leading-tight">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-center mb-2 md:mb-6 text-foreground leading-tight">
           {title}
         </h1>
 
@@ -180,11 +180,11 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
         )}
 
         {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-center justify-center w-full max-w-md mb-4">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-4 items-center justify-center w-full max-w-md mb-2 md:mb-4">
           <Button
             size="lg"
             onClick={onStart}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base md:text-xl px-8 py-4 md:px-12 md:py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm md:text-xl px-6 py-3 md:px-12 md:py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto"
           >
             Empezar Ruta
             <ChevronRight className="w-5 h-5 md:w-6 md:h-6 ml-2" />
@@ -221,10 +221,10 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
 
         {/* Hint to scroll */}
         {hasNext && (
-          <div className="mt-8 text-center animate-bounce">
-            <p className="text-sm text-muted-foreground mb-2">Desliza para ver las cápsulas</p>
-            <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 mx-auto relative">
-              <div className="w-1.5 h-3 bg-muted-foreground/50 rounded-full absolute top-2 left-1/2 -translate-x-1/2 animate-pulse" />
+          <div className="mt-4 md:mt-8 text-center animate-bounce">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1 md:mb-2">Desliza para ver las cápsulas</p>
+            <div className="w-5 h-8 md:w-6 md:h-10 rounded-full border-2 border-muted-foreground/30 mx-auto relative">
+              <div className="w-1 h-2.5 md:w-1.5 md:h-3 bg-muted-foreground/50 rounded-full absolute top-1.5 md:top-2 left-1/2 -translate-x-1/2 animate-pulse" />
             </div>
           </div>
         )}
@@ -235,9 +235,9 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             variant="ghost"
             size="icon"
             onClick={onNext}
-            className="absolute bottom-8 right-8 rounded-full w-14 h-14 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+            className="absolute bottom-4 right-4 md:bottom-8 md:right-8 rounded-full w-10 h-10 md:w-14 md:h-14 bg-background/50 backdrop-blur-sm hover:bg-background/80"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
           </Button>
         )}
       </div>
