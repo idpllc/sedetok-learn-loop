@@ -63,11 +63,11 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         } catch (err) {
           const cache = await caches.open(CACHE_NAME);
-          return (
+          const cached =
             (await cache.match(req)) ||
             (await cache.match('/index.html')) ||
-            (await cache.match('/'))
-          );
+            (await cache.match('/'));
+          return cached || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
         }
       })()
     );
