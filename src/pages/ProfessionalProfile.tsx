@@ -51,7 +51,7 @@ const ProfessionalProfile = () => {
     return (
       <>
         <Sidebar />
-        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-20 md:pt-0">
+        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-14 md:pt-0">
           <div className="text-center space-y-6 px-4 max-w-md">
             <div className="text-6xl mb-4">🔒</div>
             <h2 className="text-2xl font-bold">Perfil Profesional</h2>
@@ -79,7 +79,7 @@ const ProfessionalProfile = () => {
     return (
       <>
         <Sidebar />
-        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-20 md:pt-0">
+        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-14 md:pt-0">
           <div className="text-center space-y-4">
             <div className="text-6xl mb-4 animate-pulse">💼</div>
             <p className="text-muted-foreground">Cargando perfil profesional...</p>
@@ -92,7 +92,7 @@ const ProfessionalProfile = () => {
   return (
     <>
       <Sidebar />
-      <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
+      <div className="min-h-screen bg-background pb-20 md:ml-64 pt-14 md:pt-0">
         <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
           <div className="flex items-center gap-3 max-w-6xl mx-auto">
             <Button variant="ghost" size="icon" onClick={() => navigate(isOwnProfile ? "/profile" : "/")}>

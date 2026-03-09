@@ -37,7 +37,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-20 md:pt-0">
+      <div className="min-h-screen flex items-center justify-center bg-background pt-14 md:pt-0">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20 md:pt-0">
+    <div className="min-h-screen bg-background pt-14 md:pt-0">
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

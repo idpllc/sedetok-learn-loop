@@ -67,7 +67,7 @@ const EditGame = () => {
 
   if (authLoading || !user || loading) {
     return (
-      <div className="min-h-screen bg-background pb-20 flex items-center justify-center pt-20 md:pt-0">
+      <div className="min-h-screen bg-background pb-20 flex items-center justify-center pt-14 md:pt-0">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
@@ -78,7 +78,7 @@ const EditGame = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 pt-20 md:pt-0">
+    <div className="min-h-screen bg-background pb-20 pt-14 md:pt-0">
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
         <div className="flex items-center gap-3 max-w-6xl mx-auto">
           <Button
