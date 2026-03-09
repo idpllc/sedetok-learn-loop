@@ -333,8 +333,8 @@ export const LanguageTutorChat = () => {
                 {messages.length === 0 && (
                   <div className="flex flex-col items-center justify-center pt-8 px-4 gap-4">
                     <Avatar className="w-20 h-20 ring-4 ring-primary/10">
-                      <AvatarImage src={linguaAvatar} />
-                      <AvatarFallback>L</AvatarFallback>
+                      <AvatarImage src={alexAvatar} />
+                      <AvatarFallback>A</AvatarFallback>
                     </Avatar>
                     <div className="text-center space-y-2">
                       <h3 className="text-lg font-bold text-foreground">¡Hola! Soy Lingua 🇬🇧</h3>
