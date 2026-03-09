@@ -208,8 +208,12 @@ All colors MUST be HSL.
     top: var(--mobile-header-h);
     transition: top 0.3s ease;
   }
-  .mobile-header-pad {
-    padding-top: var(--mobile-header-h);
+  /* When header hides, collapse the top padding on main containers */
+  body[data-header-hidden="true"] .pt-14 {
+    padding-top: 0 !important;
+    transition: padding-top 0.3s ease;
+  }
+  .pt-14 {
     transition: padding-top 0.3s ease;
   }
 }
