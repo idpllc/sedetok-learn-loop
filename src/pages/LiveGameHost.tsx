@@ -425,7 +425,20 @@ const LiveGameHost = () => {
               <Progress value={((game.current_question_index || 0) + 1) / questions.length * 100} />
             </div>
 
-            {/* Emergency controls */}
+            {/* Countdown timer for host */}
+            {timeLeft !== null && !showResults && (
+              <div className="flex justify-center">
+                <div className={`flex items-center justify-center w-20 h-20 rounded-full border-4 ${
+                  timeLeft <= 5 ? 'border-destructive animate-pulse' : 'border-primary'
+                } bg-card shadow-lg`}>
+                  <span className={`text-3xl font-black ${
+                    timeLeft <= 5 ? 'text-destructive' : 'text-foreground'
+                  }`}>
+                    {timeLeft}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
