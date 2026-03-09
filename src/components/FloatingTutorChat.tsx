@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-// @ts-ignore - types exist at runtime
-import { useConversation } from "@elevenlabs/react";
+import { useConversation } from "@11labs/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, X, ChevronLeft, ChevronRight, MessageCircle, Loader2, Volume2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -34,17 +33,11 @@ export const FloatingTutorChat = () => {
     onDisconnect: () => {
       setChatState("selecting");
     },
-    onMessage: (message) => {
-      if (message.type === "user_transcript") {
-        const text = (message as any).user_transcription_event?.user_transcript;
-        if (text) {
-          setTranscript((prev) => [...prev, { role: "user", text }]);
-        }
-      } else if (message.type === "agent_response") {
-        const text = (message as any).agent_response_event?.agent_response;
-        if (text) {
-          setTranscript((prev) => [...prev, { role: "agent", text }]);
-        }
+    onMessage: (message: { message: string; source: string }) => {
+      if (message.source === "user") {
+        setTranscript((prev) => [...prev, { role: "user", text: message.message }]);
+      } else if (message.source === "ai") {
+        setTranscript((prev) => [...prev, { role: "agent", text: message.message }]);
       }
     },
     onError: (error) => {
