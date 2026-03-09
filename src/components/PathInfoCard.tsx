@@ -180,7 +180,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
         )}
 
         {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 items-center justify-center w-full max-w-md mb-4">
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-4 items-center justify-center w-full max-w-md mb-2 md:mb-4">
           <Button
             size="lg"
             onClick={onStart}
