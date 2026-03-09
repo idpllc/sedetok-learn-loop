@@ -101,7 +101,7 @@ const XPHistory = () => {
     return (
       <>
         <Sidebar />
-        <div className="min-h-screen bg-background pb-20 md:ml-64 pt-20 md:pt-0">
+        <div className="min-h-screen bg-background pb-20 md:ml-64 pt-14 md:pt-0">
           <div className="flex items-center justify-center h-screen">
             <p className="text-muted-foreground">Cargando...</p>
           </div>
