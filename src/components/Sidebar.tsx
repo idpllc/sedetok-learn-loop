@@ -93,6 +93,7 @@ export const Sidebar = () => {
       "/edit-profile": "Editar Perfil",
       "/notifications": "Notificaciones",
       "/sede-ai": "Sede AI",
+      "/language-tutor": "English Tutor",
       "/buy-educoins": "Educoins",
       "/about": "Acerca de",
       "/terms": "Términos",
