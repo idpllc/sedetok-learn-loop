@@ -146,7 +146,7 @@ export const FloatingTutorChat = () => {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-36 right-4 z-50"
+            className="fixed bottom-24 right-4 z-50"
           >
             <button
               onClick={handleFabClick}
