@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { useConversation } from "@11labs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import linguaAvatar from "@/assets/avatars/lingua-avatar.png";
+import alexAvatar from "@/assets/avatars/lingua-avatar.png";
 import ReactMarkdown from "react-markdown";
 
 const CEFR_COLORS: Record<string, string> = {
@@ -187,7 +187,7 @@ export const LanguageTutorChat = () => {
             >
               <MessageSquare className="w-4 h-4 shrink-0" />
               <span className="text-sm truncate flex-1">
-                {conv.title?.replace('[LINGUA] ', '') || 'Conversación'}
+                {conv.title?.replace('[ALEX] ', '') || 'Conversación'}
               </span>
               <button
                 onClick={(e) => {
@@ -216,10 +216,10 @@ export const LanguageTutorChat = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Avatar className="w-8 h-8">
-                <AvatarImage src={linguaAvatar} />
-                <AvatarFallback>L</AvatarFallback>
+                <AvatarImage src={alexAvatar} />
+                <AvatarFallback>A</AvatarFallback>
               </Avatar>
-              <span className="font-semibold text-foreground">Lingua</span>
+              <span className="font-semibold text-foreground">Alex</span>
             </div>
           </div>
           <ConversationSidebar />
@@ -251,11 +251,11 @@ export const LanguageTutorChat = () => {
             </Button>
           )}
           <Avatar className="w-9 h-9 ring-2 ring-primary/20">
-            <AvatarImage src={linguaAvatar} />
-            <AvatarFallback>L</AvatarFallback>
+            <AvatarImage src={alexAvatar} />
+            <AvatarFallback>A</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-foreground text-sm">Lingua</h2>
+            <h2 className="font-semibold text-foreground text-sm">Alex</h2>
             <p className="text-xs text-muted-foreground truncate">
               {assessment?.current_level
                 ? `Nivel: ${assessment.current_level} - ${CEFR_LABELS[assessment.current_level] || ''}`
@@ -297,7 +297,7 @@ export const LanguageTutorChat = () => {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {voiceConversation.isSpeaking ? "Lingua está hablando..." : "Habla para comenzar 🎤"}
+                      {voiceConversation.isSpeaking ? "Alex está hablando..." : "Habla para comenzar 🎤"}
                     </p>
                   </div>
                 )}
@@ -333,11 +333,11 @@ export const LanguageTutorChat = () => {
                 {messages.length === 0 && (
                   <div className="flex flex-col items-center justify-center pt-8 px-4 gap-4">
                     <Avatar className="w-20 h-20 ring-4 ring-primary/10">
-                      <AvatarImage src={linguaAvatar} />
-                      <AvatarFallback>L</AvatarFallback>
+                      <AvatarImage src={alexAvatar} />
+                      <AvatarFallback>A</AvatarFallback>
                     </Avatar>
                     <div className="text-center space-y-2">
-                      <h3 className="text-lg font-bold text-foreground">¡Hola! Soy Lingua 🇬🇧</h3>
+                      <h3 className="text-lg font-bold text-foreground">¡Hola! Soy Alex 🇬🇧</h3>
                       <p className="text-sm text-muted-foreground max-w-sm">
                         {assessment?.current_level
                           ? `Tu nivel actual es ${assessment.current_level} (${CEFR_LABELS[assessment.current_level]}). ¡Sigamos practicando y mejorando tu inglés!`
@@ -378,8 +378,8 @@ export const LanguageTutorChat = () => {
                   <div key={i} className={cn("flex gap-3 px-4", msg.role === "user" ? "flex-row-reverse" : "")}>
                     {msg.role === "assistant" && (
                       <Avatar className="w-8 h-8 shrink-0">
-                        <AvatarImage src={linguaAvatar} />
-                        <AvatarFallback>L</AvatarFallback>
+                      <AvatarImage src={alexAvatar} />
+                      <AvatarFallback>A</AvatarFallback>
                       </Avatar>
                     )}
                     <div className={cn(
@@ -402,8 +402,8 @@ export const LanguageTutorChat = () => {
                 {isLoading && (
                   <div className="flex gap-3 px-4">
                     <Avatar className="w-8 h-8 shrink-0">
-                      <AvatarImage src={linguaAvatar} />
-                      <AvatarFallback>L</AvatarFallback>
+                    <AvatarImage src={alexAvatar} />
+                    <AvatarFallback>A</AvatarFallback>
                     </Avatar>
                     <div className="bg-muted px-4 py-3 rounded-2xl rounded-bl-md">
                       <Loader2 className="w-4 h-4 animate-spin text-primary" />

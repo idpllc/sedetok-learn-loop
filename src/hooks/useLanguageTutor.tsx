@@ -50,7 +50,7 @@ export const useLanguageTutor = () => {
       .from('ai_chat_conversations')
       .select('*')
       .eq('user_id', user.id)
-      .ilike('title', '%[LINGUA]%')
+      .ilike('title', '%[ALEX]%')
       .order('updated_at', { ascending: false });
     setConversations(data || []);
   }, [user]);
@@ -73,7 +73,7 @@ export const useLanguageTutor = () => {
       .from('ai_chat_conversations')
       .insert({
         user_id: user.id,
-        title: `[LINGUA] ${firstMessage.slice(0, 40)}...`,
+        title: `[ALEX] ${firstMessage.slice(0, 40)}...`,
       })
       .select()
       .single();
