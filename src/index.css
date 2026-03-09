@@ -196,3 +196,9 @@ All colors MUST be HSL.
   line-height: 1.75rem;
 }
 
+/* Mobile header offset: sticky sub-headers should sit below the fixed mobile header bar */
+@media (max-width: 767px) {
+  header.sticky.top-0 {
+    top: 52px;
+  }
+}
