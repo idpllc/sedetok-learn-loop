@@ -297,7 +297,7 @@ export const LanguageTutorChat = () => {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {voiceConversation.isSpeaking ? "Lingua está hablando..." : "Habla para comenzar 🎤"}
+                      {voiceConversation.isSpeaking ? "Alex está hablando..." : "Habla para comenzar 🎤"}
                     </p>
                   </div>
                 )}
