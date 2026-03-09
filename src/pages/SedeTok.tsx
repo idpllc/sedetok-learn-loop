@@ -40,27 +40,27 @@ async function fetchSingleItem(
   type: "content" | "quiz" | "game"
 ): Promise<FeedItem | null> {
   const table = type === "quiz" ? "quizzes" : type === "game" ? "games" : "content";
-  const { data, error } = await supabase
-    .from(table)
+  const { data, error } = await (supabase
+    .from(table) as any)
     .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
     .eq("id", id)
     .single();
 
   if (error || !data) return null;
 
-  // Normalise to a common shape
+  const d = data as any;
   return {
-    ...data,
-    content_type: type === "quiz" ? "quiz" : type === "game" ? "game" : data.content_type,
-    likes_count: data.likes_count || 0,
-    comments_count: data.comments_count || 0,
-    shares_count: data.shares_count || 0,
-    saves_count: data.saves_count || 0,
-    views_count: data.views_count || 0,
-    video_url: data.video_url || null,
-    document_url: data.document_url || null,
-    rich_text: data.rich_text || null,
-    tags: data.tags || [],
+    ...d,
+    content_type: type === "quiz" ? "quiz" : type === "game" ? "game" : d.content_type,
+    likes_count: d.likes_count || 0,
+    comments_count: d.comments_count || 0,
+    shares_count: d.shares_count || 0,
+    saves_count: d.saves_count || 0,
+    views_count: d.views_count || 0,
+    video_url: d.video_url || null,
+    document_url: d.document_url || null,
+    rich_text: d.rich_text || null,
+    tags: d.tags || [],
   } as FeedItem;
 }
 
