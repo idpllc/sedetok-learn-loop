@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,11 +25,10 @@ serve(async (req) => {
 
     console.log('Generating speech with ElevenLabs...');
 
-    // Use Liam voice by default for Spanish
     const voiceId = voice || 'TX3LPaxmHKxFdv7VOQHJ';
     
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
       {
         method: 'POST',
         headers: {
@@ -53,23 +53,8 @@ serve(async (req) => {
       throw new Error(`Failed to generate speech: ${error}`);
     }
 
-    // Convert audio buffer to base64 in chunks to avoid stack overflow
     const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    
-    let base64Audio = '';
-    const chunkSize = 32768; // Process in 32KB chunks
-    
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
-      let binaryString = '';
-      
-      for (let j = 0; j < chunk.length; j++) {
-        binaryString += String.fromCharCode(chunk[j]);
-      }
-      
-      base64Audio += btoa(binaryString);
-    }
+    const base64Audio = base64Encode(arrayBuffer);
 
     console.log('Speech generated successfully');
 
