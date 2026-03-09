@@ -84,6 +84,55 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
     enabled: !!user && open
   });
 
+  // Get institution members (same institution as current user)
+  const { data: institutionMembers } = useQuery({
+    queryKey: ['institution-members-challenge', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      // First get the user's institution(s)
+      const { data: myMemberships, error: memError } = await supabase
+        .from('institution_members')
+        .select('institution_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active');
+      
+      if (memError || !myMemberships?.length) return [];
+      
+      const institutionIds = myMemberships.map(m => m.institution_id);
+      
+      // Get all active members from those institutions, excluding current user
+      const { data: members, error } = await supabase
+        .from('institution_members')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .in('institution_id', institutionIds)
+        .eq('status', 'active')
+        .neq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      // Deduplicate by user id
+      const seen = new Set<string>();
+      return (members || [])
+        .map(m => m.profiles)
+        .filter(Boolean)
+        .filter((p: any) => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+    },
+    enabled: !!user && open
+  });
+
   const handleChallenge = async (userId: string) => {
     await sendInvitation.mutateAsync({
       receiverId: userId,
