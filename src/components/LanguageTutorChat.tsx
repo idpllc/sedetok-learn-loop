@@ -337,7 +337,7 @@ export const LanguageTutorChat = () => {
                       <AvatarFallback>A</AvatarFallback>
                     </Avatar>
                     <div className="text-center space-y-2">
-                      <h3 className="text-lg font-bold text-foreground">¡Hola! Soy Lingua 🇬🇧</h3>
+                      <h3 className="text-lg font-bold text-foreground">¡Hola! Soy Alex 🇬🇧</h3>
                       <p className="text-sm text-muted-foreground max-w-sm">
                         {assessment?.current_level
                           ? `Tu nivel actual es ${assessment.current_level} (${CEFR_LABELS[assessment.current_level]}). ¡Sigamos practicando y mejorando tu inglés!`
