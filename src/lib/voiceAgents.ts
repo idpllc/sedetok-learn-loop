@@ -22,7 +22,7 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit',
     personality: 'Amigable, paciente y motivadora. Especialista en explicar conceptos complejos de forma sencilla.',
     color: 'hsl(165 89% 24%)',
-    ttsVoiceId: 'pFZP5JQG7iQjIQuC4Bku', // Lily - warm female voice
+    ttsVoiceId: '86V9x9hrQds83qf7zaGn',
     avatarImageUrl: '/src/assets/avatars/sofia-avatar.png',
   },
   {
