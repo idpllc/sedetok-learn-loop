@@ -37,8 +37,8 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     avatarImageUrl: '/src/assets/avatars/alejandro-avatar.png',
   },
   {
-    id: 'lingua',
-    name: 'Lingua',
+    id: 'alex',
+    name: 'Alex',
     description: 'Tutor especialista en inglés',
     agentId: 'agent_8401kk8r0436fwkv2shkbzj5m3aj',
     avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit',
