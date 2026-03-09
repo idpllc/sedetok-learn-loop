@@ -203,7 +203,7 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
             Retar a Amigos
           </DialogTitle>
           <DialogDescription>
-            Reta a tus seguidores o a quienes sigues a una partida de trivia
+            Reta a tus seguidores, a quienes sigues o compañeros de institución
           </DialogDescription>
         </DialogHeader>
 
@@ -235,9 +235,9 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
             />
           </div>
 
-          {/* Tabs for followers/following */}
+          {/* Tabs for followers/following/institution */}
           <Tabs defaultValue="followers" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className={`grid w-full ${institutionMembers && institutionMembers.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <TabsTrigger value="followers" className="gap-2">
                 <Users className="w-4 h-4" />
                 Seguidores ({followers?.length || 0})
@@ -246,6 +246,12 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
                 <UserCheck className="w-4 h-4" />
                 Siguiendo ({following?.length || 0})
               </TabsTrigger>
+              {institutionMembers && institutionMembers.length > 0 && (
+                <TabsTrigger value="institution" className="gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Institución ({institutionMembers.length})
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <ScrollArea className="h-[400px] mt-4">
@@ -256,6 +262,12 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
               <TabsContent value="following" className="mt-0">
                 {renderUserList(following || [], "No sigues a nadie aún")}
               </TabsContent>
+
+              {institutionMembers && institutionMembers.length > 0 && (
+                <TabsContent value="institution" className="mt-0">
+                  {renderUserList(institutionMembers, "No hay compañeros en tu institución")}
+                </TabsContent>
+              )}
             </ScrollArea>
           </Tabs>
         </div>
