@@ -69,50 +69,50 @@ async function fetchSingleItem(
  * Excludes the given ID.
  */
 async function fetchRelatedContent(
-  excludeId: string,
+  excludeIds: string[],
   subject: string | null,
   limit: number = 10
 ): Promise<FeedItem[]> {
   const results: FeedItem[] = [];
-  const seenIds = new Set<string>([excludeId]);
+  const seenIds = new Set<string>(excludeIds);
+
+  const normalize = (items: any[], type?: string) =>
+    items.map((item: any) => ({
+      ...item,
+      content_type: type || item.content_type,
+      likes_count: item.likes_count || 0,
+      comments_count: item.comments_count || 0,
+      shares_count: item.shares_count || 0,
+      video_url: item.video_url || null,
+      document_url: item.document_url || null,
+      rich_text: item.rich_text || null,
+      tags: item.tags || [],
+    })) as FeedItem[];
 
   // 1. Try same-subject content
   if (subject) {
-    const tables = [
-      { table: "content" as const, type: "content", extraFilter: (q: any) => q.eq("is_public", true) },
-      { table: "quizzes" as const, type: "quiz", extraFilter: (q: any) => q.eq("is_public", true).eq("status", "publicado") },
-      { table: "games" as const, type: "game", extraFilter: (q: any) => q.eq("is_public", true) },
+    const tables: Array<{ table: string; type: string; extra: (q: any) => any }> = [
+      { table: "content", type: "", extra: (q: any) => q.eq("is_public", true) },
+      { table: "quizzes", type: "quiz", extra: (q: any) => q.eq("is_public", true).eq("status", "publicado") },
+      { table: "games", type: "game", extra: (q: any) => q.eq("is_public", true) },
     ];
 
-    const subjectPromises = tables.map(async ({ table, type, extraFilter }) => {
-      let q = supabase
-        .from(table)
+    const subjectPromises = tables.map(async ({ table, type, extra }) => {
+      let q = (supabase.from(table) as any)
         .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
-        .neq("id", excludeId)
         .ilike("subject", `%${subject}%`)
         .order("created_at", { ascending: false })
         .limit(4);
-      q = extraFilter(q);
+      q = extra(q);
       const { data } = await q;
-      return (data || []).map((item: any) => ({
-        ...item,
-        content_type: type === "quiz" ? "quiz" : type === "game" ? "game" : item.content_type,
-        likes_count: item.likes_count || 0,
-        comments_count: item.comments_count || 0,
-        shares_count: item.shares_count || 0,
-        video_url: item.video_url || null,
-        document_url: item.document_url || null,
-        rich_text: item.rich_text || null,
-        tags: item.tags || [],
-      }));
+      return normalize(data || [], type || undefined);
     });
 
     const subjectResults = (await Promise.all(subjectPromises)).flat();
-    // Shuffle and pick
     for (const item of subjectResults.sort(() => Math.random() - 0.5)) {
       if (!seenIds.has(item.id) && results.length < limit) {
         seenIds.add(item.id);
-        results.push(item as FeedItem);
+        results.push(item);
       }
     }
   }
@@ -120,32 +120,20 @@ async function fetchRelatedContent(
   // 2. Fill remaining with random content
   if (results.length < limit) {
     const remaining = limit - results.length;
-    const idsToExclude = Array.from(seenIds);
 
-    // Fetch from content table with random-ish ordering
     const { data: fillerContent } = await supabase
       .from("content")
       .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
       .eq("is_public", true)
-      .not("id", "in", `(${idsToExclude.join(",")})`)
       .order("created_at", { ascending: false })
-      .limit(remaining + 10); // fetch extra so we can randomise
+      .limit(remaining + 20);
 
     if (fillerContent) {
-      const shuffled = fillerContent.sort(() => Math.random() - 0.5);
-      for (const item of shuffled) {
+      const shuffled = (fillerContent as any[]).sort(() => Math.random() - 0.5);
+      for (const item of normalize(shuffled)) {
         if (!seenIds.has(item.id) && results.length < limit) {
           seenIds.add(item.id);
-          results.push({
-            ...item,
-            likes_count: item.likes_count || 0,
-            comments_count: item.comments_count || 0,
-            shares_count: item.shares_count || 0,
-            video_url: item.video_url || null,
-            document_url: item.document_url || null,
-            rich_text: item.rich_text || null,
-            tags: item.tags || [],
-          } as FeedItem);
+          results.push(item);
         }
       }
     }
