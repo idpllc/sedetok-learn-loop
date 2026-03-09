@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { useConversation } from "@11labs/react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import linguaAvatar from "@/assets/avatars/lingua-avatar.png";
+import alexAvatar from "@/assets/avatars/lingua-avatar.png";
 import ReactMarkdown from "react-markdown";
 
 const CEFR_COLORS: Record<string, string> = {
