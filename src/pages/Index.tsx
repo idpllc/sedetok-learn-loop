@@ -322,7 +322,7 @@ const Index = () => {
           </div>
         </header>
 
-        <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+        <main className="max-w-7xl mx-auto px-3 md:px-4 py-3 space-y-6">
           {/* Users Section - Only show when searching */}
           {searchQuery && searchedUsers && searchedUsers.length > 0 && (
             <div>
