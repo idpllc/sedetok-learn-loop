@@ -221,10 +221,10 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
 
         {/* Hint to scroll */}
         {hasNext && (
-          <div className="mt-8 text-center animate-bounce">
-            <p className="text-sm text-muted-foreground mb-2">Desliza para ver las cápsulas</p>
-            <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 mx-auto relative">
-              <div className="w-1.5 h-3 bg-muted-foreground/50 rounded-full absolute top-2 left-1/2 -translate-x-1/2 animate-pulse" />
+          <div className="mt-4 md:mt-8 text-center animate-bounce">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1 md:mb-2">Desliza para ver las cápsulas</p>
+            <div className="w-5 h-8 md:w-6 md:h-10 rounded-full border-2 border-muted-foreground/30 mx-auto relative">
+              <div className="w-1 h-2.5 md:w-1.5 md:h-3 bg-muted-foreground/50 rounded-full absolute top-1.5 md:top-2 left-1/2 -translate-x-1/2 animate-pulse" />
             </div>
           </div>
         )}
