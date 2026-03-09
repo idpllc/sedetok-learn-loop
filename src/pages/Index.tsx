@@ -439,7 +439,7 @@ const Index = () => {
                       }}
                     >
                       <CardContent className="p-0">
-                        <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-secondary/20">
+                        <div className="relative aspect-[16/10] bg-gradient-to-br from-primary/20 to-secondary/20">
                           {(item.cover_url || item.thumbnail_url) ? (
                             <img 
                               src={item.cover_url || item.thumbnail_url} 
@@ -448,15 +448,29 @@ const Index = () => {
                             />
                           ) : scientist ? (
                             <div className="absolute inset-0 flex items-center justify-center">
-                              <img src={scientist.icon} alt={scientist.name} className="w-32 h-32 object-contain" />
+                              <img src={scientist.icon} alt={scientist.name} className="w-24 h-24 object-contain" />
                             </div>
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
                             </div>
                           )}
+                          {/* Gradient overlay at bottom of cover */}
+                          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+                          {/* Creator username on cover */}
+                          <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
+                            {profile?.avatar_url && (
+                              <Avatar className="w-5 h-5 border border-white/50">
+                                <AvatarImage src={profile.avatar_url} />
+                                <AvatarFallback className="text-[8px]">{(profile?.username || '?')[0].toUpperCase()}</AvatarFallback>
+                              </Avatar>
+                            )}
+                            <span className="text-xs font-semibold text-white drop-shadow-md">
+                              {profile?.username || item.creator}
+                            </span>
+                          </div>
                           <div className="absolute top-2 right-2">
-                            <Badge variant="secondary" className="backdrop-blur-sm shadow-sm">
+                            <Badge variant="secondary" className="backdrop-blur-sm shadow-sm text-[10px] px-1.5 py-0.5">
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
                               <span className="ml-1 capitalize">
                                 {isLearningPath ? "Ruta" : item.content_type}
@@ -464,17 +478,12 @@ const Index = () => {
                             </Badge>
                           </div>
                         </div>
-                        <div className="p-4 space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-semibold line-clamp-2">{item.title}</h3>
-                          </div>
+                        <div className="px-3 py-2 space-y-1">
+                          <h3 className="font-semibold text-sm line-clamp-1">{item.title}</h3>
                           {item.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
                           )}
-                          <div className="flex items-center justify-between pt-2">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              {profile?.username || item.creator}
-                            </div>
+                          <div className="flex items-center justify-end">
                             {!isLearningPath && (
                               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <button
