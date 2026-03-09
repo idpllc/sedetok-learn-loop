@@ -44,7 +44,7 @@ const LiveGames = () => {
   return (
     <>
       <Sidebar />
-      <div className="min-h-screen bg-background pb-20 md:ml-64">
+      <div className="min-h-screen bg-background pb-20 md:ml-64 pt-14 md:pt-0">
         {/* Sticky Header */}
         <header className="sticky top-0 z-10 bg-card border-b border-border">
           <div className="px-4 py-3">
