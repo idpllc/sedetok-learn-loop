@@ -80,17 +80,17 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
       )}
 
       {/* Main content container */}
-      <div className="relative z-10 max-w-4xl w-full mx-auto px-6 py-8 md:px-12 md:py-16 lg:px-16 flex flex-col items-center justify-center">
+      <div className="relative z-10 max-w-4xl w-full mx-auto px-4 pt-14 pb-4 md:px-12 md:py-16 lg:px-16 flex flex-col items-center justify-center overflow-y-auto max-h-screen">
         {/* Icon/Badge section */}
-        <div className="mb-4 md:mb-8 flex flex-wrap items-center justify-center gap-2">
-          <Badge className="bg-primary text-primary-foreground text-xs md:text-sm px-2 py-1 md:px-4 md:py-2">
+        <div className="mb-3 md:mb-8 flex flex-wrap items-center justify-center gap-1.5 md:gap-2">
+          <Badge className="bg-primary text-primary-foreground text-[10px] md:text-sm px-2 py-0.5 md:px-4 md:py-2">
             <BookOpen className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-            Ruta de Aprendizaje
+            Ruta
           </Badge>
-          <Badge variant="secondary" className="text-xs md:text-sm px-2 py-1 md:px-4 md:py-2 capitalize">
+          <Badge variant="secondary" className="text-[10px] md:text-sm px-2 py-0.5 md:px-4 md:py-2 capitalize">
             {category}
           </Badge>
-          <Badge variant="outline" className="text-xs md:text-sm px-2 py-1 md:px-4 md:py-2 capitalize">
+          <Badge variant="outline" className="text-[10px] md:text-sm px-2 py-0.5 md:px-4 md:py-2 capitalize">
             {gradeLevel}
           </Badge>
         </div>
