@@ -196,9 +196,24 @@ All colors MUST be HSL.
   line-height: 1.75rem;
 }
 
-/* Mobile header offset: sticky sub-headers should sit below the fixed mobile header bar */
+/* Mobile header offset: controlled by data attribute on body */
 @media (max-width: 767px) {
+  :root {
+    --mobile-header-h: 52px;
+  }
+  body[data-header-hidden="true"] {
+    --mobile-header-h: 0px;
+  }
   header.sticky.top-0 {
-    top: 52px;
+    top: var(--mobile-header-h);
+    transition: top 0.3s ease;
+  }
+  /* When header hides, collapse the top padding on main containers */
+  body[data-header-hidden="true"] .pt-14 {
+    padding-top: 0 !important;
+    transition: padding-top 0.3s ease;
+  }
+  .pt-14 {
+    transition: padding-top 0.3s ease;
   }
 }
