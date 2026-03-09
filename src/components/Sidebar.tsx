@@ -1,7 +1,7 @@
 import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2, MoreHorizontal, BookOpen, Gamepad2, MessageCircle, Play, Radio, ChevronRight, Star, Trophy, PanelLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { AuthModal } from "./AuthModal";
 import { SearchModal } from "./SearchModal";
 import { MoreModal } from "./MoreModal";
