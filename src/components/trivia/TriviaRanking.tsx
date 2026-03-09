@@ -61,6 +61,82 @@ export const TriviaRanking = () => {
     );
   }
 
+  const renderPodium = (data: any[], is1v1: boolean = false) => {
+    const topThree = data.slice(0, 3);
+    
+    if (topThree.length === 0) return null;
+
+    return (
+      <div className="grid grid-cols-3 gap-3 mb-6 px-2">
+        {/* Second Place */}
+        {topThree[1] && (
+          <div className="flex flex-col items-center pt-8">
+            <Avatar className="w-16 h-16 ring-4 ring-gray-400 ring-offset-2 mb-2">
+              <AvatarImage src={(Array.isArray(topThree[1].profiles) ? topThree[1].profiles[0] : topThree[1].profiles)?.avatar_url} />
+              <AvatarFallback className="text-lg font-bold">
+                {((Array.isArray(topThree[1].profiles) ? topThree[1].profiles[0] : topThree[1].profiles)?.full_name || (Array.isArray(topThree[1].profiles) ? topThree[1].profiles[0] : topThree[1].profiles)?.username || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="w-full bg-gradient-to-t from-gray-400 to-gray-300 rounded-t-xl p-3 text-center">
+              <Medal className="w-6 h-6 mx-auto mb-1 text-white" />
+              <div className="text-xs text-white/80 truncate max-w-full px-1">
+                {(Array.isArray(topThree[1].profiles) ? topThree[1].profiles[0] : topThree[1].profiles)?.full_name || (Array.isArray(topThree[1].profiles) ? topThree[1].profiles[0] : topThree[1].profiles)?.username || 'Usuario'}
+              </div>
+              <div className="text-lg font-bold text-white mt-1">
+                {is1v1 ? topThree[1].wins : topThree[1].total_points}
+              </div>
+              <div className="text-[10px] text-white/70">{is1v1 ? 'victorias' : 'puntos'}</div>
+            </div>
+          </div>
+        )}
+
+        {/* First Place */}
+        {topThree[0] && (
+          <div className="flex flex-col items-center">
+            <Avatar className="w-20 h-20 ring-4 ring-yellow-500 ring-offset-2 mb-2">
+              <AvatarImage src={(Array.isArray(topThree[0].profiles) ? topThree[0].profiles[0] : topThree[0].profiles)?.avatar_url} />
+              <AvatarFallback className="text-xl font-bold">
+                {((Array.isArray(topThree[0].profiles) ? topThree[0].profiles[0] : topThree[0].profiles)?.full_name || (Array.isArray(topThree[0].profiles) ? topThree[0].profiles[0] : topThree[0].profiles)?.username || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-xl p-3 text-center">
+              <Trophy className="w-7 h-7 mx-auto mb-1 text-white" />
+              <div className="text-xs text-white/90 font-medium truncate max-w-full px-1">
+                {(Array.isArray(topThree[0].profiles) ? topThree[0].profiles[0] : topThree[0].profiles)?.full_name || (Array.isArray(topThree[0].profiles) ? topThree[0].profiles[0] : topThree[0].profiles)?.username || 'Usuario'}
+              </div>
+              <div className="text-2xl font-bold text-white mt-1">
+                {is1v1 ? topThree[0].wins : topThree[0].total_points}
+              </div>
+              <div className="text-[10px] text-white/70">{is1v1 ? 'victorias' : 'puntos'}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Third Place */}
+        {topThree[2] && (
+          <div className="flex flex-col items-center pt-12">
+            <Avatar className="w-14 h-14 ring-4 ring-amber-700 ring-offset-2 mb-2">
+              <AvatarImage src={(Array.isArray(topThree[2].profiles) ? topThree[2].profiles[0] : topThree[2].profiles)?.avatar_url} />
+              <AvatarFallback className="text-base font-bold">
+                {((Array.isArray(topThree[2].profiles) ? topThree[2].profiles[0] : topThree[2].profiles)?.full_name || (Array.isArray(topThree[2].profiles) ? topThree[2].profiles[0] : topThree[2].profiles)?.username || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="w-full bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-xl p-3 text-center">
+              <Medal className="w-5 h-5 mx-auto mb-1 text-white" />
+              <div className="text-xs text-white/80 truncate max-w-full px-1">
+                {(Array.isArray(topThree[2].profiles) ? topThree[2].profiles[0] : topThree[2].profiles)?.full_name || (Array.isArray(topThree[2].profiles) ? topThree[2].profiles[0] : topThree[2].profiles)?.username || 'Usuario'}
+              </div>
+              <div className="text-base font-bold text-white mt-1">
+                {is1v1 ? topThree[2].wins : topThree[2].total_points}
+              </div>
+              <div className="text-[10px] text-white/70">{is1v1 ? 'victorias' : 'puntos'}</div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderPlayerRankingList = (data: any[], showInstitution: boolean = false, is1v1: boolean = false) => {
     if (!data || data.length === 0) {
       return (
@@ -72,76 +148,163 @@ export const TriviaRanking = () => {
       );
     }
 
-    return data.map((entry, index) => {
-      const position = index + 1;
-      const profile = Array.isArray(entry.profiles) ? entry.profiles[0] : entry.profiles;
-      const displayName = profile?.full_name || profile?.username || 'Usuario';
-      const points = is1v1 ? entry.wins : entry.total_points;
+    const restOfPlayers = data.slice(3);
 
-      return (
-        <div
-          key={entry.user_id || index}
-          className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-            position <= 3
-              ? `bg-gradient-to-r from-primary/5 to-secondary/5 ${getCardBorder(position)}`
-              : "bg-muted/30 border-transparent"
-          }`}
-        >
-          <div className="flex-shrink-0 w-8 flex items-center justify-center">
-            {getRankIcon(position)}
+    return (
+      <>
+        {renderPodium(data, is1v1)}
+        
+        {restOfPlayers.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-muted-foreground px-1 mb-3">
+              Resto del ranking
+            </h3>
+            {restOfPlayers.map((entry, index) => {
+              const position = index + 4;
+              const profile = Array.isArray(entry.profiles) ? entry.profiles[0] : entry.profiles;
+              const displayName = profile?.full_name || profile?.username || 'Usuario';
+              const points = is1v1 ? entry.wins : entry.total_points;
+
+              return (
+                <div
+                  key={entry.user_id || index}
+                  className="flex items-center gap-3 p-3 rounded-xl border bg-muted/30 transition-all hover:bg-muted/50"
+                >
+                  <div className="flex-shrink-0 w-8 flex items-center justify-center">
+                    <span className="text-sm font-bold text-muted-foreground">#{position}</span>
+                  </div>
+
+                  <Avatar className="w-10 h-10 flex-shrink-0">
+                    <AvatarImage src={profile?.avatar_url} />
+                    <AvatarFallback className="text-sm font-bold">
+                      {displayName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm truncate leading-tight">
+                      {displayName}
+                    </h4>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap mt-0.5">
+                      {is1v1 ? (
+                        <span className="text-green-600 font-medium">
+                          {entry.wins} victoria{entry.wins !== 1 ? 's' : ''}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="font-medium">{points} pts</span>
+                          <span>·</span>
+                          <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
+                          <span>·</span>
+                          <span className="text-green-600 font-medium">
+                            {entry.total_correct} ✓
+                          </span>
+                          {entry.best_streak > 0 && (
+                            <>
+                              <span>·</span>
+                              <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                                <Star className="w-2.5 h-2.5" />
+                                {entry.best_streak}
+                              </span>
+                            </>
+                          )}
+                        </>
+                      )}
+                      {showInstitution && profile?.institution && (
+                        <span className="hidden sm:flex items-center gap-0.5 text-muted-foreground">
+                          · <Building2 className="w-2.5 h-2.5" /> {profile.institution}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0 flex flex-col items-center justify-center rounded-full w-14 h-14 bg-primary text-white font-bold">
+                    <span className="text-base leading-none">{is1v1 ? entry.wins : (points >= 1000 ? `${(points / 1000).toFixed(1)}k` : points)}</span>
+                    <span className="text-[10px] opacity-90 leading-none mt-0.5">{is1v1 ? '🏆' : 'pts'}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+        )}
+      </>
+    );
+  };
 
-          <Avatar className={`w-10 h-10 flex-shrink-0 ${position <= 3 ? `ring-2 ring-offset-1 ${position === 1 ? 'ring-yellow-500' : position === 2 ? 'ring-gray-400' : 'ring-amber-700'}` : ''}`}>
-            <AvatarImage src={profile?.avatar_url} />
-            <AvatarFallback className="text-sm font-bold">
-              {displayName.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+  const renderInstitutionalPodium = (data: any[]) => {
+    const topThree = data.slice(0, 3);
+    
+    if (topThree.length === 0) return null;
 
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-sm truncate leading-tight">
-              {displayName}
-            </h4>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap mt-0.5">
-              {is1v1 ? (
-                <span className="text-green-600 font-medium">
-                  {entry.wins} victoria{entry.wins !== 1 ? 's' : ''}
-                </span>
-              ) : (
-                <>
-                  <span className="font-medium">{points} pts</span>
-                  <span>·</span>
-                  <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
-                  <span>·</span>
-                  <span className="text-green-600 font-medium">
-                    {entry.total_correct} ✓
-                  </span>
-                  {entry.best_streak > 0 && (
-                    <>
-                      <span>·</span>
-                      <span className="text-orange-500 font-medium flex items-center gap-0.5">
-                        <Star className="w-2.5 h-2.5" />
-                        {entry.best_streak}
-                      </span>
-                    </>
-                  )}
-                </>
-              )}
-              {showInstitution && profile?.institution && (
-                <span className="hidden sm:flex items-center gap-0.5 text-muted-foreground">
-                  · <Building2 className="w-2.5 h-2.5" /> {profile.institution}
-                </span>
-              )}
+    return (
+      <div className="grid grid-cols-3 gap-3 mb-6 px-2">
+        {/* Second Place */}
+        {topThree[1] && (
+          <div className="flex flex-col items-center pt-8">
+            <Avatar className="w-16 h-16 ring-4 ring-gray-400 ring-offset-2 mb-2">
+              <AvatarImage src={topThree[1].logo_url} />
+              <AvatarFallback className="text-lg font-bold">
+                {topThree[1].name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="w-full bg-gradient-to-t from-gray-400 to-gray-300 rounded-t-xl p-3 text-center">
+              <Medal className="w-6 h-6 mx-auto mb-1 text-white" />
+              <div className="text-xs text-white/80 truncate max-w-full px-1">
+                {topThree[1].name}
+              </div>
+              <div className="text-lg font-bold text-white mt-1">
+                {topThree[1].total_points}
+              </div>
+              <div className="text-[10px] text-white/70">puntos</div>
             </div>
           </div>
+        )}
 
-          <div className={`flex-shrink-0 flex flex-col items-center justify-center rounded-full w-14 h-14 text-white font-bold ${getPointsBg(position)}`}>
-            <span className="text-base leading-none">{is1v1 ? entry.wins : (points >= 1000 ? `${(points / 1000).toFixed(1)}k` : points)}</span>
-            <span className="text-[10px] opacity-90 leading-none mt-0.5">{is1v1 ? '🏆' : 'pts'}</span>
+        {/* First Place */}
+        {topThree[0] && (
+          <div className="flex flex-col items-center">
+            <Avatar className="w-20 h-20 ring-4 ring-yellow-500 ring-offset-2 mb-2">
+              <AvatarImage src={topThree[0].logo_url} />
+              <AvatarFallback className="text-xl font-bold">
+                {topThree[0].name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="w-full bg-gradient-to-t from-yellow-500 to-yellow-400 rounded-t-xl p-3 text-center">
+              <Trophy className="w-7 h-7 mx-auto mb-1 text-white" />
+              <div className="text-xs text-white/90 font-medium truncate max-w-full px-1">
+                {topThree[0].name}
+              </div>
+              <div className="text-2xl font-bold text-white mt-1">
+                {topThree[0].total_points}
+              </div>
+              <div className="text-[10px] text-white/70">puntos</div>
+            </div>
           </div>
-        </div>
-      );
-    });
+        )}
+
+        {/* Third Place */}
+        {topThree[2] && (
+          <div className="flex flex-col items-center pt-12">
+            <Avatar className="w-14 h-14 ring-4 ring-amber-700 ring-offset-2 mb-2">
+              <AvatarImage src={topThree[2].logo_url} />
+              <AvatarFallback className="text-base font-bold">
+                {topThree[2].name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="w-full bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-xl p-3 text-center">
+              <Medal className="w-5 h-5 mx-auto mb-1 text-white" />
+              <div className="text-xs text-white/80 truncate max-w-full px-1">
+                {topThree[2].name}
+              </div>
+              <div className="text-base font-bold text-white mt-1">
+                {topThree[2].total_points}
+              </div>
+              <div className="text-[10px] text-white/70">puntos</div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderInstitutionalRanking = (data: any[]) => {
@@ -155,54 +318,65 @@ export const TriviaRanking = () => {
       );
     }
 
-    return data.map((entry, index) => {
-      const position = index + 1;
+    const restOfInstitutions = data.slice(3);
 
-      return (
-        <div
-          key={entry.institution_id}
-          className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
-            position <= 3
-              ? `bg-gradient-to-r from-primary/5 to-secondary/5 ${getCardBorder(position)}`
-              : "bg-muted/30 border-transparent"
-          }`}
-        >
-          <div className="flex-shrink-0 w-8 flex items-center justify-center">
-            {getRankIcon(position)}
+    return (
+      <>
+        {renderInstitutionalPodium(data)}
+        
+        {restOfInstitutions.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-muted-foreground px-1 mb-3">
+              Resto del ranking
+            </h3>
+            {restOfInstitutions.map((entry, index) => {
+              const position = index + 4;
+
+              return (
+                <div
+                  key={entry.institution_id}
+                  className="flex items-center gap-3 p-3 rounded-xl border bg-muted/30 transition-all hover:bg-muted/50"
+                >
+                  <div className="flex-shrink-0 w-8 flex items-center justify-center">
+                    <span className="text-sm font-bold text-muted-foreground">#{position}</span>
+                  </div>
+
+                  <Avatar className="w-10 h-10 flex-shrink-0">
+                    <AvatarImage src={entry.logo_url} />
+                    <AvatarFallback className="text-sm font-bold">
+                      {entry.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-sm truncate leading-tight">
+                      {entry.name}
+                    </h4>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap mt-0.5">
+                      <span className="flex items-center gap-0.5">
+                        <Users className="w-2.5 h-2.5" />
+                        {entry.total_students} estudiante{entry.total_students !== 1 ? 's' : ''}
+                      </span>
+                      <span>·</span>
+                      <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
+                      <span>·</span>
+                      <span className="text-green-600 font-medium">
+                        {entry.total_correct} ✓
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0 flex flex-col items-center justify-center rounded-full w-14 h-14 bg-primary text-white font-bold">
+                    <span className="text-base leading-none">{entry.total_points >= 1000 ? `${(entry.total_points / 1000).toFixed(1)}k` : entry.total_points}</span>
+                    <span className="text-[10px] opacity-90 leading-none mt-0.5">pts</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          <Avatar className={`w-10 h-10 flex-shrink-0 ${position <= 3 ? `ring-2 ring-offset-1 ${position === 1 ? 'ring-yellow-500' : position === 2 ? 'ring-gray-400' : 'ring-amber-700'}` : ''}`}>
-            <AvatarImage src={entry.logo_url} />
-            <AvatarFallback className="text-sm font-bold">
-              {entry.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-sm truncate leading-tight">
-              {entry.name}
-            </h4>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap mt-0.5">
-              <span className="flex items-center gap-0.5">
-                <Users className="w-2.5 h-2.5" />
-                {entry.total_students} estudiante{entry.total_students !== 1 ? 's' : ''}
-              </span>
-              <span>·</span>
-              <span>{entry.total_matches} partida{entry.total_matches !== 1 ? 's' : ''}</span>
-              <span>·</span>
-              <span className="text-green-600 font-medium">
-                {entry.total_correct} ✓
-              </span>
-            </div>
-          </div>
-
-          <div className={`flex-shrink-0 flex flex-col items-center justify-center rounded-full w-14 h-14 text-white font-bold ${getPointsBg(position)}`}>
-            <span className="text-base leading-none">{entry.total_points >= 1000 ? `${(entry.total_points / 1000).toFixed(1)}k` : entry.total_points}</span>
-            <span className="text-[10px] opacity-90 leading-none mt-0.5">pts</span>
-          </div>
-        </div>
-      );
-    });
+        )}
+      </>
+    );
   };
 
   return (
