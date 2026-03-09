@@ -196,7 +196,7 @@ const SedeTok = () => {
     try {
       const firstItem = feed[0];
       const moreContent = await fetchRelatedContent(
-        feed.map((f) => f.id).join(","), // this won't work for exclusion, let's use a simpler approach
+        feed.map((f) => f.id),
         firstItem?.subject,
         5
       );
