@@ -34,6 +34,11 @@ export const Sidebar = () => {
   const shouldHideOnScroll = !capsuleViewRoutes.includes(location.pathname);
   const isMenuVisible = !shouldHideOnScroll || scrollDirection !== "down";
 
+  // Sync header visibility to body attribute for CSS sticky offset
+  useEffect(() => {
+    document.body.setAttribute("data-header-hidden", (!isMenuVisible).toString());
+  }, [isMenuVisible]);
+
   const handleCreateClick = useCallback(() => {
     if (!user) {
       setAuthModalOpen(true);
