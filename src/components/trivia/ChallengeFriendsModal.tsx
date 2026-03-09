@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
-import { Swords, Search, Users, UserCheck } from "lucide-react";
+import { Swords, Search, Users, UserCheck, Building2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -80,6 +80,55 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
       
       if (error) throw error;
       return data.map(f => f.profiles).filter(Boolean);
+    },
+    enabled: !!user && open
+  });
+
+  // Get institution members (same institution as current user)
+  const { data: institutionMembers } = useQuery({
+    queryKey: ['institution-members-challenge', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      // First get the user's institution(s)
+      const { data: myMemberships, error: memError } = await supabase
+        .from('institution_members')
+        .select('institution_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active');
+      
+      if (memError || !myMemberships?.length) return [];
+      
+      const institutionIds = myMemberships.map(m => m.institution_id);
+      
+      // Get all active members from those institutions, excluding current user
+      const { data: members, error } = await supabase
+        .from('institution_members')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .in('institution_id', institutionIds)
+        .eq('status', 'active')
+        .neq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      // Deduplicate by user id
+      const seen = new Set<string>();
+      return (members || [])
+        .map(m => m.profiles)
+        .filter(Boolean)
+        .filter((p: any) => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
     },
     enabled: !!user && open
   });
@@ -154,7 +203,7 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
             Retar a Amigos
           </DialogTitle>
           <DialogDescription>
-            Reta a tus seguidores o a quienes sigues a una partida de trivia
+            Reta a tus seguidores, a quienes sigues o compañeros de institución
           </DialogDescription>
         </DialogHeader>
 
@@ -186,9 +235,9 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
             />
           </div>
 
-          {/* Tabs for followers/following */}
+          {/* Tabs for followers/following/institution */}
           <Tabs defaultValue="followers" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className={`grid w-full ${institutionMembers && institutionMembers.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <TabsTrigger value="followers" className="gap-2">
                 <Users className="w-4 h-4" />
                 Seguidores ({followers?.length || 0})
@@ -197,6 +246,12 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
                 <UserCheck className="w-4 h-4" />
                 Siguiendo ({following?.length || 0})
               </TabsTrigger>
+              {institutionMembers && institutionMembers.length > 0 && (
+                <TabsTrigger value="institution" className="gap-2">
+                  <Building2 className="w-4 h-4" />
+                  Institución ({institutionMembers.length})
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <ScrollArea className="h-[400px] mt-4">
@@ -207,6 +262,12 @@ export function ChallengeFriendsModal({ open, onOpenChange }: ChallengeFriendsMo
               <TabsContent value="following" className="mt-0">
                 {renderUserList(following || [], "No sigues a nadie aún")}
               </TabsContent>
+
+              {institutionMembers && institutionMembers.length > 0 && (
+                <TabsContent value="institution" className="mt-0">
+                  {renderUserList(institutionMembers, "No hay compañeros en tu institución")}
+                </TabsContent>
+              )}
             </ScrollArea>
           </Tabs>
         </div>
