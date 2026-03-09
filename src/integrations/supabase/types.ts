@@ -1149,6 +1149,167 @@ export type Database = {
         }
         Relationships: []
       }
+      language_assessment_sessions: {
+        Row: {
+          completed_at: string | null
+          conversation_id: string | null
+          correct_answers: number | null
+          created_at: string | null
+          determined_level: Database["public"]["Enums"]["cefr_level"] | null
+          id: string
+          recommendations: string | null
+          session_type: string
+          started_at: string | null
+          status: string
+          strengths: string[] | null
+          total_questions: number | null
+          user_id: string
+          weaknesses: string[] | null
+        }
+        Insert: {
+          completed_at?: string | null
+          conversation_id?: string | null
+          correct_answers?: number | null
+          created_at?: string | null
+          determined_level?: Database["public"]["Enums"]["cefr_level"] | null
+          id?: string
+          recommendations?: string | null
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          strengths?: string[] | null
+          total_questions?: number | null
+          user_id: string
+          weaknesses?: string[] | null
+        }
+        Update: {
+          completed_at?: string | null
+          conversation_id?: string | null
+          correct_answers?: number | null
+          created_at?: string | null
+          determined_level?: Database["public"]["Enums"]["cefr_level"] | null
+          id?: string
+          recommendations?: string | null
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          strengths?: string[] | null
+          total_questions?: number | null
+          user_id?: string
+          weaknesses?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "language_assessment_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "language_assessment_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      language_assessments: {
+        Row: {
+          assessed_at: string | null
+          assessment_method: string | null
+          created_at: string | null
+          current_level: Database["public"]["Enums"]["cefr_level"] | null
+          id: string
+          notes: string | null
+          previous_level: Database["public"]["Enums"]["cefr_level"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assessed_at?: string | null
+          assessment_method?: string | null
+          created_at?: string | null
+          current_level?: Database["public"]["Enums"]["cefr_level"] | null
+          id?: string
+          notes?: string | null
+          previous_level?: Database["public"]["Enums"]["cefr_level"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assessed_at?: string | null
+          assessment_method?: string | null
+          created_at?: string | null
+          current_level?: Database["public"]["Enums"]["cefr_level"] | null
+          id?: string
+          notes?: string | null
+          previous_level?: Database["public"]["Enums"]["cefr_level"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "language_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      language_skill_scores: {
+        Row: {
+          created_at: string | null
+          id: string
+          level: Database["public"]["Enums"]["cefr_level"] | null
+          max_score: number | null
+          notes: string | null
+          score: number | null
+          session_id: string
+          skill: Database["public"]["Enums"]["language_skill"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          level?: Database["public"]["Enums"]["cefr_level"] | null
+          max_score?: number | null
+          notes?: string | null
+          score?: number | null
+          session_id: string
+          skill: Database["public"]["Enums"]["language_skill"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          level?: Database["public"]["Enums"]["cefr_level"] | null
+          max_score?: number | null
+          notes?: string | null
+          score?: number | null
+          session_id?: string
+          skill?: Database["public"]["Enums"]["language_skill"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "language_skill_scores_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "language_assessment_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "language_skill_scores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_path_content: {
         Row: {
           content_id: string | null
@@ -3485,6 +3646,7 @@ export type Database = {
         | "arte"
         | "tecnologia"
         | "otros"
+      cefr_level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"
       content_type: "video" | "document" | "quiz" | "lectura" | "game"
       frecuencia_estudio: "Diaria" | "Semanal" | "Esporádica"
       genero: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir"
@@ -3496,6 +3658,13 @@ export type Database = {
         | "libre"
         | "preescolar"
       horario_estudio: "Mañana" | "Tarde" | "Noche"
+      language_skill:
+        | "grammar"
+        | "vocabulary"
+        | "listening"
+        | "speaking"
+        | "reading"
+        | "writing"
       modo_consumo: "Videos" | "PDF" | "Quizzes" | "Textos" | "Mixto"
       motivacion_principal:
         | "Aprender"
@@ -3690,6 +3859,7 @@ export const Constants = {
         "tecnologia",
         "otros",
       ],
+      cefr_level: ["A1", "A2", "B1", "B2", "C1", "C2"],
       content_type: ["video", "document", "quiz", "lectura", "game"],
       frecuencia_estudio: ["Diaria", "Semanal", "Esporádica"],
       genero: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
@@ -3702,6 +3872,14 @@ export const Constants = {
         "preescolar",
       ],
       horario_estudio: ["Mañana", "Tarde", "Noche"],
+      language_skill: [
+        "grammar",
+        "vocabulary",
+        "listening",
+        "speaking",
+        "reading",
+        "writing",
+      ],
       modo_consumo: ["Videos", "PDF", "Quizzes", "Textos", "Mixto"],
       motivacion_principal: [
         "Aprender",

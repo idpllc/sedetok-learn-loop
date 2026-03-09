@@ -105,3 +105,6 @@ verify_jwt = false
 
 [functions.chat-login]
 verify_jwt = false
+
+[functions.language-tutor-chat]
+verify_jwt = false

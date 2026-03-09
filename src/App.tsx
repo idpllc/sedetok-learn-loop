@@ -60,6 +60,7 @@ import Chat from "./pages/Chat";
 import ChatLogin from "./pages/ChatLogin";
 import ChatLoginTest from "./pages/ChatLoginTest";
 import JoinGame from "./pages/JoinGame";
+import LanguageTutor from "./pages/LanguageTutor";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,7 @@ const App = () => (
           <Route path="/game-evaluations" element={<QuizEvaluations />} />
           <Route path="/trivia-game" element={<TriviaGame />} />
           <Route path="/sede-ai" element={<SedeAI />} />
+          <Route path="/language-tutor" element={<LanguageTutor />} />
           <Route path="/live-games" element={<LiveGames />} />
           <Route path="/live-games/edit/:gameId" element={<EditLiveGame />} />
           <Route path="/live-games/host/:gameId" element={<LiveGameHost />} />
