@@ -22,7 +22,7 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit',
     personality: 'Amigable, paciente y motivadora. Especialista en explicar conceptos complejos de forma sencilla.',
     color: 'hsl(165 89% 24%)',
-    ttsVoiceId: 'pFZP5JQG7iQjIQuC4Bku', // Lily - warm female voice
+    ttsVoiceId: '86V9x9hrQds83qf7zaGn',
     avatarImageUrl: '/src/assets/avatars/sofia-avatar.png',
   },
   {
@@ -33,7 +33,7 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     avatarUrl: 'https://models.readyplayer.me/693a028814ff705000c68122.glb?morphTargets=Oculus%20Visemes,ARKit',
     personality: 'Analítico, preciso y entusiasta. Le encanta resolver problemas paso a paso.',
     color: 'hsl(200 89% 40%)',
-    ttsVoiceId: 'onwK4e9ZLuTAKqWW03F9', // Daniel - clear male voice
+    ttsVoiceId: 'XgQWNZcJ8SRkxXwwhPTo',
     avatarImageUrl: '/src/assets/avatars/alejandro-avatar.png',
   },
 ];

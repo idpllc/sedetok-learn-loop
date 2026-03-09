@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { text, voice, agentId } = await req.json();
+    const { text, voice } = await req.json();
 
     if (!text) {
       throw new Error('Text is required');
@@ -25,31 +25,7 @@ serve(async (req) => {
 
     console.log('Generating speech with ElevenLabs...');
 
-    // If an agentId is provided, fetch the agent's configured voice
-    let voiceId = voice || 'TX3LPaxmHKxFdv7VOQHJ';
-    
-    if (agentId) {
-      console.log('Fetching voice from agent:', agentId);
-      const agentResponse = await fetch(
-        `https://api.elevenlabs.io/v1/convai/agents/${agentId}`,
-        {
-          headers: {
-            'xi-api-key': ELEVENLABS_API_KEY,
-          },
-        }
-      );
-      
-      if (agentResponse.ok) {
-        const agentData = await agentResponse.json();
-        const agentVoiceId = agentData?.conversation_config?.tts?.voice_id;
-        if (agentVoiceId) {
-          voiceId = agentVoiceId;
-          console.log('Using agent voice:', voiceId);
-        }
-      } else {
-        console.warn('Could not fetch agent config, using fallback voice');
-      }
-    }
+    const voiceId = voice || 'TX3LPaxmHKxFdv7VOQHJ';
     
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
