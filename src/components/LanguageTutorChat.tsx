@@ -402,8 +402,8 @@ export const LanguageTutorChat = () => {
                 {isLoading && (
                   <div className="flex gap-3 px-4">
                     <Avatar className="w-8 h-8 shrink-0">
-                      <AvatarImage src={linguaAvatar} />
-                      <AvatarFallback>L</AvatarFallback>
+                    <AvatarImage src={alexAvatar} />
+                    <AvatarFallback>A</AvatarFallback>
                     </Avatar>
                     <div className="bg-muted px-4 py-3 rounded-2xl rounded-bl-md">
                       <Loader2 className="w-4 h-4 animate-spin text-primary" />

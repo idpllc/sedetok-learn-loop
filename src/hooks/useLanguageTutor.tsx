@@ -73,7 +73,7 @@ export const useLanguageTutor = () => {
       .from('ai_chat_conversations')
       .insert({
         user_id: user.id,
-        title: `[LINGUA] ${firstMessage.slice(0, 40)}...`,
+        title: `[ALEX] ${firstMessage.slice(0, 40)}...`,
       })
       .select()
       .single();
