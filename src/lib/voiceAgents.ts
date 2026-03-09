@@ -7,6 +7,8 @@ export interface VoiceAgent {
   avatarUrl: string; // Ready Player Me avatar GLB URL
   personality: string;
   color: string; // Theme color for UI
+  ttsVoiceId?: string; // ElevenLabs TTS Voice ID for reading aloud
+  avatarImageUrl?: string; // 2D avatar image for UI
 }
 
 // Ready Player Me avatar URLs - these are public demo avatars
