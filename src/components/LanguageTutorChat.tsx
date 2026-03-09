@@ -187,7 +187,7 @@ export const LanguageTutorChat = () => {
             >
               <MessageSquare className="w-4 h-4 shrink-0" />
               <span className="text-sm truncate flex-1">
-                {conv.title?.replace('[LINGUA] ', '') || 'Conversación'}
+                {conv.title?.replace('[ALEX] ', '') || 'Conversación'}
               </span>
               <button
                 onClick={(e) => {
