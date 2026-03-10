@@ -244,11 +244,14 @@ export const Sidebar = () => {
           </button>
         )}
 
-        {/* Create Button */}
+      </nav>
+
+      {/* Create Button - Always visible */}
+      <div className={`p-4 border-t border-border transition-all ${isMinified ? 'px-3' : ''}`}>
         <Button
           onClick={handleCreateClick}
           variant="secondary"
-          className={`w-full mt-4 font-medium ${isMinified ? 'px-0' : 'py-6'}`}
+          className={`w-full font-medium ${isMinified ? 'px-0' : 'py-6'}`}
           size={isMinified ? "icon" : "lg"}
           title={isMinified ? "Crear" : undefined}
         >
@@ -269,7 +272,7 @@ export const Sidebar = () => {
             {!isMinified && "Iniciar Sesión"}
           </Button>
         )}
-      </nav>
+      </div>
 
       {/* Footer */}
       {!isMinified && (
