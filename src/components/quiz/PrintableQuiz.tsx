@@ -26,6 +26,19 @@ interface PrintQuestion {
   }>;
 }
 
+// Strip HTML tags and return plain text
+const stripHtml = (html: string): string => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return doc.body.textContent?.trim() || "";
+};
+
+// Extract image URLs from HTML content
+const extractImagesFromHtml = (html: string): string[] => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const imgs = doc.querySelectorAll("img");
+  return Array.from(imgs).map((img) => img.getAttribute("src") || "").filter(Boolean);
+};
+
 export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: PrintableQuizProps) => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<PrintQuestion[]>([]);
@@ -94,6 +107,9 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
     const questionsHTML = questions
       .map((q, idx) => {
         const sortedOptions = [...q.quiz_options].sort((a, b) => a.order_index - b.order_index);
+        const cleanText = stripHtml(q.question_text);
+        const embeddedImages = extractImagesFromHtml(q.question_text);
+        const allImages = [...embeddedImages, ...(q.image_url ? [q.image_url] : [])];
 
         let optionsHTML = "";
         if (q.question_type === "multiple_choice" || q.question_type === "true_false") {
@@ -104,7 +120,7 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
                   (opt, oi) => `
                 <div class="option">
                   <span class="option-letter">${optionLetters[oi] || oi + 1}.</span>
-                  <span>${opt.option_text}</span>
+                  <span>${stripHtml(opt.option_text)}</span>
                 </div>
               `
                 )
@@ -121,18 +137,18 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
             </div>`;
         }
 
-        const imageHTML = q.image_url
-          ? `<div class="question-image"><img src="${q.image_url}" alt="Imagen pregunta ${idx + 1}" /></div>`
-          : "";
+        const imagesHTML = allImages
+          .map((src) => `<div class="question-image"><img src="${src}" alt="Imagen pregunta ${idx + 1}" /></div>`)
+          .join("");
 
         return `
           <div class="question">
             <div class="question-header">
               <span class="question-number">${idx + 1}.</span>
-              <span class="question-text">${q.question_text}</span>
+              <span class="question-text">${cleanText}</span>
               <span class="question-points">(${q.points} pts)</span>
             </div>
-            ${imageHTML}
+            ${imagesHTML}
             ${optionsHTML}
           </div>
         `;
@@ -374,24 +390,27 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
                 {questions.map((q, idx) => {
                   const sortedOptions = [...q.quiz_options].sort((a, b) => a.order_index - b.order_index);
                   const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+                  const cleanText = stripHtml(q.question_text);
+                  const embeddedImages = extractImagesFromHtml(q.question_text);
+                  const allImages = [...embeddedImages, ...(q.image_url ? [q.image_url] : [])];
                   return (
                     <div key={idx} className="space-y-1">
                       <div className="flex gap-1 items-baseline">
                         <span className="font-bold">{idx + 1}.</span>
-                        <span className="font-medium flex-1">{q.question_text}</span>
+                        <span className="font-medium flex-1">{cleanText}</span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">({q.points} pts)</span>
                       </div>
-                      {q.image_url && (
-                        <div className="ml-5">
-                          <img src={q.image_url} alt="" className="max-w-[200px] max-h-[120px] border rounded" />
+                      {allImages.map((src, imgIdx) => (
+                        <div key={imgIdx} className="ml-5">
+                          <img src={src} alt="" className="max-w-[200px] max-h-[120px] border rounded" />
                         </div>
-                      )}
+                      ))}
                       {(q.question_type === "multiple_choice" || q.question_type === "true_false") && (
                         <div className="ml-6 space-y-1">
                           {sortedOptions.map((opt, oi) => (
                             <div key={oi} className="flex items-baseline gap-1 text-xs">
                               <span className="font-semibold">{optionLetters[oi] || oi + 1}.</span>
-                              <span>{opt.option_text}</span>
+                              <span>{stripHtml(opt.option_text)}</span>
                             </div>
                           ))}
                         </div>
