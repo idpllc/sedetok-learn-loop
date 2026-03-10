@@ -1,4 +1,4 @@
-import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin, ClipboardList } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin, ClipboardList, Printer } from "lucide-react";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
 import { supabase } from "@/integrations/supabase/client";
+import { PrintableQuiz } from "./quiz/PrintableQuiz";
 
 interface ContentCardProps {
   id: string;
@@ -127,6 +128,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [gameModalOpen, setGameModalOpen] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('videoMuted');
@@ -403,18 +405,32 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                     </Button>
                     
                     {user && (user.id === creatorId || userProfile?.tipo_usuario === 'Docente') && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowEvaluationModal(true);
-                        }}
-                        className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
-                      >
-                        <ClipboardList className="w-4 h-4 mr-2" />
-                        Evaluar este quiz
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowEvaluationModal(true);
+                          }}
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
+                        >
+                          <ClipboardList className="w-4 h-4 mr-2" />
+                          Evaluar este quiz
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowPrintModal(true);
+                          }}
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
+                        >
+                          <Printer className="w-4 h-4 mr-2" />
+                          Imprimir Quiz
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -777,6 +793,16 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           gameId={contentType === 'game' ? id : undefined}
           open={showEvaluationModal}
           onOpenChange={setShowEvaluationModal}
+        />
+      )}
+
+      {/* Printable Quiz Modal */}
+      {contentType === 'quiz' && user && (user.id === creatorId || userProfile?.tipo_usuario === 'Docente') && (
+        <PrintableQuiz
+          quizId={id}
+          quizTitle={title}
+          open={showPrintModal}
+          onOpenChange={setShowPrintModal}
         />
       )}
     </div>
