@@ -795,6 +795,16 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           onOpenChange={setShowEvaluationModal}
         />
       )}
+
+      {/* Printable Quiz Modal */}
+      {contentType === 'quiz' && user && (user.id === creatorId || userProfile?.tipo_usuario === 'Docente') && (
+        <PrintableQuiz
+          quizId={id}
+          quizTitle={title}
+          open={showPrintModal}
+          onOpenChange={setShowPrintModal}
+        />
+      )}
     </div>
   );
 });
