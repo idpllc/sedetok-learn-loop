@@ -128,6 +128,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [gameModalOpen, setGameModalOpen] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('videoMuted');
