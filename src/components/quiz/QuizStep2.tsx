@@ -349,6 +349,50 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
       </AlertDialogContent>
     </AlertDialog>
 
+    {/* AI Config Dialog */}
+    <AlertDialog open={aiConfigOpen} onOpenChange={setAiConfigOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Configurar generación con IA</AlertDialogTitle>
+          <AlertDialogDescription>
+            Elige cuántas preguntas generar y qué tipos incluir.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-4 py-4">
+          <div>
+            <Label htmlFor="num-questions">Cantidad de preguntas</Label>
+            <Input
+              id="num-questions"
+              type="number"
+              min={1}
+              max={30}
+              value={numQuestionsToGenerate}
+              onChange={(e) => setNumQuestionsToGenerate(Math.max(1, Math.min(30, parseInt(e.target.value) || 1)))}
+            />
+          </div>
+          <div>
+            <Label>Tipos de preguntas a incluir</Label>
+            <div className="space-y-2 mt-2">
+              {Object.entries(QUESTION_TYPE_LABELS).map(([type, label]) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`type-${type}`}
+                    checked={allowedTypes[type]}
+                    onCheckedChange={() => toggleType(type)}
+                  />
+                  <label htmlFor={`type-${type}`} className="text-sm cursor-pointer">{label}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmAiConfig}>Continuar</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
     <BuyEducoinsModal
       open={showBuyModal}
       onOpenChange={closeBuyModal}
