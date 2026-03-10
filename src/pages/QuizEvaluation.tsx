@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { Calendar, Clock, AlertCircle, CheckCircle, Home, ArrowLeft, History, KeyRound, Eye } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { useAuth } from "@/hooks/useAuth";
 import { useEventAttempts } from "@/hooks/useEventAttempts";
@@ -12,6 +12,10 @@ import { QuizViewer } from "@/components/QuizViewer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const QuizEvaluation = () => {
   const { accessCode } = useParams<{ accessCode: string }>();
