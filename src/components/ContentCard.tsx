@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
 import { supabase } from "@/integrations/supabase/client";
+import { PrintableQuiz } from "./quiz/PrintableQuiz";
 
 interface ContentCardProps {
   id: string;
