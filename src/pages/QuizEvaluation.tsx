@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { Calendar, Clock, AlertCircle, CheckCircle, Home, ArrowLeft, History, KeyRound, Eye } from "lucide-react";
 import { useEvaluationEvents } from "@/hooks/useEvaluationEvents";
 import { useAuth } from "@/hooks/useAuth";
 import { useEventAttempts } from "@/hooks/useEventAttempts";
@@ -12,6 +12,10 @@ import { QuizViewer } from "@/components/QuizViewer";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const QuizEvaluation = () => {
   const { accessCode } = useParams<{ accessCode: string }>();
@@ -24,6 +28,27 @@ const QuizEvaluation = () => {
   const [codeInput, setCodeInput] = useState("");
   const [startQuiz, setStartQuiz] = useState(false);
   const { hasAttempted, attemptCount, lastAttempt, isLoading: attemptsLoading } = useEventAttempts(event?.id);
+
+  // Fetch user's quiz result history
+  const { data: quizHistory } = useQuery({
+    queryKey: ["quiz-history", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("user_quiz_results")
+        .select(`
+          *,
+          quizzes:quiz_id (title),
+          evaluation_events:evaluation_event_id (title, access_code)
+        `)
+        .eq("user_id", user.id)
+        .order("completed_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user && !accessCode,
+  });
 
   useEffect(() => {
     if (accessCode && !authLoading) {
@@ -84,32 +109,124 @@ const QuizEvaluation = () => {
 
   if (!accessCode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-6 space-y-4">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold">Evento de Evaluación</h1>
-            <p className="text-muted-foreground">
-              Ingresa el código de acceso proporcionado por tu profesor
-            </p>
+      <div className="min-h-screen p-4 pb-24">
+        <div className="container mx-auto max-w-2xl space-y-6">
+          {/* Header with navigation */}
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+              <Home className="w-5 h-5" />
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold">Evaluaciones</h1>
+              <p className="text-sm text-muted-foreground">
+                Historial y acceso a eventos evaluativos
+              </p>
+            </div>
           </div>
 
-          <form onSubmit={handleCodeSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="code">Código de Acceso</Label>
-              <Input
-                id="code"
-                value={codeInput}
-                onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-                placeholder="Ej: ABC12345"
-                className="font-mono text-center text-lg"
-                maxLength={8}
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Acceder
-            </Button>
-          </form>
-        </Card>
+          <Tabs defaultValue="history" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="history" className="gap-2">
+                <History className="h-4 w-4" />
+                Historial
+              </TabsTrigger>
+              <TabsTrigger value="join" className="gap-2">
+                <KeyRound className="h-4 w-4" />
+                Unirse
+              </TabsTrigger>
+            </TabsList>
+
+            {/* History Tab */}
+            <TabsContent value="history" className="mt-4 space-y-3">
+              {!user ? (
+                <Card className="p-6 text-center space-y-3">
+                  <p className="text-muted-foreground">Inicia sesión para ver tu historial</p>
+                  <Button onClick={() => navigate("/auth")}>Iniciar Sesión</Button>
+                </Card>
+              ) : quizHistory && quizHistory.length > 0 ? (
+                quizHistory.map((result: any) => (
+                  <Card key={result.id} className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate">
+                          {(result as any).evaluation_events?.title || (result as any).quizzes?.title || "Quiz"}
+                        </h3>
+                        {(result as any).evaluation_events?.access_code && (
+                          <p className="text-xs text-muted-foreground font-mono">
+                            Código: {(result as any).evaluation_events.access_code}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant={result.passed ? "default" : "destructive"}>
+                        {result.passed ? "Aprobado" : "No aprobado"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {result.completed_at
+                          ? format(new Date(result.completed_at), "dd MMM yyyy, HH:mm", { locale: es })
+                          : "—"}
+                      </span>
+                      <span className="font-bold">
+                        {result.score} / {result.max_score}
+                      </span>
+                    </div>
+                    {result.answers && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={() => {
+                          if (result.evaluation_event_id) {
+                            navigate(`/quiz-evaluations/event/${result.evaluation_event_id}`);
+                          }
+                        }}
+                      >
+                        <Eye className="h-3 w-3" />
+                        Ver respuestas
+                      </Button>
+                    )}
+                  </Card>
+                ))
+              ) : (
+                <Card className="p-8 text-center">
+                  <History className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground">Aún no has respondido ningún quiz</p>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Join Tab */}
+            <TabsContent value="join" className="mt-4">
+              <Card className="p-6 space-y-4">
+                <div className="text-center space-y-2">
+                  <KeyRound className="h-10 w-10 mx-auto text-primary" />
+                  <h2 className="text-lg font-semibold">Unirse a un Evento</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Ingresa el código de acceso proporcionado por tu profesor
+                  </p>
+                </div>
+
+                <form onSubmit={handleCodeSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="code">Código de Acceso</Label>
+                    <Input
+                      id="code"
+                      value={codeInput}
+                      onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                      placeholder="Ej: ABC12345"
+                      className="font-mono text-center text-lg"
+                      maxLength={8}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Acceder
+                  </Button>
+                </form>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     );
   }
