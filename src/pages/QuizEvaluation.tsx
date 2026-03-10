@@ -29,6 +29,27 @@ const QuizEvaluation = () => {
   const [startQuiz, setStartQuiz] = useState(false);
   const { hasAttempted, attemptCount, lastAttempt, isLoading: attemptsLoading } = useEventAttempts(event?.id);
 
+  // Fetch user's quiz result history
+  const { data: quizHistory } = useQuery({
+    queryKey: ["quiz-history", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("user_quiz_results")
+        .select(`
+          *,
+          quizzes:quiz_id (title),
+          evaluation_events:evaluation_event_id (title, access_code)
+        `)
+        .eq("user_id", user.id)
+        .order("completed_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user && !accessCode,
+  });
+
   useEffect(() => {
     if (accessCode && !authLoading) {
       loadEvent(accessCode);
