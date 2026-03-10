@@ -11,30 +11,51 @@ export const useS3Upload = () => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  // Upload video to Cloudinary
+  // Upload video directly to Cloudinary using signed params from edge function
   const uploadToCloudinary = async (file: File): Promise<{ url: string; thumbnail_url: string }> => {
+    console.log(`[Cloudinary] Solicitando parámetros de carga para: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+
+    // Step 1: Get signed upload params from edge function (lightweight call)
+    const { data: signData, error: signError } = await supabase.functions.invoke('upload-to-cloudinary', {
+      body: JSON.stringify({}),
+    });
+
+    if (signError || signData?.error) {
+      const msg = signError?.message || signData?.error || "Error al obtener parámetros de carga";
+      console.error("[Cloudinary] Error obteniendo params:", msg);
+      throw new Error(msg);
+    }
+
+    const { uploadUrl, uploadPreset, signature, timestamp, folder } = signData;
+
+    // Step 2: Upload directly from client to Cloudinary (no memory limit)
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("resourceType", "video");
+    formData.append("upload_preset", uploadPreset);
+    formData.append("signature", signature);
+    formData.append("timestamp", String(timestamp));
+    formData.append("folder", folder);
 
-    console.log(`[Cloudinary] Iniciando carga de video: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+    console.log(`[Cloudinary] Subiendo video directamente a Cloudinary...`);
 
-    const { data, error } = await supabase.functions.invoke('upload-to-cloudinary', {
+    const response = await fetch(uploadUrl, {
+      method: "POST",
       body: formData,
     });
 
-    if (error) {
-      console.error("[Cloudinary] Error en edge function:", error);
-      throw new Error(error.message || "Error al subir el video a Cloudinary");
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[Cloudinary] Upload failed:", errorText);
+      throw new Error(`Error al subir video: ${response.status}`);
     }
 
-    if (data.error) {
-      console.error("[Cloudinary] Error:", data.error);
-      throw new Error(data.error);
-    }
+    const result = await response.json();
+    console.log("[Cloudinary] Video subido exitosamente:", result.secure_url);
 
-    console.log("[Cloudinary] Video subido exitosamente:", data.url);
-    return { url: data.url, thumbnail_url: data.thumbnail_url };
+    return {
+      url: result.secure_url,
+      thumbnail_url: result.secure_url.replace(/\.[^/.]+$/, ".jpg"),
+    };
   };
 
   // Upload other files to S3
@@ -42,7 +63,6 @@ export const useS3Upload = () => {
     const formData = new FormData();
     formData.append("file", file);
     
-    // Determine folder based on resource type
     const folder = resourceType === "image" ? "images" : "documents";
     formData.append("folder", folder);
 
@@ -69,7 +89,6 @@ export const useS3Upload = () => {
   const uploadFile = async (file: File, resourceType: ResourceType = "document"): Promise<string> => {
     setUploading(true);
     try {
-      // Videos go to Cloudinary, everything else goes to S3
       if (resourceType === "video") {
         const result = await uploadToCloudinary(file);
         return result.url;
@@ -92,7 +111,6 @@ export const useS3Upload = () => {
     }
   };
 
-  // Expose uploadToCloudinary separately for cases where we need both url and thumbnail
   const uploadVideo = async (file: File): Promise<{ url: string; thumbnail_url: string }> => {
     setUploading(true);
     try {
