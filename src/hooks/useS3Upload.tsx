@@ -26,14 +26,12 @@ export const useS3Upload = () => {
       throw new Error(msg);
     }
 
-    const { uploadUrl, uploadPreset, signature, timestamp, folder } = signData;
+    const { uploadUrl, uploadPreset, folder } = signData;
 
-    // Step 2: Upload directly from client to Cloudinary (no memory limit)
+    // Step 2: Upload directly from client to Cloudinary (unsigned, no memory limit)
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", uploadPreset);
-    formData.append("signature", signature);
-    formData.append("timestamp", String(timestamp));
     formData.append("folder", folder);
 
     console.log(`[Cloudinary] Subiendo video directamente a Cloudinary...`);
