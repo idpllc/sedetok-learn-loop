@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { title, description, category, grade_level, difficulty, numQuestions = 5, document_url } = await req.json();
+    const { title, description, category, grade_level, difficulty, numQuestions = 5, questionTypes, document_url } = await req.json();
     
     if (!title || !category || !grade_level || !difficulty) {
       return new Response(
@@ -19,6 +19,11 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Determine allowed question types
+    const allowedTypes = questionTypes && questionTypes.length > 0 
+      ? questionTypes 
+      : ['multiple_choice', 'true_false', 'short_answer', 'open_ended'];
 
     // Fetch document content if provided
     let documentContent = '';
@@ -32,7 +37,6 @@ serve(async (req) => {
           if (contentType.includes('text') || contentType.includes('json')) {
             documentContent = await docResponse.text();
           } else {
-            // For binary files, get base64
             const arrayBuffer = await docResponse.arrayBuffer();
             const bytes = new Uint8Array(arrayBuffer);
             documentContent = btoa(String.fromCharCode(...bytes));
@@ -48,23 +52,37 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY no configurada');
     }
 
+    const typeDescriptions: Record<string, string> = {
+      multiple_choice: 'Selección múltiple: genera 4 opciones con prefijo de letra (A., B., C., D.), solo una correcta',
+      true_false: 'Verdadero/Falso: genera 2 opciones "A. Verdadero" y "B. Falso", una correcta',
+      short_answer: 'Respuesta corta: genera la pregunta con la respuesta correcta esperada',
+      open_ended: 'Pregunta abierta: pregunta que requiere una respuesta desarrollada. Incluye evaluation_criteria describiendo qué se espera en la respuesta',
+    };
+
+    const allowedTypeDescriptions = allowedTypes.map((t: string) => typeDescriptions[t] || t).join('\n- ');
+
     const systemPrompt = `Eres un experto creador de contenido educativo. Tu tarea es generar preguntas de quiz apropiadas y bien estructuradas basadas en el contexto proporcionado.
 
 IMPORTANTE:
 - Las preguntas deben ser claras, educativas y apropiadas para el nivel educativo
-- Para opción múltiple: genera 4 opciones, solo una correcta
-- Para verdadero/falso: genera la pregunta con una respuesta correcta (true o false)
-- Para respuesta corta: genera la pregunta con la respuesta correcta esperada
+- SOLO genera preguntas de estos tipos: ${allowedTypes.join(', ')}
+- ${allowedTypeDescriptions}
+- IMPORTANTE para selección múltiple: las opciones DEBEN tener prefijo de letra: "A. texto", "B. texto", "C. texto", "D. texto"
+- IMPORTANTE para verdadero/falso: las opciones DEBEN ser "A. Verdadero" y "B. Falso"
 - Los puntos deben ser proporcionales a la dificultad (5-20 puntos)
-- Incluye retroalimentación educativa para respuestas correctas e incorrectas`;
+- Incluye retroalimentación educativa para respuestas correctas e incorrectas
+- Distribuye los tipos de pregunta de forma balanceada entre los tipos permitidos`;
 
-    let userPrompt = `Genera ${numQuestions} preguntas de quiz para:
+    let userPrompt = `Genera exactamente ${numQuestions} preguntas de quiz para:
 
 Título: ${title}
 Descripción: ${description || 'Sin descripción'}
 Asignatura: ${category}
 Nivel educativo: ${grade_level}
-Dificultad: ${difficulty}`;
+Dificultad: ${difficulty}
+
+Tipos de pregunta permitidos: ${allowedTypes.join(', ')}
+Distribuye las ${numQuestions} preguntas entre estos tipos.`;
 
     if (documentContent) {
       userPrompt += `\n\nDOCUMENTO DE REFERENCIA:
@@ -73,9 +91,11 @@ Analiza el siguiente documento y genera preguntas basadas en su contenido:
 ${documentContent.substring(0, 50000)}
 
 IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido del documento adjunto.`;
-    } else {
-      userPrompt += `\n\nGenera una mezcla de tipos de preguntas (opción múltiple, verdadero/falso, respuesta corta) apropiadas para este tema.`;
     }
+
+    const enumTypes = allowedTypes.filter((t: string) => 
+      ['multiple_choice', 'true_false', 'short_answer', 'open_ended'].includes(t)
+    );
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -100,7 +120,7 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
                 properties: {
                   estimated_time_minutes: {
                     type: 'number',
-                    description: 'Tiempo estimado en minutos para completar el quiz (considera 1-2 min por pregunta múltiple, 30 seg por verdadero/falso, 2-3 min por respuesta corta)'
+                    description: 'Tiempo estimado en minutos para completar el quiz'
                   },
                   questions: {
                     type: 'array',
@@ -109,7 +129,7 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
                       properties: {
                         question_type: {
                           type: 'string',
-                          enum: ['multiple_choice', 'true_false', 'short_answer'],
+                          enum: enumTypes,
                           description: 'Tipo de pregunta'
                         },
                         question_text: {
@@ -130,13 +150,13 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
                         },
                         options: {
                           type: 'array',
-                          description: 'Opciones de respuesta (para multiple_choice y true_false)',
+                          description: 'Opciones de respuesta (para multiple_choice y true_false). Cada opción debe tener prefijo de letra.',
                           items: {
                             type: 'object',
                             properties: {
                               option_text: {
                                 type: 'string',
-                                description: 'Texto de la opción'
+                                description: 'Texto de la opción con prefijo de letra (ej: "A. Respuesta")'
                               },
                               is_correct: {
                                 type: 'boolean',
@@ -154,6 +174,10 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
                           type: 'string',
                           enum: ['exact', 'flexible'],
                           description: 'Modo de comparación para respuestas cortas'
+                        },
+                        evaluation_criteria: {
+                          type: 'string',
+                          description: 'Criterios de evaluación para preguntas abiertas (open_ended)'
                         }
                       },
                       required: ['question_type', 'question_text', 'points', 'feedback_correct', 'feedback_incorrect']
@@ -190,7 +214,6 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
     const data = await response.json();
     console.log('Respuesta de IA:', JSON.stringify(data, null, 2));
 
-    // Extraer las preguntas del tool call
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.function.name !== 'generate_quiz_questions') {
       throw new Error('No se recibieron preguntas de la IA');
@@ -198,9 +221,17 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
 
     const generatedQuestions = JSON.parse(toolCall.function.arguments);
     
-    // Transformar las preguntas al formato esperado por el frontend
+    const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+    const ensureLetterPrefix = (text: string, index: number): string => {
+      const letter = LETTERS[index] || String.fromCharCode(65 + index);
+      // Check if already has letter prefix like "A." or "A)"
+      if (/^[A-H][.)]\s/.test(text)) return text;
+      return `${letter}. ${text}`;
+    };
+
     const formattedQuestions = generatedQuestions.questions.map((q: any, index: number) => {
-      const baseQuestion = {
+      const baseQuestion: any = {
         id: `ai-${Date.now()}-${index}`,
         question_type: q.question_type,
         question_text: q.question_text,
@@ -212,9 +243,9 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
       if (q.question_type === 'multiple_choice') {
         return {
           ...baseQuestion,
-          options: q.options.map((opt: any, optIndex: number) => ({
+          options: (q.options || []).map((opt: any, optIndex: number) => ({
             id: `opt-${Date.now()}-${index}-${optIndex}`,
-            option_text: opt.option_text,
+            option_text: ensureLetterPrefix(opt.option_text, optIndex),
             is_correct: opt.is_correct,
             order_index: optIndex,
           })),
@@ -222,9 +253,9 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
       } else if (q.question_type === 'true_false') {
         return {
           ...baseQuestion,
-          options: q.options.map((opt: any, optIndex: number) => ({
+          options: (q.options || []).map((opt: any, optIndex: number) => ({
             id: `opt-${Date.now()}-${index}-${optIndex}`,
-            option_text: opt.option_text,
+            option_text: ensureLetterPrefix(opt.option_text, optIndex),
             is_correct: opt.is_correct,
             order_index: optIndex,
           })),
@@ -239,6 +270,12 @@ IMPORTANTE: Las preguntas deben estar directamente relacionadas con el contenido
             is_correct: true,
             order_index: 0,
           }],
+        };
+      } else if (q.question_type === 'open_ended') {
+        return {
+          ...baseQuestion,
+          evaluation_criteria: q.evaluation_criteria || '',
+          options: [],
         };
       }
       

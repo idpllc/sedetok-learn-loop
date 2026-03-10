@@ -9,6 +9,9 @@ import { useEducoins } from "@/hooks/useEducoins";
 import { useXP } from "@/hooks/useXP";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface QuizQuestion {
   id: string;
@@ -56,6 +59,29 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
   const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
   const { deductXP } = useXP();
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [aiConfigOpen, setAiConfigOpen] = useState(false);
+  const [numQuestionsToGenerate, setNumQuestionsToGenerate] = useState(5);
+  const [allowedTypes, setAllowedTypes] = useState<Record<string, boolean>>({
+    multiple_choice: true,
+    true_false: true,
+    short_answer: true,
+    open_ended: true,
+  });
+
+  const QUESTION_TYPE_LABELS: Record<string, string> = {
+    multiple_choice: "Selección múltiple",
+    true_false: "Verdadero / Falso",
+    short_answer: "Respuesta corta",
+    open_ended: "Pregunta abierta",
+  };
+
+  const toggleType = (type: string) => {
+    const newTypes = { ...allowedTypes, [type]: !allowedTypes[type] };
+    // Ensure at least one type is selected
+    if (Object.values(newTypes).some(v => v)) {
+      setAllowedTypes(newTypes);
+    }
+  };
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -104,6 +130,16 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
       return;
     }
 
+    setAiConfigOpen(true);
+  };
+
+  const confirmAiConfig = () => {
+    const selectedTypes = Object.entries(allowedTypes).filter(([, v]) => v).map(([k]) => k);
+    if (selectedTypes.length === 0) {
+      toast.error("Selecciona al menos un tipo de pregunta");
+      return;
+    }
+    setAiConfigOpen(false);
     setPaymentDialogOpen(true);
   };
 
@@ -126,6 +162,7 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
 
     setIsGenerating(true);
     try {
+      const selectedTypes = Object.entries(allowedTypes).filter(([, v]) => v).map(([k]) => k);
       const { data, error } = await supabase.functions.invoke('generate-quiz-questions', {
         body: {
           title: quizContext.title,
@@ -133,7 +170,8 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
           category: quizContext.category,
           grade_level: quizContext.grade_level,
           difficulty: quizContext.difficulty,
-          numQuestions: 5,
+          numQuestions: numQuestionsToGenerate,
+          questionTypes: selectedTypes,
           document_url: quizContext.document_url,
         }
       });
@@ -307,6 +345,50 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* AI Config Dialog */}
+    <AlertDialog open={aiConfigOpen} onOpenChange={setAiConfigOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Configurar generación con IA</AlertDialogTitle>
+          <AlertDialogDescription>
+            Elige cuántas preguntas generar y qué tipos incluir.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-4 py-4">
+          <div>
+            <Label htmlFor="num-questions">Cantidad de preguntas</Label>
+            <Input
+              id="num-questions"
+              type="number"
+              min={1}
+              max={30}
+              value={numQuestionsToGenerate}
+              onChange={(e) => setNumQuestionsToGenerate(Math.max(1, Math.min(30, parseInt(e.target.value) || 1)))}
+            />
+          </div>
+          <div>
+            <Label>Tipos de preguntas a incluir</Label>
+            <div className="space-y-2 mt-2">
+              {Object.entries(QUESTION_TYPE_LABELS).map(([type, label]) => (
+                <div key={type} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`type-${type}`}
+                    checked={allowedTypes[type]}
+                    onCheckedChange={() => toggleType(type)}
+                  />
+                  <label htmlFor={`type-${type}`} className="text-sm cursor-pointer">{label}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmAiConfig}>Continuar</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
