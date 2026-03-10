@@ -390,24 +390,27 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
                 {questions.map((q, idx) => {
                   const sortedOptions = [...q.quiz_options].sort((a, b) => a.order_index - b.order_index);
                   const optionLetters = ["A", "B", "C", "D", "E", "F", "G", "H"];
+                  const cleanText = stripHtml(q.question_text);
+                  const embeddedImages = extractImagesFromHtml(q.question_text);
+                  const allImages = [...embeddedImages, ...(q.image_url ? [q.image_url] : [])];
                   return (
                     <div key={idx} className="space-y-1">
                       <div className="flex gap-1 items-baseline">
                         <span className="font-bold">{idx + 1}.</span>
-                        <span className="font-medium flex-1">{q.question_text}</span>
+                        <span className="font-medium flex-1">{cleanText}</span>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">({q.points} pts)</span>
                       </div>
-                      {q.image_url && (
-                        <div className="ml-5">
-                          <img src={q.image_url} alt="" className="max-w-[200px] max-h-[120px] border rounded" />
+                      {allImages.map((src, imgIdx) => (
+                        <div key={imgIdx} className="ml-5">
+                          <img src={src} alt="" className="max-w-[200px] max-h-[120px] border rounded" />
                         </div>
-                      )}
+                      ))}
                       {(q.question_type === "multiple_choice" || q.question_type === "true_false") && (
                         <div className="ml-6 space-y-1">
                           {sortedOptions.map((opt, oi) => (
                             <div key={oi} className="flex items-baseline gap-1 text-xs">
                               <span className="font-semibold">{optionLetters[oi] || oi + 1}.</span>
-                              <span>{opt.option_text}</span>
+                              <span>{stripHtml(opt.option_text)}</span>
                             </div>
                           ))}
                         </div>
