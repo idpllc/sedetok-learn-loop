@@ -399,7 +399,7 @@ const Index = () => {
                   {filteredContent.length} {filteredContent.length === 1 ? "resultado" : "resultados"}
                 </p>
               </div> */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {filteredContent.map((item) => {
                   const isLearningPath = item.itemType === "learning_path";
                   const isQuiz = !isLearningPath && item.content_type === 'quiz';
