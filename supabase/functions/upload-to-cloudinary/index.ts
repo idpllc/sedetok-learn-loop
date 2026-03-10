@@ -6,70 +6,47 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const CLOUDINARY_CLOUD_NAME = Deno.env.get('CLOUDINARY_CLOUD_NAME');
+    const CLOUDINARY_API_SECRET = Deno.env.get('CLOUDINARY_API_SECRET');
     const CLOUDINARY_UPLOAD_PRESET = Deno.env.get('CLOUDINARY_UPLOAD_PRESET');
 
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      console.error('[Cloudinary] Missing configuration:', { 
-        hasCloudName: !!CLOUDINARY_CLOUD_NAME, 
-        hasPreset: !!CLOUDINARY_UPLOAD_PRESET 
-      });
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_SECRET || !CLOUDINARY_UPLOAD_PRESET) {
       throw new Error('Cloudinary configuration is missing');
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    const resourceType = formData.get('resourceType') as string || 'video';
+    // Generate signed upload params for direct client upload
+    const timestamp = Math.round(Date.now() / 1000);
+    const folder = 'sedefy/videos';
 
-    if (!file) {
-      throw new Error('No file provided');
-    }
+    // Build the string to sign (params must be in alphabetical order)
+    const paramsToSign = `folder=${folder}&timestamp=${timestamp}&upload_preset=${CLOUDINARY_UPLOAD_PRESET}`;
 
-    console.log(`[Cloudinary] Uploading ${resourceType}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+    // Generate SHA-1 signature
+    const encoder = new TextEncoder();
+    const data = encoder.encode(paramsToSign + CLOUDINARY_API_SECRET);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // Create FormData for Cloudinary
-    const cloudinaryFormData = new FormData();
-    cloudinaryFormData.append('file', file);
-    cloudinaryFormData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    cloudinaryFormData.append('folder', 'sedefy/videos');
-
-    // Upload to Cloudinary
-    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
-    
-    console.log('[Cloudinary] Uploading to:', uploadUrl);
-
-    const response = await fetch(uploadUrl, {
-      method: 'POST',
-      body: cloudinaryFormData,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[Cloudinary] Upload failed:', errorText);
-      throw new Error(`Cloudinary upload failed: ${errorText}`);
-    }
-
-    const result = await response.json();
-    
-    console.log('[Cloudinary] Upload successful:', result.secure_url);
+    console.log('[Cloudinary] Generated signed upload params for direct upload');
 
     return new Response(
-      JSON.stringify({ 
-        url: result.secure_url,
-        public_id: result.public_id,
-        format: result.format,
-        duration: result.duration,
-        thumbnail_url: result.secure_url.replace(/\.[^/.]+$/, ".jpg")
+      JSON.stringify({
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        signature,
+        timestamp,
+        folder,
+        uploadUrl: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200,
       }
     );
   } catch (error) {
@@ -77,9 +54,9 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500,
       }
     );
   }
