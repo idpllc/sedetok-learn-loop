@@ -59,17 +59,25 @@ interface EventResultsProps {
 export const EventResults = ({ results, eventTitle, loading, quizId, gameId, eventId }: EventResultsProps) => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const exportToCSV = () => {
-    const headers = ["Usuario", "Nombre", "Documento", "Puntaje", "Puntaje Máximo", "Aprobado", "Tiempo (min)", "Fecha"];
-    const rows = results.map((result) => [
-      result.profiles?.username || "N/A",
-      result.profiles?.full_name || "N/A",
-      result.no_documento || result.profiles?.numero_documento || "N/A",
-      result.score,
-      result.max_score,
-      result.passed ? "Sí" : "No",
-      result.time_taken ? Math.round(result.time_taken / 60) : "N/A",
-      format(new Date(result.completed_at), "dd/MM/yyyy HH:mm", { locale: es }),
-    ]);
+    const headers = ["Usuario", "Nombre", "Documento", "Puntaje", "Puntaje Máximo", "Porcentaje", "Escala 0-5", "Escala 0-10", "Cualitativa", "Desempeño", "Aprobado", "Tiempo (min)", "Fecha"];
+    const rows = results.map((result) => {
+      const percentage = (result.score / result.max_score) * 100;
+      return [
+        result.profiles?.username || "N/A",
+        result.profiles?.full_name || "N/A",
+        result.no_documento || result.profiles?.numero_documento || "N/A",
+        result.score,
+        result.max_score,
+        percentage.toFixed(1) + "%",
+        convertTo5Scale(percentage),
+        convertTo10Scale(percentage),
+        convertToQualitative(percentage),
+        convertToPerformance(percentage),
+        result.passed ? "Sí" : "No",
+        result.time_taken ? Math.round(result.time_taken / 60) : "N/A",
+        format(new Date(result.completed_at), "dd/MM/yyyy HH:mm", { locale: es }),
+      ];
+    });
 
     const csvContent = [headers, ...rows]
       .map((row) => row.map((cell) => `"${cell}"`).join(","))
