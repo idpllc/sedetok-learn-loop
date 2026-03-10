@@ -26,6 +26,19 @@ interface PrintQuestion {
   }>;
 }
 
+// Strip HTML tags and return plain text
+const stripHtml = (html: string): string => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return doc.body.textContent?.trim() || "";
+};
+
+// Extract image URLs from HTML content
+const extractImagesFromHtml = (html: string): string[] => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const imgs = doc.querySelectorAll("img");
+  return Array.from(imgs).map((img) => img.getAttribute("src") || "").filter(Boolean);
+};
+
 export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: PrintableQuizProps) => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<PrintQuestion[]>([]);
