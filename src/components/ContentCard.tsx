@@ -405,18 +405,32 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                     </Button>
                     
                     {user && (user.id === creatorId || userProfile?.tipo_usuario === 'Docente') && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowEvaluationModal(true);
-                        }}
-                        className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
-                      >
-                        <ClipboardList className="w-4 h-4 mr-2" />
-                        Evaluar este quiz
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowEvaluationModal(true);
+                          }}
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
+                        >
+                          <ClipboardList className="w-4 h-4 mr-2" />
+                          Evaluar este quiz
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowPrintModal(true);
+                          }}
+                          className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
+                        >
+                          <Printer className="w-4 h-4 mr-2" />
+                          Imprimir Quiz
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>
