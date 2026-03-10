@@ -162,6 +162,7 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
 
     setIsGenerating(true);
     try {
+      const selectedTypes = Object.entries(allowedTypes).filter(([, v]) => v).map(([k]) => k);
       const { data, error } = await supabase.functions.invoke('generate-quiz-questions', {
         body: {
           title: quizContext.title,
@@ -169,7 +170,8 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
           category: quizContext.category,
           grade_level: quizContext.grade_level,
           difficulty: quizContext.difficulty,
-          numQuestions: 5,
+          numQuestions: numQuestionsToGenerate,
+          questionTypes: selectedTypes,
           document_url: quizContext.document_url,
         }
       });
