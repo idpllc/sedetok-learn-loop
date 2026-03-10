@@ -13,6 +13,7 @@ const ChatLogin: React.FC = () => {
   useEffect(() => {
     const processLogin = async () => {
       const token = searchParams.get("token");
+      const redirect = searchParams.get("redirect") || "/chat";
       if (!token) {
         setError("Token no proporcionado en la URL");
         setLoading(false);
@@ -50,11 +51,11 @@ const ChatLogin: React.FC = () => {
         if (sessionError) throw new Error(`Error al establecer sesión: ${sessionError.message}`);
         if (!sessionData?.session) throw new Error("No se pudo establecer la sesión");
 
-        setStatusMsg("Redirigiendo al chat...");
-        console.log("[ChatLogin] Session established! Redirecting...");
+        setStatusMsg("Redirigiendo...");
+        console.log("[ChatLogin] Session established! Redirecting to:", redirect);
 
         // Hard redirect ensures the session in localStorage is picked up cleanly
-        window.location.replace("/chat");
+        window.location.replace(redirect);
       } catch (err: any) {
         console.error("[ChatLogin] Error:", err);
         setError(err.message || "Error al procesar el acceso");
