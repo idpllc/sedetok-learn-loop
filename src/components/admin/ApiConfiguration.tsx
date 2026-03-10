@@ -170,13 +170,55 @@ export function ApiConfiguration() {
                 </div>
               </div>
 
-              {/* Ejemplos por rol */}
+              {/* Ejemplos por rol — Chat */}
               <div className="space-y-3">
-                <label className="text-sm font-medium">Ejemplos de URL por Rol</label>
-                <CodeBlock language="URL — Estudiante" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&grupo=5°A&course_name=Quinto&sede=Sede Norte&redirect=/chat`} />
-                <CodeBlock language="URL — Docente (director de grupo)" code={`https://sedefy.com/auto-login?documento=1009876543&institution=Colegio San José&member_role=teacher&full_name=Carlos Pérez&sede=Sede Norte&grupo=6°B&course_name=Sexto&es_director_grupo=true&redirect=/chat`} />
-                <CodeBlock language="URL — Administrador" code={`https://sedefy.com/auto-login?documento=1001234567&institution=Colegio San José&member_role=admin&full_name=Ana Rodríguez&redirect=/institution`} />
-                <CodeBlock language="URL — Coordinador" code={`https://sedefy.com/auto-login?documento=1007654321&institution=Colegio San José&member_role=coordinator&full_name=Luis Martínez&redirect=/chat`} />
+                <label className="text-sm font-medium">Ejemplos — Acceso al Chat (requiere grupo y sede)</label>
+                <CodeBlock language="URL — Estudiante → Chat" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&grupo=5°A&course_name=Quinto&sede=Sede Norte&redirect=/chat`} />
+                <CodeBlock language="URL — Docente (director) → Chat" code={`https://sedefy.com/auto-login?documento=1009876543&institution=Colegio San José&member_role=teacher&full_name=Carlos Pérez&sede=Sede Norte&grupo=6°B&course_name=Sexto&es_director_grupo=true&redirect=/chat`} />
+              </div>
+
+              {/* Ejemplos — Otras secciones */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Ejemplos — Acceso a otras secciones (sin grupo ni sede)</label>
+                <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20 mb-3">
+                  <p className="text-sm text-muted-foreground">
+                    💡 Para acceder a secciones que <strong>no son el chat</strong>, solo necesitas <code className="px-1 py-0.5 bg-muted rounded">documento</code>, <code className="px-1 py-0.5 bg-muted rounded">institution</code> y <code className="px-1 py-0.5 bg-muted rounded">member_role</code>. Los campos <code className="px-1 py-0.5 bg-muted rounded">grupo</code>, <code className="px-1 py-0.5 bg-muted rounded">sede</code> y <code className="px-1 py-0.5 bg-muted rounded">course_name</code> son opcionales.
+                  </p>
+                </div>
+                <CodeBlock language="URL — Juegos en Vivo" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&redirect=/live-games`} />
+                <CodeBlock language="URL — Trivia" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&redirect=/trivia-game`} />
+                <CodeBlock language="URL — Rutas de Aprendizaje" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&redirect=/learning-paths`} />
+                <CodeBlock language="URL — Perfil Profesional" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&redirect=/professional-profile`} />
+                <CodeBlock language="URL — Perfil Vocacional" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&redirect=/vocational-profile`} />
+                <CodeBlock language="URL — Sede AI" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&redirect=/sede-ai`} />
+                <CodeBlock language="URL — Tutor de Idiomas" code={`https://sedefy.com/auto-login?documento=1012345678&institution=Colegio San José&member_role=student&full_name=María López&redirect=/language-tutor`} />
+                <CodeBlock language="URL — Administrador → Dashboard Institución" code={`https://sedefy.com/auto-login?documento=1001234567&institution=Colegio San José&member_role=admin&full_name=Ana Rodríguez&redirect=/institution`} />
+              </div>
+
+              {/* Tabla de rutas disponibles */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Rutas disponibles para redirección</label>
+                <div className="divide-y border rounded-lg overflow-hidden">
+                  {[
+                    ["/chat", "Chat escolar (requiere grupo y sede)"],
+                    ["/live-games", "Juegos en vivo (Kahoot-style)"],
+                    ["/trivia-game", "Trivia — Duelos 1v1"],
+                    ["/learning-paths", "Explorar rutas de aprendizaje"],
+                    ["/view-learning-path/{id}", "Ruta específica (reemplazar {id} por UUID)"],
+                    ["/professional-profile", "Perfil profesional del usuario"],
+                    ["/vocational-profile", "Perfil vocacional"],
+                    ["/sede-ai", "Asistente de IA"],
+                    ["/language-tutor", "Tutor de idiomas con IA"],
+                    ["/achievements", "Logros y medallas"],
+                    ["/institution", "Dashboard de la institución (admin/teacher)"],
+                    ["/", "Feed principal (SedeTok)"],
+                  ].map(([route, desc]) => (
+                    <div key={route} className="flex gap-3 items-start px-3 py-2 text-sm bg-background">
+                      <code className="px-2 py-0.5 bg-muted rounded text-xs shrink-0 font-mono">{route}</code>
+                      <span className="text-muted-foreground text-xs">{desc}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Ejemplo cURL */}
