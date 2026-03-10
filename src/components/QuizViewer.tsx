@@ -78,7 +78,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const [startTime, setStartTime] = useState<number | null>(null);
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [isTabVisible, setIsTabVisible] = useState(true);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Detect tab visibility changes
   useEffect(() => {
