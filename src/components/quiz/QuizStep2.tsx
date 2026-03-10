@@ -59,6 +59,29 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
   const { deductEducoins, showBuyModal, requiredAmount, closeBuyModal } = useEducoins();
   const { deductXP } = useXP();
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [aiConfigOpen, setAiConfigOpen] = useState(false);
+  const [numQuestionsToGenerate, setNumQuestionsToGenerate] = useState(5);
+  const [allowedTypes, setAllowedTypes] = useState<Record<string, boolean>>({
+    multiple_choice: true,
+    true_false: true,
+    short_answer: true,
+    open_ended: true,
+  });
+
+  const QUESTION_TYPE_LABELS: Record<string, string> = {
+    multiple_choice: "Selección múltiple",
+    true_false: "Verdadero / Falso",
+    short_answer: "Respuesta corta",
+    open_ended: "Pregunta abierta",
+  };
+
+  const toggleType = (type: string) => {
+    const newTypes = { ...allowedTypes, [type]: !allowedTypes[type] };
+    // Ensure at least one type is selected
+    if (Object.values(newTypes).some(v => v)) {
+      setAllowedTypes(newTypes);
+    }
+  };
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
