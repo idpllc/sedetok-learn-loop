@@ -19,13 +19,8 @@ const QuizEvaluations = () => {
   const { eventResults, resultsLoading } = useEvaluationEvents(undefined, undefined, undefined, eventId);
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="p-6">
-          <p className="text-muted-foreground">Debes iniciar sesión para gestionar evaluaciones</p>
-        </Card>
-      </div>
-    );
+    navigate("/auth", { replace: true });
+    return null;
   }
 
   // Mostrar resultados si hay eventId
