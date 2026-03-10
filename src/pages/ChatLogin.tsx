@@ -13,6 +13,7 @@ const ChatLogin: React.FC = () => {
   useEffect(() => {
     const processLogin = async () => {
       const token = searchParams.get("token");
+      const redirect = searchParams.get("redirect") || "/chat";
       if (!token) {
         setError("Token no proporcionado en la URL");
         setLoading(false);
