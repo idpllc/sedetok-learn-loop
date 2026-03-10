@@ -9,6 +9,9 @@ import { useEducoins } from "@/hooks/useEducoins";
 import { useXP } from "@/hooks/useXP";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { BuyEducoinsModal } from "@/components/BuyEducoinsModal";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface QuizQuestion {
   id: string;
