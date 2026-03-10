@@ -130,6 +130,16 @@ export const QuizStep2 = ({ questions, onChange, onTimeLimitChange, quizContext 
       return;
     }
 
+    setAiConfigOpen(true);
+  };
+
+  const confirmAiConfig = () => {
+    const selectedTypes = Object.entries(allowedTypes).filter(([, v]) => v).map(([k]) => k);
+    if (selectedTypes.length === 0) {
+      toast.error("Selecciona al menos un tipo de pregunta");
+      return;
+    }
+    setAiConfigOpen(false);
     setPaymentDialogOpen(true);
   };
 
