@@ -34,7 +34,7 @@ const EditProfile = () => {
   const { awardProfileXP } = useXP();
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const previousStateRef = useRef<any>(null);
   const [activeTab, setActiveTab] = useState("personal");
   const [newEmail, setNewEmail] = useState("");
