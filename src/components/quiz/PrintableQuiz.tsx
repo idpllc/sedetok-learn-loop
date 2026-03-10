@@ -107,6 +107,9 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
     const questionsHTML = questions
       .map((q, idx) => {
         const sortedOptions = [...q.quiz_options].sort((a, b) => a.order_index - b.order_index);
+        const cleanText = stripHtml(q.question_text);
+        const embeddedImages = extractImagesFromHtml(q.question_text);
+        const allImages = [...embeddedImages, ...(q.image_url ? [q.image_url] : [])];
 
         let optionsHTML = "";
         if (q.question_type === "multiple_choice" || q.question_type === "true_false") {
@@ -117,7 +120,7 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
                   (opt, oi) => `
                 <div class="option">
                   <span class="option-letter">${optionLetters[oi] || oi + 1}.</span>
-                  <span>${opt.option_text}</span>
+                  <span>${stripHtml(opt.option_text)}</span>
                 </div>
               `
                 )
@@ -134,18 +137,18 @@ export const PrintableQuiz = ({ quizId, quizTitle, open, onOpenChange }: Printab
             </div>`;
         }
 
-        const imageHTML = q.image_url
-          ? `<div class="question-image"><img src="${q.image_url}" alt="Imagen pregunta ${idx + 1}" /></div>`
-          : "";
+        const imagesHTML = allImages
+          .map((src) => `<div class="question-image"><img src="${src}" alt="Imagen pregunta ${idx + 1}" /></div>`)
+          .join("");
 
         return `
           <div class="question">
             <div class="question-header">
               <span class="question-number">${idx + 1}.</span>
-              <span class="question-text">${q.question_text}</span>
+              <span class="question-text">${cleanText}</span>
               <span class="question-points">(${q.points} pts)</span>
             </div>
-            ${imageHTML}
+            ${imagesHTML}
             ${optionsHTML}
           </div>
         `;
