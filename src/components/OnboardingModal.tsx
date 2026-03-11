@@ -225,12 +225,44 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
         return;
       }
 
+      // Award 2000 XP for completing 360 profile
+      try {
+        const { data: alreadyAwarded } = await supabase
+          .from("user_xp_log")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("action_type", "profile_360_complete")
+          .maybeSingle();
+
+        if (!alreadyAwarded) {
+          await supabase.from("user_xp_log").insert({
+            user_id: user.id,
+            action_type: "profile_360_complete",
+            xp_amount: 2000,
+          });
+
+          await supabase
+            .from("profiles")
+            .update({
+              experience_points: (await supabase
+                .from("profiles")
+                .select("experience_points")
+                .eq("id", user.id)
+                .single()
+                .then(r => r.data?.experience_points || 0)) + 2000,
+            })
+            .eq("id", user.id);
+        }
+      } catch (xpError) {
+        console.error("Error awarding XP:", xpError);
+      }
+
       localStorage.removeItem("onboarding_step");
       localStorage.removeItem("onboarding_postponed_until");
 
       toast({
-        title: "¡Perfil completado! 🎉",
-        description: "Tu experiencia de aprendizaje ahora será completamente personalizada",
+        title: "¡Perfil completado! 🎉 +2000 XP",
+        description: "Tu experiencia de aprendizaje ahora será completamente personalizada. ¡Has ganado 2000 puntos de experiencia!",
       });
 
       onOpenChange(false);
