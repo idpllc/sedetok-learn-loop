@@ -794,7 +794,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         institution={institution}
         tags={tags}
         creatorAvatar={creatorAvatar}
-        commentsCount={initialComments}
+        commentsCount={liveCommentCount || 0}
         isQuiz={contentType === 'quiz'}
         isGame={contentType === 'game'}
         questionsCount={questionsCount}
