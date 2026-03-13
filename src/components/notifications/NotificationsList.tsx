@@ -2,13 +2,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Loader2, Bell, CheckCheck, MessageSquare, Heart, UserPlus, BookOpen, Trophy } from "lucide-react";
+import { Loader2, Bell, CheckCheck, MessageSquare, Heart, UserPlus, BookOpen, Trophy, Swords } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 export const NotificationsList = () => {
   const { notifications, notificationsLoading, markAsRead, markAllAsRead, unreadCount } =
     useNotifications();
+  const navigate = useNavigate();
 
   if (notificationsLoading) {
     return (
@@ -32,8 +34,21 @@ export const NotificationsList = () => {
         return <BookOpen className="h-5 w-5" />;
       case "evaluation_result":
         return <Trophy className="h-5 w-5" />;
+      case "trivia_invitation":
+      case "trivia_invitation_accepted":
+      case "trivia_turn":
+        return <Swords className="h-5 w-5" />;
       default:
         return <Bell className="h-5 w-5" />;
+    }
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    markAsRead(notification.id);
+    if (notification.type === 'trivia_invitation' || notification.type === 'trivia_turn') {
+      navigate('/trivia-game');
+    } else if (notification.type === 'trivia_invitation_accepted' && notification.related_id) {
+      navigate(`/trivia-game?match=${notification.related_id}`);
     }
   };
 
@@ -66,7 +81,8 @@ export const NotificationsList = () => {
             notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 rounded-lg border transition-colors ${
+                onClick={() => handleNotificationClick(notification)}
+                className={`p-4 rounded-lg border transition-colors cursor-pointer hover:bg-accent/5 ${
                   notification.read
                     ? "bg-background"
                     : "bg-accent/10 border-accent"
