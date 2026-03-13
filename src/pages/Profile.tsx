@@ -75,6 +75,7 @@ const Profile = () => {
       return data;
     },
     enabled: !!userId || !!user?.id,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Determine if viewing own profile after data loads
