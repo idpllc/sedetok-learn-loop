@@ -62,7 +62,7 @@ serve(async (req) => {
         timestamp,
         signature,
         uploadPreset: CLOUDINARY_UPLOAD_PRESET ?? null,
-        uploadUrl: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
+        uploadUrl: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
