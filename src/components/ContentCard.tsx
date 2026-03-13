@@ -257,14 +257,12 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   };
 
   const handleAuthSuccess = () => {
-    const isQuiz = contentType === 'quiz';
-    const isGame = contentType === 'game';
     if (pendingAction === 'like') {
-      likeMutation.mutate({ contentId: id, isLiked: false, isQuiz, isGame });
-      awardXP(id, 'like', isQuiz || isGame);
+      likeMutation.mutate({ contentId: id, isLiked: false, isQuiz: isQuizType, isGame: isGameType });
+      awardXP(id, 'like', isQuizType || isGameType);
     } else if (pendingAction === 'save') {
-      saveMutation.mutate({ contentId: id, isSaved: false, isQuiz, isGame });
-      awardXP(id, 'save', isQuiz || isGame);
+      saveMutation.mutate({ contentId: id, isSaved: false, isQuiz: isQuizType, isGame: isGameType });
+      awardXP(id, 'save', isQuizType || isGameType);
     }
     setPendingAction(null);
   };
