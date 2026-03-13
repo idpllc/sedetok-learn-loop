@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 export const NotificationsList = () => {
   const { notifications, notificationsLoading, markAsRead, markAllAsRead, unreadCount } =
     useNotifications();
+  const navigate = useNavigate();
 
   if (notificationsLoading) {
     return (
