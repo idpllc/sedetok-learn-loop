@@ -101,7 +101,8 @@ export const useUserActivity = (enabled: boolean = true) => {
 
       return [...content, ...quizzes, ...games];
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
+    staleTime: 3 * 60 * 1000,
   });
 
   // For shared content, we track by shares_count
