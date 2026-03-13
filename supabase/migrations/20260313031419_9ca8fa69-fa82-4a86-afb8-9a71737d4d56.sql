@@ -1,0 +1,1 @@
+ALTER TABLE trivia_1v1_invitations ALTER COLUMN expires_at SET DEFAULT (now() + interval '7 days');
