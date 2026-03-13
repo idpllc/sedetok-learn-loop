@@ -51,7 +51,8 @@ export const useUserActivity = (enabled: boolean = true) => {
 
       return [...content, ...quizzes, ...games];
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
+    staleTime: 3 * 60 * 1000,
   });
 
   const { data: savedContent, isLoading: savesLoading } = useQuery({
