@@ -311,7 +311,7 @@ const SedeTok = () => {
                 id={content.id}
                 title={content.title}
                 description={content.description || ""}
-                creator={profile?.username || profile?.full_name || "Usuario"}
+                creator={getDisplayName(profile)}
                 creatorId={content.creator_id}
                 institution={profile?.institution}
                 tags={content.tags || []}

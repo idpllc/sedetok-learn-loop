@@ -394,7 +394,7 @@ const ViewCourse = () => {
               videoRef={videoRef}
               title={content.title}
               description={content.description}
-              creator={content.profiles?.username || ""}
+              creator={getDisplayName(content.profiles)}
               creatorId={content.creator_id}
               institution={content.profiles?.institution}
               creatorAvatar={content.profiles?.avatar_url}

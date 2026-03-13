@@ -144,7 +144,7 @@ const CreatorContent = () => {
                 videoRef={videoRef}
                 title={item.title}
                 description={item.description}
-                creator={item.profiles?.username || item.creator}
+                creator={getDisplayName(item.profiles) !== "Usuario" ? getDisplayName(item.profiles) : item.creator}
                 creatorId={item.creator_id || userId}
                 institution={item.profiles?.institution || item.institution}
                 creatorAvatar={item.profiles?.avatar_url}

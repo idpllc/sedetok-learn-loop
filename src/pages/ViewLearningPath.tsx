@@ -156,7 +156,7 @@ const ViewLearningPath = () => {
           title: quiz.title || "",
           description: quiz.description || "",
           creator_id: quiz.creator_id,
-          creator: profile?.username || "",
+          creator: getDisplayName(profile),
           institution: profile?.institution || "",
           creatorAvatar: profile?.avatar_url,
           tags: [],
