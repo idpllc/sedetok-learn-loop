@@ -194,6 +194,10 @@ export const useS3Upload = () => {
     while (start < totalSize) {
       const end = Math.min(start + chunkSize, totalSize);
       const chunk = file.slice(start, end);
+      const headers = {
+        "X-Unique-Upload-Id": uploadId,
+        "Content-Range": `bytes ${start}-${end - 1}/${totalSize}`,
+      };
 
       const chunkResponse = await uploadChunkWithRetries(
         uploadUrl,
