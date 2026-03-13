@@ -302,7 +302,8 @@ export const useS3Upload = () => {
 
         for (const url of uploadUrls) {
           try {
-            const unsignedResponse = await postToCloudinary(url, buildUnsignedFormData);
+            if (!unsignedFields) break;
+            const unsignedResponse = await uploadWithResilience(url, file, unsignedFields);
             if (!unsignedResponse.ok) {
               const unsignedError = parseCloudinaryError(unsignedResponse.bodyText);
               throw new Error(`Error al subir video: ${unsignedResponse.status} - ${unsignedError}`);
