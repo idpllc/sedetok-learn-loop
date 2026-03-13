@@ -36,12 +36,11 @@ interface CourseRouteData {
 export const useCourses = (filter?: "created" | "all") => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const coursesQuery = useQuery({
-    queryKey: ["courses", filter],
+    queryKey: ["courses", filter, user?.id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
       let query = supabase
         .from("courses")
         .select("*")
@@ -57,6 +56,8 @@ export const useCourses = (filter?: "created" | "all") => {
       if (error) throw error;
       return data;
     },
+    enabled: filter !== 'created' || !!user,
+    staleTime: 2 * 60 * 1000,
   });
 
   const createCourse = useMutation({
