@@ -34,8 +34,21 @@ export const NotificationsList = () => {
         return <BookOpen className="h-5 w-5" />;
       case "evaluation_result":
         return <Trophy className="h-5 w-5" />;
+      case "trivia_invitation":
+      case "trivia_invitation_accepted":
+      case "trivia_turn":
+        return <Swords className="h-5 w-5" />;
       default:
         return <Bell className="h-5 w-5" />;
+    }
+  };
+
+  const handleNotificationClick = (notification: any) => {
+    markAsRead(notification.id);
+    if (notification.type === 'trivia_invitation' || notification.type === 'trivia_turn') {
+      navigate('/trivia-game');
+    } else if (notification.type === 'trivia_invitation_accepted' && notification.related_id) {
+      navigate(`/trivia-game?match=${notification.related_id}`);
     }
   };
 
