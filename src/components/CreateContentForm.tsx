@@ -288,6 +288,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       setFormData({ ...formData, content_type: "video" as ContentType });
     } else if (type === 'document') {
       setFormData({ ...formData, content_type: "document" as ContentType });
+    } else if (type === 'image') {
+      setFormData({ ...formData, content_type: "document" as ContentType });
     }
   };
 
@@ -311,6 +313,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     if (type === 'video') {
       setFormData({ ...formData, content_type: "video" as ContentType });
     } else if (type === 'document') {
+      setFormData({ ...formData, content_type: "document" as ContentType });
+    } else if (type === 'image') {
       setFormData({ ...formData, content_type: "document" as ContentType });
     }
   };
