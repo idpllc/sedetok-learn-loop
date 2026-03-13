@@ -101,7 +101,11 @@ export const useS3Upload = () => {
 
   const buildFormDataFromFields = (file: Blob, fields: Record<string, string>, filename?: string) => {
     const formData = new FormData();
-    formData.append("file", file, filename);
+    if (filename) {
+      formData.append("file", file, filename);
+    } else {
+      formData.append("file", file);
+    }
 
     Object.entries(fields).forEach(([key, value]) => {
       if (value) formData.append(key, value);
