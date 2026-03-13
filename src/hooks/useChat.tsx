@@ -284,17 +284,16 @@ export const useChat = () => {
           .filter((id) => myIds.has(id));
 
         if (commonIds.length > 0) {
-          const { data: existing } = await supabase
+          const { data: existingList } = await supabase
             .from("chat_conversations")
             .select("*")
             .in("id", commonIds)
             .eq("type", "direct")
-            .limit(1)
-            .single();
+            .limit(1);
 
-          if (existing) {
-            openConversation(existing.id);
-            return existing.id;
+          if (existingList && existingList.length > 0) {
+            openConversation(existingList[0].id);
+            return existingList[0].id;
           }
         }
       }
