@@ -35,9 +35,22 @@ export const useS3Upload = () => {
       message.includes("failed to fetch") ||
       message.includes("networkerror") ||
       message.includes("network request failed") ||
+      message.includes("xhr network error") ||
       message.includes("network") ||
       message.includes("timeout")
     );
+  };
+
+  const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const isMobileDevice = (): boolean => {
+    if (typeof navigator === "undefined") return false;
+    return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+  };
+
+  const shouldUseChunkedUpload = (file: File): boolean => {
+    const chunkThreshold = 20 * 1024 * 1024; // 20MB
+    return isMobileDevice() || file.size >= chunkThreshold;
   };
 
   const uploadWithFetch = async (uploadUrl: string, formData: FormData): Promise<CloudinaryUploadResponse> => {
@@ -55,11 +68,21 @@ export const useS3Upload = () => {
     };
   };
 
-  const uploadWithXhr = (uploadUrl: string, formData: FormData): Promise<CloudinaryUploadResponse> =>
+  const uploadWithXhr = (
+    uploadUrl: string,
+    formData: FormData,
+    options: { headers?: Record<string, string>; timeoutMs?: number } = {},
+  ): Promise<CloudinaryUploadResponse> =>
     new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", uploadUrl, true);
-      xhr.timeout = 1000 * 60 * 10; // 10 minutos
+      xhr.timeout = options.timeoutMs ?? 1000 * 60 * 10; // 10 minutos por defecto
+
+      if (options.headers) {
+        Object.entries(options.headers).forEach(([key, value]) => {
+          xhr.setRequestHeader(key, value);
+        });
+      }
 
       xhr.onload = () => {
         resolve({
@@ -76,7 +99,16 @@ export const useS3Upload = () => {
       xhr.send(formData);
     });
 
-  const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const buildFormDataFromFields = (file: Blob, fields: Record<string, string>, filename?: string) => {
+    const formData = new FormData();
+    formData.append("file", file, filename);
+
+    Object.entries(fields).forEach(([key, value]) => {
+      if (value) formData.append(key, value);
+    });
+
+    return formData;
+  };
 
   const postWithRetries = async (
     uploadUrl: string,
@@ -96,10 +128,10 @@ export const useS3Upload = () => {
             console.warn(`[Cloudinary] Fetch falló (intento ${attempt}), probando XHR...`);
             return await uploadWithXhr(uploadUrl, buildFormData());
           }
-        } else {
-          console.log(`[Cloudinary] Reintento ${attempt}/${maxRetries} con XHR...`);
-          return await uploadWithXhr(uploadUrl, buildFormData());
         }
+
+        console.log(`[Cloudinary] Reintento ${attempt}/${maxRetries} con XHR...`);
+        return await uploadWithXhr(uploadUrl, buildFormData());
       } catch (error) {
         lastError = error;
         if (!isNetworkUploadError(error)) throw error;
@@ -114,8 +146,87 @@ export const useS3Upload = () => {
     throw lastError;
   };
 
-  const postToCloudinary = async (uploadUrl: string, buildFormData: () => FormData): Promise<CloudinaryUploadResponse> => {
-    return postWithRetries(uploadUrl, buildFormData, 3);
+  const uploadChunkWithRetries = async (
+    uploadUrl: string,
+    chunkFormData: FormData,
+    headers: Record<string, string>,
+    maxRetries = 3,
+  ): Promise<CloudinaryUploadResponse> => {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await uploadWithXhr(uploadUrl, chunkFormData, {
+          headers,
+          timeoutMs: 1000 * 60 * 4,
+        });
+      } catch (error) {
+        lastError = error;
+        if (!isNetworkUploadError(error) || attempt >= maxRetries) throw error;
+
+        const waitMs = Math.min(1000 * Math.pow(2, attempt), 8000);
+        console.warn(`[Cloudinary] Chunk falló (intento ${attempt}/${maxRetries}), esperando ${waitMs}ms...`);
+        await delay(waitMs);
+      }
+    }
+
+    throw lastError;
+  };
+
+  const uploadToCloudinaryInChunks = async (
+    uploadUrl: string,
+    file: File,
+    fields: Record<string, string>,
+  ): Promise<CloudinaryUploadResponse> => {
+    const chunkSize = 6 * 1024 * 1024; // 6MB (Cloudinary recomienda >= 5MB)
+    const totalSize = file.size;
+    const uploadId = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    let start = 0;
+    let lastResponse: CloudinaryUploadResponse | null = null;
+
+    while (start < totalSize) {
+      const end = Math.min(start + chunkSize, totalSize);
+      const chunk = file.slice(start, end);
+
+      const chunkFormData = buildFormDataFromFields(chunk, fields, file.name);
+      const headers = {
+        "X-Unique-Upload-Id": uploadId,
+        "Content-Range": `bytes ${start}-${end - 1}/${totalSize}`,
+      };
+
+      const chunkResponse = await uploadChunkWithRetries(uploadUrl, chunkFormData, headers, 3);
+      lastResponse = chunkResponse;
+
+      if (!chunkResponse.ok) {
+        return chunkResponse;
+      }
+
+      start = end;
+    }
+
+    return (
+      lastResponse ?? {
+        ok: false,
+        status: 0,
+        bodyText: "No se obtuvo respuesta de carga por chunks",
+      }
+    );
+  };
+
+  const uploadWithResilience = async (
+    uploadUrl: string,
+    file: File,
+    fields: Record<string, string>,
+  ): Promise<CloudinaryUploadResponse> => {
+    if (shouldUseChunkedUpload(file)) {
+      console.log("[Cloudinary] Usando subida por chunks para mayor estabilidad móvil...");
+      return uploadToCloudinaryInChunks(uploadUrl, file, fields);
+    }
+
+    return postWithRetries(uploadUrl, () => buildFormDataFromFields(file, fields), 3);
   };
 
   const parseSuccessResponse = (bodyText: string): { url: string; thumbnail_url: string } => {
