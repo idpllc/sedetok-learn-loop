@@ -444,6 +444,7 @@ export const useContent = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saves"] });
       queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
     },
     onError: (error) => {
       toast({
