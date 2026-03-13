@@ -61,6 +61,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
 
   const currentPlayer = players?.find(p => p.user_id === user?.id);
   const opponent = players?.find(p => p.user_id !== user?.id);
+  // Allow playing even in 'waiting' status if current_player_id is set to me
   const isMyTurn = match?.current_player_id === user?.id && !turnEnded;
   const currentQuestion = questions[currentQuestionIndex];
   const waitingForOpponent = !opponent;
