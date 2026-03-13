@@ -128,7 +128,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     }
   }, [match?.current_player_id, user?.id, matchId, toast]);
 
-  // Activate match when second player joins or fix stuck matches
+  // Activate match when second player joins
   useEffect(() => {
     const activateMatch = async () => {
       if (!match || !players || players.length !== 2 || !currentPlayer) return;
@@ -136,22 +136,22 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       // Only player 1 should activate to avoid race conditions
       if (currentPlayer.player_number !== 1) return;
       
-      const needsActivation = match.status === 'waiting' || !match.current_player_id;
-      if (!needsActivation) return;
+      // Only activate if still in waiting status
+      if (match.status !== 'waiting') return;
 
-      const firstPlayer = players.find(p => p.player_number === 1);
       try {
         await updateMatch.mutateAsync({
           status: 'active',
           started_at: match.started_at || new Date().toISOString(),
-          current_player_id: firstPlayer?.user_id || players[0]?.user_id
+          // Keep current_player_id as-is so we don't interrupt player 1's turn
+          current_player_id: match.current_player_id || players.find(p => p.player_number === 1)?.user_id
         });
       } catch (e) {
         console.error('Error activating match:', e);
       }
     };
     activateMatch();
-  }, [match?.status, match?.current_player_id, players?.length, currentPlayer?.player_number]);
+  }, [match?.status, players?.length, currentPlayer?.player_number]);
 
   // Timer
   useEffect(() => {
