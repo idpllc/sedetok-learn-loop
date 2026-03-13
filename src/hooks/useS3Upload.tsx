@@ -266,24 +266,20 @@ export const useS3Upload = () => {
     const { uploadUrl, folder, apiKey, timestamp, signature, uploadPreset } = signData;
     const uploadUrls = getUploadUrls(uploadUrl);
 
-    const buildSignedFormData = () => {
-      const signedFormData = new FormData();
-      signedFormData.append("file", file);
-      signedFormData.append("api_key", apiKey);
-      signedFormData.append("timestamp", String(timestamp));
-      signedFormData.append("signature", signature);
-      signedFormData.append("folder", folder);
-      if (uploadPreset) signedFormData.append("upload_preset", uploadPreset);
-      return signedFormData;
+    const signedFields: Record<string, string> = {
+      api_key: apiKey,
+      timestamp: String(timestamp),
+      signature,
+      folder,
+      ...(uploadPreset ? { upload_preset: uploadPreset } : {}),
     };
 
-    const buildUnsignedFormData = () => {
-      const unsignedFormData = new FormData();
-      unsignedFormData.append("file", file);
-      unsignedFormData.append("upload_preset", uploadPreset);
-      unsignedFormData.append("folder", folder);
-      return unsignedFormData;
-    };
+    const unsignedFields: Record<string, string> | null = uploadPreset
+      ? {
+          upload_preset: uploadPreset,
+          folder,
+        }
+      : null;
 
     console.log("[Cloudinary] Subiendo video directamente a Cloudinary (signed)...");
 
