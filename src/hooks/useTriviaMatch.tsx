@@ -72,7 +72,7 @@ export function useTriviaMatch(matchId?: string) {
     };
   }, [matchId, queryClient]);
 
-  // Get match data
+  // Get match data with polling fallback for waiting/stuck states
   const { data: match, isLoading: loadingMatch } = useQuery({
     queryKey: ['trivia-match', matchId],
     queryFn: async () => {
@@ -85,10 +85,16 @@ export function useTriviaMatch(matchId?: string) {
       if (error) throw error;
       return data as TriviaMatch;
     },
-    enabled: !!matchId
+    enabled: !!matchId,
+    refetchInterval: (query) => {
+      const d = query.state.data as TriviaMatch | null | undefined;
+      // Poll every 2s while waiting or missing current_player_id
+      if (!d || d.status === 'waiting' || !d.current_player_id) return 2000;
+      return false;
+    }
   });
 
-  // Get match players
+  // Get match players with polling fallback
   const { data: players, isLoading: loadingPlayers } = useQuery({
     queryKey: ['trivia-match-players', matchId],
     queryFn: async () => {
@@ -101,7 +107,13 @@ export function useTriviaMatch(matchId?: string) {
       if (error) throw error;
       return data as TriviaMatchPlayer[];
     },
-    enabled: !!matchId
+    enabled: !!matchId,
+    refetchInterval: (query) => {
+      const d = query.state.data as TriviaMatchPlayer[] | undefined;
+      // Poll every 2s while waiting for second player
+      if (!d || d.length < 2) return 2000;
+      return false;
+    }
   });
 
   // Create match
