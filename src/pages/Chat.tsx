@@ -346,7 +346,8 @@ const ChatPage: React.FC = () => {
     return other?.profile?.avatar_url;
   };
 
-  const getConvName = (conv: ChatConversation) => {
+  const getConvName = (conv: ChatConversation | undefined) => {
+    if (!conv) return "Chat";
     if (conv.name) return conv.name;
     if (conv.type === "direct") {
       const other = conv.participants?.find((p) => p.user_id !== user?.id);
