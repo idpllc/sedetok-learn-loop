@@ -211,7 +211,7 @@ const ViewLearningPath = () => {
           title: content.title || "",
           description: content.description || "",
           creator_id: content.creator_id,
-          creator: profile?.username || "",
+          creator: getDisplayName(profile),
           institution: profile?.institution || "",
           creatorAvatar: profile?.avatar_url,
           tags: content.tags || [],
