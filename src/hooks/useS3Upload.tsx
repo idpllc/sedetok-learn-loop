@@ -152,7 +152,7 @@ export const useS3Upload = () => {
 
   const uploadChunkWithRetries = async (
     uploadUrl: string,
-    chunkFormData: FormData,
+    buildChunkFormData: () => FormData,
     headers: Record<string, string>,
     maxRetries = 3,
   ): Promise<CloudinaryUploadResponse> => {
@@ -160,7 +160,7 @@ export const useS3Upload = () => {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await uploadWithXhr(uploadUrl, chunkFormData, {
+        return await uploadWithXhr(uploadUrl, buildChunkFormData(), {
           headers,
           timeoutMs: 1000 * 60 * 4,
         });
