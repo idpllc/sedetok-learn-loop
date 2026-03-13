@@ -11,6 +11,15 @@ export const useS3Upload = () => {
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
+  const parseCloudinaryError = (errorText: string): string => {
+    try {
+      const parsed = JSON.parse(errorText);
+      return parsed?.error?.message || parsed?.message || errorText;
+    } catch {
+      return errorText;
+    }
+  };
+
   // Upload video directly to Cloudinary using signed params from edge function
   const uploadToCloudinary = async (file: File): Promise<{ url: string; thumbnail_url: string }> => {
     console.log(`[Cloudinary] Solicitando parámetros de carga para: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
@@ -26,27 +35,57 @@ export const useS3Upload = () => {
       throw new Error(msg);
     }
 
-    const { uploadUrl, folder, apiKey, timestamp, signature } = signData;
+    const { uploadUrl, folder, apiKey, timestamp, signature, uploadPreset } = signData;
 
-    // Step 2: Upload directly from client to Cloudinary (signed, no memory limit)
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("api_key", apiKey);
-    formData.append("timestamp", String(timestamp));
-    formData.append("signature", signature);
-    formData.append("folder", folder);
+    const signedFormData = new FormData();
+    signedFormData.append("file", file);
+    signedFormData.append("api_key", apiKey);
+    signedFormData.append("timestamp", String(timestamp));
+    signedFormData.append("signature", signature);
+    signedFormData.append("folder", folder);
+    if (uploadPreset) {
+      signedFormData.append("upload_preset", uploadPreset);
+    }
 
-    console.log(`[Cloudinary] Subiendo video directamente a Cloudinary...`);
+    console.log(`[Cloudinary] Subiendo video directamente a Cloudinary (signed)...`);
 
-    const response = await fetch(uploadUrl, {
+    let response = await fetch(uploadUrl, {
       method: "POST",
-      body: formData,
+      body: signedFormData,
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[Cloudinary] Upload failed:", errorText);
-      throw new Error(`Error al subir video: ${response.status}`);
+      const signedErrorText = await response.text();
+      const signedError = parseCloudinaryError(signedErrorText);
+      console.error("[Cloudinary] Signed upload failed:", signedErrorText);
+
+      const shouldFallbackToUnsigned = Boolean(uploadPreset) && (
+        response.status === 401 ||
+        response.status === 403 ||
+        /invalid signature|unsigned|upload preset/i.test(signedError)
+      );
+
+      if (shouldFallbackToUnsigned) {
+        console.warn("[Cloudinary] Reintentando como unsigned con upload_preset...");
+        const unsignedFormData = new FormData();
+        unsignedFormData.append("file", file);
+        unsignedFormData.append("upload_preset", uploadPreset);
+        unsignedFormData.append("folder", folder);
+
+        response = await fetch(uploadUrl, {
+          method: "POST",
+          body: unsignedFormData,
+        });
+
+        if (!response.ok) {
+          const unsignedErrorText = await response.text();
+          const unsignedError = parseCloudinaryError(unsignedErrorText);
+          console.error("[Cloudinary] Unsigned fallback failed:", unsignedErrorText);
+          throw new Error(`Error al subir video: ${response.status} - ${unsignedError}`);
+        }
+      } else {
+        throw new Error(`Error al subir video: ${response.status} - ${signedError}`);
+      }
     }
 
     const result = await response.json();

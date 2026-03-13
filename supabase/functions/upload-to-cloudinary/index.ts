@@ -11,9 +11,13 @@ serve(async (req) => {
   }
 
   try {
-    const CLOUDINARY_CLOUD_NAME = Deno.env.get('CLOUDINARY_CLOUD_NAME');
-    const CLOUDINARY_API_KEY = Deno.env.get('CLOUDINARY_API_KEY');
-    const CLOUDINARY_API_SECRET = Deno.env.get('CLOUDINARY_API_SECRET');
+    const CLOUDINARY_CLOUD_NAME = Deno.env.get('CLOUDINARY_CLOUD_NAME')?.trim();
+    const CLOUDINARY_API_KEY = Deno.env.get('CLOUDINARY_API_KEY')?.trim();
+    const CLOUDINARY_API_SECRET = Deno.env.get('CLOUDINARY_API_SECRET')?.trim();
+    const CLOUDINARY_UPLOAD_PRESET =
+      Deno.env.get('CLOUDINARY_UPLOAD_PRESET')?.trim() ||
+      Deno.env.get('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET')?.trim() ||
+      undefined;
 
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
       console.error('[Cloudinary] Missing env vars:', {
@@ -28,14 +32,27 @@ serve(async (req) => {
     const folder = 'sedefy/videos';
 
     // Signed upload: params in alphabetical order + api_secret appended
-    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+    const params: Record<string, string | number> = {
+      folder,
+      timestamp,
+    };
+
+    if (CLOUDINARY_UPLOAD_PRESET) {
+      params.upload_preset = CLOUDINARY_UPLOAD_PRESET;
+    }
+
+    const paramsToSign = Object.keys(params)
+      .sort()
+      .map((key) => `${key}=${params[key]}`)
+      .join('&');
+
     const encoder = new TextEncoder();
     const data = encoder.encode(paramsToSign + CLOUDINARY_API_SECRET);
     const hashBuffer = await crypto.subtle.digest('SHA-1', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const signature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    console.log('[Cloudinary] Generated signed upload params');
+    console.log('[Cloudinary] Generated signed upload params', { hasPreset: !!CLOUDINARY_UPLOAD_PRESET });
 
     return new Response(
       JSON.stringify({
@@ -44,6 +61,7 @@ serve(async (req) => {
         folder,
         timestamp,
         signature,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET ?? null,
         uploadUrl: `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
       }),
       {
