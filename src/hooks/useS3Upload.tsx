@@ -195,13 +195,12 @@ export const useS3Upload = () => {
       const end = Math.min(start + chunkSize, totalSize);
       const chunk = file.slice(start, end);
 
-      const chunkFormData = buildFormDataFromFields(chunk, fields, file.name);
-      const headers = {
-        "X-Unique-Upload-Id": uploadId,
-        "Content-Range": `bytes ${start}-${end - 1}/${totalSize}`,
-      };
-
-      const chunkResponse = await uploadChunkWithRetries(uploadUrl, chunkFormData, headers, 3);
+      const chunkResponse = await uploadChunkWithRetries(
+        uploadUrl,
+        () => buildFormDataFromFields(chunk, fields, file.name),
+        headers,
+        3,
+      );
       lastResponse = chunkResponse;
 
       if (!chunkResponse.ok) {
