@@ -371,6 +371,77 @@ export const useChat = () => {
     }
   }, [user, openConversation, fetchConversations, toast]);
 
+  // Create academic group with linked chat
+  const createAcademicGroup = useCallback(async (
+    name: string,
+    memberIds: string[],
+    institutionId: string,
+    options?: { sedeId?: string; courseName?: string; academicYear?: string }
+  ) => {
+    if (!user) return null;
+    try {
+      // 1. Create academic group
+      const { data: group, error: groupErr } = await supabase
+        .from("academic_groups")
+        .insert({
+          name,
+          institution_id: institutionId,
+          sede_id: options?.sedeId || null,
+          course_name: options?.courseName || null,
+          academic_year: options?.academicYear || null,
+          director_user_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (groupErr) throw groupErr;
+
+      // 2. Add members to academic group
+      const academicMembers = [
+        { group_id: group.id, user_id: user.id, role: "teacher" },
+        ...memberIds.map((uid) => ({ group_id: group.id, user_id: uid, role: "student" })),
+      ];
+      await supabase.from("academic_group_members").insert(academicMembers);
+
+      // 3. Create linked chat conversation
+      const { data: conv, error: convErr } = await supabase
+        .from("chat_conversations")
+        .insert({
+          type: "group",
+          name,
+          institution_id: institutionId,
+          academic_group_id: group.id,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (convErr) throw convErr;
+
+      // 4. Add chat participants
+      const chatParticipants = [user.id, ...memberIds].map((uid) => ({
+        conversation_id: conv.id,
+        user_id: uid,
+        role: uid === user.id ? "admin" : "member",
+      }));
+      await supabase.from("chat_participants").insert(chatParticipants);
+
+      await fetchConversations();
+      openConversation(conv.id);
+
+      toast({ title: "Grupo académico creado", description: `"${name}" con ${memberIds.length} miembro(s)` });
+      return conv.id;
+    } catch (error: any) {
+      console.error("Error creating academic group:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo crear el grupo académico",
+        variant: "destructive",
+      });
+      return null;
+    }
+  }, [user, openConversation, fetchConversations, toast]);
+
   // Upload file for chat
   const uploadChatFile = useCallback(async (file: File): Promise<string | null> => {
     try {

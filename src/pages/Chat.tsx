@@ -33,7 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const EMOJI_LIST = ["😀","😂","😍","🥰","😎","🤔","👍","👏","🎉","❤️","🔥","💯","✅","📚","🎓","📝","👋","🙏","💪","⭐","😊","🤗","😢","😮","🫡","🤝","🥳","🏆","📖","🧠"];
 
-type SearchMode = "direct" | "group";
+type SearchMode = "direct" | "group" | "academic";
 
 // Thin sidebar nav items
 const NAV_ITEMS = [
