@@ -489,7 +489,7 @@ const Index = () => {
                             {profile?.avatar_url && (
                               <Avatar className="w-5 h-5 border border-white/50">
                                 <AvatarImage src={profile.avatar_url} />
-                                <AvatarFallback className="text-[8px]">{(profile?.username || '?')[0].toUpperCase()}</AvatarFallback>
+                                <AvatarFallback className="text-[8px]">{getDisplayName(profile)[0].toUpperCase()}</AvatarFallback>
                               </Avatar>
                             )}
                             <span className="text-xs font-semibold text-white drop-shadow-md">
