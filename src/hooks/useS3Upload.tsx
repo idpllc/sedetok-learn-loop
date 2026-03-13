@@ -288,7 +288,7 @@ export const useS3Upload = () => {
 
     for (const url of uploadUrls) {
       try {
-        signedResponse = await postToCloudinary(url, buildSignedFormData);
+        signedResponse = await uploadWithResilience(url, file, signedFields);
         break;
       } catch (error) {
         lastSignedError = error;
