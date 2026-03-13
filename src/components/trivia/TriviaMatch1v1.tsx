@@ -133,25 +133,26 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     const activateMatch = async () => {
       if (!match || !players || players.length !== 2 || !currentPlayer) return;
       
-      // Only player 1 should activate to avoid race conditions
-      if (currentPlayer.player_number !== 1) return;
-      
-      // Only activate if still in waiting status
-      if (match.status !== 'waiting') return;
+      const needsUpdate = match.status === 'waiting' || !match.current_player_id;
+      if (!needsUpdate) return;
+
+      // If current_player_id is null, it means player 1 finished their turn while waiting.
+      // Give the turn to player 2 (the one who just joined).
+      const player2 = players.find(p => p.player_number === 2);
+      const nextPlayerId = match.current_player_id || player2?.user_id || players[1]?.user_id;
 
       try {
         await updateMatch.mutateAsync({
           status: 'active',
           started_at: match.started_at || new Date().toISOString(),
-          // Keep current_player_id as-is so we don't interrupt player 1's turn
-          current_player_id: match.current_player_id || players.find(p => p.player_number === 1)?.user_id
+          current_player_id: nextPlayerId
         });
       } catch (e) {
         console.error('Error activating match:', e);
       }
     };
     activateMatch();
-  }, [match?.status, players?.length, currentPlayer?.player_number]);
+  }, [match?.status, match?.current_player_id, players?.length, currentPlayer?.player_number]);
 
   // Timer
   useEffect(() => {
@@ -310,12 +311,19 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   };
 
   const changeTurn = async () => {
-    // If there's no opponent yet, stay on current player's turn
-    const nextPlayerId = opponent?.user_id || user?.id;
-    await updateMatch.mutateAsync({
-      current_player_id: nextPlayerId,
-      current_question_number: 0
-    });
+    if (opponent?.user_id) {
+      // Opponent exists - pass turn to them
+      await updateMatch.mutateAsync({
+        current_player_id: opponent.user_id,
+        current_question_number: 0
+      });
+    } else {
+      // No opponent yet - clear current_player_id so match goes to "waiting" state
+      await updateMatch.mutateAsync({
+        current_player_id: null as any,
+        current_question_number: 0
+      });
+    }
     setPhase('wheel');
     setSelectedAnswer(null);
     setTimeLeft(20);
@@ -489,7 +497,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     );
   }
 
-  // Only show waiting screen if no current_player_id is set (shouldn't happen with new flow)
+  // Show waiting screen when current_player_id is null (player finished turn, waiting for opponent)
   if (!match.current_player_id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -497,11 +505,17 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           <CardContent className="pt-6 pb-6 text-center space-y-4">
             <div className="text-5xl animate-pulse">⏳</div>
             <div>
-              <h2 className="text-xl font-bold">Preparando la partida...</h2>
+              <h2 className="text-xl font-bold">Esperando oponente</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Un momento por favor
+                Ya completaste tu turno. Cuando un oponente se una, será su turno.
               </p>
             </div>
+            {match.match_code && (
+              <div className="bg-muted rounded-lg p-3">
+                <p className="text-xs text-muted-foreground">Código de partida</p>
+                <p className="text-2xl font-bold tracking-widest">{match.match_code}</p>
+              </div>
+            )}
             <Button onClick={() => { window.location.href = '/trivia-game'; }} variant="outline" size="sm" className="w-full">
               Volver al menú
             </Button>

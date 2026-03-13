@@ -190,12 +190,14 @@ export function useTriviaMatch(matchId?: string) {
         throw new Error("La partida está llena");
       }
 
-      // Activate the match - keep current_player_id as-is (player 1 set it on creation)
+      // Activate the match. If current_player_id is null, player 1 already finished — give turn to player 2
+      const updates: any = { status: 'active' };
+      if (!match.current_player_id) {
+        updates.current_player_id = user.id;
+      }
       await supabase
         .from('trivia_1v1_matches')
-        .update({
-          status: 'active'
-        })
+        .update(updates)
         .eq('id', match.id);
 
       return match as TriviaMatch;
