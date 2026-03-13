@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export const useUserActivity = () => {
+export const useUserActivity = (enabled: boolean = true) => {
   const { user } = useAuth();
 
   const { data: likedContent, isLoading: likesLoading } = useQuery({
