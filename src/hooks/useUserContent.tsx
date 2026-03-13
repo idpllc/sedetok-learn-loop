@@ -1,210 +1,112 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useUserContent = (userId?: string) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: userContent, isLoading } = useQuery({
     queryKey: ["userContent", userId],
     queryFn: async () => {
-      let targetUserId = userId;
-      let isOwnContent = false;
-      
-      if (!targetUserId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Usuario no autenticado");
-        targetUserId = user.id;
-        isOwnContent = true;
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        isOwnContent = user?.id === targetUserId;
-      }
+      const targetUserId = userId;
+      if (!targetUserId) return [];
 
-      // Fetch regular content with profile data
-      let contentQuery = supabase
-        .from("content")
-        .select(`
-          *,
-          profiles:creator_id (
-            username,
-            avatar_url,
-            institution
-          )
-        `)
-        .eq("creator_id", targetUserId);
+      const isOwnContent = user?.id === targetUserId;
 
-      if (!isOwnContent) {
-        contentQuery = contentQuery.eq("is_public", true);
-      }
+      // Fetch content, quizzes, and games in parallel
+      const [contentResult, quizResult, gameResult] = await Promise.all([
+        (() => {
+          let q = supabase
+            .from("content")
+            .select(`*, profiles:creator_id (username, avatar_url, institution)`)
+            .eq("creator_id", targetUserId);
+          if (!isOwnContent) q = q.eq("is_public", true);
+          return q.order("created_at", { ascending: false });
+        })(),
+        (() => {
+          let q = supabase
+            .from("quizzes")
+            .select(`*, profiles:creator_id (username, avatar_url, institution)`)
+            .eq("creator_id", targetUserId);
+          if (!isOwnContent) q = q.eq("is_public", true);
+          return q.order("created_at", { ascending: false });
+        })(),
+        (() => {
+          let q = supabase
+            .from("games")
+            .select(`*, profiles:creator_id (username, avatar_url, institution)`)
+            .eq("creator_id", targetUserId);
+          if (!isOwnContent) q = q.eq("is_public", true);
+          return q.order("created_at", { ascending: false });
+        })()
+      ]);
 
-      const { data: contentData, error: contentError } = await contentQuery.order("created_at", { ascending: false });
-      if (contentError) throw contentError;
+      if (contentResult.error) throw contentResult.error;
+      if (quizResult.error) throw quizResult.error;
+      if (gameResult.error) throw gameResult.error;
 
-      // Fetch quizzes with profile data
-      let quizQuery = supabase
-        .from("quizzes")
-        .select(`
-          *,
-          profiles:creator_id (
-            username,
-            avatar_url,
-            institution
-          )
-        `)
-        .eq("creator_id", targetUserId);
-
-      if (!isOwnContent) {
-        quizQuery = quizQuery.eq("is_public", true);
-      }
-
-      const { data: quizData, error: quizError } = await quizQuery.order("created_at", { ascending: false });
-      if (quizError) throw quizError;
-
-      // Fetch games with profile data
-      let gameQuery = supabase
-        .from("games")
-        .select(`
-          *,
-          profiles:creator_id (
-            username,
-            avatar_url,
-            institution
-          )
-        `)
-        .eq("creator_id", targetUserId);
-
-      if (!isOwnContent) {
-        gameQuery = gameQuery.eq("is_public", true);
-      }
-
-      const { data: gameData, error: gameError } = await gameQuery.order("created_at", { ascending: false });
-      if (gameError) throw gameError;
-
-      // Combine and mark quizzes with content_type
-      const quizzes = (quizData || []).map(quiz => ({
+      const quizzes = (quizResult.data || []).map(quiz => ({
         ...quiz,
         content_type: 'quiz' as const,
-        likes_count: 0,
-        views_count: 0,
-        saves_count: 0,
-        shares_count: 0,
-        comments_count: 0,
+        likes_count: 0, views_count: 0, saves_count: 0, shares_count: 0, comments_count: 0,
         tags: quiz.tags || [],
       }));
 
-      // Combine and mark games with content_type
-      const games = (gameData || []).map(game => ({
+      const games = (gameResult.data || []).map(game => ({
         ...game,
         content_type: 'game' as const,
-        likes_count: 0,
-        views_count: 0,
-        saves_count: 0,
-        shares_count: 0,
-        comments_count: 0,
+        likes_count: 0, views_count: 0, saves_count: 0, shares_count: 0, comments_count: 0,
         tags: game.tags || [],
       }));
 
-      // Combine all arrays and sort by created_at
-      const allContent = [...(contentData || []), ...quizzes, ...games].sort(
+      return [...(contentResult.data || []), ...quizzes, ...games].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
-
-      return allContent;
     },
+    enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (contentId: string) => {
-      // First, check which table this content belongs to
       const content = userContent?.find(c => c.id === contentId);
       
       if (content?.content_type === 'quiz') {
-        // Delete from quizzes table
-        const { error } = await supabase
-          .from("quizzes")
-          .delete()
-          .eq("id", contentId);
-        
+        const { error } = await supabase.from("quizzes").delete().eq("id", contentId);
         if (error) throw error;
       } else if (content?.content_type === 'game') {
-        // Delete from games table
-        const { error } = await supabase
-          .from("games")
-          .delete()
-          .eq("id", contentId);
-        
+        const { error } = await supabase.from("games").delete().eq("id", contentId);
         if (error) throw error;
       } else {
-        // Delete from content table
-        const { error } = await supabase
-          .from("content")
-          .delete()
-          .eq("id", contentId);
-        
+        const { error } = await supabase.from("content").delete().eq("id", contentId);
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userContent"] });
-      toast({
-        title: "Contenido eliminado",
-        description: "El contenido ha sido eliminado exitosamente",
-      });
+      toast({ title: "Contenido eliminado", description: "El contenido ha sido eliminado exitosamente" });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ 
-      contentId, 
-      updates 
-    }: { 
-      contentId: string; 
-      updates: { 
-        title?: string; 
-        description?: string; 
-        is_public?: boolean;
-        tags?: string[];
-        video_url?: string;
-        document_url?: string;
-        thumbnail_url?: string;
-      } 
-    }) => {
-      const { error } = await supabase
-        .from("content")
-        .update(updates)
-        .eq("id", contentId);
-
+    mutationFn: async ({ contentId, updates }: { contentId: string; updates: { title?: string; description?: string; is_public?: boolean; tags?: string[]; video_url?: string; document_url?: string; thumbnail_url?: string; } }) => {
+      const { error } = await supabase.from("content").update(updates).eq("id", contentId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["userContent"] });
-      toast({
-        title: "Contenido actualizado",
-        description: "Los cambios se guardaron correctamente",
-      });
+      toast({ title: "Contenido actualizado", description: "Los cambios se guardaron correctamente" });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
-  return {
-    userContent,
-    isLoading,
-    deleteMutation,
-    updateMutation,
-  };
+  return { userContent, isLoading, deleteMutation, updateMutation };
 };
