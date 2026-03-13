@@ -240,9 +240,26 @@ const ChatPage: React.FC = () => {
     resetSearch();
   };
 
+  const handleCreateAcademicGroup = async () => {
+    if (!groupName.trim() || selectedMembers.length === 0 || !myMembership?.institution_id) return;
+    setCreatingGroup(true);
+    await createAcademicGroup(
+      groupName.trim(),
+      selectedMembers.map((m) => m.id),
+      myMembership.institution_id,
+      {
+        courseName: academicCourseName.trim() || undefined,
+        academicYear: academicYear.trim() || undefined,
+      }
+    );
+    setCreatingGroup(false);
+    resetSearch();
+  };
+
   const resetSearch = () => {
     setShowSearch(false); setSearchQuery(""); setSearchResults([]);
     setGroupName(""); setSelectedMembers([]); setSearchMode("direct");
+    setAcademicCourseName(""); setAcademicYear("");
   };
 
   const handleSend = async () => {
