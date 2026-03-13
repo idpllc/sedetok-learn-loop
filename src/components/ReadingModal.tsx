@@ -155,7 +155,7 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
           <div className="flex items-center gap-3 mt-3">
             <Volume2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <span className="text-xs text-muted-foreground flex-shrink-0">Leer con voz:</span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide min-w-0">
               {VOICE_AGENTS.map((agent) => {
                 const isActive = selectedAgent === agent.id;
                 const isThisGenerating = isActive && isGenerating;
