@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { subjects } from "@/lib/subjects";
-import { getDisplayName } from "@/lib/displayName";
+import { getDisplayName } from "@/lib/displayName"; // display name helper
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Database } from "@/integrations/supabase/types";
