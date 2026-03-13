@@ -116,7 +116,7 @@ export function useTriviaMatch(matchId?: string) {
     }
   });
 
-  // Create match
+  // Create match - player 1 starts playing immediately
   const createMatch = useMutation({
     mutationFn: async (level: string) => {
       if (!user) throw new Error("User not authenticated");
@@ -128,7 +128,9 @@ export function useTriviaMatch(matchId?: string) {
         .insert({
           match_code: matchCode,
           level,
-          status: 'waiting'
+          status: 'waiting',
+          current_player_id: user.id,
+          started_at: new Date().toISOString()
         })
         .select()
         .single();
