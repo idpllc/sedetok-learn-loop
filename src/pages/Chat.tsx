@@ -56,7 +56,7 @@ const ChatPage: React.FC = () => {
   const { toast } = useToast();
   const {
     conversations, activeConversation, messages, loadingConversations, loadingMessages, sending,
-    openConversation, sendMessage, createDirectConversation, createGroupConversation,
+    openConversation, sendMessage, createDirectConversation, createGroupConversation, createAcademicGroup,
     uploadChatFile, searchUsers, searchInstitutionUsers, setActiveConversation,
     leaveConversation, updateGroupAvatar, getConversationMembers, deleteMessage, playMessageSent,
   } = useChat();
