@@ -105,6 +105,72 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const { isFollowing, toggleFollow, isProcessing } = useFollow(creatorId);
   const { lastAttempt, hasAttempted } = useQuizAttempts(contentType === 'quiz' ? id : undefined);
   
+  // Live like/comment counts
+  const isQuizType = contentType === 'quiz';
+  const isGameType = contentType === 'game';
+  const idField = isGameType ? 'game_id' : isQuizType ? 'quiz_id' : 'content_id';
+
+  const { data: liveLikeCount } = useQuery({
+    queryKey: ['live-counts', 'likes', id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact', head: true })
+        .eq(idField, id);
+      return count || 0;
+    },
+    initialData: initialLikes,
+    staleTime: 5000,
+  });
+
+  const { data: liveCommentCount } = useQuery({
+    queryKey: ['live-counts', 'comments', id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq(idField, id);
+      return count || 0;
+    },
+    initialData: initialComments,
+    staleTime: 5000,
+  });
+
+  // Live isLiked / isSaved state
+  const { data: liveIsLiked } = useQuery({
+    queryKey: ['live-counts', 'user-liked', id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from('likes')
+        .select('id')
+        .eq(idField, id)
+        .eq('user_id', user.id)
+        .limit(1);
+      return (data && data.length > 0) || false;
+    },
+    initialData: isLiked,
+    enabled: !!user,
+    staleTime: 5000,
+  });
+
+  const { data: liveIsSaved } = useQuery({
+    queryKey: ['live-counts', 'user-saved', id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from('saves')
+        .select('id')
+        .eq(idField, id)
+        .eq('user_id', user.id)
+        .limit(1);
+      return (data && data.length > 0) || false;
+    },
+    initialData: isSaved,
+    enabled: !!user,
+    staleTime: 5000,
+  });
+
   // Fetch user profile to check if they are a teacher
   const { data: userProfile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -172,12 +238,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       setAuthModalOpen(true);
       return;
     }
-    const isQuiz = contentType === 'quiz';
-    const isGame = contentType === 'game';
-    likeMutation.mutate({ contentId: id, isLiked, isQuiz, isGame });
-    // Award XP only when liking (not unliking)
-    if (!isLiked) {
-      awardXP(id, 'like', isQuiz || isGame);
+    likeMutation.mutate({ contentId: id, isLiked: liveIsLiked || false, isQuiz: isQuizType, isGame: isGameType });
+    if (!liveIsLiked) {
+      awardXP(id, 'like', isQuizType || isGameType);
     }
   };
 
@@ -187,24 +250,19 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       setAuthModalOpen(true);
       return;
     }
-    const isQuiz = contentType === 'quiz';
-    const isGame = contentType === 'game';
-    saveMutation.mutate({ contentId: id, isSaved, isQuiz, isGame });
-    // Award XP only when saving (not unsaving)
-    if (!isSaved) {
-      awardXP(id, 'save', isQuiz || isGame);
+    saveMutation.mutate({ contentId: id, isSaved: liveIsSaved || false, isQuiz: isQuizType, isGame: isGameType });
+    if (!liveIsSaved) {
+      awardXP(id, 'save', isQuizType || isGameType);
     }
   };
 
   const handleAuthSuccess = () => {
-    const isQuiz = contentType === 'quiz';
-    const isGame = contentType === 'game';
     if (pendingAction === 'like') {
-      likeMutation.mutate({ contentId: id, isLiked: false, isQuiz, isGame });
-      awardXP(id, 'like', isQuiz || isGame);
+      likeMutation.mutate({ contentId: id, isLiked: false, isQuiz: isQuizType, isGame: isGameType });
+      awardXP(id, 'like', isQuizType || isGameType);
     } else if (pendingAction === 'save') {
-      saveMutation.mutate({ contentId: id, isSaved: false, isQuiz, isGame });
-      awardXP(id, 'save', isQuiz || isGame);
+      saveMutation.mutate({ contentId: id, isSaved: false, isQuiz: isQuizType, isGame: isGameType });
+      awardXP(id, 'save', isQuizType || isGameType);
     }
     setPendingAction(null);
   };
@@ -647,13 +705,13 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-              isLiked ? 'bg-red-500' : 'bg-white/90'
+              liveIsLiked ? 'bg-red-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Heart 
-                className={`w-5 h-5 ${isLiked ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-5 h-5 ${liveIsLiked ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
-            <span className="text-xs font-semibold text-white drop-shadow-lg">{initialLikes}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-lg">{liveLikeCount}</span>
           </button>
 
           <button
@@ -663,7 +721,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-white">
               <MessageCircle className="w-5 h-5 text-black" />
             </div>
-            <span className="text-xs font-semibold text-white drop-shadow-lg">{initialComments}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-lg">{liveCommentCount}</span>
           </button>
 
           <button 
@@ -671,10 +729,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-              isSaved ? 'bg-yellow-500' : 'bg-white/90'
+              liveIsSaved ? 'bg-yellow-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Bookmark 
-                className={`w-5 h-5 ${isSaved ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-5 h-5 ${liveIsSaved ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
           </button>
@@ -736,7 +794,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         institution={institution}
         tags={tags}
         creatorAvatar={creatorAvatar}
-        commentsCount={initialComments}
+        commentsCount={liveCommentCount || 0}
         isQuiz={contentType === 'quiz'}
         isGame={contentType === 'game'}
         questionsCount={questionsCount}

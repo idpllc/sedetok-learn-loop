@@ -148,11 +148,11 @@ export const useInfiniteContent = (
         ...quiz,
         content_type: 'quiz' as const,
         itemType: 'content',
-        likes_count: 0,
+        likes_count: quiz.likes_count || 0,
         views_count: 0,
-        saves_count: 0,
-        shares_count: 0,
-        comments_count: 0,
+        saves_count: quiz.saves_count || 0,
+        shares_count: quiz.shares_count || 0,
+        comments_count: quiz.comments_count || 0,
         video_url: null,
         document_url: null,
         rich_text: null,
@@ -407,7 +407,9 @@ export const useContent = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
       queryClient.invalidateQueries({ queryKey: ["likes"] });
+      queryClient.invalidateQueries({ queryKey: ["live-counts"] });
     },
     onError: (error) => {
       toast({
@@ -442,6 +444,7 @@ export const useContent = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saves"] });
       queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
     },
     onError: (error) => {
       toast({

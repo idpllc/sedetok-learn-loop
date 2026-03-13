@@ -48,6 +48,7 @@ export const useComments = (contentId: string, isQuiz?: boolean, isGame?: boolea
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", contentId] });
+      queryClient.invalidateQueries({ queryKey: ["live-counts", "comments"] });
       toast.success("Comentario agregado");
       // Call the callback to award XP
       if (onCommentAdded) {
@@ -70,6 +71,7 @@ export const useComments = (contentId: string, isQuiz?: boolean, isGame?: boolea
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", contentId] });
+      queryClient.invalidateQueries({ queryKey: ["live-counts", "comments"] });
       toast.success("Comentario eliminado");
     },
     onError: () => {
