@@ -59,7 +59,7 @@ export const useS3Upload = () => {
     new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", uploadUrl, true);
-      xhr.timeout = 1000 * 60 * 8; // 8 minutos
+      xhr.timeout = 1000 * 60 * 10; // 10 minutos
 
       xhr.onload = () => {
         resolve({
@@ -69,20 +69,53 @@ export const useS3Upload = () => {
         });
       };
 
-      xhr.onerror = () => reject(new Error("Network request failed during upload"));
+      xhr.onerror = () => reject(new Error("XHR network error"));
       xhr.ontimeout = () => reject(new Error("Upload timeout"));
+      xhr.onabort = () => reject(new Error("Upload aborted"));
 
       xhr.send(formData);
     });
 
-  const postToCloudinary = async (uploadUrl: string, buildFormData: () => FormData): Promise<CloudinaryUploadResponse> => {
-    try {
-      return await uploadWithFetch(uploadUrl, buildFormData());
-    } catch (fetchError) {
-      if (!isNetworkUploadError(fetchError)) throw fetchError;
-      console.warn(`[Cloudinary] Fetch falló en ${uploadUrl}, reintentando con XHR...`, fetchError);
-      return uploadWithXhr(uploadUrl, buildFormData());
+  const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const postWithRetries = async (
+    uploadUrl: string,
+    buildFormData: () => FormData,
+    maxRetries = 3,
+  ): Promise<CloudinaryUploadResponse> => {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // On first attempt try fetch, subsequent attempts use XHR (more stable on mobile)
+        if (attempt === 1) {
+          try {
+            return await uploadWithFetch(uploadUrl, buildFormData());
+          } catch (fetchErr) {
+            if (!isNetworkUploadError(fetchErr)) throw fetchErr;
+            console.warn(`[Cloudinary] Fetch falló (intento ${attempt}), probando XHR...`);
+            return await uploadWithXhr(uploadUrl, buildFormData());
+          }
+        } else {
+          console.log(`[Cloudinary] Reintento ${attempt}/${maxRetries} con XHR...`);
+          return await uploadWithXhr(uploadUrl, buildFormData());
+        }
+      } catch (error) {
+        lastError = error;
+        if (!isNetworkUploadError(error)) throw error;
+        if (attempt < maxRetries) {
+          const waitMs = Math.min(2000 * Math.pow(2, attempt - 1), 10000);
+          console.warn(`[Cloudinary] Intento ${attempt} falló, esperando ${waitMs}ms...`);
+          await delay(waitMs);
+        }
+      }
     }
+
+    throw lastError;
+  };
+
+  const postToCloudinary = async (uploadUrl: string, buildFormData: () => FormData): Promise<CloudinaryUploadResponse> => {
+    return postWithRetries(uploadUrl, buildFormData, 3);
   };
 
   const parseSuccessResponse = (bodyText: string): { url: string; thumbnail_url: string } => {
