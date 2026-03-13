@@ -182,13 +182,19 @@ export const useS3Upload = () => {
     file: File,
     fields: Record<string, string>,
   ): Promise<CloudinaryUploadResponse> => {
-    const chunkSize = 6 * 1024 * 1024; // 6MB (Cloudinary recomienda >= 5MB)
+    // Cloudinary requiere chunks >= 5MB (excepto el último).
+    // Usamos 10MB para reducir número de peticiones en archivos grandes (ej. 500MB = 50 chunks).
+    const chunkSize = 10 * 1024 * 1024; // 10MB
     const totalSize = file.size;
+    const totalChunks = Math.ceil(totalSize / chunkSize);
     const uploadId = typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+    console.log(`[Cloudinary] Subida por chunks: ${totalChunks} bloques de ~${(chunkSize / 1024 / 1024).toFixed(0)}MB para archivo de ${(totalSize / 1024 / 1024).toFixed(1)}MB`);
+
     let start = 0;
+    let chunkIndex = 0;
     let lastResponse: CloudinaryUploadResponse | null = null;
 
     while (start < totalSize) {
@@ -199,20 +205,26 @@ export const useS3Upload = () => {
         "Content-Range": `bytes ${start}-${end - 1}/${totalSize}`,
       };
 
+      console.log(`[Cloudinary] Chunk ${chunkIndex + 1}/${totalChunks} (${(start / 1024 / 1024).toFixed(1)}MB - ${(end / 1024 / 1024).toFixed(1)}MB)`);
+
       const chunkResponse = await uploadChunkWithRetries(
         uploadUrl,
         () => buildFormDataFromFields(chunk, fields, file.name),
         headers,
-        3,
+        5, // 5 reintentos por chunk para archivos grandes
       );
       lastResponse = chunkResponse;
 
       if (!chunkResponse.ok) {
+        console.error(`[Cloudinary] Chunk ${chunkIndex + 1}/${totalChunks} falló: ${chunkResponse.status}`);
         return chunkResponse;
       }
 
       start = end;
+      chunkIndex++;
     }
+
+    console.log(`[Cloudinary] Todos los ${totalChunks} chunks subidos exitosamente`);
 
     return (
       lastResponse ?? {
