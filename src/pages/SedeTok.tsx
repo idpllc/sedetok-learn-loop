@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ContentCard } from "@/components/ContentCard";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
+import { getDisplayName } from "@/lib/displayName";
 
 interface FeedItem {
   id: string;

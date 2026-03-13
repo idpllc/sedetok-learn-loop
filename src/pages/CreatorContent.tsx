@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getDisplayName } from "@/lib/displayName";
 
 const CreatorContent = () => {
   const navigate = useNavigate();
