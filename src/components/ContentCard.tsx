@@ -238,12 +238,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       setAuthModalOpen(true);
       return;
     }
-    const isQuiz = contentType === 'quiz';
-    const isGame = contentType === 'game';
-    likeMutation.mutate({ contentId: id, isLiked, isQuiz, isGame });
-    // Award XP only when liking (not unliking)
-    if (!isLiked) {
-      awardXP(id, 'like', isQuiz || isGame);
+    likeMutation.mutate({ contentId: id, isLiked: liveIsLiked || false, isQuiz: isQuizType, isGame: isGameType });
+    if (!liveIsLiked) {
+      awardXP(id, 'like', isQuizType || isGameType);
     }
   };
 
@@ -253,12 +250,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       setAuthModalOpen(true);
       return;
     }
-    const isQuiz = contentType === 'quiz';
-    const isGame = contentType === 'game';
-    saveMutation.mutate({ contentId: id, isSaved, isQuiz, isGame });
-    // Award XP only when saving (not unsaving)
-    if (!isSaved) {
-      awardXP(id, 'save', isQuiz || isGame);
+    saveMutation.mutate({ contentId: id, isSaved: liveIsSaved || false, isQuiz: isQuizType, isGame: isGameType });
+    if (!liveIsSaved) {
+      awardXP(id, 'save', isQuizType || isGameType);
     }
   };
 
