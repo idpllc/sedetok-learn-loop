@@ -87,6 +87,9 @@ const ChatPage: React.FC = () => {
   const [groupName, setGroupName] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
   const [creatingGroup, setCreatingGroup] = useState(false);
+  // Academic group extra fields
+  const [academicCourseName, setAcademicCourseName] = useState("");
+  const [academicYear, setAcademicYear] = useState("");
 
   // Right panel - members
   const [showMembersPanel, setShowMembersPanel] = useState(false);
