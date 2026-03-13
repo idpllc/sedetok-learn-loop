@@ -66,21 +66,8 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   const waitingForOpponent = !opponent;
   const matchIsWaiting = match?.status === 'waiting';
 
-  // Get match data with polling fallback
-  const { data: matchQuery } = useQuery({
-    queryKey: ['trivia-match', matchId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('trivia_1v1_matches')
-        .select('*')
-        .eq('id', matchId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!matchId,
-    refetchInterval: match?.status === 'waiting' || !match?.current_player_id ? 3000 : false,
-  });
+  // Reset turnEnded and charactersWonThisTurn when it actually becomes our turn and send notification
+  useEffect(() => {
     if (match?.current_player_id === user?.id) {
       setTurnEnded(false);
       setCharactersWonThisTurn(0);
