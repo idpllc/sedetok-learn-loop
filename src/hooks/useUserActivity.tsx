@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export const useUserActivity = () => {
+export const useUserActivity = (enabled: boolean = true) => {
   const { user } = useAuth();
 
   const { data: likedContent, isLoading: likesLoading } = useQuery({
@@ -51,7 +51,8 @@ export const useUserActivity = () => {
 
       return [...content, ...quizzes, ...games];
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
+    staleTime: 3 * 60 * 1000,
   });
 
   const { data: savedContent, isLoading: savesLoading } = useQuery({
@@ -100,7 +101,8 @@ export const useUserActivity = () => {
 
       return [...content, ...quizzes, ...games];
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
+    staleTime: 3 * 60 * 1000,
   });
 
   // For shared content, we track by shares_count
@@ -120,7 +122,8 @@ export const useUserActivity = () => {
 
       return content || [];
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
+    staleTime: 3 * 60 * 1000,
   });
 
   return {

@@ -75,6 +75,7 @@ const Profile = () => {
       return data;
     },
     enabled: !!userId || !!user?.id,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Determine if viewing own profile after data loads
@@ -82,7 +83,7 @@ const Profile = () => {
 
   const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(profileData?.id);
   const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(profileData?.id, 'created');
-  const { courses, isLoading: coursesLoading, deleteCourse } = useCourses('created');
+  const { courses, isLoading: coursesLoading, deleteCourse } = useCourses(isOwnProfile ? 'created' : undefined);
   const { isFollowing, toggleFollow, isProcessing } = useFollow(profileData?.id || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
@@ -91,14 +92,15 @@ const Profile = () => {
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const [deleteCourseDialogOpen, setDeleteCourseDialogOpen] = useState(false);
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
-  const { likedContent, savedContent, sharedContent, isLoading: activityLoading } = useUserActivity();
+  // Only load activity data for own profile
+  const { likedContent, savedContent, sharedContent, isLoading: activityLoading } = useUserActivity(!!isOwnProfile);
   const { updateProfile } = useProfileUpdate();
   const { uploadFile, uploading } = useCloudinary();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileTab, setProfileTab] = useState<"creator" | "professional" | "vocational">("creator");
 
-  // Fetch academic metrics for intelligences
-  const { data: metrics } = useAcademicMetrics(profileData?.id);
+  // Only fetch academic metrics when vocational tab is active
+  const { data: metrics } = useAcademicMetrics(profileTab === 'vocational' ? profileData?.id : undefined);
 
   const handleSignOut = async () => {
     await signOut();
