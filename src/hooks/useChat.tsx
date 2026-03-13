@@ -736,6 +736,7 @@ export const useChat = () => {
     sendMessage,
     createDirectConversation,
     createGroupConversation,
+    createAcademicGroup,
     uploadChatFile,
     searchUsers,
     searchInstitutionUsers,
