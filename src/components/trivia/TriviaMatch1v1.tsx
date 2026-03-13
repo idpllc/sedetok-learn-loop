@@ -628,7 +628,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
-          opponent={opponent!} 
+          opponent={opponent} 
           categories={categories}
         />
 
