@@ -2,9 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Loader2, Bell, CheckCheck, MessageSquare, Heart, UserPlus, BookOpen, Trophy } from "lucide-react";
+import { Loader2, Bell, CheckCheck, MessageSquare, Heart, UserPlus, BookOpen, Trophy, Swords } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 export const NotificationsList = () => {
   const { notifications, notificationsLoading, markAsRead, markAllAsRead, unreadCount } =

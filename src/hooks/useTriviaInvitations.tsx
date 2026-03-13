@@ -168,41 +168,48 @@ export const useTriviaInvitations = () => {
 
       if (error) throw error;
 
-      // Send notification
-      await supabase.from('notifications').insert({
-        user_id: receiverId,
-        type: 'trivia_invitation',
-        title: '¡Te han retado!',
-        message: `Tienes un nuevo reto de trivia`,
-        related_id: data.id,
-        related_type: 'trivia_invitation',
-        read: false
-      });
-
-      // Send push notification
-      await supabase.functions.invoke('send-push-notification', {
-        body: {
-          userId: receiverId,
+      // Send notification + email via edge function (creates notification record + sends email)
+      try {
+        await supabase.functions.invoke('send-email-notification', {
+          body: {
+            userId: receiverId,
+            notificationType: 'trivia_invitation',
+            title: '¡Te han retado en SEDEFY Trivia!',
+            message: 'Has recibido un nuevo reto de trivia. Ingresa a SEDEFY para aceptar el desafío y demostrar tus conocimientos.',
+            relatedId: data.id,
+            relatedType: 'trivia_invitation'
+          }
+        });
+      } catch (e) {
+        console.error('Error sending email notification:', e);
+        // Fallback: create notification directly if edge function fails
+        await supabase.from('notifications').insert({
+          user_id: receiverId,
+          type: 'trivia_invitation',
           title: '¡Te han retado!',
           message: 'Tienes un nuevo reto de trivia',
-          url: '/trivia-game',
-          notificationId: data.id,
-          relatedId: data.id,
-          relatedType: 'trivia_invitation'
-        }
-      });
+          related_id: data.id,
+          related_type: 'trivia_invitation',
+          read: false
+        });
+      }
 
-      // Send email notification
-      await supabase.functions.invoke('send-email-notification', {
-        body: {
-          userId: receiverId,
-          notificationType: 'trivia_invitation',
-          title: '¡Te han retado en SEDEFY Trivia!',
-          message: 'Has recibido un nuevo reto de trivia. Ingresa a SEDEFY para aceptar el desafío y demostrar tus conocimientos.',
-          relatedId: data.id,
-          relatedType: 'trivia_invitation'
-        }
-      });
+      // Send push notification
+      try {
+        await supabase.functions.invoke('send-push-notification', {
+          body: {
+            userId: receiverId,
+            title: '¡Te han retado!',
+            message: 'Tienes un nuevo reto de trivia',
+            url: '/trivia-game',
+            notificationId: data.id,
+            relatedId: data.id,
+            relatedType: 'trivia_invitation'
+          }
+        });
+      } catch (e) {
+        console.error('Error sending push notification:', e);
+      }
 
       return data;
     },
