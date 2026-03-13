@@ -133,25 +133,26 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     const activateMatch = async () => {
       if (!match || !players || players.length !== 2 || !currentPlayer) return;
       
-      // Only player 1 should activate to avoid race conditions
-      if (currentPlayer.player_number !== 1) return;
-      
-      // Only activate if still in waiting status
-      if (match.status !== 'waiting') return;
+      const needsUpdate = match.status === 'waiting' || !match.current_player_id;
+      if (!needsUpdate) return;
+
+      // If current_player_id is null, it means player 1 finished their turn while waiting.
+      // Give the turn to player 2 (the one who just joined).
+      const player2 = players.find(p => p.player_number === 2);
+      const nextPlayerId = match.current_player_id || player2?.user_id || players[1]?.user_id;
 
       try {
         await updateMatch.mutateAsync({
           status: 'active',
           started_at: match.started_at || new Date().toISOString(),
-          // Keep current_player_id as-is so we don't interrupt player 1's turn
-          current_player_id: match.current_player_id || players.find(p => p.player_number === 1)?.user_id
+          current_player_id: nextPlayerId
         });
       } catch (e) {
         console.error('Error activating match:', e);
       }
     };
     activateMatch();
-  }, [match?.status, players?.length, currentPlayer?.player_number]);
+  }, [match?.status, match?.current_player_id, players?.length, currentPlayer?.player_number]);
 
   // Timer
   useEffect(() => {
