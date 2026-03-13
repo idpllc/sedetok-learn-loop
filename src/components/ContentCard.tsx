@@ -105,6 +105,72 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const { isFollowing, toggleFollow, isProcessing } = useFollow(creatorId);
   const { lastAttempt, hasAttempted } = useQuizAttempts(contentType === 'quiz' ? id : undefined);
   
+  // Live like/comment counts
+  const isQuizType = contentType === 'quiz';
+  const isGameType = contentType === 'game';
+  const idField = isGameType ? 'game_id' : isQuizType ? 'quiz_id' : 'content_id';
+
+  const { data: liveLikeCount } = useQuery({
+    queryKey: ['live-counts', 'likes', id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('likes')
+        .select('*', { count: 'exact', head: true })
+        .eq(idField, id);
+      return count || 0;
+    },
+    initialData: initialLikes,
+    staleTime: 5000,
+  });
+
+  const { data: liveCommentCount } = useQuery({
+    queryKey: ['live-counts', 'comments', id],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq(idField, id);
+      return count || 0;
+    },
+    initialData: initialComments,
+    staleTime: 5000,
+  });
+
+  // Live isLiked / isSaved state
+  const { data: liveIsLiked } = useQuery({
+    queryKey: ['live-counts', 'user-liked', id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from('likes')
+        .select('id')
+        .eq(idField, id)
+        .eq('user_id', user.id)
+        .limit(1);
+      return (data && data.length > 0) || false;
+    },
+    initialData: isLiked,
+    enabled: !!user,
+    staleTime: 5000,
+  });
+
+  const { data: liveIsSaved } = useQuery({
+    queryKey: ['live-counts', 'user-saved', id, user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      const { data } = await supabase
+        .from('saves')
+        .select('id')
+        .eq(idField, id)
+        .eq('user_id', user.id)
+        .limit(1);
+      return (data && data.length > 0) || false;
+    },
+    initialData: isSaved,
+    enabled: !!user,
+    staleTime: 5000,
+  });
+
   // Fetch user profile to check if they are a teacher
   const { data: userProfile } = useQuery({
     queryKey: ['profile', user?.id],
