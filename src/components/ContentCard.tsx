@@ -705,13 +705,13 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-              isLiked ? 'bg-red-500' : 'bg-white/90'
+              liveIsLiked ? 'bg-red-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Heart 
-                className={`w-5 h-5 ${isLiked ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-5 h-5 ${liveIsLiked ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
-            <span className="text-xs font-semibold text-white drop-shadow-lg">{initialLikes}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-lg">{liveLikeCount}</span>
           </button>
 
           <button
@@ -721,7 +721,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-white">
               <MessageCircle className="w-5 h-5 text-black" />
             </div>
-            <span className="text-xs font-semibold text-white drop-shadow-lg">{initialComments}</span>
+            <span className="text-xs font-semibold text-white drop-shadow-lg">{liveCommentCount}</span>
           </button>
 
           <button 
@@ -729,10 +729,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             className="flex flex-col items-center gap-1 transition-all hover:scale-110"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
-              isSaved ? 'bg-yellow-500' : 'bg-white/90'
+              liveIsSaved ? 'bg-yellow-500' : 'bg-white/90'
             } backdrop-blur-sm`}>
               <Bookmark 
-                className={`w-5 h-5 ${isSaved ? 'fill-white text-white' : 'text-black'}`}
+                className={`w-5 h-5 ${liveIsSaved ? 'fill-white text-white' : 'text-black'}`}
               />
             </div>
           </button>
