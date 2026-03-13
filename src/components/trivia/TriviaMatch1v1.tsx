@@ -505,7 +505,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
                 </div>
               ))}
             </div>
-            <Button onClick={() => navigate('/trivia-game')} variant="outline" size="sm" className="w-full">
+            <Button onClick={() => { window.location.href = '/trivia-game'; }} variant="outline" size="sm" className="w-full">
               Volver al menú
             </Button>
           </CardContent>
