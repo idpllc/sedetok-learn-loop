@@ -599,7 +599,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     e.preventDefault();
     
     // Validate content_type is set
-    if (!formData.content_type || formData.content_type === '') {
+    if (!formData.content_type || (formData.content_type as string) === '') {
       toastHook({
         title: "Error",
         description: "Debes seleccionar un tipo de contenido",
