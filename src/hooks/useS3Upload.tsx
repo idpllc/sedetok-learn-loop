@@ -197,16 +197,22 @@ export const useS3Upload = () => {
         console.warn("[Cloudinary] Reintentando como unsigned con upload_preset...");
 
         for (const url of uploadUrls) {
-          const unsignedResponse = await postToCloudinary(url, buildUnsignedFormData);
-          if (unsignedResponse.ok) {
-            return parseSuccessResponse(unsignedResponse.bodyText);
-          }
+          try {
+            const unsignedResponse = await postToCloudinary(url, buildUnsignedFormData);
+            if (unsignedResponse.ok) {
+              return parseSuccessResponse(unsignedResponse.bodyText);
+            }
 
-          const unsignedError = parseCloudinaryError(unsignedResponse.bodyText);
-          console.error("[Cloudinary] Unsigned fallback failed:", unsignedResponse.bodyText);
+            const unsignedError = parseCloudinaryError(unsignedResponse.bodyText);
+            console.error("[Cloudinary] Unsigned fallback failed:", unsignedResponse.bodyText);
 
-          if (url === uploadUrls[uploadUrls.length - 1]) {
-            throw new Error(`Error al subir video: ${unsignedResponse.status} - ${unsignedError}`);
+            if (url === uploadUrls[uploadUrls.length - 1]) {
+              throw new Error(`Error al subir video: ${unsignedResponse.status} - ${unsignedError}`);
+            }
+          } catch (error) {
+            if (!isNetworkUploadError(error) || url === uploadUrls[uploadUrls.length - 1]) {
+              throw error;
+            }
           }
         }
       }
