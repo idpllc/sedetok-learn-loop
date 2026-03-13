@@ -407,7 +407,9 @@ export const useContent = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content"] });
+      queryClient.invalidateQueries({ queryKey: ["infinite-content"] });
       queryClient.invalidateQueries({ queryKey: ["likes"] });
+      queryClient.invalidateQueries({ queryKey: ["live-counts"] });
     },
     onError: (error) => {
       toast({
