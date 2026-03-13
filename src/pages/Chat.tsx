@@ -339,7 +339,8 @@ const ChatPage: React.FC = () => {
     return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  const getConvAvatar = (conv: ChatConversation) => {
+  const getConvAvatar = (conv: ChatConversation | undefined) => {
+    if (!conv) return undefined;
     if (conv.type === "group") return conv.avatar_url;
     const other = conv.participants?.find((p) => p.user_id !== user?.id);
     return other?.profile?.avatar_url;
