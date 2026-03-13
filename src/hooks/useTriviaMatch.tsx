@@ -116,7 +116,7 @@ export function useTriviaMatch(matchId?: string) {
     }
   });
 
-  // Create match
+  // Create match - player 1 starts playing immediately
   const createMatch = useMutation({
     mutationFn: async (level: string) => {
       if (!user) throw new Error("User not authenticated");
@@ -128,7 +128,9 @@ export function useTriviaMatch(matchId?: string) {
         .insert({
           match_code: matchCode,
           level,
-          status: 'waiting'
+          status: 'waiting',
+          current_player_id: user.id,
+          started_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -149,7 +151,7 @@ export function useTriviaMatch(matchId?: string) {
     }
   });
 
-  // Join match
+  // Join match by code
   const joinMatch = useMutation({
     mutationFn: async (matchCode: string) => {
       if (!user) throw new Error("User not authenticated");
@@ -163,20 +165,7 @@ export function useTriviaMatch(matchId?: string) {
       
       if (matchError) throw new Error("No se encontró la partida");
 
-      const { data: existingPlayers } = await supabase
-        .from('trivia_1v1_players')
-        .select('*')
-        .eq('match_id', match.id);
-
-      if (existingPlayers && existingPlayers.length >= 2) {
-        throw new Error("La partida está llena");
-      }
-
-      // Check if user is already in this match
-      if (existingPlayers?.some(p => p.user_id === user.id)) {
-        return match as TriviaMatch;
-      }
-
+      // Insert player 2 (will fail if already in match due to unique constraint)
       const { error: playerError } = await supabase
         .from('trivia_1v1_players')
         .insert({
@@ -185,18 +174,27 @@ export function useTriviaMatch(matchId?: string) {
           player_number: 2
         });
       
-      if (playerError) throw playerError;
+      // If insert failed, user might already be in the match
+      if (playerError) {
+        // Check if user is already in this match
+        const { data: myPlayer } = await supabase
+          .from('trivia_1v1_players')
+          .select('id')
+          .eq('match_id', match.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (myPlayer) {
+          return match as TriviaMatch; // Already joined
+        }
+        throw new Error("La partida está llena");
+      }
 
-      // Get first player ID
-      const firstPlayer = existingPlayers?.[0];
-
-      // Start the match and set first player's turn
+      // Activate the match - keep current_player_id as-is (player 1 set it on creation)
       await supabase
         .from('trivia_1v1_matches')
         .update({
-          status: 'active',
-          started_at: new Date().toISOString(),
-          current_player_id: firstPlayer?.user_id || null
+          status: 'active'
         })
         .eq('id', match.id);
 
