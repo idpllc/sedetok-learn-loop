@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getDisplayName } from "@/lib/displayName";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
@@ -394,7 +395,7 @@ const ViewCourse = () => {
               videoRef={videoRef}
               title={content.title}
               description={content.description}
-              creator={content.profiles?.username || ""}
+              creator={getDisplayName(content.profiles)}
               creatorId={content.creator_id}
               institution={content.profiles?.institution}
               creatorAvatar={content.profiles?.avatar_url}

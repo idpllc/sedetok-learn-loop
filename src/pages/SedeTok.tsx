@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ContentCard } from "@/components/ContentCard";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
+import { getDisplayName } from "@/lib/displayName";
 
 interface FeedItem {
   id: string;
@@ -311,7 +312,7 @@ const SedeTok = () => {
                 id={content.id}
                 title={content.title}
                 description={content.description || ""}
-                creator={profile?.username || profile?.full_name || "Usuario"}
+                creator={getDisplayName(profile)}
                 creatorId={content.creator_id}
                 institution={profile?.institution}
                 tags={content.tags || []}

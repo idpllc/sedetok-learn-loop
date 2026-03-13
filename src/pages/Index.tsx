@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { subjects } from "@/lib/subjects";
+import { getDisplayName } from "@/lib/displayName";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Database } from "@/integrations/supabase/types";
@@ -488,11 +489,11 @@ const Index = () => {
                             {profile?.avatar_url && (
                               <Avatar className="w-5 h-5 border border-white/50">
                                 <AvatarImage src={profile.avatar_url} />
-                                <AvatarFallback className="text-[8px]">{(profile?.username || '?')[0].toUpperCase()}</AvatarFallback>
+                                <AvatarFallback className="text-[8px]">{getDisplayName(profile)[0].toUpperCase()}</AvatarFallback>
                               </Avatar>
                             )}
                             <span className="text-xs font-semibold text-white drop-shadow-md">
-                              {profile?.username || item.creator}
+                              {getDisplayName(profile) !== "Usuario" ? getDisplayName(profile) : item.creator}
                             </span>
                           </div>
                           <div className="absolute top-2 right-2">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getDisplayName } from "@/lib/displayName";
 import { ContentCard } from "@/components/ContentCard";
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
@@ -156,7 +157,7 @@ const ViewLearningPath = () => {
           title: quiz.title || "",
           description: quiz.description || "",
           creator_id: quiz.creator_id,
-          creator: profile?.username || "",
+          creator: getDisplayName(profile),
           institution: profile?.institution || "",
           creatorAvatar: profile?.avatar_url,
           tags: [],
@@ -183,7 +184,7 @@ const ViewLearningPath = () => {
           title: game.title || "",
           description: game.description || "",
           creator_id: game.creator_id,
-          creator: profile?.username || "",
+          creator: getDisplayName(profile),
           institution: profile?.institution || "",
           creatorAvatar: profile?.avatar_url,
           tags: game.tags || [],
@@ -210,7 +211,7 @@ const ViewLearningPath = () => {
           title: content.title || "",
           description: content.description || "",
           creator_id: content.creator_id,
-          creator: profile?.username || "",
+          creator: getDisplayName(profile),
           institution: profile?.institution || "",
           creatorAvatar: profile?.avatar_url,
           tags: content.tags || [],

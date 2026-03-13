@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getDisplayName } from "@/lib/displayName";
 
 const CreatorContent = () => {
   const navigate = useNavigate();
@@ -144,7 +145,7 @@ const CreatorContent = () => {
                 videoRef={videoRef}
                 title={item.title}
                 description={item.description}
-                creator={item.profiles?.username || item.creator}
+                creator={getDisplayName(item.profiles) !== "Usuario" ? getDisplayName(item.profiles) : item.creator}
                 creatorId={item.creator_id || userId}
                 institution={item.profiles?.institution || item.institution}
                 creatorAvatar={item.profiles?.avatar_url}
