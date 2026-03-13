@@ -102,7 +102,9 @@ serve(async (req) => {
       .insert({
         match_code: matchCode,
         level,
-        status: 'waiting'
+        status: 'waiting',
+        current_player_id: userId,
+        started_at: new Date().toISOString()
       })
       .select()
       .single();

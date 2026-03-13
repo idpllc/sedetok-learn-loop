@@ -61,6 +61,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
 
   const currentPlayer = players?.find(p => p.user_id === user?.id);
   const opponent = players?.find(p => p.user_id !== user?.id);
+  // Allow playing even in 'waiting' status if current_player_id is set to me
   const isMyTurn = match?.current_player_id === user?.id && !turnEnded;
   const currentQuestion = questions[currentQuestionIndex];
   const waitingForOpponent = !opponent;
@@ -127,7 +128,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     }
   }, [match?.current_player_id, user?.id, matchId, toast]);
 
-  // Activate match when second player joins or fix stuck matches
+  // Activate match when second player joins
   useEffect(() => {
     const activateMatch = async () => {
       if (!match || !players || players.length !== 2 || !currentPlayer) return;
@@ -135,22 +136,22 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
       // Only player 1 should activate to avoid race conditions
       if (currentPlayer.player_number !== 1) return;
       
-      const needsActivation = match.status === 'waiting' || !match.current_player_id;
-      if (!needsActivation) return;
+      // Only activate if still in waiting status
+      if (match.status !== 'waiting') return;
 
-      const firstPlayer = players.find(p => p.player_number === 1);
       try {
         await updateMatch.mutateAsync({
           status: 'active',
           started_at: match.started_at || new Date().toISOString(),
-          current_player_id: firstPlayer?.user_id || players[0]?.user_id
+          // Keep current_player_id as-is so we don't interrupt player 1's turn
+          current_player_id: match.current_player_id || players.find(p => p.player_number === 1)?.user_id
         });
       } catch (e) {
         console.error('Error activating match:', e);
       }
     };
     activateMatch();
-  }, [match?.status, match?.current_player_id, players?.length, currentPlayer?.player_number]);
+  }, [match?.status, players?.length, currentPlayer?.player_number]);
 
   // Timer
   useEffect(() => {
@@ -488,31 +489,18 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     );
   }
 
-  // Waiting for match to start - show waiting screen
-  if (match.status === 'waiting' || !match.current_player_id) {
+  // Only show waiting screen if no current_player_id is set (shouldn't happen with new flow)
+  if (!match.current_player_id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-sm w-full">
           <CardContent className="pt-6 pb-6 text-center space-y-4">
             <div className="text-5xl animate-pulse">⏳</div>
             <div>
-              <h2 className="text-xl font-bold">Esperando al oponente</h2>
+              <h2 className="text-xl font-bold">Preparando la partida...</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {waitingForOpponent
-                  ? "Esperando a que el otro jugador se una..."
-                  : "Preparando la partida..."}
+                Un momento por favor
               </p>
-            </div>
-            <div className="flex justify-center gap-6">
-              {players?.map((player) => (
-                <div key={player.id} className="flex flex-col items-center gap-2">
-                  <Avatar className="w-14 h-14 border-4 border-primary">
-                    <AvatarImage src={player.profiles?.avatar_url || undefined} />
-                    <AvatarFallback>{player.profiles?.username?.[0] || '?'}</AvatarFallback>
-                  </Avatar>
-                  <p className="text-xs font-medium truncate max-w-[80px]">{player.profiles?.username || 'Jugador'}</p>
-                </div>
-              ))}
             </div>
             <Button onClick={() => { window.location.href = '/trivia-game'; }} variant="outline" size="sm" className="w-full">
               Volver al menú
@@ -583,7 +571,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
-          opponent={opponent!} 
+          opponent={opponent} 
           categories={categories}
         />
         <StreakIndicator streak={currentStreak} />
@@ -617,7 +605,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
-          opponent={opponent!} 
+          opponent={opponent} 
           categories={categories}
         />
         <StreakIndicator streak={3} />
@@ -640,7 +628,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
         <ExitButton />
         <PlayerStats 
           currentPlayer={currentPlayer!} 
-          opponent={opponent!} 
+          opponent={opponent} 
           categories={categories}
         />
 
