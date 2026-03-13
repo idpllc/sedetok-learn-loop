@@ -598,6 +598,16 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate content_type is set
+    if (!formData.content_type || formData.content_type === '') {
+      toastHook({
+        title: "Error",
+        description: "Debes seleccionar un tipo de contenido",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       let videoUrl: string | undefined;
       let documentUrl: string | undefined;
