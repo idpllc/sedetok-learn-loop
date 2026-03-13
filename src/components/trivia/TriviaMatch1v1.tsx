@@ -497,7 +497,7 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     );
   }
 
-  // Only show waiting screen if no current_player_id is set (shouldn't happen with new flow)
+  // Show waiting screen when current_player_id is null (player finished turn, waiting for opponent)
   if (!match.current_player_id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -505,11 +505,17 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
           <CardContent className="pt-6 pb-6 text-center space-y-4">
             <div className="text-5xl animate-pulse">⏳</div>
             <div>
-              <h2 className="text-xl font-bold">Preparando la partida...</h2>
+              <h2 className="text-xl font-bold">Esperando oponente</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Un momento por favor
+                Ya completaste tu turno. Cuando un oponente se una, será su turno.
               </p>
             </div>
+            {match.match_code && (
+              <div className="bg-muted rounded-lg p-3">
+                <p className="text-xs text-muted-foreground">Código de partida</p>
+                <p className="text-2xl font-bold tracking-widest">{match.match_code}</p>
+              </div>
+            )}
             <Button onClick={() => { window.location.href = '/trivia-game'; }} variant="outline" size="sm" className="w-full">
               Volver al menú
             </Button>
