@@ -127,21 +127,30 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
     }
   }, [match?.current_player_id, user?.id, matchId, toast]);
 
-  // Activate match when second player joins
+  // Activate match when second player joins or fix stuck matches
   useEffect(() => {
     const activateMatch = async () => {
-      if (matchIsWaiting && opponent && match && players && players.length === 2) {
-        // Update match to active status - first player starts
-        const firstPlayer = players.find(p => p.player_number === 1);
+      if (!match || !players || players.length !== 2 || !currentPlayer) return;
+      
+      // Only player 1 should activate to avoid race conditions
+      if (currentPlayer.player_number !== 1) return;
+      
+      const needsActivation = match.status === 'waiting' || !match.current_player_id;
+      if (!needsActivation) return;
+
+      const firstPlayer = players.find(p => p.player_number === 1);
+      try {
         await updateMatch.mutateAsync({
           status: 'active',
-          started_at: new Date().toISOString(),
+          started_at: match.started_at || new Date().toISOString(),
           current_player_id: firstPlayer?.user_id || players[0]?.user_id
         });
+      } catch (e) {
+        console.error('Error activating match:', e);
       }
     };
     activateMatch();
-  }, [matchIsWaiting, opponent, match?.id, players?.length]);
+  }, [match?.status, match?.current_player_id, players?.length, currentPlayer?.player_number]);
 
   // Timer
   useEffect(() => {
