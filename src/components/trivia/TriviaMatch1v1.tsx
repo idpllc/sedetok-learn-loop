@@ -310,12 +310,19 @@ export function TriviaMatch1v1({ matchId }: TriviaMatch1v1Props) {
   };
 
   const changeTurn = async () => {
-    // If there's no opponent yet, stay on current player's turn
-    const nextPlayerId = opponent?.user_id || user?.id;
-    await updateMatch.mutateAsync({
-      current_player_id: nextPlayerId,
-      current_question_number: 0
-    });
+    if (opponent?.user_id) {
+      // Opponent exists - pass turn to them
+      await updateMatch.mutateAsync({
+        current_player_id: opponent.user_id,
+        current_question_number: 0
+      });
+    } else {
+      // No opponent yet - clear current_player_id so match goes to "waiting" state
+      await updateMatch.mutateAsync({
+        current_player_id: null as any,
+        current_question_number: 0
+      });
+    }
     setPhase('wheel');
     setSelectedAnswer(null);
     setTimeLeft(20);
