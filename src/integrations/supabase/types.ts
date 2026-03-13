@@ -3611,6 +3611,10 @@ export type Database = {
         Args: { _student_id: string; _viewer_id: string }
         Returns: boolean
       }
+      is_institution_staff: {
+        Args: { _institution_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_user_in_trivia_match: {
         Args: { _match_id: string; _user_id: string }
         Returns: boolean
