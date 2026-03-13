@@ -436,32 +436,46 @@ const ChatPage: React.FC = () => {
                 onClick={() => { setSearchMode("direct"); setSelectedMembers([]); setSearchQuery(""); setSearchResults([]); }}
                 className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${searchMode === "direct" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <MessageCircle className="h-3.5 w-3.5" /> Chat directo
+                <MessageCircle className="h-3.5 w-3.5" /> Directo
               </button>
               <button
                 onClick={() => { setSearchMode("group"); setSearchQuery(""); setSearchResults([]); }}
                 className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${searchMode === "group" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <Users className="h-3.5 w-3.5" /> Nuevo grupo
+                <Users className="h-3.5 w-3.5" /> Grupo
               </button>
+              {myMembership?.institution_id && ["admin", "coordinator", "teacher"].includes(myMembership?.member_role) && (
+                <button
+                  onClick={() => { setSearchMode("academic"); setSearchQuery(""); setSearchResults([]); }}
+                  className={`flex-1 py-2.5 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${searchMode === "academic" ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <BookOpen className="h-3.5 w-3.5" /> Académico
+                </button>
+              )}
             </div>
 
             <div className="p-3 space-y-2">
-              {searchMode === "group" && (
+              {(searchMode === "group" || searchMode === "academic") && (
                 <div className="relative">
                   <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Nombre del grupo..." value={groupName} onChange={(e) => setGroupName(e.target.value)} className="pl-10" />
+                  <Input placeholder={searchMode === "academic" ? "Nombre del grupo académico..." : "Nombre del grupo..."} value={groupName} onChange={(e) => setGroupName(e.target.value)} className="pl-10" />
+                </div>
+              )}
+              {searchMode === "academic" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Materia (opcional)" value={academicCourseName} onChange={(e) => setAcademicCourseName(e.target.value)} />
+                  <Input placeholder="Año (ej: 2026)" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} />
                 </div>
               )}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={searchMode === "group" ? "Buscar personas..." : "Buscar usuario..."}
+                  placeholder={searchMode === "direct" ? "Buscar usuario..." : "Buscar personas..."}
                   value={searchQuery} onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              {searchMode === "group" && selectedMembers.length > 0 && (
+              {(searchMode === "group" || searchMode === "academic") && selectedMembers.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {selectedMembers.map((m) => (
                     <span key={m.id} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
@@ -497,7 +511,7 @@ const ChatPage: React.FC = () => {
                             {u.member_role && <Badge variant="secondary" className="ml-1.5 text-[10px] px-1 py-0">{getRoleBadgeLabel(u.member_role)}</Badge>}
                           </p>
                         </div>
-                        {searchMode === "group" && isSelected && (
+                        {(searchMode === "group" || searchMode === "academic") && isSelected && (
                           <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center shrink-0">
                             <CheckCheck className="h-3 w-3 text-primary-foreground" />
                           </div>
@@ -572,6 +586,12 @@ const ChatPage: React.FC = () => {
                 <Button onClick={handleCreateGroup} disabled={!groupName.trim() || selectedMembers.length === 0 || creatingGroup} className="w-full" size="sm">
                   <Users className="h-4 w-4 mr-1.5" />
                   {creatingGroup ? "Creando..." : `Crear grupo (${selectedMembers.length})`}
+                </Button>
+              )}
+              {searchMode === "academic" && (
+                <Button onClick={handleCreateAcademicGroup} disabled={!groupName.trim() || selectedMembers.length === 0 || creatingGroup} className="w-full" size="sm">
+                  <BookOpen className="h-4 w-4 mr-1.5" />
+                  {creatingGroup ? "Creando..." : `Crear grupo académico (${selectedMembers.length})`}
                 </Button>
               )}
             </div>
