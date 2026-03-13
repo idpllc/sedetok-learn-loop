@@ -122,7 +122,8 @@ export const useUserActivity = (enabled: boolean = true) => {
 
       return content || [];
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
+    staleTime: 3 * 60 * 1000,
   });
 
   return {
