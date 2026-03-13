@@ -81,7 +81,8 @@ export const NotificationsList = () => {
             notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 rounded-lg border transition-colors ${
+                onClick={() => handleNotificationClick(notification)}
+                className={`p-4 rounded-lg border transition-colors cursor-pointer hover:bg-accent/5 ${
                   notification.read
                     ? "bg-background"
                     : "bg-accent/10 border-accent"
