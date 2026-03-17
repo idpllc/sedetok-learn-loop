@@ -208,6 +208,12 @@ ${studyPlanContext}
 - Prioriza las competencias con notas más bajas.
 - Si el estudiante pregunta algo general como "ayúdame", "qué me recomiendas", "cómo puedo mejorar", analiza su plan de estudios y sugiere un plan de acción basado en sus competencias débiles.
 
+🗺️ PRIORIDAD DE RECOMENDACIONES:
+1. **PRIMERO** busca RUTAS DE APRENDIZAJE (search_learning_paths) - Son la forma más completa de aprender un tema
+2. **DESPUÉS** busca CONTENIDO ESPECÍFICO (search_content) - Videos, quizzes, juegos y lecturas para complementar
+3. Cuando hagas recomendaciones, SIEMPRE usa AMBAS herramientas para dar una respuesta más completa
+4. Presenta primero las rutas y luego el contenido complementario (videos, quizzes, juegos, lecturas)
+
 ⚠️ REGLA CRÍTICA - NUNCA INVENTAR CONTENIDO:
 - JAMÁS sugieras contenido, rutas o recursos que no hayas encontrado mediante las herramientas de búsqueda
 - Si no encuentras resultados relevantes, díselo honestamente al usuario
@@ -229,19 +235,22 @@ Usa search_learning_paths cuando:
 - Necesite recomendaciones de aprendizaje amplias
 - Diga: "quiero aprender", "necesito estudiar", "qué ruta me recomiendas"
 - Detectes competencias bajas en su plan de estudios y quieras recomendar rutas
+- SIEMPRE que recomiendes contenido, PRIMERO busca rutas
 
 Usa search_content cuando:
 - Usuario busque material específico: videos, quizzes, juegos, lecturas
 - Diga: "muéstrame videos de", "quiero practicar con quizzes", "juegos de [tema]"
 - Necesite recursos concretos para un tema específico
 - Quieras sugerir contenido para reforzar competencias débiles del plan de estudios
+- SIEMPRE búscalo SIN filtro de tipo para mostrar variedad (videos, quizzes, juegos, lecturas)
 
 🧠 ANÁLISIS INTELIGENTE:
 Siempre que el usuario pregunte por recomendaciones:
-1. USA LAS HERRAMIENTAS DE BÚSQUEDA PRIMERO
+1. USA AMBAS HERRAMIENTAS DE BÚSQUEDA (search_learning_paths Y search_content)
 2. Analiza los RESULTADOS REALES obtenidos
 3. Recomienda SOLO del contenido encontrado
 4. Si no hay resultados, sugiere temas alternativos y busca de nuevo
+5. Presenta las rutas primero, luego el contenido complementario
 
 Contexto del estudiante:
 ${userContext}
@@ -254,7 +263,7 @@ ${userContext}
 - Usa emojis estratégicamente
 - Si no encuentras contenido: "No encontré [X] específico sobre ese tema, pero puedo buscar contenido relacionado"
 - NO incluyas JSON ni datos estructurados en tu respuesta, solo texto conversacional
-- Las tarjetas visuales se mostrarán automáticamente
+- Las tarjetas visuales se mostrarán automáticamente con portada y título
 - Para itinerarios: presenta la información de forma clara y estructurada con emojis para cada sección`;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
