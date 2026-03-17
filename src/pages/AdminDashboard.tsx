@@ -22,12 +22,15 @@ import {
   MessageSquare,
   MessagesSquare,
   Building2,
+  Webhook,
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { ApiConfiguration } from "@/components/admin/ApiConfiguration";
 import { VerificationManagement } from "@/components/admin/VerificationManagement";
 import { InstitutionManagement } from "@/components/admin/InstitutionManagement";
+import { WebhookDocumentation } from "@/components/admin/WebhookDocumentation";
+import { StudyPlanWebhookDocs } from "@/components/admin/StudyPlanWebhookDocs";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -79,7 +82,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 gap-2">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 gap-2">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Resumen</span>
@@ -99,6 +102,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="verification" className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               <span className="hidden sm:inline">Verificación</span>
+            </TabsTrigger>
+            <TabsTrigger value="webhooks" className="flex items-center gap-2">
+              <Webhook className="w-4 h-4" />
+              <span className="hidden sm:inline">Webhooks</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -301,6 +308,11 @@ export default function AdminDashboard() {
 
           <TabsContent value="verification">
             <VerificationManagement />
+          </TabsContent>
+
+          <TabsContent value="webhooks" className="space-y-6">
+            <WebhookDocumentation />
+            <StudyPlanWebhookDocs />
           </TabsContent>
 
           <TabsContent value="settings">
