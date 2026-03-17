@@ -5,7 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
-const API_KEY = Deno.env.get("CHAT_JWT_SECRET") || "tucanmistico";
+const FALLBACK_KEY = "tucanmistico";
+const API_KEYS = [
+  Deno.env.get("CHAT_JWT_SECRET"),
+  Deno.env.get("WEBHOOK_API_KEY"),
+  FALLBACK_KEY,
+].filter(Boolean) as string[];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
