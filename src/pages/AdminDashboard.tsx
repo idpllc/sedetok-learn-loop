@@ -316,6 +316,10 @@ export default function AdminDashboard() {
             <VerificationManagement />
           </TabsContent>
 
+          <TabsContent value="study-plans">
+            <StudyPlanManagement />
+          </TabsContent>
+
           <TabsContent value="webhooks" className="space-y-6">
             <WebhookDocumentation />
             <StudyPlanWebhookDocs />
