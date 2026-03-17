@@ -2519,6 +2519,53 @@ export type Database = {
         }
         Relationships: []
       }
+      student_study_plans: {
+        Row: {
+          academic_year: string
+          created_at: string
+          document_number: string | null
+          grade: string
+          id: string
+          institution_id: string | null
+          institution_nit: string | null
+          periodos: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          academic_year: string
+          created_at?: string
+          document_number?: string | null
+          grade: string
+          id?: string
+          institution_id?: string | null
+          institution_nit?: string | null
+          periodos?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          academic_year?: string
+          created_at?: string
+          document_number?: string | null
+          grade?: string
+          id?: string
+          institution_id?: string | null
+          institution_nit?: string | null
+          periodos?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_study_plans_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trivia_1v1_invitations: {
         Row: {
           accepted_at: string | null
