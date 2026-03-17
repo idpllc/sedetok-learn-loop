@@ -2383,7 +2383,10 @@ export type Database = {
           grade_level: Database["public"]["Enums"]["grade_level"]
           id: string
           is_public: boolean | null
+          likes_count: number | null
           random_order: boolean | null
+          saves_count: number | null
+          shares_count: number | null
           status: Database["public"]["Enums"]["quiz_status"] | null
           subject: string | null
           tags: string[] | null
@@ -2403,7 +2406,10 @@ export type Database = {
           grade_level: Database["public"]["Enums"]["grade_level"]
           id?: string
           is_public?: boolean | null
+          likes_count?: number | null
           random_order?: boolean | null
+          saves_count?: number | null
+          shares_count?: number | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
           subject?: string | null
           tags?: string[] | null
@@ -2423,7 +2429,10 @@ export type Database = {
           grade_level?: Database["public"]["Enums"]["grade_level"]
           id?: string
           is_public?: boolean | null
+          likes_count?: number | null
           random_order?: boolean | null
+          saves_count?: number | null
+          shares_count?: number | null
           status?: Database["public"]["Enums"]["quiz_status"] | null
           subject?: string | null
           tags?: string[] | null
