@@ -133,6 +133,7 @@ const App = () => (
           <Route path="/join" element={<JoinGame />} />
           <Route path="/join/:pin" element={<JoinGame />} />
           <Route path="/path-evaluation-results/:eventId" element={<PathEvaluationResults />} />
+          <Route path="/study-plan" element={<StudyPlan />} />
           <Route path="/api-docs" element={<ApiDocumentation />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/chat/login" element={<ChatLogin />} />
