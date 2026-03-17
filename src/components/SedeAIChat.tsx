@@ -146,8 +146,6 @@ const ContentCards = ({ content }: { content: ContentData[] }) => {
 };
 
 const PathCards = ({ paths }: { paths: PathData[] }) => {
-  const navigate = useNavigate();
-  
   return (
     <div className="mt-4 w-full">
       <Carousel
@@ -159,39 +157,34 @@ const PathCards = ({ paths }: { paths: PathData[] }) => {
       >
         <CarouselContent className="-ml-2">
           {paths.map((path) => (
-            <CarouselItem key={path.id} className="pl-2 basis-[280px]">
+            <CarouselItem key={path.id} className="pl-2 basis-[220px]">
               <Card
-                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden h-full"
-                onClick={() => navigate(`/learning-paths/${path.id}`)}
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] overflow-hidden h-full border-primary/20"
+                onClick={() => window.open(`/learning-paths/${path.id}`, '_blank')}
               >
-                {path.cover_url && (
-                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                <div className="aspect-video w-full overflow-hidden bg-muted relative">
+                  {path.cover_url ? (
                     <img
                       src={path.cover_url}
                       alt={path.title}
                       className="w-full h-full object-cover"
                     />
-                  </div>
-                )}
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{path.title}</h3>
-                  {path.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                      {path.description}
-                    </p>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/30">
+                      <span className="text-3xl">🗺️</span>
+                    </div>
                   )}
-                  <div className="flex gap-1 flex-wrap">
-                    {path.category && (
-                      <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                        {path.category}
-                      </span>
-                    )}
-                    {path.subject && (
-                      <span className="text-xs px-2 py-0.5 bg-secondary/10 text-secondary-foreground rounded-full">
-                        {path.subject}
-                      </span>
-                    )}
-                  </div>
+                  <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    🗺️ Ruta
+                  </span>
+                </div>
+                <div className="p-2.5">
+                  <h3 className="font-semibold text-xs mb-1 line-clamp-2 leading-tight">{path.title}</h3>
+                  {path.subject && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {path.subject}
+                    </span>
+                  )}
                 </div>
               </Card>
             </CarouselItem>
