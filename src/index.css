@@ -217,3 +217,14 @@ All colors MUST be HSL.
     transition: padding-top 0.3s ease;
   }
 }
+
+/* Sidebar collapse: when collapsed, reduce left margin on desktop */
+@media (min-width: 768px) {
+  body[data-sidebar-collapsed="true"] .md\:ml-64 {
+    margin-left: 4rem !important;
+    transition: margin-left 0.3s ease;
+  }
+  body[data-sidebar-collapsed="false"] .md\:ml-64 {
+    transition: margin-left 0.3s ease;
+  }
+}
