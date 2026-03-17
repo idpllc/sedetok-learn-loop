@@ -72,6 +72,7 @@ export const Sidebar = () => {
     { id: "trivia", icon: Gamepad2, label: "Trivia Game", path: "/trivia-game" },
     { id: "live-games", icon: Radio, label: "Juegos en Vivo", path: "/live-games" },
     { id: "language-tutor", icon: Languages, label: "English Tutor", path: "/language-tutor" },
+    { id: "study-plan", icon: GraduationCap, label: "Plan de Estudios", path: "/study-plan" },
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ], []);
