@@ -405,6 +405,7 @@ ${userContext}
           }
         ],
         tools,
+        parallel_tool_calls: true,
         temperature: 0.8,
       }),
     });
