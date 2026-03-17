@@ -23,6 +23,7 @@ import {
   MessagesSquare,
   Building2,
   Webhook,
+  GraduationCap,
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
