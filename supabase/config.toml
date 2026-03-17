@@ -108,3 +108,6 @@ verify_jwt = false
 
 [functions.language-tutor-chat]
 verify_jwt = false
+
+[functions.api-user-content]
+verify_jwt = false
