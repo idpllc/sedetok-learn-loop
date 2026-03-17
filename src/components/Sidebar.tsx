@@ -40,6 +40,11 @@ export const Sidebar = () => {
     document.body.setAttribute("data-header-hidden", (!isMenuVisible).toString());
   }, [isMenuVisible]);
 
+  // Sync sidebar collapsed state to body attribute for CSS margin offset
+  useEffect(() => {
+    document.body.setAttribute("data-sidebar-collapsed", (isCollapsed || searchModalOpen).toString());
+  }, [isCollapsed, searchModalOpen]);
+
   const handleCreateClick = useCallback(() => {
     if (!user) {
       setAuthModalOpen(true);
