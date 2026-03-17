@@ -1,4 +1,5 @@
 import { Camera, MapPin, Calendar, Mail, Phone, Share2, Linkedin, Instagram, Facebook, Twitter, Github, Copy, Check } from "lucide-react";
+import { getDisplayName } from "@/lib/displayName";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
