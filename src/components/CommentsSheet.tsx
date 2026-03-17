@@ -45,7 +45,7 @@ export const CommentsSheet = ({ contentId, commentsCount, isQuiz = false, isGame
           <span className="text-xs font-semibold text-white drop-shadow-lg">{commentsCount}</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[80vh] bg-background z-[70] md:left-[280px] md:rounded-tl-xl">
+      <SheetContent side="bottom" className="h-[80vh] bg-background z-[70] md:inset-x-auto md:left-[calc(50%+8rem)] md:w-[min(calc(100vw-18rem),56rem)] md:-translate-x-1/2 md:rounded-t-3xl">
         <SheetHeader>
           <SheetTitle>Comentarios ({commentsCount})</SheetTitle>
         </SheetHeader>
