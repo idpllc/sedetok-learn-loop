@@ -1,4 +1,5 @@
 import { Camera, MapPin, Calendar, Mail, Phone, Share2, Linkedin, Instagram, Facebook, Twitter, Github, Copy, Check } from "lucide-react";
+import { getDisplayName } from "@/lib/displayName";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -90,7 +91,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
     ? `${appDomain}/u/${profile.custom_url}`
     : `${appDomain}/profile/${profile?.id}`;
   
-  const shareText = `¡Mira mi perfil profesional en SEDETOK! ${profile?.full_name || profile?.username}`;
+  const shareText = `¡Mira mi perfil profesional en SEDETOK! ${getDisplayName(profile)}`;
 
   const copyToClipboard = async () => {
     try {
@@ -331,7 +332,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
         <div className="space-y-1 md:space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <h1 className="text-xl md:text-3xl font-bold">{profile?.full_name || profile?.username}</h1>
+              <h1 className="text-xl md:text-3xl font-bold">{getDisplayName(profile)}</h1>
               {profile?.bio && (
                 <p className="text-sm md:text-base text-muted-foreground mt-0.5 md:mt-1">{profile.bio}</p>
               )}

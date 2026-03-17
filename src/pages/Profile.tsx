@@ -38,6 +38,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
+import { getDisplayName } from "@/lib/displayName";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -656,7 +657,7 @@ const Profile = () => {
                   followers: profileData?.followers_count || 0,
                 }}
                 avatar={profileData?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileData?.username}`}
-                username={profileData?.username || "Usuario"}
+                username={getDisplayName(profileData)}
                 xp={profileData?.experience_points || 0}
                 levelIcon={getUserLevel(profileData?.experience_points || 0).icon}
                 levelName={getUserLevel(profileData?.experience_points || 0).level}
