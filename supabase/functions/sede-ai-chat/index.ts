@@ -51,13 +51,13 @@ serve(async (req) => {
     // Get user context - optimized queries with limits
     const [profileData, pathProgressData, vocationalData] = await Promise.all([
       supabase.from('profiles')
-        .select('full_name, experience_points, educoins, areas_interes')
+        .select('full_name, experience_points, educoins, areas_interes, numero_documento')
         .eq('id', user.id)
         .single(),
       supabase.from('user_path_progress')
         .select('path_id, completed, learning_paths(title)')
         .eq('user_id', user.id)
-        .limit(10), // Solo las últimas 10 rutas
+        .limit(10),
       supabase.from('vocational_profiles')
         .select('summary')
         .eq('user_id', user.id)
@@ -82,6 +82,80 @@ serve(async (req) => {
     const profile = profileData.data;
     const pathProgress = pathProgressData.data || [];
     const vocationalProfile = vocationalData.data;
+
+    // Fetch student study plans
+    let studyPlanContext = '';
+    try {
+      // Query by user_id OR document_number
+      let studyPlanQuery = supabaseAdmin
+        .from('student_study_plans')
+        .select('*')
+        .order('academic_year', { ascending: false })
+        .limit(3);
+
+      if (profile?.numero_documento) {
+        studyPlanQuery = studyPlanQuery.or(`user_id.eq.${user.id},document_number.eq.${profile.numero_documento}`);
+      } else {
+        studyPlanQuery = studyPlanQuery.eq('user_id', user.id);
+      }
+
+      const { data: studyPlans } = await studyPlanQuery;
+
+      if (studyPlans && studyPlans.length > 0) {
+        // Analyze competencies with low grades
+        const lowCompetencies: Array<{ asignatura: string; competencia: string; nota: number | null; periodo: string }> = [];
+        const allSubjects: Array<{ asignatura: string; nota: number | null; periodo: string }> = [];
+
+        for (const plan of studyPlans) {
+          const periodos = (plan.periodos || []) as Array<any>;
+          for (const periodo of periodos) {
+            for (const asignatura of (periodo.asignaturas || [])) {
+              allSubjects.push({
+                asignatura: asignatura.nombre_asignatura,
+                nota: asignatura.nota_final_asignatura,
+                periodo: periodo.periodo_nombre
+              });
+              for (const competencia of (asignatura.competencias || [])) {
+                if (competencia.calificacion_competencia !== null && competencia.calificacion_competencia < 3.5) {
+                  lowCompetencies.push({
+                    asignatura: asignatura.nombre_asignatura,
+                    competencia: competencia.nombre_competencia,
+                    nota: competencia.calificacion_competencia,
+                    periodo: periodo.periodo_nombre
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        const latestPlan = studyPlans[0];
+        studyPlanContext = `\n📋 PLAN DE ESTUDIOS (${latestPlan.academic_year} - Grado ${latestPlan.grade}):`;
+
+        if (lowCompetencies.length > 0) {
+          studyPlanContext += `\n⚠️ COMPETENCIAS CON NOTA BAJA (< 3.5):`;
+          for (const lc of lowCompetencies.slice(0, 15)) {
+            studyPlanContext += `\n  - ${lc.asignatura} → "${lc.competencia}" (Nota: ${lc.nota ?? 'Sin nota'}, ${lc.periodo})`;
+          }
+          if (lowCompetencies.length > 15) {
+            studyPlanContext += `\n  ... y ${lowCompetencies.length - 15} más`;
+          }
+        } else {
+          studyPlanContext += `\n✅ Todas las competencias están aprobadas (≥ 3.5)`;
+        }
+
+        // Add subject summary
+        const subjectsWithLowGrades = allSubjects.filter(s => s.nota !== null && s.nota < 3.5);
+        if (subjectsWithLowGrades.length > 0) {
+          studyPlanContext += `\n📉 ASIGNATURAS CON NOTA BAJA:`;
+          for (const s of subjectsWithLowGrades.slice(0, 10)) {
+            studyPlanContext += `\n  - ${s.asignatura}: ${s.nota} (${s.periodo})`;
+          }
+        }
+      }
+    } catch (spError) {
+      console.error('Error fetching study plans:', spError);
+    }
 
     // Group progress by path
     const pathsWithProgress = pathProgress.reduce((acc: any, progress: any) => {
@@ -113,6 +187,7 @@ Nivel XP: ${profile?.experience_points || 0} puntos
 Rutas activas: ${activePathsCount > 0 ? `${activePathsCount} rutas - ${pathsSummary}${activePathsCount > 3 ? '...' : ''}` : 'Ninguna ruta activa'}
 
 ${vocationalProfile ? `Perfil Vocacional: ${vocationalProfile.summary.slice(0, 150)}...` : 'Sin perfil vocacional'}
+${studyPlanContext}
 `;
 
     const systemPrompt = `Eres SEDE AI, el asistente educativo inteligente de SEDEFY. Tu misión es maximizar el potencial de cada estudiante mediante recomendaciones personalizadas y guía estratégica.
@@ -125,12 +200,20 @@ ${vocationalProfile ? `Perfil Vocacional: ${vocationalProfile.summary.slice(0, 1
 - Guiar en el desarrollo de habilidades y exploración vocacional
 - Crear itinerarios de estudio personalizados cuando el usuario lo solicite
 
+📊 ANÁLISIS AUTOMÁTICO DEL PLAN DE ESTUDIOS:
+- Si el estudiante tiene competencias con nota baja (< 3.5) en su plan de estudios, PROACTIVAMENTE analiza sus falencias cuando el mensaje esté relacionado con temas académicos o cuando pregunte por recomendaciones.
+- Identifica patrones: ¿Son varias competencias de la misma asignatura? ¿Es un problema transversal?
+- Explica de forma clara y empática qué competencias necesitan refuerzo y POR QUÉ son importantes.
+- USA las herramientas search_content y search_learning_paths para buscar contenido en SEDEFY que le ayude a mejorar en esas competencias específicas.
+- Prioriza las competencias con notas más bajas.
+- Si el estudiante pregunta algo general como "ayúdame", "qué me recomiendas", "cómo puedo mejorar", analiza su plan de estudios y sugiere un plan de acción basado en sus competencias débiles.
+
 ⚠️ REGLA CRÍTICA - NUNCA INVENTAR CONTENIDO:
 - JAMÁS sugieras contenido, rutas o recursos que no hayas encontrado mediante las herramientas de búsqueda
 - Si no encuentras resultados relevantes, díselo honestamente al usuario
 - NO inventes títulos, descripciones o detalles de contenido
 - SOLO menciona contenido que aparezca en los resultados de search_content o search_learning_paths
-- Si los resultados de búsqueda están vacíos, NO hagas recomendaciones específicas
+- Si los resultados de búsqueda están vacíos, NO hagas recomendaciones específicas de contenido, pero SÍ puedes explicar las falencias y dar consejos generales de estudio
 
 📚 CUÁNDO USAR CADA HERRAMIENTA:
 
@@ -145,11 +228,13 @@ Usa search_learning_paths cuando:
 - Busque programas estructurados o cursos
 - Necesite recomendaciones de aprendizaje amplias
 - Diga: "quiero aprender", "necesito estudiar", "qué ruta me recomiendas"
+- Detectes competencias bajas en su plan de estudios y quieras recomendar rutas
 
 Usa search_content cuando:
 - Usuario busque material específico: videos, quizzes, juegos, lecturas
 - Diga: "muéstrame videos de", "quiero practicar con quizzes", "juegos de [tema]"
 - Necesite recursos concretos para un tema específico
+- Quieras sugerir contenido para reforzar competencias débiles del plan de estudios
 
 🧠 ANÁLISIS INTELIGENTE:
 Siempre que el usuario pregunte por recomendaciones:
