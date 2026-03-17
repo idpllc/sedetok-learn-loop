@@ -1,4 +1,4 @@
-import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin, ClipboardList, Printer } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin, ClipboardList, Printer, Loader2 } from "lucide-react";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -195,6 +195,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [gameModalOpen, setGameModalOpen] = useState(false);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(() => {
     const saved = localStorage.getItem('videoMuted');
@@ -273,6 +274,67 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     }
   };
 
+  const handleAutoCreateEvaluation = async (type: 'quiz' | 'game') => {
+    if (!user || isCreatingEvent) return;
+    setIsCreatingEvent(true);
+    try {
+      // Generate access code
+      const { data: codeData, error: codeError } = await supabase.rpc("generate_access_code");
+      if (codeError) throw codeError;
+
+      // Auto-set dates: start now, end in 7 days
+      const now = new Date();
+      const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      const eventPayload: any = {
+        creator_id: user.id,
+        title: `Evaluación - ${title}`,
+        start_date: now.toISOString(),
+        end_date: endDate.toISOString(),
+        access_code: codeData,
+        require_authentication: true,
+        allow_multiple_attempts: false,
+        show_results_immediately: true,
+      };
+
+      if (type === 'quiz') {
+        eventPayload.quiz_id = id;
+      } else {
+        eventPayload.game_id = id;
+      }
+
+      const { data: eventData, error: eventError } = await supabase
+        .from("quiz_evaluation_events")
+        .insert(eventPayload)
+        .select()
+        .single();
+
+      if (eventError) throw eventError;
+
+      queryClient.invalidateQueries({ queryKey: ["evaluation-events"] });
+
+      // Navigate to the event results view
+      navigate(`/quiz-evaluations/event/${eventData.id}`);
+
+      // Show toast with access code
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "✅ Evento evaluativo creado",
+        description: `Código de acceso: ${eventData.access_code}. Compártelo con tus estudiantes para que se unan y respondan.`,
+        duration: 10000,
+      });
+    } catch (error: any) {
+      console.error("Error creating evaluation event:", error);
+      const { toast } = await import("@/hooks/use-toast");
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo crear el evento evaluativo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingEvent(false);
+    }
+  };
 
   const handleExpandReading = () => {
     setIsReadingModalOpen(true);
@@ -467,13 +529,14 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={isCreatingEvent}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowEvaluationModal(true);
+                            handleAutoCreateEvaluation('quiz');
                           }}
                           className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
                         >
-                          <ClipboardList className="w-4 h-4 mr-2" />
+                          {isCreatingEvent ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ClipboardList className="w-4 h-4 mr-2" />}
                           Evaluar este quiz
                         </Button>
                         <Button
@@ -549,13 +612,14 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       <Button
                         variant="outline"
                         size="sm"
+                        disabled={isCreatingEvent}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowEvaluationModal(true);
+                          handleAutoCreateEvaluation('game');
                         }}
                         className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
                       >
-                        <ClipboardList className="w-4 h-4 mr-2" />
+                        {isCreatingEvent ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ClipboardList className="w-4 h-4 mr-2" />}
                         Evaluar este juego
                       </Button>
                     )}
