@@ -51,13 +51,13 @@ serve(async (req) => {
     // Get user context - optimized queries with limits
     const [profileData, pathProgressData, vocationalData] = await Promise.all([
       supabase.from('profiles')
-        .select('full_name, experience_points, educoins, areas_interes')
+        .select('full_name, experience_points, educoins, areas_interes, numero_documento')
         .eq('id', user.id)
         .single(),
       supabase.from('user_path_progress')
         .select('path_id, completed, learning_paths(title)')
         .eq('user_id', user.id)
-        .limit(10), // Solo las últimas 10 rutas
+        .limit(10),
       supabase.from('vocational_profiles')
         .select('summary')
         .eq('user_id', user.id)
@@ -82,6 +82,80 @@ serve(async (req) => {
     const profile = profileData.data;
     const pathProgress = pathProgressData.data || [];
     const vocationalProfile = vocationalData.data;
+
+    // Fetch student study plans
+    let studyPlanContext = '';
+    try {
+      // Query by user_id OR document_number
+      let studyPlanQuery = supabaseAdmin
+        .from('student_study_plans')
+        .select('*')
+        .order('academic_year', { ascending: false })
+        .limit(3);
+
+      if (profile?.numero_documento) {
+        studyPlanQuery = studyPlanQuery.or(`user_id.eq.${user.id},document_number.eq.${profile.numero_documento}`);
+      } else {
+        studyPlanQuery = studyPlanQuery.eq('user_id', user.id);
+      }
+
+      const { data: studyPlans } = await studyPlanQuery;
+
+      if (studyPlans && studyPlans.length > 0) {
+        // Analyze competencies with low grades
+        const lowCompetencies: Array<{ asignatura: string; competencia: string; nota: number | null; periodo: string }> = [];
+        const allSubjects: Array<{ asignatura: string; nota: number | null; periodo: string }> = [];
+
+        for (const plan of studyPlans) {
+          const periodos = (plan.periodos || []) as Array<any>;
+          for (const periodo of periodos) {
+            for (const asignatura of (periodo.asignaturas || [])) {
+              allSubjects.push({
+                asignatura: asignatura.nombre_asignatura,
+                nota: asignatura.nota_final_asignatura,
+                periodo: periodo.periodo_nombre
+              });
+              for (const competencia of (asignatura.competencias || [])) {
+                if (competencia.calificacion_competencia !== null && competencia.calificacion_competencia < 3.5) {
+                  lowCompetencies.push({
+                    asignatura: asignatura.nombre_asignatura,
+                    competencia: competencia.nombre_competencia,
+                    nota: competencia.calificacion_competencia,
+                    periodo: periodo.periodo_nombre
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        const latestPlan = studyPlans[0];
+        studyPlanContext = `\n📋 PLAN DE ESTUDIOS (${latestPlan.academic_year} - Grado ${latestPlan.grade}):`;
+
+        if (lowCompetencies.length > 0) {
+          studyPlanContext += `\n⚠️ COMPETENCIAS CON NOTA BAJA (< 3.5):`;
+          for (const lc of lowCompetencies.slice(0, 15)) {
+            studyPlanContext += `\n  - ${lc.asignatura} → "${lc.competencia}" (Nota: ${lc.nota ?? 'Sin nota'}, ${lc.periodo})`;
+          }
+          if (lowCompetencies.length > 15) {
+            studyPlanContext += `\n  ... y ${lowCompetencies.length - 15} más`;
+          }
+        } else {
+          studyPlanContext += `\n✅ Todas las competencias están aprobadas (≥ 3.5)`;
+        }
+
+        // Add subject summary
+        const subjectsWithLowGrades = allSubjects.filter(s => s.nota !== null && s.nota < 3.5);
+        if (subjectsWithLowGrades.length > 0) {
+          studyPlanContext += `\n📉 ASIGNATURAS CON NOTA BAJA:`;
+          for (const s of subjectsWithLowGrades.slice(0, 10)) {
+            studyPlanContext += `\n  - ${s.asignatura}: ${s.nota} (${s.periodo})`;
+          }
+        }
+      }
+    } catch (spError) {
+      console.error('Error fetching study plans:', spError);
+    }
 
     // Group progress by path
     const pathsWithProgress = pathProgress.reduce((acc: any, progress: any) => {
@@ -113,6 +187,7 @@ Nivel XP: ${profile?.experience_points || 0} puntos
 Rutas activas: ${activePathsCount > 0 ? `${activePathsCount} rutas - ${pathsSummary}${activePathsCount > 3 ? '...' : ''}` : 'Ninguna ruta activa'}
 
 ${vocationalProfile ? `Perfil Vocacional: ${vocationalProfile.summary.slice(0, 150)}...` : 'Sin perfil vocacional'}
+${studyPlanContext}
 `;
 
     const systemPrompt = `Eres SEDE AI, el asistente educativo inteligente de SEDEFY. Tu misión es maximizar el potencial de cada estudiante mediante recomendaciones personalizadas y guía estratégica.
