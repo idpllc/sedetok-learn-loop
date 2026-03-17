@@ -317,10 +317,18 @@ export const Sidebar = () => {
       {/* Desktop Sidebar */}
       <aside 
         className={`hidden md:flex fixed left-0 top-0 h-screen bg-card border-r border-border flex-col z-[60] transition-[width] duration-300 ${
-          searchModalOpen ? 'w-16' : 'w-64'
+          isCollapsed || searchModalOpen ? 'w-16' : 'w-64'
         }`}
       >
-        <SidebarContent isMinified={searchModalOpen} />
+        <SidebarContent isMinified={isCollapsed || searchModalOpen} />
+        {/* Collapse toggle button */}
+        <button
+          onClick={() => setIsCollapsed(prev => !prev)}
+          className="absolute top-6 -right-3 w-6 h-6 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
+          title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+        >
+          <PanelLeft className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+        </button>
       </aside>
 
       {/* Mobile/Tablet Header Bar */}
