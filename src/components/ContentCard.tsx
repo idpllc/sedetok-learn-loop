@@ -529,13 +529,14 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                         <Button
                           variant="outline"
                           size="sm"
+                          disabled={isCreatingEvent}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowEvaluationModal(true);
+                            handleAutoCreateEvaluation('quiz');
                           }}
                           className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm pointer-events-auto"
                         >
-                          <ClipboardList className="w-4 h-4 mr-2" />
+                          {isCreatingEvent ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ClipboardList className="w-4 h-4 mr-2" />}
                           Evaluar este quiz
                         </Button>
                         <Button
