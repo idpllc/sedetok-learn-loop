@@ -572,7 +572,7 @@ const Profile = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-xl font-bold">{isOwnProfile ? "Mi Perfil" : profileData?.username || "Perfil"}</h1>
+            <h1 className="text-xl font-bold">{isOwnProfile ? "Mi Perfil" : getDisplayName(profileData) || "Perfil"}</h1>
           </div>
           <div className="flex items-center gap-2">
             {isOwnProfile ? (
