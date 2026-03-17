@@ -95,6 +95,7 @@ export const Sidebar = () => {
       "/notifications": "Notificaciones",
       "/sede-ai": "Sede AI",
       "/language-tutor": "English Tutor",
+      "/study-plan": "Plan de Estudios",
       "/buy-educoins": "Educoins",
       "/about": "Acerca de",
       "/terms": "Términos",
