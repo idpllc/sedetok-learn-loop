@@ -40,14 +40,37 @@ export interface StudyPlan {
 export const useStudyPlan = () => {
   const { user } = useAuth();
 
-  const { data: studyPlans, isLoading, error } = useQuery({
-    queryKey: ['study-plans', user?.id],
+  // First get the user's document number from their profile
+  const { data: profile } = useQuery({
+    queryKey: ['profile-document', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data } = await supabase
+        .from('profiles')
+        .select('numero_documento')
+        .eq('id', user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: studyPlans, isLoading, error } = useQuery({
+    queryKey: ['study-plans', user?.id, profile?.numero_documento],
+    queryFn: async () => {
+      // Query by user_id OR by document_number matching the profile's numero_documento
+      let query = supabase
         .from('student_study_plans')
         .select('*')
-        .eq('user_id', user!.id)
         .order('academic_year', { ascending: false });
+
+      if (profile?.numero_documento) {
+        // Use OR filter: user_id matches OR document_number matches
+        query = query.or(`user_id.eq.${user!.id},document_number.eq.${profile.numero_documento}`);
+      } else {
+        query = query.eq('user_id', user!.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
@@ -56,7 +79,7 @@ export const useStudyPlan = () => {
         periodos: (plan.periodos || []) as Periodo[],
       })) as StudyPlan[];
     },
-    enabled: !!user,
+    enabled: !!user && profile !== undefined,
   });
 
   return { studyPlans, isLoading, error };
