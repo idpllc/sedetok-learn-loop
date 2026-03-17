@@ -16,6 +16,7 @@ import { useScrollDirection } from "@/hooks/useScrollDirection";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
