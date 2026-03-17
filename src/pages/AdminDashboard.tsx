@@ -31,6 +31,7 @@ import { VerificationManagement } from "@/components/admin/VerificationManagemen
 import { InstitutionManagement } from "@/components/admin/InstitutionManagement";
 import { WebhookDocumentation } from "@/components/admin/WebhookDocumentation";
 import { StudyPlanWebhookDocs } from "@/components/admin/StudyPlanWebhookDocs";
+import { StudyPlanManagement } from "@/components/admin/StudyPlanManagement";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
