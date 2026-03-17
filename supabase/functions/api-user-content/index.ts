@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
   try {
     // Validate API key
     const apiKey = req.headers.get("x-api-key");
-    if (!apiKey || apiKey !== API_KEY) {
+    if (!apiKey || !API_KEYS.includes(apiKey)) {
       return new Response(
         JSON.stringify({ error: "Unauthorized", message: "Invalid or missing API key" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
