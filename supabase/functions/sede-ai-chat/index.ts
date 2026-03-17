@@ -412,34 +412,129 @@ ${userContext}
     const initialData = await initialResponse.json();
     const choice = initialData.choices?.[0];
 
-    // Check if AI wants to use a tool
+    // Check if AI wants to use tools (handle multiple tool calls)
     if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
-      const toolCall = choice.message.tool_calls[0];
-      
-      if (toolCall.function.name === "search_content") {
-        const args = JSON.parse(toolCall.function.arguments);
-        const searchQuery = args.query || "";
-        const contentType = args.content_type;
-        const limit = args.limit || 8;
+      // Process all tool calls
+      const toolResults: any[] = [];
+      let allPathsInfo: any[] = [];
+      let allContentInfo: any[] = [];
+      let itineraryResult: any = null;
 
-        console.log('Searching content with query:', searchQuery, 'type:', contentType, 'limit:', limit);
+      for (const toolCall of choice.message.tool_calls) {
+        if (toolCall.function.name === "search_content") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const searchQuery = args.query || "";
+          const contentType = args.content_type;
+          const limit = args.limit || 8;
 
-        let results: any[] = [];
+          console.log('Searching content with query:', searchQuery, 'type:', contentType, 'limit:', limit);
 
-        // Search in different tables based on content type
-        if (!contentType || contentType === 'video' || contentType === 'reading') {
-          const typeFilter = contentType === 'video' ? 'video' : contentType === 'reading' ? 'reading' : null;
-          
-          let query = supabase
-            .from('content')
-            .select('id, title, description, thumbnail_url, type, category, subject, creator_id, profiles!content_creator_id_fkey(full_name, avatar_url)')
-            .eq('is_public', true);
+          let results: any[] = [];
 
-          if (typeFilter) {
-            query = query.eq('type', typeFilter);
-          } else if (!contentType) {
-            query = query.in('type', ['video', 'reading']);
+          // Search in content table (videos, readings)
+          if (!contentType || contentType === 'video' || contentType === 'reading') {
+            const typeFilter = contentType === 'video' ? 'video' : contentType === 'reading' ? 'reading' : null;
+            
+            let query = supabase
+              .from('content')
+              .select('id, title, description, thumbnail_url, content_type, category, subject, creator_id, profiles!content_creator_id_fkey(full_name, avatar_url)')
+              .eq('is_public', true);
+
+            if (typeFilter) {
+              query = query.eq('content_type', typeFilter);
+            }
+
+            if (searchQuery) {
+              const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
+              const orConditions = searchTerms.map((term: string) => 
+                `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
+              ).join(',');
+              if (orConditions) query = query.or(orConditions);
+            }
+
+            const { data } = await query.limit(limit);
+            if (data) results.push(...data.map(c => ({ ...c, type_resolved: c.content_type })));
           }
+
+          // Search quizzes
+          if (!contentType || contentType === 'quiz') {
+            let query = supabase
+              .from('quizzes')
+              .select('id, title, description, thumbnail_url, category, subject, creator_id, profiles!quizzes_creator_id_fkey(full_name, avatar_url)')
+              .eq('is_public', true);
+
+            if (searchQuery) {
+              const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
+              const orConditions = searchTerms.map((term: string) => 
+                `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
+              ).join(',');
+              if (orConditions) query = query.or(orConditions);
+            }
+
+            const { data } = await query.limit(limit);
+            if (data) results.push(...data.map(q => ({ ...q, type_resolved: 'quiz' })));
+          }
+
+          // Search games
+          if (!contentType || contentType === 'game') {
+            let query = supabase
+              .from('games')
+              .select('id, title, description, thumbnail_url, category, subject, creator_id, profiles!games_creator_id_fkey(full_name, avatar_url)')
+              .eq('is_public', true);
+
+            if (searchQuery) {
+              const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
+              const orConditions = searchTerms.map((term: string) => 
+                `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
+              ).join(',');
+              if (orConditions) query = query.or(orConditions);
+            }
+
+            const { data } = await query.limit(limit);
+            if (data) results.push(...data.map(g => ({ ...g, type_resolved: 'game' })));
+          }
+
+          results = results.slice(0, limit);
+          console.log('Found content:', results.length);
+
+          const contentInfo = results.map(c => {
+            const profile = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
+            return {
+              id: c.id,
+              title: c.title,
+              description: c.description,
+              category: c.category,
+              subject: c.subject,
+              creator: profile?.full_name,
+              cover_url: c.thumbnail_url,
+              type: c.type_resolved
+            };
+          });
+
+          allContentInfo.push(...contentInfo);
+          toolResults.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            name: toolCall.function.name,
+            content: JSON.stringify({
+              content: contentInfo,
+              message: `Encontré ${contentInfo.length} contenidos relevantes.`
+            })
+          });
+        }
+
+        if (toolCall.function.name === "search_learning_paths") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const searchQuery = args.query || "";
+          const limit = args.limit || 8;
+
+          console.log('Searching learning paths with query:', searchQuery, 'limit:', limit);
+
+          let query = supabase
+            .from('learning_paths')
+            .select('id, title, description, cover_url, thumbnail_url, category, subject, tags, creator_id, profiles!learning_paths_creator_id_fkey(full_name, avatar_url)')
+            .eq('is_public', true)
+            .limit(limit);
 
           if (searchQuery) {
             const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
@@ -449,65 +544,202 @@ ${userContext}
             if (orConditions) query = query.or(orConditions);
           }
 
-          const { data } = await query.limit(limit);
-          if (data) results.push(...data.map(c => ({ ...c, content_type: c.type })));
-        }
-
-        if (!contentType || contentType === 'quiz') {
-          let query = supabase
-            .from('quizzes')
-            .select('id, title, description, thumbnail_url, category, subject, creator_id, profiles!quizzes_creator_id_fkey(full_name, avatar_url)')
-            .eq('is_public', true);
-
-          if (searchQuery) {
-            const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
-            const orConditions = searchTerms.map((term: string) => 
-              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
-            ).join(',');
-            if (orConditions) query = query.or(orConditions);
+          if (args.category) {
+            query = query.eq('category', args.category);
           }
 
-          const { data } = await query.limit(limit);
-          if (data) results.push(...data.map(q => ({ ...q, content_type: 'quiz' })));
+          const { data: paths, error: pathsError } = await query;
+          if (pathsError) console.error('Error searching paths:', pathsError);
+
+          console.log('Found paths:', paths?.length || 0);
+
+          const pathsInfo = paths?.map(p => {
+            const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+            return {
+              id: p.id,
+              title: p.title,
+              description: p.description,
+              category: p.category,
+              subject: p.subject,
+              creator: profile?.full_name,
+              cover_url: p.cover_url || p.thumbnail_url
+            };
+          }) || [];
+
+          allPathsInfo.push(...pathsInfo);
+          toolResults.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            name: toolCall.function.name,
+            content: JSON.stringify({
+              paths: pathsInfo,
+              message: `Encontré ${pathsInfo.length} rutas de aprendizaje relevantes.`
+            })
+          });
         }
 
-        if (!contentType || contentType === 'game') {
-          let query = supabase
-            .from('games')
-            .select('id, title, description, thumbnail_url, category, subject, creator_id, profiles!games_creator_id_fkey(full_name, avatar_url)')
-            .eq('is_public', true);
+        if (toolCall.function.name === "generate_study_itinerary") {
+          const args = JSON.parse(toolCall.function.arguments);
+          const topic = args.topic || "";
+          const durationDays = args.duration_days || 7;
+          const hoursPerDay = args.hours_per_day || 2;
+          const difficulty = args.difficulty || "intermedio";
 
-          if (searchQuery) {
-            const searchTerms = searchQuery.toLowerCase().split(' ').filter((t: string) => t.length > 2);
-            const orConditions = searchTerms.map((term: string) => 
-              `title.ilike.%${term}%,description.ilike.%${term}%,subject.ilike.%${term}%`
-            ).join(',');
-            if (orConditions) query = query.or(orConditions);
+          console.log('Generating study itinerary for:', topic);
+
+          const itineraryResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                { 
+                  role: "system", 
+                  content: `Eres un experto en diseño curricular y pedagogía. Tu tarea es crear itinerarios de estudio detallados y estructurados.
+
+REGLAS:
+- Genera un itinerario de estudio para el tema proporcionado
+- El itinerario debe tener ${durationDays} días
+- Cada día tiene aproximadamente ${hoursPerDay} horas de estudio
+- Nivel de dificultad: ${difficulty}
+- Divide el tema en subtemas lógicos y progresivos
+- Incluye objetivos de aprendizaje para cada día
+- Sugiere actividades prácticas cuando sea relevante
+- Sé específico con los subtemas, no genérico
+
+FORMATO DE RESPUESTA (JSON):
+{
+  "topic": "Tema principal",
+  "total_days": número,
+  "hours_per_day": número,
+  "difficulty": "nivel",
+  "overview": "Descripción breve del itinerario",
+  "days": [
+    {
+      "day": 1,
+      "title": "Título del día",
+      "subtopics": ["Subtema 1", "Subtema 2"],
+      "objectives": ["Objetivo 1", "Objetivo 2"],
+      "activities": ["Actividad sugerida"],
+      "estimated_hours": número
+    }
+  ],
+  "final_project": "Descripción de un proyecto final opcional"
+}`
+                },
+                { role: "user", content: `Crea un itinerario de estudio completo para: "${topic}"` }
+              ],
+              temperature: 0.7,
+            }),
+          });
+
+          let itinerary = null;
+          if (itineraryResponse.ok) {
+            const itineraryData = await itineraryResponse.json();
+            try {
+              const content = itineraryData.choices?.[0]?.message?.content || "";
+              const jsonMatch = content.match(/\{[\s\S]*\}/);
+              if (jsonMatch) itinerary = JSON.parse(jsonMatch[0]);
+            } catch (parseError) {
+              console.error('Error parsing itinerary JSON:', parseError);
+            }
           }
 
-          const { data } = await query.limit(limit);
-          if (data) results.push(...data.map(g => ({ ...g, content_type: 'game' })));
+          itineraryResult = itinerary;
+          toolResults.push({
+            role: "tool",
+            tool_call_id: toolCall.id,
+            name: toolCall.function.name,
+            content: JSON.stringify({
+              itinerary: itinerary,
+              message: itinerary 
+                ? `Itinerario generado para "${itinerary.topic}" con ${itinerary.total_days} días de estudio.`
+                : `No se pudo generar el itinerario.`
+            })
+          });
         }
+      }
 
-        // Limit total results
-        results = results.slice(0, limit);
+      // Final call to AI with all tool results
+      const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...messages,
+            { role: "user", content: message },
+            choice.message,
+            ...toolResults
+          ],
+          stream: true,
+          temperature: 0.8,
+        }),
+      });
 
-        console.log('Found content:', results.length);
+      if (!finalResponse.ok) {
+        if (finalResponse.status === 429) {
+          return new Response(JSON.stringify({ error: "Límite de solicitudes excedido, intenta más tarde." }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (finalResponse.status === 402) {
+          return new Response(JSON.stringify({ error: "Créditos insuficientes." }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw new Error(`AI gateway error: ${finalResponse.status}`);
+      }
 
-        // Format content for AI response
-        const contentInfo = results.map(c => {
-          const profile = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
-          return {
-            id: c.id,
-            title: c.title,
-            description: c.description,
-            category: c.category,
-            subject: c.subject,
-            creator: profile?.full_name,
-            cover_url: c.thumbnail_url,
-            type: c.content_type
-          };
-        });
+      // Stream response with all data markers appended at end
+      const reader = finalResponse.body!.getReader();
+      const encoder = new TextEncoder();
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                // Append paths marker (shown first - priority)
+                if (allPathsInfo.length > 0) {
+                  const marker = `\n\n|||PATHS_DATA:${JSON.stringify(allPathsInfo)}|||`;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: marker } }] })}\n\n`));
+                }
+                // Append content marker
+                if (allContentInfo.length > 0) {
+                  const marker = `\n\n|||CONTENT_DATA:${JSON.stringify(allContentInfo)}|||`;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: marker } }] })}\n\n`));
+                }
+                // Append itinerary marker
+                if (itineraryResult) {
+                  const marker = `\n\n|||ITINERARY_DATA:${JSON.stringify(itineraryResult)}|||`;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: marker } }] })}\n\n`));
+                }
+                controller.close();
+                break;
+              }
+              controller.enqueue(value);
+            }
+          } catch (error) {
+            controller.error(error);
+          }
+        }
+      });
+
+      return new Response(stream, {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
+    }
 
         // Second call to AI with tool results
         const finalResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
