@@ -51,7 +51,7 @@ serve(async (req) => {
 
   try {
     const webhookKey = req.headers.get('x-webhook-key');
-    const expectedKey = Deno.env.get('WEBHOOK_API_KEY');
+    const expectedKey = Deno.env.get('WEBHOOK_API_KEY') || Deno.env.get('CHAT_JWT_SECRET');
 
     if (!webhookKey || webhookKey !== expectedKey) {
       return new Response(
