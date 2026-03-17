@@ -29,6 +29,8 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { ApiConfiguration } from "@/components/admin/ApiConfiguration";
 import { VerificationManagement } from "@/components/admin/VerificationManagement";
 import { InstitutionManagement } from "@/components/admin/InstitutionManagement";
+import { WebhookDocumentation } from "@/components/admin/WebhookDocumentation";
+import { StudyPlanWebhookDocs } from "@/components/admin/StudyPlanWebhookDocs";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
