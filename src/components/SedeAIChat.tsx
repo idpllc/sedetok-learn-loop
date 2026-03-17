@@ -62,10 +62,7 @@ interface ItineraryData {
 }
 
 const ContentCards = ({ content }: { content: ContentData[] }) => {
-  const navigate = useNavigate();
-  
   const getContentRoute = (item: ContentData) => {
-    // Determinar la ruta basada en el tipo de contenido
     if (item.type === 'quiz') {
       return `/?quiz=${item.id}`;
     } else if (item.type === 'game') {
@@ -80,9 +77,21 @@ const ContentCards = ({ content }: { content: ContentData[] }) => {
       video: '📹 Video',
       quiz: '📝 Quiz',
       game: '🎮 Juego',
-      reading: '📖 Lectura'
+      reading: '📖 Lectura',
+      path: '🗺️ Ruta'
     };
     return labels[type] || type;
+  };
+
+  const getTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      video: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
+      quiz: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+      game: 'bg-green-500/10 text-green-700 dark:text-green-400',
+      reading: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
+      path: 'bg-primary/10 text-primary'
+    };
+    return colors[type] || 'bg-muted text-muted-foreground';
   };
   
   return (
@@ -96,44 +105,34 @@ const ContentCards = ({ content }: { content: ContentData[] }) => {
       >
         <CarouselContent className="-ml-2">
           {content.map((item) => (
-            <CarouselItem key={item.id} className="pl-2 basis-[280px]">
+            <CarouselItem key={item.id} className="pl-2 basis-[220px]">
               <Card
-                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden h-full"
-                onClick={() => navigate(getContentRoute(item))}
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] overflow-hidden h-full border-border/50"
+                onClick={() => window.open(getContentRoute(item), '_blank')}
               >
-                {item.cover_url && (
-                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                <div className="aspect-video w-full overflow-hidden bg-muted relative">
+                  {item.cover_url ? (
                     <img
                       src={item.cover_url}
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
-                  </div>
-                )}
-                <div className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-medium text-primary">
-                      {getContentTypeLabel(item.type)}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{item.title}</h3>
-                  {item.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                      {item.description}
-                    </p>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/20">
+                      <span className="text-3xl">{getContentTypeLabel(item.type).split(' ')[0]}</span>
+                    </div>
                   )}
-                  <div className="flex gap-1 flex-wrap">
-                    {item.category && (
-                      <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                        {item.category}
-                      </span>
-                    )}
-                    {item.subject && (
-                      <span className="text-xs px-2 py-0.5 bg-secondary/10 text-secondary-foreground rounded-full">
-                        {item.subject}
-                      </span>
-                    )}
-                  </div>
+                  <span className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${getTypeColor(item.type)}`}>
+                    {getContentTypeLabel(item.type)}
+                  </span>
+                </div>
+                <div className="p-2.5">
+                  <h3 className="font-semibold text-xs mb-1 line-clamp-2 leading-tight">{item.title}</h3>
+                  {item.subject && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {item.subject}
+                    </span>
+                  )}
                 </div>
               </Card>
             </CarouselItem>
@@ -147,8 +146,6 @@ const ContentCards = ({ content }: { content: ContentData[] }) => {
 };
 
 const PathCards = ({ paths }: { paths: PathData[] }) => {
-  const navigate = useNavigate();
-  
   return (
     <div className="mt-4 w-full">
       <Carousel
@@ -160,39 +157,34 @@ const PathCards = ({ paths }: { paths: PathData[] }) => {
       >
         <CarouselContent className="-ml-2">
           {paths.map((path) => (
-            <CarouselItem key={path.id} className="pl-2 basis-[280px]">
+            <CarouselItem key={path.id} className="pl-2 basis-[220px]">
               <Card
-                className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden h-full"
-                onClick={() => navigate(`/learning-paths/${path.id}`)}
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] overflow-hidden h-full border-primary/20"
+                onClick={() => window.open(`/learning-paths/${path.id}`, '_blank')}
               >
-                {path.cover_url && (
-                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                <div className="aspect-video w-full overflow-hidden bg-muted relative">
+                  {path.cover_url ? (
                     <img
                       src={path.cover_url}
                       alt={path.title}
                       className="w-full h-full object-cover"
                     />
-                  </div>
-                )}
-                <div className="p-3">
-                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{path.title}</h3>
-                  {path.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                      {path.description}
-                    </p>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/30">
+                      <span className="text-3xl">🗺️</span>
+                    </div>
                   )}
-                  <div className="flex gap-1 flex-wrap">
-                    {path.category && (
-                      <span className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                        {path.category}
-                      </span>
-                    )}
-                    {path.subject && (
-                      <span className="text-xs px-2 py-0.5 bg-secondary/10 text-secondary-foreground rounded-full">
-                        {path.subject}
-                      </span>
-                    )}
-                  </div>
+                  <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    🗺️ Ruta
+                  </span>
+                </div>
+                <div className="p-2.5">
+                  <h3 className="font-semibold text-xs mb-1 line-clamp-2 leading-tight">{path.title}</h3>
+                  {path.subject && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {path.subject}
+                    </span>
+                  )}
                 </div>
               </Card>
             </CarouselItem>
