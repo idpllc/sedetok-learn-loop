@@ -38,6 +38,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
+import { getDisplayName } from "@/lib/displayName";
 
 const Profile = () => {
   const navigate = useNavigate();
