@@ -310,6 +310,11 @@ export default function AdminDashboard() {
             <VerificationManagement />
           </TabsContent>
 
+          <TabsContent value="webhooks" className="space-y-6">
+            <WebhookDocumentation />
+            <StudyPlanWebhookDocs />
+          </TabsContent>
+
           <TabsContent value="settings">
             <ApiConfiguration />
           </TabsContent>
