@@ -104,6 +104,10 @@ export default function AdminDashboard() {
               <CheckCircle2 className="w-4 h-4" />
               <span className="hidden sm:inline">Verificación</span>
             </TabsTrigger>
+            <TabsTrigger value="study-plans" className="flex items-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              <span className="hidden sm:inline">Planes</span>
+            </TabsTrigger>
             <TabsTrigger value="webhooks" className="flex items-center gap-2">
               <Webhook className="w-4 h-4" />
               <span className="hidden sm:inline">Webhooks</span>
