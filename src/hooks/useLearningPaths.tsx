@@ -18,6 +18,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
             profiles:creator_id(username, avatar_url, full_name)
           `)
           .eq("is_public", true)
+          .neq("status", "draft")
           .order("created_at", { ascending: false });
         
         if (error) throw error;
