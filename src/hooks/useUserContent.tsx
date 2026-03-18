@@ -23,7 +23,7 @@ export const useUserContent = (userId?: string) => {
             .from("content")
             .select(`*, profiles:creator_id (username, avatar_url, institution)`)
             .eq("creator_id", targetUserId);
-          if (!isOwnContent) q = q.eq("is_public", true);
+          if (!isOwnContent) { q = q.eq("is_public", true); }
           return q.order("created_at", { ascending: false });
         })(),
         (() => {
@@ -31,7 +31,7 @@ export const useUserContent = (userId?: string) => {
             .from("quizzes")
             .select(`*, profiles:creator_id (username, avatar_url, institution)`)
             .eq("creator_id", targetUserId);
-          if (!isOwnContent) q = q.eq("is_public", true);
+          if (!isOwnContent) { q = q.eq("is_public", true).eq("status", "publicado"); }
           return q.order("created_at", { ascending: false });
         })(),
         (() => {
@@ -39,7 +39,7 @@ export const useUserContent = (userId?: string) => {
             .from("games")
             .select(`*, profiles:creator_id (username, avatar_url, institution)`)
             .eq("creator_id", targetUserId);
-          if (!isOwnContent) q = q.eq("is_public", true);
+          if (!isOwnContent) { q = q.eq("is_public", true).neq("status", "draft"); }
           return q.order("created_at", { ascending: false });
         })()
       ]);

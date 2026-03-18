@@ -63,7 +63,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         if (error) throw error;
         return (data || []) as any[];
       } else {
-        // All public paths + own (including drafts) when logged in
+        // All public published paths + own (including drafts) when logged in
         let query = supabase
           .from("learning_paths")
           .select(`
@@ -72,10 +72,10 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           `)
           .order("created_at", { ascending: false });
         if (userId) {
-          // Show public paths or those created by the current user
-          query = query.or(`is_public.eq.true,creator_id.eq.${userId}`);
+          // Show public published paths or those created by the current user (including drafts)
+          query = query.or(`and(is_public.eq.true,status.neq.draft),creator_id.eq.${userId}`);
         } else {
-          query = query.eq("is_public", true);
+          query = query.eq("is_public", true).neq("status", "draft");
         }
         const { data, error } = await query;
         
