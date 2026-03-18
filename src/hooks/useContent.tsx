@@ -118,6 +118,7 @@ export const useInfiniteContent = (
           .from("learning_paths")
           .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`, { count: 'exact' })
           .eq("is_public", true)
+          .neq("status", "draft")
           .order("created_at", { ascending: false })
           .range(offset, offset + ITEMS_PER_PAGE - 1);
         if (searchQuery?.trim()) {
