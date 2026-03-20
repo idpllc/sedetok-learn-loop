@@ -118,24 +118,48 @@ async function fetchRelatedContent(
     }
   }
 
-  // 2. Fill remaining with random content
+  // 2. Fill remaining with random content from all tables
   if (results.length < limit) {
     const remaining = limit - results.length;
+    const fetchSize = remaining + 30;
 
-    const { data: fillerContent } = await supabase
-      .from("content")
-      .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
-      .eq("is_public", true)
-      .order("created_at", { ascending: false })
-      .limit(remaining + 20);
+    // Use a random offset to get different content each time
+    const randomOffset = Math.floor(Math.random() * 50);
 
-    if (fillerContent) {
-      const shuffled = (fillerContent as any[]).sort(() => Math.random() - 0.5);
-      for (const item of normalize(shuffled)) {
-        if (!seenIds.has(item.id) && results.length < limit) {
-          seenIds.add(item.id);
-          results.push(item);
-        }
+    const fillerPromises = [
+      supabase
+        .from("content")
+        .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
+        .eq("is_public", true)
+        .order("created_at", { ascending: false })
+        .range(randomOffset, randomOffset + fetchSize - 1),
+      supabase
+        .from("quizzes")
+        .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
+        .eq("is_public", true)
+        .eq("status", "publicado")
+        .order("created_at", { ascending: false })
+        .range(randomOffset, randomOffset + fetchSize - 1),
+      supabase
+        .from("games")
+        .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
+        .eq("is_public", true)
+        .order("created_at", { ascending: false })
+        .range(randomOffset, randomOffset + fetchSize - 1),
+    ];
+
+    const [contentRes, quizRes, gameRes] = await Promise.all(fillerPromises);
+
+    const allFillers = [
+      ...normalize((contentRes.data as any[]) || []),
+      ...normalize((quizRes.data as any[]) || [], "quiz"),
+      ...normalize((gameRes.data as any[]) || [], "game"),
+    ].sort(() => Math.random() - 0.5);
+
+    for (const item of allFillers) {
+      if (!seenIds.has(item.id) && results.length < limit) {
+        seenIds.add(item.id);
+        results.push(item);
       }
     }
   }
