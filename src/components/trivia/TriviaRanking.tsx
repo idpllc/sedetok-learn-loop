@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useTriviaRankings } from "@/hooks/useTriviaGame";
+import { useGlobalRanking, useInstitutionalRanking, useMatchRanking } from "@/hooks/useTriviaGame";
 import { Trophy, Medal, Building2, Swords, Star, Users } from "lucide-react";
 
 export const TriviaRanking = () => {
-  const { globalRanking, institutionalRanking, matchRanking, isLoading } = useTriviaRankings();
+  const [activeTab, setActiveTab] = useState("global");
+  const { data: globalRanking, isLoading: loadingGlobal } = useGlobalRanking(activeTab === "global");
+  const { data: institutionalRanking, isLoading: loadingInstitutional } = useInstitutionalRanking(activeTab === "institutional");
+  const { data: matchRanking, isLoading: loadingMatches } = useMatchRanking(activeTab === "1v1");
+  const isLoading = (activeTab === "global" && loadingGlobal) || (activeTab === "institutional" && loadingInstitutional) || (activeTab === "1v1" && loadingMatches);
 
   const getRankIcon = (position: number) => {
     switch (position) {
