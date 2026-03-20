@@ -66,9 +66,11 @@ export const BottomNav = () => {
           {/* Create button - Center */}
           <button
             onClick={handleCreateClick}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all text-muted-foreground hover:text-foreground"
+            className="flex flex-col items-center justify-center gap-1 px-3 py-2 transition-all text-pink hover:text-pink/80"
           >
-            <Plus className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-full bg-pink flex items-center justify-center -mt-4 shadow-lg">
+              <Plus className="w-5 h-5 text-pink-foreground" />
+            </div>
             <span className="text-xs font-medium">Crear</span>
           </button>
 

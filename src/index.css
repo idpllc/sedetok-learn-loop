@@ -30,6 +30,10 @@ All colors MUST be HSL.
     --accent: 45 93% 57%;
     --accent-foreground: 220 14% 15%;
 
+    /* Rosa vibrante para CTAs y etiquetas */
+    --pink: 336 92% 59%;
+    --pink-foreground: 0 0% 100%;
+
     --muted: 220 13% 96%;
     --muted-foreground: 220 9% 46%;
 
@@ -83,6 +87,9 @@ All colors MUST be HSL.
 
     --accent: 45 93% 57%;
     --accent-foreground: 220 14% 15%;
+
+    --pink: 336 92% 59%;
+    --pink-foreground: 0 0% 100%;
 
     --muted: 220 18% 20%;
     --muted-foreground: 220 9% 65%;

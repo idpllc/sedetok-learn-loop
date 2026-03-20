@@ -731,7 +731,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               
               {/* Category and grade badges below description */}
               <div className="flex items-center gap-2 flex-wrap">
-                <Badge className="bg-primary/90 text-primary-foreground font-semibold text-xs">
+                <Badge variant="pink" className="font-semibold text-xs">
                   {subject || category}
                 </Badge>
                 <Badge variant="secondary" className="font-semibold text-xs bg-white/20 text-white border-white/30">
