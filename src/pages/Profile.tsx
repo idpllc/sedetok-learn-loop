@@ -39,7 +39,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { getDisplayName } from "@/lib/displayName";
-
+import { PathEnrollmentsDialog } from "@/components/learning-paths/PathEnrollmentsDialog";
 const Profile = () => {
   const navigate = useNavigate();
   const location = useLocation();
