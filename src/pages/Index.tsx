@@ -95,7 +95,7 @@ const Index = () => {
     { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
     { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
     { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
-    { id: "document" as ContentType, label: "Documentos", icon: "📄" },
+    { id: "document" as ContentType, label: "Recursos", icon: "📄" },
   ];
 
   const gradeLevels = [
