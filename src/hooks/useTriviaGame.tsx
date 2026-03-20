@@ -232,192 +232,126 @@ export const useTriviaGame = () => {
   };
 };
 
-// Hook for rankings
-export const useTriviaRankings = () => {
-  const { user } = useAuth();
-
-  // Global Ranking
-  const { data: globalRanking, isLoading: loadingGlobal } = useQuery({
+// Hook for rankings - split per tab for lazy loading
+export const useGlobalRanking = (enabled: boolean = true) => {
+  return useQuery({
     queryKey: ["trivia-rankings", "global"],
     queryFn: async () => {
-      // Fetch top stats first
       const { data: stats, error: statsError } = await supabase
         .from("trivia_user_stats")
         .select("*")
+        .gt("total_points", 0)
         .order("total_points", { ascending: false })
-        .limit(300);
+        .limit(100);
       if (statsError) throw statsError;
+      if (!stats || stats.length === 0) return [] as any[];
 
-      const activeStats = (stats || [])
-        .filter((s: any) =>
-          (s.total_points || 0) > 0 ||
-          (s.total_correct || 0) > 0
-        )
-        .sort((a: any, b: any) => {
-          if ((b.total_points || 0) !== (a.total_points || 0)) return (b.total_points || 0) - (a.total_points || 0);
-          if ((b.total_correct || 0) !== (a.total_correct || 0)) return (b.total_correct || 0) - (a.total_correct || 0);
-          if ((b.total_matches || 0) !== (a.total_matches || 0)) return (b.total_matches || 0) - (a.total_matches || 0);
-          return (b.best_streak || 0) - (a.best_streak || 0);
-        })
-        .slice(0, 100);
+      const sorted = stats.sort((a: any, b: any) => {
+        if ((b.total_points || 0) !== (a.total_points || 0)) return (b.total_points || 0) - (a.total_points || 0);
+        if ((b.total_correct || 0) !== (a.total_correct || 0)) return (b.total_correct || 0) - (a.total_correct || 0);
+        return (b.total_matches || 0) - (a.total_matches || 0);
+      });
 
-      const userIds = activeStats.map((s: any) => s.user_id).filter(Boolean);
-      if (userIds.length === 0) return [] as any[];
-
-      // Fetch profiles separately (no FK join dependency)
-      const { data: profiles, error: profilesError } = await supabase
+      const userIds = sorted.map((s: any) => s.user_id);
+      const { data: profiles } = await supabase
         .from("profiles")
         .select("id, username, full_name, avatar_url, institution")
         .in("id", userIds);
-      if (profilesError) throw profilesError;
 
       const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
-      return activeStats.map((s: any) => ({
-        ...s,
-        profiles: profileMap.get(s.user_id) || null,
-      }));
+      return sorted.map((s: any) => ({ ...s, profiles: profileMap.get(s.user_id) || null }));
     },
+    enabled,
+    staleTime: 2 * 60 * 1000,
   });
+};
 
-  // Institutional Ranking - Show institutions ranked by total student points
-  const { data: institutionalRanking, isLoading: loadingInstitutional } = useQuery({
+export const useInstitutionalRanking = (enabled: boolean = true) => {
+  return useQuery({
     queryKey: ["trivia-rankings", "institutional"],
     queryFn: async () => {
-      // Get all institution members with their stats
       const { data: members, error: membersError } = await supabase
         .from("institution_members")
         .select("user_id, institution_id")
-        .eq("status", "active");
-
+        .eq("status", "active")
+        .limit(1000);
       if (membersError || !members || members.length === 0) return [];
 
-      // Get all stats
       const userIds = members.map(m => m.user_id);
-      const { data: stats, error: statsError } = await supabase
+      const { data: stats } = await supabase
         .from("trivia_user_stats")
-        .select("*")
-        .in("user_id", userIds);
-
-      if (statsError) throw statsError;
+        .select("user_id, total_points, total_matches, total_correct, best_streak")
+        .in("user_id", userIds)
+        .gt("total_points", 0);
 
       const statsMap = new Map((stats || []).map((s: any) => [s.user_id, s]));
 
-      // Get institution details
       const institutionIds = [...new Set(members.map(m => m.institution_id))];
-      const { data: institutions, error: instError } = await supabase
+      const { data: institutions } = await supabase
         .from("institutions")
-        .select("id, name, logo_url");
-
-      if (instError) throw instError;
+        .select("id, name, logo_url")
+        .in("id", institutionIds);
 
       const instMap = new Map((institutions || []).map((i: any) => [i.id, i]));
 
-      // Aggregate stats per institution
-      const instAggregated: Record<string, {
-        institution_id: string;
-        name: string;
-        logo_url: string | null;
-        total_points: number;
-        total_matches: number;
-        total_correct: number;
-        total_students: number;
-        best_streak: number;
-      }> = {};
-
+      const instAgg: Record<string, any> = {};
       for (const member of members) {
         const inst = instMap.get(member.institution_id);
         if (!inst) continue;
-
-        if (!instAggregated[member.institution_id]) {
-          instAggregated[member.institution_id] = {
-            institution_id: member.institution_id,
-            name: inst.name,
-            logo_url: inst.logo_url,
-            total_points: 0,
-            total_matches: 0,
-            total_correct: 0,
-            total_students: 0,
-            best_streak: 0,
-          };
+        if (!instAgg[member.institution_id]) {
+          instAgg[member.institution_id] = { institution_id: member.institution_id, name: inst.name, logo_url: inst.logo_url, total_points: 0, total_matches: 0, total_correct: 0, total_students: 0, best_streak: 0 };
         }
-
+        instAgg[member.institution_id].total_students += 1;
         const userStat = statsMap.get(member.user_id);
-        instAggregated[member.institution_id].total_students += 1;
         if (userStat) {
-          instAggregated[member.institution_id].total_points += userStat.total_points || 0;
-          instAggregated[member.institution_id].total_matches += userStat.total_matches || 0;
-          instAggregated[member.institution_id].total_correct += userStat.total_correct || 0;
-          instAggregated[member.institution_id].best_streak = Math.max(
-            instAggregated[member.institution_id].best_streak,
-            userStat.best_streak || 0
-          );
+          instAgg[member.institution_id].total_points += userStat.total_points || 0;
+          instAgg[member.institution_id].total_matches += userStat.total_matches || 0;
+          instAgg[member.institution_id].total_correct += userStat.total_correct || 0;
+          instAgg[member.institution_id].best_streak = Math.max(instAgg[member.institution_id].best_streak, userStat.best_streak || 0);
         }
       }
 
-      return Object.values(instAggregated)
-        .filter((inst) =>
-          (inst.total_points || 0) > 0 ||
-          (inst.total_correct || 0) > 0
-        )
-        .sort((a, b) => {
-          if (b.total_points !== a.total_points) return b.total_points - a.total_points;
-          if (b.total_correct !== a.total_correct) return b.total_correct - a.total_correct;
-          if (b.total_matches !== a.total_matches) return b.total_matches - a.total_matches;
-          return b.best_streak - a.best_streak;
-        })
+      return Object.values(instAgg)
+        .filter((i: any) => i.total_points > 0)
+        .sort((a: any, b: any) => b.total_points - a.total_points)
         .slice(0, 50);
     },
+    enabled,
+    staleTime: 2 * 60 * 1000,
   });
+};
 
-  // 1v1 Ranking - based on wins
-  const { data: matchRanking, isLoading: loadingMatches } = useQuery({
+export const useMatchRanking = (enabled: boolean = true) => {
+  return useQuery({
     queryKey: ["trivia-rankings", "1v1"],
     queryFn: async () => {
-      // Get win counts per user
       const { data, error } = await supabase
         .from("trivia_1v1_matches")
-        .select(`
-          winner_id,
-          profiles:winner_id (
-            username,
-            full_name,
-            avatar_url
-          )
-        `)
+        .select(`winner_id, profiles:winner_id (username, full_name, avatar_url)`)
         .eq("status", "finished")
         .not("winner_id", "is", null);
-      
       if (error) throw error;
 
-      // Count wins per user
-      const winCounts = data.reduce((acc: any, match) => {
+      const winCounts = (data || []).reduce((acc: any, match: any) => {
         const winnerId = match.winner_id;
-        if (!acc[winnerId]) {
-          acc[winnerId] = {
-            user_id: winnerId,
-            wins: 0,
-            profiles: match.profiles
-          };
-        }
+        if (!acc[winnerId]) { acc[winnerId] = { user_id: winnerId, wins: 0, profiles: match.profiles }; }
         acc[winnerId].wins += 1;
         return acc;
       }, {});
 
-      // Convert to array and sort by wins
-      const ranking = Object.values(winCounts)
-        .sort((a: any, b: any) => b.wins - a.wins)
-        .slice(0, 100);
-      
-      return ranking;
+      return Object.values(winCounts).sort((a: any, b: any) => b.wins - a.wins).slice(0, 100);
     },
+    enabled,
+    staleTime: 2 * 60 * 1000,
   });
+};
 
-  return { 
-    globalRanking, 
-    institutionalRanking,
-    matchRanking,
-    isLoading: loadingGlobal || loadingInstitutional || loadingMatches 
-  };
+// Legacy wrapper for backwards compat
+export const useTriviaRankings = () => {
+  const { data: globalRanking, isLoading: loadingGlobal } = useGlobalRanking();
+  const { data: institutionalRanking, isLoading: loadingInstitutional } = useInstitutionalRanking();
+  const { data: matchRanking, isLoading: loadingMatches } = useMatchRanking();
+  return { globalRanking, institutionalRanking, matchRanking, isLoading: loadingGlobal || loadingInstitutional || loadingMatches };
 };
 
 // Hook for user achievements
