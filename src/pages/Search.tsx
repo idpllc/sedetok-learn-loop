@@ -124,7 +124,7 @@ const Search = () => {
     { id: "all" as const, label: "Todo", icon: "🎯" },
     { id: "video" as ContentType, label: "Videos", icon: "🎥" },
     { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
-    { id: "document" as ContentType, label: "Recursos", icon: "📄" },
+    { id: "document" as ContentType, label: "Documentos", icon: "📄" },
     { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
     { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
     { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
