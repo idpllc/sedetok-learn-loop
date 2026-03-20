@@ -225,14 +225,12 @@ const SedeTok = () => {
     if (loadingMore || feed.length === 0) return;
     setLoadingMore(true);
     try {
-      const firstItem = feed[0];
-      const moreContent = await fetchRelatedContent(
-        feed.map((f) => f.id),
-        firstItem?.subject,
-        5
-      );
-      // Filter out items we already have
       const existingIds = new Set(feed.map((f) => f.id));
+      const moreContent = await fetchRelatedContent(
+        Array.from(existingIds),
+        null, // don't filter by subject for infinite scroll — get anything new
+        10
+      );
       const newItems = moreContent.filter((item) => !existingIds.has(item.id));
       if (newItems.length > 0) {
         setFeed((prev) => [...prev, ...newItems]);
