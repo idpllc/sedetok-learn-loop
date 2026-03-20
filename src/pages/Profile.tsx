@@ -269,6 +269,9 @@ const Profile = () => {
     </Card>
   );
 
+  const [enrollmentsPathId, setEnrollmentsPathId] = useState<string | null>(null);
+  const [enrollmentsPathTitle, setEnrollmentsPathTitle] = useState("");
+
   const PathItem = ({ path }: { path: any }) => (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -291,6 +294,19 @@ const Profile = () => {
         
         {isOwnProfile && (
           <div className="absolute top-2 right-2 flex gap-1">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-foreground/90 backdrop-blur-sm hover:bg-foreground text-background"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEnrollmentsPathId(path.id);
+                setEnrollmentsPathTitle(path.title);
+              }}
+              title="Ver avance de estudiantes"
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="secondary"
               size="icon"
