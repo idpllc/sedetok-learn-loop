@@ -185,10 +185,20 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
         <div className="flex flex-col sm:flex-row gap-2 md:gap-4 items-center justify-center w-full max-w-md mb-2 md:mb-4">
           <Button
             size="lg"
-            onClick={onStart}
+            onClick={() => {
+              if (!isCreator && !isEnrolled && user) {
+                enroll.mutate(undefined, { onSuccess: () => onStart() });
+              } else {
+                onStart();
+              }
+            }}
+            disabled={enroll.isPending}
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm md:text-xl px-6 py-3 md:px-12 md:py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto"
           >
-            Empezar Ruta
+            {enroll.isPending ? (
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            ) : null}
+            {isEnrolled || isCreator ? "Continuar Ruta" : "Empezar Ruta"}
             <ChevronRight className="w-5 h-5 md:w-6 md:h-6 ml-2" />
           </Button>
           
