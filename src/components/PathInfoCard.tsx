@@ -49,6 +49,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   const navigate = useNavigate();
   const { user } = useAuth();
   const isCreator = Boolean(user?.id && creatorId && user.id === creatorId);
+  const { isEnrolled, enroll } = usePathEnrollment(pathId);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isObjectivesExpanded, setIsObjectivesExpanded] = useState(false);
   
