@@ -270,51 +270,9 @@ export const useInstitutionalRanking = (enabled: boolean = true) => {
   return useQuery({
     queryKey: ["trivia-rankings", "institutional"],
     queryFn: async () => {
-      const { data: members, error: membersError } = await supabase
-        .from("institution_members")
-        .select("user_id, institution_id")
-        .eq("status", "active")
-        .limit(1000);
-      if (membersError || !members || members.length === 0) return [];
-
-      const userIds = members.map(m => m.user_id);
-      const { data: stats } = await supabase
-        .from("trivia_user_stats")
-        .select("user_id, total_points, total_matches, total_correct, best_streak")
-        .in("user_id", userIds)
-        .gt("total_points", 0);
-
-      const statsMap = new Map((stats || []).map((s: any) => [s.user_id, s]));
-
-      const institutionIds = [...new Set(members.map(m => m.institution_id))];
-      const { data: institutions } = await supabase
-        .from("institutions")
-        .select("id, name, logo_url")
-        .in("id", institutionIds);
-
-      const instMap = new Map((institutions || []).map((i: any) => [i.id, i]));
-
-      const instAgg: Record<string, any> = {};
-      for (const member of members) {
-        const inst = instMap.get(member.institution_id);
-        if (!inst) continue;
-        if (!instAgg[member.institution_id]) {
-          instAgg[member.institution_id] = { institution_id: member.institution_id, name: inst.name, logo_url: inst.logo_url, total_points: 0, total_matches: 0, total_correct: 0, total_students: 0, best_streak: 0 };
-        }
-        instAgg[member.institution_id].total_students += 1;
-        const userStat = statsMap.get(member.user_id);
-        if (userStat) {
-          instAgg[member.institution_id].total_points += userStat.total_points || 0;
-          instAgg[member.institution_id].total_matches += userStat.total_matches || 0;
-          instAgg[member.institution_id].total_correct += userStat.total_correct || 0;
-          instAgg[member.institution_id].best_streak = Math.max(instAgg[member.institution_id].best_streak, userStat.best_streak || 0);
-        }
-      }
-
-      return Object.values(instAgg)
-        .filter((i: any) => i.total_points > 0)
-        .sort((a: any, b: any) => b.total_points - a.total_points)
-        .slice(0, 50);
+      const { data, error } = await supabase.rpc("get_institutional_trivia_ranking");
+      if (error) throw error;
+      return data || [];
     },
     enabled,
     staleTime: 2 * 60 * 1000,
