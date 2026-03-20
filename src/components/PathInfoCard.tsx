@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Copy } from "lucide-react";
+import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Copy, Loader2 } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { SharePathSheet } from "@/components/SharePathSheet";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { usePathEnrollment } from "@/hooks/usePathEnrollment";
 
 interface PathInfoCardProps {
   pathId: string;
