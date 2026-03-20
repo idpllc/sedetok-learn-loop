@@ -24,5 +24,7 @@ if (import.meta.env.PROD) {
   });
 }
 
-const root = document.getElementById("root")!;
-createRoot(root).render(<React.StrictMode><App /></React.StrictMode>);
+const container = document.getElementById("root")!;
+const app = React.createElement(App);
+const strictMode = React.createElement(React.StrictMode, null, app);
+createRoot(container).render(strictMode);
