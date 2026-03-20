@@ -346,6 +346,15 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Calculate which column has longer text to allocate more space (must be before early returns)
+  const maxLeftLen = useMemo(() => leftItems.length > 0 ? Math.max(...leftItems.map(i => i.text.length)) : 0, [leftItems]);
+  const maxRightLen = useMemo(() => rightItems.length > 0 ? Math.max(...rightItems.map(i => i.text.length)) : 0, [rightItems]);
+  const leftFlex = useMemo(() => {
+    const total = maxLeftLen + maxRightLen;
+    if (total === 0) return 0.5;
+    return Math.max(0.35, Math.min(0.65, maxLeftLen / total));
+  }, [maxLeftLen, maxRightLen]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -398,15 +407,6 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
   }
 
   const progress = (connections.length / leftItems.length) * 100;
-
-  // Calculate which column has longer text to allocate more space
-  const maxLeftLen = useMemo(() => Math.max(...leftItems.map(i => i.text.length), 0), [leftItems]);
-  const maxRightLen = useMemo(() => Math.max(...rightItems.map(i => i.text.length), 0), [rightItems]);
-  const leftFlex = useMemo(() => {
-    const total = maxLeftLen + maxRightLen;
-    if (total === 0) return 1;
-    return Math.max(0.4, Math.min(0.6, maxLeftLen / total));
-  }, [maxLeftLen, maxRightLen]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-700 via-teal-600 to-emerald-500 p-2 md:p-6 pr-8 md:pr-10">
