@@ -258,7 +258,7 @@ export const Sidebar = () => {
       <div className={`p-4 border-t border-border transition-all ${isMinified ? 'px-3' : ''}`}>
         <Button
           onClick={handleCreateClick}
-          variant="secondary"
+          variant="pink"
           className={`w-full font-medium ${isMinified ? 'px-0' : 'py-6'}`}
           size={isMinified ? "icon" : "lg"}
           title={isMinified ? "Crear" : undefined}
