@@ -385,7 +385,7 @@ export const TriviaRanking = () => {
   };
 
   return (
-    <Tabs defaultValue="global" className="w-full">
+    <Tabs defaultValue="global" onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-3 mb-1">
         <TabsTrigger value="global" className="flex items-center gap-1 text-xs sm:text-sm">
           <Trophy className="w-3.5 h-3.5" />
