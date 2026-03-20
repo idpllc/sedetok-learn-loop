@@ -999,6 +999,14 @@ const Profile = () => {
         />
       )}
 
+      {/* Path Enrollments Dialog */}
+      <PathEnrollmentsDialog
+        open={!!enrollmentsPathId}
+        onOpenChange={(open) => { if (!open) setEnrollmentsPathId(null); }}
+        pathId={enrollmentsPathId || ""}
+        pathTitle={enrollmentsPathTitle}
+      />
+
     </div>
     </>
   );
