@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLiveGames } from "@/hooks/useLiveGames";
-import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft, Pencil, RotateCcw, History } from "lucide-react";
+import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft, Pencil, RotateCcw, History, Zap, QrCode, BarChart3, Clock, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import CreateLiveGameModal from "@/components/live-games/CreateLiveGameModal";
@@ -12,6 +12,7 @@ import JoinLiveGameModal from "@/components/live-games/JoinLiveGameModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
+import { useAuth } from "@/hooks/useAuth";
 
 const LiveGames = () => {
   const navigate = useNavigate();
