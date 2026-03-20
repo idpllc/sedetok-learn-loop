@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList, Eye, Users, Gamepad2, Columns3, ArrowRightLeft, CircleDot, MapPin } from "lucide-react";
+import { ArrowLeft, Video, FileText, HelpCircle, Trash2, Edit, UserCog, Sparkles, LogOut, UserPlus, UserCheck, BookOpen, Map, Briefcase, Heart, Bookmark, Share2, Camera, GraduationCap, ClipboardList, Eye, Users, Gamepad2, Columns3, ArrowRightLeft, CircleDot, MapPin, BarChart3 } from "lucide-react";
 import { getUserLevel } from "@/lib/xpLevels";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
@@ -39,7 +39,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { getDisplayName } from "@/lib/displayName";
-
+import { PathEnrollmentsDialog } from "@/components/learning-paths/PathEnrollmentsDialog";
 const Profile = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -269,6 +269,9 @@ const Profile = () => {
     </Card>
   );
 
+  const [enrollmentsPathId, setEnrollmentsPathId] = useState<string | null>(null);
+  const [enrollmentsPathTitle, setEnrollmentsPathTitle] = useState("");
+
   const PathItem = ({ path }: { path: any }) => (
     <Card 
       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -291,6 +294,19 @@ const Profile = () => {
         
         {isOwnProfile && (
           <div className="absolute top-2 right-2 flex gap-1">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 bg-foreground/90 backdrop-blur-sm hover:bg-foreground text-background"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEnrollmentsPathId(path.id);
+                setEnrollmentsPathTitle(path.title);
+              }}
+              title="Ver avance de estudiantes"
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+            </Button>
             <Button
               variant="secondary"
               size="icon"
@@ -982,6 +998,14 @@ const Profile = () => {
           isOwnProfile={isOwnProfile} 
         />
       )}
+
+      {/* Path Enrollments Dialog */}
+      <PathEnrollmentsDialog
+        open={!!enrollmentsPathId}
+        onOpenChange={(open) => { if (!open) setEnrollmentsPathId(null); }}
+        pathId={enrollmentsPathId || ""}
+        pathTitle={enrollmentsPathTitle}
+      />
 
     </div>
     </>
