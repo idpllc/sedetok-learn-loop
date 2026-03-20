@@ -27,7 +27,6 @@ if (import.meta.env.PROD) {
   });
 }
 
-
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
