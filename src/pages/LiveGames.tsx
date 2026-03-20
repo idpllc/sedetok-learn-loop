@@ -16,9 +16,13 @@ import { useAuth } from "@/hooks/useAuth";
 
 const LiveGames = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { games, isLoading, deleteGame, replayGame } = useLiveGames();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showInfo, setShowInfo] = useState(() => {
+    return !localStorage.getItem('liveGamesInfoDismissed');
+  });
 
   const handleReplayGame = async (gameId: string) => {
     try {
