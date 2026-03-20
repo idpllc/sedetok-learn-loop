@@ -487,7 +487,7 @@ const Achievements = () => {
                     Comprar Educoins
                   </Button>
                   <p className="text-xs text-muted-foreground text-center mt-2">
-                    Usa Educoins para generar quizzes con IA
+                    Usa Educoins para generar contenido con IA, juegos, quizzes y más funciones premium en SEDEFY
                   </p>
                 </div>
               </div>
