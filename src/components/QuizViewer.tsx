@@ -418,6 +418,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
       setSelectedAnswer(null);
+      setSelectedAnswers([]);
       setShortAnswerText("");
       setShowFeedback(false);
       setIsAnswerCorrect(false);
