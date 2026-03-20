@@ -259,10 +259,11 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
     playClick();
     if (fromAvailable) {
       setSelectedWords([...selectedWords, word]);
-      setAvailableWords(availableWords.filter(w => w !== word));
+      const idx = availableWords.indexOf(word);
+      setAvailableWords(availableWords.filter((_, i) => i !== idx));
     } else {
-      const index = selectedWords.indexOf(word);
-      setSelectedWords(selectedWords.filter((_, i) => i !== index));
+      const idx = selectedWords.indexOf(word);
+      setSelectedWords(selectedWords.filter((_, i) => i !== idx));
       setAvailableWords([...availableWords, word]);
     }
   };
