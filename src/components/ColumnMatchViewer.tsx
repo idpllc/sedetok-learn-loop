@@ -310,6 +310,23 @@ export const ColumnMatchViewer = ({ gameId, onComplete, evaluationEventId, showR
 
       // Award 100 XP for game completion
       await awardProfileXP('game_complete', 100, false, gameId);
+
+      // Automatically post a comment with the result
+      try {
+        const commentText = passed
+          ? `🎮 Juego completado con ${normalizedScore}/100 puntos - ¡Aprobado!`
+          : `🎮 Juego completado con ${normalizedScore}/100 puntos - Necesita mejorar`;
+
+        await supabase
+          .from("comments")
+          .insert({
+            user_id: user.id,
+            game_id: gameId,
+            comment_text: commentText,
+          });
+      } catch (commentErr) {
+        console.error("Failed to post automatic game comment:", commentErr);
+      }
     }
 
     if (showResultsImmediately) {
