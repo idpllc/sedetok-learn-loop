@@ -59,6 +59,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
   const [quizTimeLimit, setQuizTimeLimit] = useState<number | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [shortAnswerText, setShortAnswerText] = useState("");
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
@@ -249,17 +250,56 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     return matrix[str2.length][str1.length];
   };
 
+  const getCorrectOptionsCount = (question: Question) => {
+    return question.quiz_options.filter(opt => opt.is_correct).length;
+  };
+
   const handleAnswer = (optionId: string) => {
     if (showFeedback) return;
 
+    const currentQ = questions[currentQuestion];
+    const correctCount = getCorrectOptionsCount(currentQ);
+
+    // Multi-correct question
+    if (correctCount > 1) {
+      setSelectedAnswers(prev => {
+        if (prev.includes(optionId)) {
+          return prev.filter(id => id !== optionId);
+        }
+        return [...prev, optionId];
+      });
+      return;
+    }
+
+    // Single-correct question (original behavior)
     setSelectedAnswer(optionId);
     setShowFeedback(true);
     setUserAnswers({ ...userAnswers, [currentQuestion]: optionId });
 
-    const currentQ = questions[currentQuestion];
     const selectedOption = currentQ.quiz_options.find((opt) => opt.id === optionId);
 
     const correct = selectedOption?.is_correct || false;
+    setQuestionResults({ ...questionResults, [currentQuestion]: correct });
+
+    if (correct) {
+      setScore(score + currentQ.points);
+      setIsAnswerCorrect(true);
+    } else {
+      setIsAnswerCorrect(false);
+    }
+  };
+
+  const handleConfirmMultiSelect = () => {
+    if (showFeedback) return;
+    const currentQ = questions[currentQuestion];
+    const correctOptionIds = currentQ.quiz_options.filter(opt => opt.is_correct).map(opt => opt.id);
+    
+    const allCorrectSelected = correctOptionIds.every(id => selectedAnswers.includes(id));
+    const noIncorrectSelected = selectedAnswers.every(id => correctOptionIds.includes(id));
+    const correct = allCorrectSelected && noIncorrectSelected;
+
+    setShowFeedback(true);
+    setUserAnswers({ ...userAnswers, [currentQuestion]: selectedAnswers.join(',') });
     setQuestionResults({ ...questionResults, [currentQuestion]: correct });
 
     if (correct) {
@@ -364,6 +404,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
+      setSelectedAnswers([]);
       setShortAnswerText("");
       setShowFeedback(false);
       setIsAnswerCorrect(false);
@@ -377,6 +418,7 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
       setSelectedAnswer(null);
+      setSelectedAnswers([]);
       setShortAnswerText("");
       setShowFeedback(false);
       setIsAnswerCorrect(false);
@@ -861,80 +903,118 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
                   )}
 
                    {/* Options for multiple choice and true/false */}
-                   {(currentQ.question_type === "multiple_choice" || currentQ.question_type === "true_false") && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
-                      {currentQ.quiz_options
-                        .sort((a, b) => a.order_index - b.order_index)
-                        .map((option, index) => {
-                          const isSelected = selectedAnswer === option.id;
-                          const isCorrect = option.is_correct;
-                          const showResult = showFeedback && isSelected;
-                          const showAsCorrect = showCorrectAnswers[currentQuestion] && isCorrect;
-                          
-                          // Array de colores vibrantes para estudiantes
-                          const colors = [
-                            'bg-gradient-to-r from-blue-400/20 to-blue-500/20 border-blue-400 hover:from-blue-400/30 hover:to-blue-500/30',
-                            'bg-gradient-to-r from-purple-400/20 to-purple-500/20 border-purple-400 hover:from-purple-400/30 hover:to-purple-500/30',
-                            'bg-gradient-to-r from-pink-400/20 to-pink-500/20 border-pink-400 hover:from-pink-400/30 hover:to-pink-500/30',
-                            'bg-gradient-to-r from-orange-400/20 to-orange-500/20 border-orange-400 hover:from-orange-400/30 hover:to-orange-500/30',
-                            'bg-gradient-to-r from-teal-400/20 to-teal-500/20 border-teal-400 hover:from-teal-400/30 hover:to-teal-500/30',
-                          ];
-                          const colorClass = !showFeedback && !showCorrectAnswers ? colors[index % colors.length] : '';
+                   {(currentQ.question_type === "multiple_choice" || currentQ.question_type === "true_false") && (() => {
+                     const correctCount = getCorrectOptionsCount(currentQ);
+                     const isMultiCorrect = correctCount > 1;
 
-                           return (
-                            <Button
-                              key={option.id}
-                              variant="outline"
-                              className={`w-full justify-start text-left h-auto min-h-[80px] p-3 md:p-4 text-sm md:text-base break-words whitespace-normal ${
-                                showAsCorrect
-                                  ? "bg-green-100 border-green-500 dark:bg-green-900/20"
-                                  : showResult
-                                  ? isCorrect
-                                    ? "bg-green-100 border-green-500 dark:bg-green-900/20"
-                                    : "bg-red-100 border-red-500 dark:bg-red-900/20"
-                                  : isSelected
-                                  ? "bg-primary/10 border-primary"
-                                  : colorClass
-                              }`}
-                              onClick={() => handleAnswer(option.id)}
-                              disabled={showFeedback}
-                            >
-                              <div className="flex-1 space-y-2 flex flex-col">
-                                <span className="block break-words">{option.option_text}</span>
-                                
-                                {option.image_url && (
-                                  <img 
-                                    src={option.image_url} 
-                                    alt="Option" 
-                                    className="w-full max-h-32 object-contain rounded"
-                                  />
-                                )}
-                                
-                                {option.video_url && (
-                                  <div className="aspect-video w-full">
-                                    <iframe
-                                      src={option.video_url.replace("watch?v=", "embed/")}
-                                      className="w-full h-full rounded"
-                                      allowFullScreen
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {(showResult || showAsCorrect) && (
-                                <span className="ml-2 flex-shrink-0 self-start">
-                                  {(isCorrect || showAsCorrect) ? (
-                                    <Check className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
-                                  ) : (
-                                    <X className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
-                                  )}
-                                </span>
-                              )}
-                            </Button>
-                          );
-                        })}
-                    </div>
-                   )}
+                     return (
+                       <div className="space-y-3 w-full">
+                         {/* Multi-correct hint */}
+                         {isMultiCorrect && !showFeedback && (
+                           <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                             <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                             <span>Esta pregunta tiene <strong>{correctCount} respuestas correctas</strong>. Selecciona todas antes de confirmar.</span>
+                           </div>
+                         )}
+
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full">
+                           {currentQ.quiz_options
+                             .sort((a, b) => a.order_index - b.order_index)
+                             .map((option, index) => {
+                               const isSelectedSingle = selectedAnswer === option.id;
+                               const isSelectedMulti = selectedAnswers.includes(option.id);
+                               const isSelected = isMultiCorrect ? isSelectedMulti : isSelectedSingle;
+                               const isCorrect = option.is_correct;
+                               const showResultSingle = showFeedback && isSelectedSingle;
+                               const showResultMulti = showFeedback && isSelectedMulti;
+                               const showResult = isMultiCorrect ? showResultMulti : showResultSingle;
+                               const showAsCorrect = showCorrectAnswers[currentQuestion] && isCorrect;
+                               // When multi-correct and feedback shown, also highlight correct options not selected
+                               const showMissedCorrect = isMultiCorrect && showFeedback && isCorrect && !isSelectedMulti;
+                               
+                               const colors = [
+                                 'bg-gradient-to-r from-blue-400/20 to-blue-500/20 border-blue-400 hover:from-blue-400/30 hover:to-blue-500/30',
+                                 'bg-gradient-to-r from-purple-400/20 to-purple-500/20 border-purple-400 hover:from-purple-400/30 hover:to-purple-500/30',
+                                 'bg-gradient-to-r from-pink-400/20 to-pink-500/20 border-pink-400 hover:from-pink-400/30 hover:to-pink-500/30',
+                                 'bg-gradient-to-r from-orange-400/20 to-orange-500/20 border-orange-400 hover:from-orange-400/30 hover:to-orange-500/30',
+                                 'bg-gradient-to-r from-teal-400/20 to-teal-500/20 border-teal-400 hover:from-teal-400/30 hover:to-teal-500/30',
+                               ];
+                               const colorClass = !showFeedback && !showCorrectAnswers ? colors[index % colors.length] : '';
+
+                                return (
+                                 <Button
+                                   key={option.id}
+                                   variant="outline"
+                                   className={`w-full justify-start text-left h-auto min-h-[80px] p-3 md:p-4 text-sm md:text-base break-words whitespace-normal ${
+                                     showAsCorrect || showMissedCorrect
+                                       ? "bg-green-100 border-green-500 dark:bg-green-900/20"
+                                       : showResult
+                                       ? isCorrect
+                                         ? "bg-green-100 border-green-500 dark:bg-green-900/20"
+                                         : "bg-red-100 border-red-500 dark:bg-red-900/20"
+                                       : isSelected
+                                       ? "bg-primary/10 border-primary ring-2 ring-primary/30"
+                                       : colorClass
+                                   }`}
+                                   onClick={() => handleAnswer(option.id)}
+                                   disabled={showFeedback}
+                                 >
+                                   <div className="flex-1 space-y-2 flex flex-col">
+                                     <span className="block break-words">{option.option_text}</span>
+                                     
+                                     {option.image_url && (
+                                       <img 
+                                         src={option.image_url} 
+                                         alt="Option" 
+                                         className="w-full max-h-32 object-contain rounded"
+                                       />
+                                     )}
+                                     
+                                     {option.video_url && (
+                                       <div className="aspect-video w-full">
+                                         <iframe
+                                           src={option.video_url.replace("watch?v=", "embed/")}
+                                           className="w-full h-full rounded"
+                                           allowFullScreen
+                                         />
+                                       </div>
+                                     )}
+                                   </div>
+                                   
+                                   {(showResult || showAsCorrect || showMissedCorrect) && (
+                                     <span className="ml-2 flex-shrink-0 self-start">
+                                       {(isCorrect || showAsCorrect) ? (
+                                         <Check className="h-4 w-4 md:h-5 md:w-5 text-green-600" />
+                                       ) : (
+                                         <X className="h-4 w-4 md:h-5 md:w-5 text-red-600" />
+                                       )}
+                                     </span>
+                                   )}
+
+                                   {/* Multi-select checkbox indicator */}
+                                   {isMultiCorrect && !showFeedback && isSelected && (
+                                     <span className="ml-2 flex-shrink-0 self-start">
+                                       <Check className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                                     </span>
+                                   )}
+                                 </Button>
+                               );
+                             })}
+                         </div>
+
+                         {/* Confirm button for multi-correct */}
+                         {isMultiCorrect && !showFeedback && (
+                           <Button
+                             onClick={handleConfirmMultiSelect}
+                             disabled={selectedAnswers.length === 0}
+                             className="w-full"
+                           >
+                             Confirmar respuestas ({selectedAnswers.length}/{correctCount} seleccionadas)
+                           </Button>
+                         )}
+                       </div>
+                     );
+                   })()}
 
                    {/* Input for short answer */}
                    {currentQ.question_type === "short_answer" && (
