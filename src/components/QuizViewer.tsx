@@ -250,17 +250,56 @@ export const QuizViewer = ({ quizId, lastAttempt, onComplete, onQuizComplete, ev
     return matrix[str2.length][str1.length];
   };
 
+  const getCorrectOptionsCount = (question: Question) => {
+    return question.quiz_options.filter(opt => opt.is_correct).length;
+  };
+
   const handleAnswer = (optionId: string) => {
     if (showFeedback) return;
 
+    const currentQ = questions[currentQuestion];
+    const correctCount = getCorrectOptionsCount(currentQ);
+
+    // Multi-correct question
+    if (correctCount > 1) {
+      setSelectedAnswers(prev => {
+        if (prev.includes(optionId)) {
+          return prev.filter(id => id !== optionId);
+        }
+        return [...prev, optionId];
+      });
+      return;
+    }
+
+    // Single-correct question (original behavior)
     setSelectedAnswer(optionId);
     setShowFeedback(true);
     setUserAnswers({ ...userAnswers, [currentQuestion]: optionId });
 
-    const currentQ = questions[currentQuestion];
     const selectedOption = currentQ.quiz_options.find((opt) => opt.id === optionId);
 
     const correct = selectedOption?.is_correct || false;
+    setQuestionResults({ ...questionResults, [currentQuestion]: correct });
+
+    if (correct) {
+      setScore(score + currentQ.points);
+      setIsAnswerCorrect(true);
+    } else {
+      setIsAnswerCorrect(false);
+    }
+  };
+
+  const handleConfirmMultiSelect = () => {
+    if (showFeedback) return;
+    const currentQ = questions[currentQuestion];
+    const correctOptionIds = currentQ.quiz_options.filter(opt => opt.is_correct).map(opt => opt.id);
+    
+    const allCorrectSelected = correctOptionIds.every(id => selectedAnswers.includes(id));
+    const noIncorrectSelected = selectedAnswers.every(id => correctOptionIds.includes(id));
+    const correct = allCorrectSelected && noIncorrectSelected;
+
+    setShowFeedback(true);
+    setUserAnswers({ ...userAnswers, [currentQuestion]: selectedAnswers.join(',') });
     setQuestionResults({ ...questionResults, [currentQuestion]: correct });
 
     if (correct) {
