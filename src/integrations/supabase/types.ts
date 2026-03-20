@@ -3611,6 +3611,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_institutional_trivia_ranking: {
+        Args: never
+        Returns: {
+          best_streak: number
+          institution_id: string
+          logo_url: string
+          name: string
+          total_correct: number
+          total_matches: number
+          total_points: number
+          total_students: number
+        }[]
+      }
       get_institutions_xp_ranking: {
         Args: never
         Returns: {
