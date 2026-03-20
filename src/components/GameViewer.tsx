@@ -107,6 +107,27 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
       // Award 100 XP for game completion
       await awardProfileXP('game_complete', 100, false, gameId);
 
+      // Automatically post a comment with the result
+      try {
+        const commentText = passed
+          ? `🎮 Juego completado con ${normalizedScore}/100 puntos - ¡Aprobado!`
+          : `🎮 Juego completado con ${normalizedScore}/100 puntos - Necesita mejorar`;
+
+        const { error: commentError } = await supabase
+          .from("comments")
+          .insert({
+            user_id: user.id,
+            game_id: gameId,
+            comment_text: commentText,
+          });
+
+        if (commentError) {
+          console.error("Error posting automatic game comment:", commentError);
+        }
+      } catch (commentErr) {
+        console.error("Failed to post automatic game comment:", commentErr);
+      }
+
       if (showResultsImmediately) {
         toast.success(`¡Juego completado! Puntuación: ${normalizedScore}/100`);
       }
