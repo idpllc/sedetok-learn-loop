@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLiveGames } from "@/hooks/useLiveGames";
-import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft, Pencil, RotateCcw, History } from "lucide-react";
+import { Gamepad2, Plus, Play, Trash2, Users, ArrowLeft, Pencil, RotateCcw, History, Zap, QrCode, BarChart3, Clock, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import CreateLiveGameModal from "@/components/live-games/CreateLiveGameModal";
@@ -12,12 +12,17 @@ import JoinLiveGameModal from "@/components/live-games/JoinLiveGameModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
+import { useAuth } from "@/hooks/useAuth";
 
 const LiveGames = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { games, isLoading, deleteGame, replayGame } = useLiveGames();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showInfo, setShowInfo] = useState(() => {
+    return !localStorage.getItem('liveGamesInfoDismissed');
+  });
 
   const handleReplayGame = async (gameId: string) => {
     try {
@@ -87,7 +92,116 @@ const LiveGames = () => {
           </div>
         </header>
 
-        <div className="px-4 py-4">
+        <div className="px-4 py-4 space-y-4">
+          {/* Info/Explainer Section */}
+          {showInfo && (
+            <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+              <div className="p-4 space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-foreground">¿Qué son los Juegos en Vivo?</h3>
+                      <p className="text-xs text-muted-foreground">Competencias interactivas en tiempo real</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground"
+                    onClick={() => {
+                      setShowInfo(false);
+                      localStorage.setItem('liveGamesInfoDismissed', 'true');
+                    }}
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Los Juegos en Vivo son competencias <strong className="text-foreground">tipo Kahoot</strong> donde el docente proyecta preguntas y los estudiantes responden desde sus dispositivos en tiempo real. Ideal para repasar temas, evaluar de forma lúdica y mantener la atención del grupo.
+                </p>
+
+                {/* Benefits */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-background/60">
+                    <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">Respuesta rápida</p>
+                      <p className="text-[11px] text-muted-foreground">Temporizador por pregunta con alertas sonoras</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-background/60">
+                    <QrCode className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">Acceso fácil</p>
+                      <p className="text-[11px] text-muted-foreground">Los alumnos entran con un PIN de 6 dígitos o QR</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-background/60">
+                    <BarChart3 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">Resultados al instante</p>
+                      <p className="text-[11px] text-muted-foreground">Ranking en vivo con puntajes y aciertos</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-background/60">
+                    <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">Reutilizable</p>
+                      <p className="text-[11px] text-muted-foreground">Reusa juegos anteriores con un nuevo PIN</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* How to create */}
+                <div className="space-y-2 pt-1">
+                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">¿Cómo crear un juego?</h4>
+                  <ol className="space-y-1.5 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                      <span>Toca <strong className="text-foreground">"Crear Juego"</strong> y escribe un título.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                      <span>Agrega preguntas de opción múltiple con imágenes y retroalimentación. También puedes <strong className="text-foreground">generarlas con IA</strong>.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                      <span>Comparte el <strong className="text-foreground">PIN</strong> con tus estudiantes e inicia la partida.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">4</span>
+                      <span>Proyecta las preguntas mientras ellos responden desde sus celulares. ¡El ranking se actualiza en vivo!</span>
+                    </li>
+                  </ol>
+                </div>
+
+                {!user && (
+                  <p className="text-xs text-muted-foreground bg-background/60 rounded-lg p-2.5 text-center">
+                    💡 <strong className="text-foreground">¿Eres estudiante?</strong> Solo necesitas el PIN de 6 dígitos que te dará tu profesor. Toca "Unirme" para jugar.
+                  </p>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {!showInfo && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-muted-foreground text-xs"
+              onClick={() => {
+                setShowInfo(true);
+                localStorage.removeItem('liveGamesInfoDismissed');
+              }}
+            >
+              <ChevronDown className="w-3.5 h-3.5 mr-1" />
+              ¿Qué son los Juegos en Vivo?
+            </Button>
+          )}
           <Tabs defaultValue="my-games" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="my-games">Mis Juegos</TabsTrigger>
