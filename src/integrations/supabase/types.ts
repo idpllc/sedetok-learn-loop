@@ -1848,6 +1848,35 @@ export type Database = {
         }
         Relationships: []
       }
+      path_enrollments: {
+        Row: {
+          enrolled_at: string
+          id: string
+          path_id: string
+          user_id: string
+        }
+        Insert: {
+          enrolled_at?: string
+          id?: string
+          path_id: string
+          user_id: string
+        }
+        Update: {
+          enrolled_at?: string
+          id?: string
+          path_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "path_enrollments_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           areas_interes: string[] | null
