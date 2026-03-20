@@ -397,70 +397,92 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             onVideoWatched={onVideoWatched}
           />
         ) : documentUrl || (contentType === 'documento' && thumbnail) ? (
-          <div className="w-full h-full flex items-center justify-center relative pointer-events-none">
-            {/* Thumbnail/cover background */}
-            {thumbnail && (
-              <img 
-                src={thumbnail} 
-                alt={title}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
-            
-            {/* Dark overlay */}
-            <div className="absolute inset-0 bg-black/40 z-0" />
-            
-            {/* Central download/view button */}
-            <div className="absolute inset-0 flex items-center justify-center z-[999]">
-              <Button
-                size="lg"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  const resourceUrl = documentUrl || thumbnail;
-                  if (!resourceUrl) return;
+          (() => {
+            const resourceUrl = documentUrl || thumbnail || '';
+            const fileExt = resourceUrl.split('.').pop()?.split('?')[0]?.toUpperCase() || 'ARCHIVO';
+            const extColorMap: Record<string, string> = {
+              PDF: 'from-red-600 via-red-500 to-orange-500',
+              DOC: 'from-blue-700 via-blue-500 to-cyan-500',
+              DOCX: 'from-blue-700 via-blue-500 to-cyan-500',
+              XLS: 'from-green-700 via-green-500 to-emerald-500',
+              XLSX: 'from-green-700 via-green-500 to-emerald-500',
+              PPT: 'from-orange-600 via-orange-500 to-amber-500',
+              PPTX: 'from-orange-600 via-orange-500 to-amber-500',
+              ZIP: 'from-yellow-600 via-yellow-500 to-amber-400',
+              RAR: 'from-yellow-600 via-yellow-500 to-amber-400',
+              PNG: 'from-pink-600 via-fuchsia-500 to-purple-500',
+              JPG: 'from-pink-600 via-fuchsia-500 to-purple-500',
+              JPEG: 'from-pink-600 via-fuchsia-500 to-purple-500',
+              MP3: 'from-violet-600 via-purple-500 to-indigo-500',
+              MP4: 'from-indigo-600 via-blue-500 to-violet-500',
+            };
+            const gradientClass = extColorMap[fileExt] || 'from-slate-700 via-slate-600 to-slate-500';
+            return (
+              <div className="w-full h-full flex items-center justify-center relative pointer-events-none overflow-hidden">
+                {/* Animated gradient background */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} animate-pulse`} style={{ animationDuration: '4s' }} />
+                
+                {/* Decorative pattern */}
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+                
+                {/* Thumbnail overlay if available */}
+                {thumbnail && (
+                  <>
+                    <img src={thumbnail} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <div className="absolute inset-0 bg-black/50" />
+                  </>
+                )}
+                
+                {/* Central content */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-[999] gap-4">
+                  {/* File type badge */}
+                  <div className="bg-white/20 backdrop-blur-md rounded-2xl px-6 py-3 border border-white/30 shadow-2xl">
+                    <span className="text-white font-bold text-2xl tracking-widest">.{fileExt}</span>
+                  </div>
                   
-                  try {
-                    // Use backend function to download file (bypasses CORS) as binary
-                    const { data, error } = await supabase.functions.invoke("download-file", {
-                      body: {
-                        url: resourceUrl,
-                        filename: resourceUrl.split("/").pop() || "recurso",
-                      },
-                    });
+                  <p className="text-white/80 text-sm font-medium max-w-xs text-center truncate px-4">
+                    {title}
+                  </p>
+                  
+                  <Button
+                    size="lg"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!resourceUrl) return;
+                      try {
+                        const { data, error } = await supabase.functions.invoke("download-file", {
+                          body: { url: resourceUrl, filename: resourceUrl.split("/").pop() || "recurso" },
+                        });
+                        if (error) throw error;
+                        if ((data as any)?.fallback) {
+                          window.open(resourceUrl, "_blank", "noopener,noreferrer");
+                        } else {
+                          const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement("a");
+                          link.href = url;
+                          link.download = resourceUrl.split("/").pop() || "recurso";
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                        }
+                        onDocumentDownload?.();
+                      } catch (error) {
+                        console.error("Error downloading file:", error);
+                        window.open(resourceUrl, "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                    className="flex items-center gap-3 shadow-2xl bg-white text-black hover:bg-white/90 text-lg px-8 py-6 hover:scale-105 transition-all duration-300 pointer-events-auto rounded-full font-bold"
+                  >
+                    <Download className="w-6 h-6" />
+                    Descargar {fileExt}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()
 
-                    if (error) throw error;
-
-                    // Fallback path: open URL directly in new tab
-                    if ((data as any)?.fallback) {
-                      window.open(resourceUrl, "_blank", "noopener,noreferrer");
-                    } else {
-                      // When the function returns Content-Type: application/octet-stream,
-                      // supabase.functions.invoke() gives us a Blob.
-                      const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
-                      const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement("a");
-                      link.href = url;
-                      link.download = resourceUrl.split("/").pop() || "recurso";
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      window.URL.revokeObjectURL(url);
-                    }
-
-                    onDocumentDownload?.();
-                  } catch (error) {
-                    console.error("Error downloading file:", error);
-                    // Fallback: open in new tab
-                    window.open(resourceUrl, "_blank", "noopener,noreferrer");
-                  }
-                }}
-                className="flex items-center gap-2 shadow-2xl bg-primary hover:bg-primary/90 text-lg px-8 py-6 hover:scale-105 transition-transform pointer-events-auto"
-              >
-                <Download className="w-6 h-6" />
-                Descargar Recurso
-              </Button>
-            </div>
-          </div>
         ) : contentType === 'lectura' && richText ? (
           <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
             <div className="w-full max-w-2xl bg-background/95 backdrop-blur-sm rounded-lg p-6 shadow-xl overflow-hidden">
