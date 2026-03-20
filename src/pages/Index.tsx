@@ -447,6 +447,21 @@ const Index = () => {
                             ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40'
                             : item.content_type === 'game' && !item.cover_url && !item.thumbnail_url
                             ? 'bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/20'
+                            : item.content_type === 'document' && !item.cover_url && !item.thumbnail_url
+                            ? (() => {
+                                const docUrl = item.document_url || '';
+                                const ext = docUrl.split('.').pop()?.split('?')[0]?.toUpperCase() || '';
+                                const docColorMap: Record<string, string> = {
+                                  PDF: 'from-red-600 via-red-500 to-orange-500',
+                                  DOC: 'from-blue-700 via-blue-500 to-cyan-500',
+                                  DOCX: 'from-blue-700 via-blue-500 to-cyan-500',
+                                  XLS: 'from-green-700 via-green-500 to-emerald-500',
+                                  XLSX: 'from-green-700 via-green-500 to-emerald-500',
+                                  PPT: 'from-orange-600 via-orange-500 to-amber-500',
+                                  PPTX: 'from-orange-600 via-orange-500 to-amber-500',
+                                };
+                                return `bg-gradient-to-br ${docColorMap[ext] || 'from-teal-600 via-teal-500 to-emerald-500'}`;
+                              })()
                             : 'bg-gradient-to-br from-primary/20 to-secondary/20'
                         }`}>
                           {(item.cover_url || item.thumbnail_url) ? (
@@ -476,6 +491,18 @@ const Index = () => {
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                               <span className="text-5xl">🎮</span>
                               <span className="text-xs font-medium text-muted-foreground capitalize">{item.game_type?.replace('_', ' ') || 'Juego'}</span>
+                            </div>
+                          ) : item.content_type === 'document' && !item.cover_url && !item.thumbnail_url ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+                              <FileText className="w-10 h-10 text-white drop-shadow-lg" />
+                              {(() => {
+                                const docUrl = item.document_url || '';
+                                const ext = docUrl.split('.').pop()?.split('?')[0]?.toUpperCase() || '';
+                                return ext ? (
+                                  <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-md border border-white/30 tracking-wider">.{ext}</span>
+                                ) : null;
+                              })()}
                             </div>
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
