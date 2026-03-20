@@ -301,8 +301,11 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+      <Dialog open={open} onOpenChange={(value) => {
+        if (postponeDialogOpen) return;
+        onOpenChange(value);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 z-[70]">
           <div className="sticky top-0 bg-card z-10 border-b border-border">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-2">
@@ -313,7 +316,12 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handlePostpone}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handlePostpone();
+                  }}
+                  type="button"
                 >
                   Posponer
                 </Button>
@@ -360,7 +368,7 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
       </Dialog>
 
       <AlertDialog open={postponeDialogOpen} onOpenChange={setPostponeDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[80]">
           <AlertDialogHeader>
             <AlertDialogTitle>¿Posponer el perfil 360°?</AlertDialogTitle>
             <AlertDialogDescription>
