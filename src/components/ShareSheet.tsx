@@ -20,7 +20,7 @@ export const ShareSheet = ({ contentId, contentTitle, isQuiz, isGame, sharesCoun
   const [open, setOpen] = useState(false);
 
   const paramName = isGame ? 'game' : isQuiz ? 'quiz' : 'content';
-  const shareUrl = `${window.location.origin}/?${paramName}=${contentId}`;
+  const shareUrl = `${window.location.origin}/sedetok?${paramName}=${contentId}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(contentTitle);
 
