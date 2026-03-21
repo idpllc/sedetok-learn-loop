@@ -59,6 +59,7 @@ interface ContentCardProps {
   onReadComplete?: () => void;
   onDocumentDownload?: () => void;
   onQuizComplete?: (passed: boolean) => void;
+  onGameComplete?: () => void;
 }
 
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
