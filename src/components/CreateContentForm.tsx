@@ -460,10 +460,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   };
 
   const handleGameSubmit = async (status: "draft" | "published") => {
+    if (isSubmittingGame) return;
     if (!user) {
       toast.error("Debes iniciar sesión para crear un juego");
       return;
     }
+    setIsSubmittingGame(true);
 
     // Validate based on game type
     if (gameType === "word_order") {
