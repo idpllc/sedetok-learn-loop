@@ -448,6 +448,4 @@ export function RPMAvatar({ avatarUrl, isSpeaking, audioLevel = 0 }: RPMAvatarPr
   );
 }
 
-// Preload avatar URLs with morphTargets enabled
-useGLTF.preload('https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit');
-useGLTF.preload('https://models.readyplayer.me/693a028814ff705000c68122.glb?morphTargets=Oculus%20Visemes,ARKit');
+// Preload removed - avatars loaded on demand
