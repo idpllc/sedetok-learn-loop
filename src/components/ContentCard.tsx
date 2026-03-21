@@ -375,7 +375,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 {/* Thumbnail overlay if available */}
                 {thumbnail && (
                   <>
-                    <img src={thumbnail} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <img src={thumbnail} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" width={400} height={300} />
                     <div className="absolute inset-0 bg-black/50" />
                   </>
                 )}
