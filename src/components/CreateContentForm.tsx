@@ -349,10 +349,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   };
 
   const handleQuizSubmit = async (status: "borrador" | "publicado") => {
+    if (isSubmittingQuiz) return;
     if (!user) {
       toast.error("Debes iniciar sesión para crear un quiz");
       return;
     }
+    setIsSubmittingQuiz(true);
 
     if (quizQuestions.length < 5) {
       toast.error("Debes agregar al menos 5 preguntas antes de guardar el quiz");
