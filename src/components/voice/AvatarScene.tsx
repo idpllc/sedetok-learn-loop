@@ -1,9 +1,30 @@
-import { Suspense, useMemo, useState, useCallback } from 'react';
+import { Suspense, useMemo, useState, useCallback, Component, ReactNode } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, Stars } from '@react-three/drei';
 import { RPMAvatar } from './RPMAvatar';
 import { Loader2, User } from 'lucide-react';
 import * as THREE from 'three';
+
+// Internal error boundary that triggers 2D fallback
+class AvatarErrorBoundary extends Component<
+  { children: ReactNode; onError: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode; onError: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+  componentDidCatch() {
+    this.props.onError();
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
 
 interface AvatarSceneProps {
   avatarUrl: string;
