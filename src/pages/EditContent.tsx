@@ -6,15 +6,17 @@ import { CreateContentForm } from "@/components/CreateContentForm";
 import { useUserContent } from "@/hooks/useUserContent";
 import { useCloudinary } from "@/hooks/useCloudinary";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const EditContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const { user, loading: authLoading } = useAuth();
-  const { userContent, isLoading, updateMutation } = useUserContent();
+  const { userContent, isLoading, updateMutation } = useUserContent(user?.id);
   const { uploadFile } = useCloudinary();
   const [content, setContent] = useState<any>(null);
+  const [directLoading, setDirectLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -22,18 +24,39 @@ const EditContent = () => {
     }
   }, [user, authLoading, navigate, location]);
 
+  // Try to find content from userContent first, then fetch directly
   useEffect(() => {
-    if (userContent && id) {
+    if (!id || !user) return;
+
+    if (userContent) {
       const foundContent = userContent.find((c) => c.id === id);
       if (foundContent) {
         setContent(foundContent);
-      } else {
-        navigate("/profile");
+        return;
       }
     }
-  }, [userContent, id, navigate]);
 
-  if (authLoading || !user || isLoading || !content) {
+    // If not found in userContent (or still loading), fetch directly
+    if (!isLoading && !content) {
+      setDirectLoading(true);
+      supabase
+        .from("content")
+        .select("*, profiles:creator_id (username, avatar_url, institution)")
+        .eq("id", id)
+        .eq("creator_id", user.id)
+        .maybeSingle()
+        .then(({ data, error }) => {
+          setDirectLoading(false);
+          if (error || !data) {
+            navigate("/profile");
+          } else {
+            setContent(data);
+          }
+        });
+    }
+  }, [userContent, id, user, isLoading]);
+
+  if (authLoading || !user || (isLoading && !content) || directLoading || !content) {
     return (
       <div className="min-h-screen bg-background pb-20 flex items-center justify-center pt-14 md:pt-0">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
