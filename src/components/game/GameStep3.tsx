@@ -27,10 +27,13 @@ export const GameStep3 = ({ config, onChange }: GameStep3Props) => {
         <Input
           id="time-limit"
           type="number"
-          min="0"
+          min="60"
           value={config.time_limit || ""}
-          onChange={(e) => onChange({ ...config, time_limit: parseInt(e.target.value) || undefined })}
-          placeholder="Opcional - deja vacío para sin límite"
+          onChange={(e) => {
+            const val = parseInt(e.target.value);
+            onChange({ ...config, time_limit: val ? Math.max(val, 60) : undefined });
+          }}
+          placeholder="Mínimo 60 segundos - deja vacío para sin límite"
         />
         <p className="text-xs text-muted-foreground">
           Si está vacío, el juego no tendrá límite de tiempo
