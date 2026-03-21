@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, X, Clock, RotateCcw, Trophy, Heart, ClipboardList } from "lucide-react";
+import { Check, X, Clock, RotateCcw, Trophy, Heart, ClipboardList, ShoppingCart, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ import { WordWheelViewer } from "./WordWheelViewer";
 import { InteractiveImageViewer } from "./game/InteractiveImageViewer";
 import { useGameSounds } from "@/hooks/useGameSounds";
 import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
+import { GamePurchaseModal } from "./game/GamePurchaseModal";
 
 interface GameViewerProps {
   gameId: string;
