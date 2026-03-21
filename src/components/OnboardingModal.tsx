@@ -305,7 +305,7 @@ export const OnboardingModal = ({ open, onOpenChange, initialStep = 1 }: Onboard
         if (postponeDialogOpen) return;
         onOpenChange(value);
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 z-[70] [&~[data-overlay]]:bg-black/30" overlayClassName="bg-black/30">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 z-[70]">
           <div className="sticky top-0 bg-card z-10 border-b border-border">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-2">
