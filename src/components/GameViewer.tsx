@@ -243,19 +243,34 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
           }))}
           maxLives={3}
           timeLimit={gameData.time_limit}
-          onComplete={async (score, maxScore) => {
+          onComplete={async (scoreVal, maxScoreVal) => {
             if (user) {
+              const passed = scoreVal >= 60;
               await supabase.from("user_quiz_results").insert({
                 user_id: user.id,
                 game_id: gameId,
-                score,
-                max_score: 100, // Always 100 max
-                passed: score >= 60,
+                score: scoreVal,
+                max_score: 100,
+                passed,
                 evaluation_event_id: evaluationEventId,
               });
               
               // Award 100 XP
               awardProfileXP('game_complete', 100, false, gameId);
+
+              // Post automatic comment with result
+              try {
+                const commentText = passed
+                  ? `🎮 Juego completado con ${scoreVal}/100 puntos - ¡Aprobado!`
+                  : `🎮 Juego completado con ${scoreVal}/100 puntos - Necesita mejorar`;
+                await supabase.from("comments").insert({
+                  user_id: user.id,
+                  game_id: gameId,
+                  comment_text: commentText,
+                });
+              } catch (commentErr) {
+                console.error("Failed to post automatic game comment:", commentErr);
+              }
             }
             if (onComplete) onComplete();
           }}
