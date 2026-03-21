@@ -203,10 +203,15 @@ const QuizEvaluations = () => {
         </Tabs>
 
         <CreateUnifiedEvaluationEvent
-          quizId={quizId}
-          gameId={gameId}
+          quizId={createQuizId || quizId}
+          gameId={createGameId || gameId}
           open={showCreateModal}
-          onOpenChange={setShowCreateModal}
+          onOpenChange={(open) => {
+            setShowCreateModal(open);
+            if (!open && (createQuizId || createGameId)) {
+              setSearchParams({});
+            }
+          }}
         />
       </div>
     </div>
