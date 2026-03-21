@@ -71,11 +71,13 @@ export const usePathProgress = (pathId?: string) => {
     mutationFn: async ({
       contentId,
       quizId,
+      gameId,
       progressData,
       completed,
     }: {
       contentId?: string;
       quizId?: string;
+      gameId?: string;
       progressData: any;
       completed?: boolean;
     }) => {
@@ -88,10 +90,11 @@ export const usePathProgress = (pathId?: string) => {
           path_id: pathId,
           content_id: contentId || null,
           quiz_id: quizId || null,
+          game_id: gameId || null,
           completed: completed || false,
           completed_at: completed ? new Date().toISOString() : null,
           progress_data: progressData,
-        })
+        } as any)
         .select()
         .single();
 
