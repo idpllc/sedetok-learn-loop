@@ -117,19 +117,20 @@ export const usePathProgress = (pathId?: string) => {
     return new Set(
       progress
         .filter((p) => p.completed)
-        .map((p) => p.content_id || p.quiz_id)
+        .map((p) => p.content_id || p.quiz_id || (p as any).game_id)
         .filter(Boolean) as string[]
     );
   };
 
-  const isCompleted = (contentId?: string, quizId?: string): boolean => {
+  const isCompleted = (contentId?: string, quizId?: string, gameId?: string): boolean => {
     if (!progress) return false;
     
     return progress.some(
       (p) =>
         p.completed &&
         ((contentId && p.content_id === contentId) ||
-          (quizId && p.quiz_id === quizId))
+          (quizId && p.quiz_id === quizId) ||
+          (gameId && (p as any).game_id === gameId))
     );
   };
 

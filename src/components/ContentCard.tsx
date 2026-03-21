@@ -870,6 +870,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 gameId={id}
                 onComplete={() => {
                   setGameModalOpen(false);
+                  onGameComplete?.();
                 }}
               />
             </div>
