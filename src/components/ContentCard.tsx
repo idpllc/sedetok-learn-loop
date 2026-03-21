@@ -623,6 +623,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             src={thumbnail} 
             alt={title}
             className="w-full h-full object-cover"
+            loading="lazy"
+            width={400}
+            height={300}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
