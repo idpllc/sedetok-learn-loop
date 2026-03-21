@@ -375,7 +375,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 {/* Thumbnail overlay if available */}
                 {thumbnail && (
                   <>
-                    <img src={thumbnail} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <img src={thumbnail} alt={title} className="absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy" width={400} height={300} />
                     <div className="absolute inset-0 bg-black/50" />
                   </>
                 )}
@@ -486,6 +486,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       src={scientist.icon} 
                       alt={scientist.name}
                       className="w-32 h-32 mx-auto rounded-full shadow-2xl border-4 border-white/30 object-cover animate-bounce"
+                      loading="lazy"
+                      width={128}
+                      height={128}
                     />
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white mb-4">{title}</h3>
@@ -623,6 +626,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             src={thumbnail} 
             alt={title}
             className="w-full h-full object-cover"
+            loading="lazy"
+            width={400}
+            height={300}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
@@ -731,7 +737,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-lg"
             >
               {creatorAvatar ? (
-                <img src={creatorAvatar} alt={creator} className="w-full h-full object-cover" />
+                <img src={creatorAvatar} alt={creator} className="w-full h-full object-cover" loading="lazy" width={48} height={48} />
               ) : (
                 <div className="w-full h-full bg-primary/80 flex items-center justify-center">
                   <span className="text-white font-semibold text-lg">{creator.charAt(0)}</span>

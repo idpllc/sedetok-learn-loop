@@ -168,7 +168,7 @@ export const Sidebar = () => {
             <span className="text-primary-foreground font-bold text-sm">S</span>
           </div>
         ) : (
-          <img src={sedefyLogo} alt="Sedefy" className="h-8 w-auto" />
+          <img src={sedefyLogo} alt="Sedefy" className="h-8 w-auto" width={110} height={32} />
         )}
       </div>
 
