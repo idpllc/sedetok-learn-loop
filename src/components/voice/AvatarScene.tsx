@@ -169,12 +169,14 @@ export function AvatarScene({ avatarUrl, isSpeaking, audioLevel = 0, avatarImage
 
   return (
     <div className="w-full h-full relative overflow-hidden rounded-xl">
-      <CanvasWrapper 
-        avatarUrl={avatarUrl} 
-        isSpeaking={isSpeaking} 
-        audioLevel={audioLevel} 
-        onError={handleError}
-      />
+      <AvatarErrorBoundary onError={handleError}>
+        <CanvasWrapper 
+          avatarUrl={avatarUrl} 
+          isSpeaking={isSpeaking} 
+          audioLevel={audioLevel} 
+          onError={handleError}
+        />
+      </AvatarErrorBoundary>
     </div>
   );
 }
