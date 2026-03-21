@@ -97,6 +97,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   onReadComplete,
   onDocumentDownload,
   onQuizComplete,
+  onGameComplete,
 }, ref) => {
   const navigate = useNavigate();
   const { user } = useAuth();
