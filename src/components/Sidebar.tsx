@@ -292,26 +292,8 @@ export const Sidebar = () => {
             >
               Sobre Sedefy
             </button>
-            <button
-              onClick={() => handleNavigate("/creator-program")}
-              className="block hover:text-foreground transition-colors"
-            >
-              Programa de creadores
-            </button>
-            <button
-              onClick={() => handleNavigate("/terms")}
-              className="block hover:text-foreground transition-colors"
-            >
-              Términos y condiciones
-            </button>
-            <button
-              onClick={() => handleNavigate("/privacy")}
-              className="block hover:text-foreground transition-colors"
-            >
-              Política de privacidad
-            </button>
           </nav>
-          <p className="mt-4 text-xs text-muted-foreground">© 2025 Sedefy</p>
+          <p className="mt-4 text-xs text-muted-foreground">© 2026 Sedefy</p>
         </div>
       )}
     </>
