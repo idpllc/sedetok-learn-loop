@@ -68,6 +68,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const { createPath, updatePath } = useLearningPaths(user?.id, 'created');
   const { createGame, updateGame } = useGames();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
+  const [isSubmittingGame, setIsSubmittingGame] = useState(false);
   const [quizStep, setQuizStep] = useState(0); // 0 = basic form, 1 = questions, 2 = config
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizConfig, setQuizConfig] = useState({
