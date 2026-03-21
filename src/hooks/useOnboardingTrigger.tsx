@@ -37,26 +37,8 @@ export const useOnboardingTrigger = () => {
         const savedStep = profile.onboarding_paso_actual || 1;
         setInitialStep(savedStep);
 
-        const sessionStart = localStorage.getItem("session_start");
-        const now = Date.now();
-
-        if (!sessionStart) {
-          localStorage.setItem("session_start", now.toString());
-        } else {
-          const elapsedTime = now - parseInt(sessionStart);
-          const fiveMinutes = 5 * 60 * 1000;
-
-          if (elapsedTime >= fiveMinutes) {
-            setShouldShowOnboarding(true);
-          } else {
-            const timeRemaining = fiveMinutes - elapsedTime;
-            const timeoutId = setTimeout(() => {
-              setShouldShowOnboarding(true);
-            }, timeRemaining);
-
-            return () => clearTimeout(timeoutId);
-          }
-        }
+        // Only show onboarding when explicitly requested by the user
+        // Do not auto-trigger based on session time
       } catch (error) {
         console.error("Error checking onboarding status:", error);
       }
