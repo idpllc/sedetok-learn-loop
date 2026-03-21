@@ -422,19 +422,30 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
     >
       <div className="max-w-4xl mx-auto space-y-6 flex flex-col justify-center min-h-full">
         {/* Header */}
-        <div className="flex items-center justify-between pr-8">
+        <div className="flex items-center justify-between flex-wrap gap-2 pr-8">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              {[...Array(3)].map((_, i) => (
+            <div className="flex items-center gap-1">
+              {[...Array(maxLives)].map((_, i) => (
                 <Heart
                   key={i}
                   className={`w-5 h-5 ${
                     i < lives
-                      ? "fill-red-500 text-red-500"
+                      ? "fill-destructive text-destructive"
                       : "fill-muted text-muted"
                   }`}
                 />
               ))}
+              {user && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 ml-1"
+                  onClick={() => setPurchaseType("lives")}
+                  title="Comprar vidas"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              )}
             </div>
             <span className="text-sm font-medium text-muted-foreground">
               Pregunta {currentQuestion + 1} de {questions.length}
@@ -443,6 +454,17 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
               <div className="flex items-center gap-2 text-primary">
                 <Clock className="w-4 h-4" />
                 <span className="font-mono font-bold">{formatTime(timeRemaining)}</span>
+                {user && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setPurchaseType("time")}
+                    title="Comprar tiempo"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </div>
             )}
           </div>
