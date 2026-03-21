@@ -486,6 +486,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       src={scientist.icon} 
                       alt={scientist.name}
                       className="w-32 h-32 mx-auto rounded-full shadow-2xl border-4 border-white/30 object-cover animate-bounce"
+                      loading="lazy"
+                      width={128}
+                      height={128}
                     />
                   </div>
                   <h3 className="text-xl md:text-2xl font-bold text-white mb-4">{title}</h3>
