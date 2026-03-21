@@ -454,6 +454,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     } catch (error) {
       console.error("Error saving quiz:", error);
       toast.error(editMode ? "Error al actualizar el quiz" : "Error al guardar el quiz");
+    } finally {
+      setIsSubmittingQuiz(false);
     }
   };
 
