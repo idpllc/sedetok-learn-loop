@@ -29,7 +29,7 @@ export const GamePurchaseModal = ({ open, onOpenChange, type, onPurchase }: Game
   const [userXP, setUserXP] = useState<number | null>(null);
 
   // Fetch XP on open
-  useState(() => {
+  useEffect(() => {
     if (open && user) {
       supabase
         .from("profiles")
@@ -40,7 +40,7 @@ export const GamePurchaseModal = ({ open, onOpenChange, type, onPurchase }: Game
           setUserXP(data?.experience_points || 0);
         });
     }
-  });
+  }, [open, user]);
 
   const isLives = type === "lives";
   const educoinsPerUnit = isLives ? LIFE_COST_EDUCOINS : TIME_COST_EDUCOINS;
