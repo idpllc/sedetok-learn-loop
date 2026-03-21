@@ -600,6 +600,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     } catch (error) {
       console.error("Error saving game:", error);
       toast.error(editMode ? "Error al actualizar el juego" : "Error al guardar el juego");
+    } finally {
+      setIsSubmittingGame(false);
     }
   };
 
