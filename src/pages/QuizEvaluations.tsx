@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, ArrowLeft, Copy, Share2, CheckCircle } from "lucide-react";
@@ -17,11 +17,22 @@ import { useToast } from "@/hooks/use-toast";
 
 const QuizEvaluations = () => {
   const { quizId, gameId, eventId } = useParams<{ quizId?: string; gameId?: string; eventId?: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { eventResults, resultsLoading } = useEvaluationEvents(undefined, undefined, undefined, eventId);
+
+  const createQuizId = searchParams.get("createQuizId");
+  const createGameId = searchParams.get("createGameId");
+
+  // Auto-open modal when navigating with createQuizId or createGameId
+  useEffect(() => {
+    if (createQuizId || createGameId) {
+      setShowCreateModal(true);
+    }
+  }, [createQuizId, createGameId]);
 
   // Fetch event details when viewing an event
   const { data: eventDetails } = useQuery({

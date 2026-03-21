@@ -274,65 +274,12 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     }
   };
 
-  const handleAutoCreateEvaluation = async (type: 'quiz' | 'game') => {
-    if (!user || isCreatingEvent) return;
-    setIsCreatingEvent(true);
-    try {
-      // Generate access code
-      const { data: codeData, error: codeError } = await supabase.rpc("generate_access_code");
-      if (codeError) throw codeError;
-
-      // Auto-set dates: start now, end in 7 days
-      const now = new Date();
-      const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-      const eventPayload: any = {
-        creator_id: user.id,
-        title: `Evaluación - ${title}`,
-        start_date: now.toISOString(),
-        end_date: endDate.toISOString(),
-        access_code: codeData,
-        require_authentication: true,
-        allow_multiple_attempts: false,
-        show_results_immediately: true,
-      };
-
-      if (type === 'quiz') {
-        eventPayload.quiz_id = id;
-      } else {
-        eventPayload.game_id = id;
-      }
-
-      const { data: eventData, error: eventError } = await supabase
-        .from("quiz_evaluation_events")
-        .insert(eventPayload)
-        .select()
-        .single();
-
-      if (eventError) throw eventError;
-
-      queryClient.invalidateQueries({ queryKey: ["evaluation-events"] });
-
-      // Navigate to the event results view
-      navigate(`/quiz-evaluations/results/${eventData.id}`);
-
-      // Show toast with access code
-      const { toast } = await import("@/hooks/use-toast");
-      toast({
-        title: "✅ Evento evaluativo creado",
-        description: `Código de acceso: ${eventData.access_code}. Compártelo con tus estudiantes para que se unan y respondan.`,
-        duration: 10000,
-      });
-    } catch (error: any) {
-      console.error("Error creating evaluation event:", error);
-      const { toast } = await import("@/hooks/use-toast");
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el evento evaluativo",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingEvent(false);
+  const handleAutoCreateEvaluation = (type: 'quiz' | 'game') => {
+    if (!user) return;
+    if (type === 'quiz') {
+      navigate(`/quiz-evaluations?createQuizId=${id}`);
+    } else {
+      navigate(`/quiz-evaluations?createGameId=${id}`);
     }
   };
 
