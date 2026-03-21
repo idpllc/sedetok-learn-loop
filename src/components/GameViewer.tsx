@@ -63,6 +63,8 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
   const [startTime, setStartTime] = useState<number | null>(null);
   const [lives, setLives] = useState(3);
   const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+  const [purchaseType, setPurchaseType] = useState<"lives" | "time" | null>(null);
+  const maxLives = 3;
 
   // Helper functions defined before useEffects
   const shuffleArray = (array: string[]) => {
