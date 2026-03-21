@@ -68,6 +68,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const { createPath, updatePath } = useLearningPaths(user?.id, 'created');
   const { createGame, updateGame } = useGames();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
+  const [isSubmittingGame, setIsSubmittingGame] = useState(false);
   const [quizStep, setQuizStep] = useState(0); // 0 = basic form, 1 = questions, 2 = config
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [quizConfig, setQuizConfig] = useState({
@@ -347,10 +349,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   };
 
   const handleQuizSubmit = async (status: "borrador" | "publicado") => {
+    if (isSubmittingQuiz) return;
     if (!user) {
       toast.error("Debes iniciar sesión para crear un quiz");
       return;
     }
+    setIsSubmittingQuiz(true);
 
     if (quizQuestions.length < 5) {
       toast.error("Debes agregar al menos 5 preguntas antes de guardar el quiz");
@@ -450,14 +454,18 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     } catch (error) {
       console.error("Error saving quiz:", error);
       toast.error(editMode ? "Error al actualizar el quiz" : "Error al guardar el quiz");
+    } finally {
+      setIsSubmittingQuiz(false);
     }
   };
 
   const handleGameSubmit = async (status: "draft" | "published") => {
+    if (isSubmittingGame) return;
     if (!user) {
       toast.error("Debes iniciar sesión para crear un juego");
       return;
     }
+    setIsSubmittingGame(true);
 
     // Validate based on game type
     if (gameType === "word_order") {
@@ -592,6 +600,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     } catch (error) {
       console.error("Error saving game:", error);
       toast.error(editMode ? "Error al actualizar el juego" : "Error al guardar el juego");
+    } finally {
+      setIsSubmittingGame(false);
     }
   };
 
@@ -934,15 +944,15 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <Button
                   variant="outline"
                   onClick={() => handleQuizSubmit("borrador")}
-                  disabled={quizQuestions.length === 0}
+                  disabled={quizQuestions.length === 0 || isSubmittingQuiz}
                 >
-                  Guardar borrador
+                  {isSubmittingQuiz ? "Guardando..." : "Guardar borrador"}
                 </Button>
                 <Button
                   onClick={() => handleQuizSubmit("publicado")}
-                  disabled={quizQuestions.length === 0}
+                  disabled={quizQuestions.length === 0 || isSubmittingQuiz}
                 >
-                  Publicar
+                  {isSubmittingQuiz ? "Publicando..." : "Publicar"}
                 </Button>
               </>
             )}
@@ -1117,22 +1127,24 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   variant="outline"
                   onClick={() => handleGameSubmit("draft")}
                   disabled={
-                    (gameType === "word_order" || gameType === "word_wheel" || gameType === "interactive_image")
+                    isSubmittingGame ||
+                    ((gameType === "word_order" || gameType === "word_wheel" || gameType === "interactive_image")
                       ? gameQuestions.length === 0
-                      : (leftColumnItems.length === 0 || rightColumnItems.length === 0)
+                      : (leftColumnItems.length === 0 || rightColumnItems.length === 0))
                   }
                 >
-                  Guardar borrador
+                  {isSubmittingGame ? "Guardando..." : "Guardar borrador"}
                 </Button>
                 <Button
                   onClick={() => handleGameSubmit("published")}
                   disabled={
-                    (gameType === "word_order" || gameType === "word_wheel" || gameType === "interactive_image")
+                    isSubmittingGame ||
+                    ((gameType === "word_order" || gameType === "word_wheel" || gameType === "interactive_image")
                       ? gameQuestions.length === 0
-                      : (leftColumnItems.length === 0 || rightColumnItems.length === 0)
+                      : (leftColumnItems.length === 0 || rightColumnItems.length === 0))
                   }
                 >
-                  Publicar
+                  {isSubmittingGame ? "Publicando..." : "Publicar"}
                 </Button>
               </>
             )}
