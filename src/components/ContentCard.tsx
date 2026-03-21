@@ -415,6 +415,27 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                           window.URL.revokeObjectURL(url);
                         }
                         onDocumentDownload?.();
+                        // Post automatic download comment
+                        if (user) {
+                          try {
+                            const { data: existing } = await supabase
+                              .from("comments")
+                              .select("id")
+                              .eq("user_id", user.id)
+                              .eq("content_id", id)
+                              .like("comment_text", "%📥 Recurso descargado%")
+                              .maybeSingle();
+                            if (!existing) {
+                              await supabase.from("comments").insert({
+                                user_id: user.id,
+                                content_id: id,
+                                comment_text: `📥 Recurso descargado`,
+                              });
+                            }
+                          } catch (err) {
+                            console.error("Error posting download comment:", err);
+                          }
+                        }
                       } catch (error) {
                         console.error("Error downloading file:", error);
                         window.open(resourceUrl, "_blank", "noopener,noreferrer");
