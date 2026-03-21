@@ -276,11 +276,9 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 
   const handleAutoCreateEvaluation = (type: 'quiz' | 'game') => {
     if (!user) return;
-    if (type === 'quiz') {
-      navigate(`/quiz-evaluations?createQuizId=${id}`);
-    } else {
-      navigate(`/quiz-evaluations?createGameId=${id}`);
-    }
+    const param = type === 'quiz' ? `createQuizId=${id}` : `createGameId=${id}`;
+    // Use window.location for reliable navigation from SedeTok fullscreen context
+    window.location.href = `/quiz-evaluations?${param}`;
   };
 
   const handleExpandReading = () => {
