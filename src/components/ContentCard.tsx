@@ -59,6 +59,7 @@ interface ContentCardProps {
   onReadComplete?: () => void;
   onDocumentDownload?: () => void;
   onQuizComplete?: (passed: boolean) => void;
+  onGameComplete?: () => void;
 }
 
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
@@ -96,6 +97,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   onReadComplete,
   onDocumentDownload,
   onQuizComplete,
+  onGameComplete,
 }, ref) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -868,6 +870,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 gameId={id}
                 onComplete={() => {
                   setGameModalOpen(false);
+                  onGameComplete?.();
                 }}
               />
             </div>

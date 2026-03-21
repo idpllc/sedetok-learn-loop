@@ -1,0 +1,1 @@
+ALTER TABLE public.user_path_progress ADD COLUMN game_id uuid REFERENCES public.games(id) ON DELETE CASCADE;

@@ -29,10 +29,12 @@ export const usePathProgress = (pathId?: string) => {
     mutationFn: async ({
       contentId,
       quizId,
+      gameId,
       progressData,
     }: {
       contentId?: string;
       quizId?: string;
+      gameId?: string;
       progressData?: any;
     }) => {
       if (!user || !pathId) throw new Error("Usuario no autenticado");
@@ -44,10 +46,11 @@ export const usePathProgress = (pathId?: string) => {
           path_id: pathId,
           content_id: contentId || null,
           quiz_id: quizId || null,
+          game_id: gameId || null,
           completed: true,
           completed_at: new Date().toISOString(),
           progress_data: progressData || {},
-        })
+        } as any)
         .select()
         .single();
 
@@ -68,11 +71,13 @@ export const usePathProgress = (pathId?: string) => {
     mutationFn: async ({
       contentId,
       quizId,
+      gameId,
       progressData,
       completed,
     }: {
       contentId?: string;
       quizId?: string;
+      gameId?: string;
       progressData: any;
       completed?: boolean;
     }) => {
@@ -85,10 +90,11 @@ export const usePathProgress = (pathId?: string) => {
           path_id: pathId,
           content_id: contentId || null,
           quiz_id: quizId || null,
+          game_id: gameId || null,
           completed: completed || false,
           completed_at: completed ? new Date().toISOString() : null,
           progress_data: progressData,
-        })
+        } as any)
         .select()
         .single();
 
@@ -111,19 +117,20 @@ export const usePathProgress = (pathId?: string) => {
     return new Set(
       progress
         .filter((p) => p.completed)
-        .map((p) => p.content_id || p.quiz_id)
+        .map((p) => p.content_id || p.quiz_id || (p as any).game_id)
         .filter(Boolean) as string[]
     );
   };
 
-  const isCompleted = (contentId?: string, quizId?: string): boolean => {
+  const isCompleted = (contentId?: string, quizId?: string, gameId?: string): boolean => {
     if (!progress) return false;
     
     return progress.some(
       (p) =>
         p.completed &&
         ((contentId && p.content_id === contentId) ||
-          (quizId && p.quiz_id === quizId))
+          (quizId && p.quiz_id === quizId) ||
+          (gameId && (p as any).game_id === gameId))
     );
   };
 

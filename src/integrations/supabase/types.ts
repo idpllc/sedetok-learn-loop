@@ -3127,6 +3127,7 @@ export type Database = {
           completed_at: string | null
           content_id: string | null
           created_at: string | null
+          game_id: string | null
           id: string
           path_id: string
           progress_data: Json | null
@@ -3139,6 +3140,7 @@ export type Database = {
           completed_at?: string | null
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           path_id: string
           progress_data?: Json | null
@@ -3151,6 +3153,7 @@ export type Database = {
           completed_at?: string | null
           content_id?: string | null
           created_at?: string | null
+          game_id?: string | null
           id?: string
           path_id?: string
           progress_data?: Json | null
@@ -3164,6 +3167,13 @@ export type Database = {
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_path_progress_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
           {

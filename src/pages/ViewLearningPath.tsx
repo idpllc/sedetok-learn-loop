@@ -375,8 +375,10 @@ const ViewLearningPath = () => {
           };
 
           const isQuiz = item.content_type === 'quiz';
-          const itemContentId = isQuiz ? undefined : item.id;
+          const isGame = item.content_type === 'game';
+          const itemContentId = (!isQuiz && !isGame) ? item.id : undefined;
           const itemQuizId = isQuiz ? item.id : undefined;
+          const itemGameId = isGame ? item.id : undefined;
           
           return (
             <ContentCard
@@ -421,6 +423,9 @@ const ViewLearningPath = () => {
                 if (passed) {
                   markComplete.mutate({ quizId: itemQuizId });
                 }
+              }}
+              onGameComplete={() => {
+                markComplete.mutate({ gameId: itemGameId });
               }}
               onPrevious={() => {
                 pauseAllVideos();
