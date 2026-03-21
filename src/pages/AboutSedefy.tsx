@@ -158,6 +158,21 @@ const AboutSedefy = () => {
               </CardContent>
             </Card>
           </section>
+
+          {/* Links */}
+          <section className="py-8 border-t border-border">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm text-muted-foreground">
+              <button onClick={() => navigate("/creator-program")} className="hover:text-foreground transition-colors">
+                Programa de creadores
+              </button>
+              <button onClick={() => navigate("/terms")} className="hover:text-foreground transition-colors">
+                Términos y condiciones
+              </button>
+              <button onClick={() => navigate("/privacy")} className="hover:text-foreground transition-colors">
+                Política de privacidad
+              </button>
+            </div>
+          </section>
         </main>
 
         <BottomNav />
