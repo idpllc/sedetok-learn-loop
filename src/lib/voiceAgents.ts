@@ -1,25 +1,25 @@
-// Pre-configured voice agents with Ready Player Me avatars
+// Pre-configured voice agents with self-hosted 3D avatars
 export interface VoiceAgent {
   id: string;
   name: string;
   description: string;
   agentId: string; // ElevenLabs Agent ID
-  avatarUrl: string; // Ready Player Me avatar GLB URL
+  avatarUrl: string; // Self-hosted avatar GLB URL with viseme morph targets
   personality: string;
   color: string; // Theme color for UI
   ttsVoiceId?: string; // ElevenLabs TTS Voice ID for reading aloud
   avatarImageUrl?: string; // 2D avatar image for UI
 }
 
-// Ready Player Me avatar URLs - these are public demo avatars
-// Users can create their own at https://readyplayer.me/
+// Self-hosted GLB avatars with Oculus Visemes morph targets
+// Hosted on S3 for reliability
 export const VOICE_AGENTS: VoiceAgent[] = [
   {
     id: 'sofia',
     name: 'Sofía',
     description: 'Tu tutora de aprendizaje general',
     agentId: 'agent_5201kc59xc30ew7s7vsnxcsr10gj',
-    avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit',
+    avatarUrl: 'https://sedefy.s3.us-east-1.amazonaws.com/avatars/1774135034120-b0wonc5w108.glb',
     personality: 'Amigable, paciente y motivadora. Especialista en explicar conceptos complejos de forma sencilla.',
     color: 'hsl(165 89% 24%)',
     ttsVoiceId: '86V9x9hrQds83qf7zaGn',
@@ -30,7 +30,7 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     name: 'Alejandro',
     description: 'Experto en ciencias y matemáticas',
     agentId: 'agent_9001kc53p9b3f3da7353ycdk1bgq',
-    avatarUrl: 'https://models.readyplayer.me/693a028814ff705000c68122.glb?morphTargets=Oculus%20Visemes,ARKit',
+    avatarUrl: 'https://sedefy.s3.us-east-1.amazonaws.com/avatars/1774135035964-19omqlzsn5x.glb',
     personality: 'Analítico, preciso y entusiasta. Le encanta resolver problemas paso a paso.',
     color: 'hsl(200 89% 40%)',
     ttsVoiceId: 'XgQWNZcJ8SRkxXwwhPTo',
@@ -41,7 +41,7 @@ export const VOICE_AGENTS: VoiceAgent[] = [
     name: 'Alex',
     description: 'Tutor especialista en inglés',
     agentId: 'agent_8401kk8r0436fwkv2shkbzj5m3aj',
-    avatarUrl: 'https://models.readyplayer.me/693a050ffe6f676b66e408b7.glb?morphTargets=Oculus%20Visemes,ARKit',
+    avatarUrl: 'https://sedefy.s3.us-east-1.amazonaws.com/avatars/1774135037603-95kmke2v9qs.glb',
     personality: 'Especialista en enseñanza de inglés. Evalúa tu nivel CEFR y te guía con paciencia.',
     color: 'hsl(280 89% 40%)',
     ttsVoiceId: 'IdhxxSTaAg80CTeSgScm',
