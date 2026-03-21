@@ -194,6 +194,7 @@ export function VoiceAssistant3D({ agent, onClose }: VoiceAssistant3DProps) {
           avatarUrl={agent.avatarUrl}
           isSpeaking={conversation.isSpeaking}
           audioLevel={audioLevel}
+          avatarImageUrl={agent.avatarImageUrl}
         />
         
         {/* Glow effect when speaking */}
