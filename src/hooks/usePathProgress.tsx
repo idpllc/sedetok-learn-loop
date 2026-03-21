@@ -29,10 +29,12 @@ export const usePathProgress = (pathId?: string) => {
     mutationFn: async ({
       contentId,
       quizId,
+      gameId,
       progressData,
     }: {
       contentId?: string;
       quizId?: string;
+      gameId?: string;
       progressData?: any;
     }) => {
       if (!user || !pathId) throw new Error("Usuario no autenticado");
@@ -44,10 +46,11 @@ export const usePathProgress = (pathId?: string) => {
           path_id: pathId,
           content_id: contentId || null,
           quiz_id: quizId || null,
+          game_id: gameId || null,
           completed: true,
           completed_at: new Date().toISOString(),
           progress_data: progressData || {},
-        })
+        } as any)
         .select()
         .single();
 
