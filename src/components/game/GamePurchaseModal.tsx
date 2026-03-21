@@ -93,12 +93,12 @@ export const GamePurchaseModal = ({ open, onOpenChange, type, onPurchase }: Game
           <DialogTitle className="flex items-center gap-2">
             {isLives ? (
               <>
-                <Heart className="w-5 h-5 text-red-500" />
+                <Heart className="w-5 h-5 text-destructive" />
                 Comprar Vidas
               </>
             ) : (
               <>
-                <Clock className="w-5 h-5 text-blue-500" />
+                <Clock className="w-5 h-5 text-primary" />
                 Comprar Tiempo Extra
               </>
             )}
