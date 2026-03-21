@@ -135,7 +135,7 @@ export const GamePurchaseModal = ({ open, onOpenChange, type, onPurchase }: Game
             {/* Educoins option */}
             <div className="border rounded-lg p-3 space-y-2">
               <div className="flex items-center gap-1.5 text-sm font-medium">
-                <Coins className="w-4 h-4 text-yellow-500" />
+                <Coins className="w-4 h-4 text-accent-foreground" />
                 Educoins
               </div>
               <p className="text-2xl font-bold">{totalEducoins}</p>
