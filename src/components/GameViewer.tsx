@@ -622,6 +622,19 @@ export const GameViewer = ({ gameId, onComplete, evaluationEventId, showResultsI
           onOpenChange={setShowEvaluationModal}
         />
       )}
+
+      <GamePurchaseModal
+        open={purchaseType !== null}
+        onOpenChange={(open) => { if (!open) setPurchaseType(null); }}
+        type={purchaseType || "lives"}
+        onPurchase={(amount) => {
+          if (purchaseType === "lives") {
+            setLives((prev) => prev + amount);
+          } else {
+            setTimeRemaining((prev) => (prev !== null ? prev + amount * 60 : amount * 60));
+          }
+        }}
+      />
     </div>
   );
 };
