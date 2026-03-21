@@ -178,7 +178,7 @@ const QuizEvaluation = () => {
                         className="w-full gap-2"
                         onClick={() => {
                           if (result.evaluation_event_id) {
-                            navigate(`/quiz-evaluations/event/${result.evaluation_event_id}`);
+                            navigate(`/quiz-evaluations/results/${result.evaluation_event_id}`);
                           }
                         }}
                       >

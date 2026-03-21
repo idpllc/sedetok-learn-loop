@@ -314,7 +314,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
       queryClient.invalidateQueries({ queryKey: ["evaluation-events"] });
 
       // Navigate to the event results view
-      navigate(`/quiz-evaluations/event/${eventData.id}`);
+      navigate(`/quiz-evaluations/results/${eventData.id}`);
 
       // Show toast with access code
       const { toast } = await import("@/hooks/use-toast");
