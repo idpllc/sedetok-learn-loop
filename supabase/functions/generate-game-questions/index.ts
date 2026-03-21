@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -13,6 +13,8 @@ serve(async (req) => {
   try {
     const { title, description, category, grade_level, gameType, numQuestions = 5 } = await req.json();
     
+    console.log('Request received:', { title, description, category, grade_level, gameType, numQuestions });
+
     if (!title || !category || !grade_level || !gameType) {
       return new Response(
         JSON.stringify({ error: 'Faltan campos requeridos' }),
@@ -27,15 +29,17 @@ serve(async (req) => {
 
     let systemPrompt = '';
     let userPrompt = '';
+    let toolParameters: any = {};
 
     if (gameType === 'word_order') {
-      systemPrompt = `Eres un experto creador de juegos educativos. Tu tarea es generar preguntas para el juego "Ordenar Palabras" donde los estudiantes deben construir oraciones correctas ordenando palabras desordenadas.
+      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar preguntas para el juego "Ordenar Palabras" donde los estudiantes deben construir oraciones correctas ordenando palabras desordenadas.
 
-IMPORTANTE:
-- Genera oraciones educativas y apropiadas para el nivel educativo
+REGLAS:
+- Genera oraciones educativas y apropiadas para el nivel educativo indicado
 - Las oraciones deben tener entre 4 y 10 palabras
 - Deben ser gramaticalmente correctas y con sentido claro
-- Incluye una instrucción clara de lo que se pide`;
+- El array "words" debe contener EXACTAMENTE las mismas palabras que "correct_sentence", separadas por espacios
+- Incluye una instrucción clara de lo que se pide en question_text`;
 
       userPrompt = `Genera ${numQuestions} preguntas del juego "Ordenar Palabras" para:
 
@@ -45,31 +49,83 @@ Asignatura: ${category}
 Nivel educativo: ${grade_level}
 
 Genera oraciones variadas y educativas apropiadas para este contexto.`;
-    } else if (gameType === 'word_wheel') {
-      systemPrompt = `Eres un experto creador de juegos educativos. Tu tarea es generar preguntas para el juego "Ruleta de Palabras" donde los estudiantes deben adivinar palabras basándose en definiciones y su letra inicial.
 
-IMPORTANTE:
-- Genera 26 preguntas, una por cada letra del alfabeto (A-Z)
-- Cada pregunta debe tener una definición clara de la palabra
-- La palabra correcta debe empezar con la letra correspondiente
-- Las definiciones deben ser educativas y apropiadas para el nivel`;
+      toolParameters = {
+        type: 'object',
+        properties: {
+          questions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                question_text: { type: 'string', description: 'Instrucción de lo que debe hacer el estudiante' },
+                correct_sentence: { type: 'string', description: 'La oración completa correcta' },
+                words: { type: 'array', items: { type: 'string' }, description: 'Array de palabras individuales de la oración' }
+              },
+              required: ['question_text', 'correct_sentence', 'words'],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ['questions'],
+        additionalProperties: false
+      };
+    } else if (gameType === 'word_wheel') {
+      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar preguntas para el juego "Ruleta de Palabras" (estilo Pasapalabra).
+
+REGLAS ESTRICTAS:
+- Genera EXACTAMENTE 26 preguntas, una por cada letra del alfabeto español: A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ñ, O, P, Q, R, S, T, U, V, W, X, Y, Z
+- Si no se usa Ñ, genera 27 con las 26 letras estándar A-Z
+- Cada pregunta debe tener:
+  - initial_letter: la letra mayúscula (A, B, C, etc.)
+  - question_text: una definición o pista clara que describe la palabra
+  - correct_sentence: la palabra correcta que DEBE empezar con esa letra
+- Las palabras deben estar relacionadas con la asignatura y tema indicados
+- Las definiciones deben ser claras y apropiadas para el nivel educativo
+- Para letras difíciles (W, X, Y), usa palabras que CONTENGAN esa letra si no existe una que empiece con ella, pero indica "Contiene la letra X:" en la pista`;
 
       userPrompt = `Genera 26 preguntas del juego "Ruleta de Palabras" (una por cada letra A-Z) para:
 
 Título: ${title}
 Descripción: ${description || 'Sin descripción'}
-Asignatura: ${category}
+Asignatura/Tema: ${category}
 Nivel educativo: ${grade_level}
 
-Genera una palabra y definición para cada letra del alfabeto, relacionadas con este tema.`;
-    } else if (gameType === 'column_match') {
-      systemPrompt = `Eres un experto creador de juegos educativos. Tu tarea es generar pares de items para el juego "Conectar Columnas" donde los estudiantes deben emparejar conceptos relacionados.
+IMPORTANTE: Todas las palabras y definiciones deben estar directamente relacionadas con "${title}" y la asignatura "${category}". 
+Por ejemplo, si el título es "La célula" y la asignatura es "Biología", la letra A podría ser "ADN", la B "Biosíntesis", etc.
 
-IMPORTANTE:
+Genera una palabra y definición para CADA una de las 26 letras del alfabeto.`;
+
+      toolParameters = {
+        type: 'object',
+        properties: {
+          questions: {
+            type: 'array',
+            description: 'Array de exactamente 26 preguntas, una por cada letra A-Z',
+            items: {
+              type: 'object',
+              properties: {
+                initial_letter: { type: 'string', description: 'Letra mayúscula del alfabeto (A-Z)' },
+                question_text: { type: 'string', description: 'Definición o pista para adivinar la palabra' },
+                correct_sentence: { type: 'string', description: 'La palabra correcta que empieza con esa letra' }
+              },
+              required: ['initial_letter', 'question_text', 'correct_sentence'],
+              additionalProperties: false
+            }
+          }
+        },
+        required: ['questions'],
+        additionalProperties: false
+      };
+    } else if (gameType === 'column_match') {
+      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar pares de items para el juego "Conectar Columnas" donde los estudiantes deben emparejar conceptos relacionados.
+
+REGLAS:
 - Genera pares de conceptos relacionados lógicamente
 - La columna izquierda puede ser: términos, preguntas, conceptos, países, etc.
 - La columna derecha debe ser: definiciones, respuestas, ejemplos, capitales, etc.
-- Los pares deben ser educativos y apropiados para el nivel`;
+- Los pares deben ser educativos y apropiados para el nivel
+- left_items[0] se conecta con right_items[0], left_items[1] con right_items[1], etc.`;
 
       userPrompt = `Genera ${numQuestions} pares de items del juego "Conectar Columnas" para:
 
@@ -79,7 +135,19 @@ Asignatura: ${category}
 Nivel educativo: ${grade_level}
 
 Genera pares de conceptos relacionados apropiados para este contexto.`;
+
+      toolParameters = {
+        type: 'object',
+        properties: {
+          left_items: { type: 'array', items: { type: 'string' }, description: 'Items de la columna izquierda' },
+          right_items: { type: 'array', items: { type: 'string' }, description: 'Items de la columna derecha (en el mismo orden que left_items)' }
+        },
+        required: ['left_items', 'right_items'],
+        additionalProperties: false
+      };
     }
+
+    console.log('Calling AI gateway with gameType:', gameType);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -88,7 +156,7 @@ Genera pares de conceptos relacionados apropiados para este contexto.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-3-flash-preview',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -99,75 +167,7 @@ Genera pares de conceptos relacionados apropiados para este contexto.`;
             function: {
               name: 'generate_game_questions',
               description: 'Genera preguntas de juego estructuradas',
-              parameters: gameType === 'word_order' ? {
-                type: 'object',
-                properties: {
-                  questions: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        question_text: {
-                          type: 'string',
-                          description: 'Instrucción de lo que debe hacer el estudiante'
-                        },
-                        correct_sentence: {
-                          type: 'string',
-                          description: 'La oración completa correcta'
-                        },
-                        words: {
-                          type: 'array',
-                          items: { type: 'string' },
-                          description: 'Array de palabras de la oración (serán desordenadas)'
-                        }
-                      },
-                      required: ['question_text', 'correct_sentence', 'words']
-                    }
-                  }
-                },
-                required: ['questions']
-              } : gameType === 'word_wheel' ? {
-                type: 'object',
-                properties: {
-                  questions: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        initial_letter: {
-                          type: 'string',
-                          description: 'Letra inicial (A-Z)'
-                        },
-                        question_text: {
-                          type: 'string',
-                          description: 'Definición o pista de la palabra'
-                        },
-                        correct_sentence: {
-                          type: 'string',
-                          description: 'La palabra correcta'
-                        }
-                      },
-                      required: ['initial_letter', 'question_text', 'correct_sentence']
-                    }
-                  }
-                },
-                required: ['questions']
-              } : {
-                type: 'object',
-                properties: {
-                  left_items: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    description: 'Items de la columna izquierda'
-                  },
-                  right_items: {
-                    type: 'array',
-                    items: { type: 'string' },
-                    description: 'Items de la columna derecha (en el mismo orden que left_items)'
-                  }
-                },
-                required: ['left_items', 'right_items']
-              }
+              parameters: toolParameters
             }
           }
         ],
@@ -176,6 +176,8 @@ Genera pares de conceptos relacionados apropiados para este contexto.`;
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('AI gateway error:', response.status, errorText);
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Límite de peticiones excedido. Por favor intenta más tarde.' }),
@@ -184,24 +186,49 @@ Genera pares de conceptos relacionados apropiados para este contexto.`;
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Por favor agrega créditos en Settings -> Workspace -> Usage.' }),
+          JSON.stringify({ error: 'Créditos insuficientes.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      const errorText = await response.text();
-      console.error('Error de IA:', response.status, errorText);
-      throw new Error('Error al comunicarse con el servicio de IA');
+      throw new Error(`Error del servicio de IA: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('Respuesta de IA:', JSON.stringify(data, null, 2));
+    console.log('AI response received, choices:', data.choices?.length);
+
+    // Try tool_calls first, then fall back to parsing content
+    let generatedData: any = null;
 
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall || toolCall.function.name !== 'generate_game_questions') {
-      throw new Error('No se recibieron preguntas de la IA');
+    if (toolCall && toolCall.function?.arguments) {
+      try {
+        generatedData = JSON.parse(toolCall.function.arguments);
+        console.log('Parsed from tool_calls successfully');
+      } catch (parseErr) {
+        console.error('Failed to parse tool_calls arguments:', parseErr);
+      }
     }
 
-    const generatedData = JSON.parse(toolCall.function.arguments);
+    // Fallback: try to extract JSON from message content
+    if (!generatedData) {
+      const content = data.choices?.[0]?.message?.content;
+      if (content) {
+        console.log('Trying to parse from message content');
+        try {
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            generatedData = JSON.parse(jsonMatch[0]);
+          }
+        } catch (parseErr) {
+          console.error('Failed to parse content as JSON:', parseErr);
+        }
+      }
+    }
+
+    if (!generatedData) {
+      console.error('Full AI response:', JSON.stringify(data, null, 2));
+      throw new Error('No se pudieron extraer las preguntas de la respuesta de IA');
+    }
     
     if (gameType === 'column_match') {
       return new Response(
@@ -212,14 +239,17 @@ Genera pares de conceptos relacionados apropiados para este contexto.`;
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
-      const formattedQuestions = generatedData.questions.map((q: any, index: number) => ({
-        question_text: q.question_text,
-        correct_sentence: q.correct_sentence,
+      const questions = generatedData.questions || [];
+      const formattedQuestions = questions.map((q: any, index: number) => ({
+        question_text: q.question_text || '',
+        correct_sentence: q.correct_sentence || '',
         words: q.words || [],
-        initial_letter: q.initial_letter || '',
+        initial_letter: (q.initial_letter || '').toUpperCase(),
         points: 10,
         order_index: index,
       }));
+
+      console.log(`Returning ${formattedQuestions.length} formatted questions`);
 
       return new Response(
         JSON.stringify({ questions: formattedQuestions }),
