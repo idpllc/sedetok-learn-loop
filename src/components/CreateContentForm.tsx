@@ -944,15 +944,15 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                 <Button
                   variant="outline"
                   onClick={() => handleQuizSubmit("borrador")}
-                  disabled={quizQuestions.length === 0}
+                  disabled={quizQuestions.length === 0 || isSubmittingQuiz}
                 >
-                  Guardar borrador
+                  {isSubmittingQuiz ? "Guardando..." : "Guardar borrador"}
                 </Button>
                 <Button
                   onClick={() => handleQuizSubmit("publicado")}
-                  disabled={quizQuestions.length === 0}
+                  disabled={quizQuestions.length === 0 || isSubmittingQuiz}
                 >
-                  Publicar
+                  {isSubmittingQuiz ? "Publicando..." : "Publicar"}
                 </Button>
               </>
             )}
