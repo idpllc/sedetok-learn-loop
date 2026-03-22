@@ -318,10 +318,9 @@ useImperativeHandle(ref, () => ({
         onClick={togglePlay}
       />
 
-      {/* Play/Pause overlay */}
+      {/* Play/Pause overlay - only visible when paused */}
       <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
-        style={{ opacity: isPlaying ? 0 : 1, transition: 'opacity 0.3s' }}
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10 transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}
       >
         <div className="w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
           <Play className="w-10 h-10 text-black ml-1" />
