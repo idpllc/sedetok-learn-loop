@@ -640,13 +640,13 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           </div>
         )}
 
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0" />
+        {/* Overlay gradient - hidden when video is playing */}
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-0' : 'opacity-100'}`} />
 
-        {/* Desktop volume controls - top left corner like TikTok */}
+        {/* Desktop volume controls - top left corner like TikTok - hidden when playing */}
         {videoUrl && (
           <div
-            className="hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
+            className={`hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl transition-opacity duration-300 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
@@ -676,8 +676,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           </div>
         )}
 
-        {/* Content info */}
-        <div className="absolute bottom-16 md:bottom-6 lg:bottom-8 left-0 right-0 px-4 md:px-6 pb-4 z-10">
+        {/* Content info - hidden when video is playing */}
+        <div className={`absolute bottom-16 md:bottom-6 lg:bottom-8 left-0 right-0 px-4 md:px-6 pb-4 z-10 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="space-y-2">
             <div>
               <button 
@@ -729,7 +729,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Action buttons - floating on the right, centered vertically */}
-        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
+        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
           {/* Creator avatar with follow button */}
           <div className="relative flex flex-col items-center">
             <button

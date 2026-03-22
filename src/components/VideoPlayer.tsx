@@ -253,16 +253,29 @@ useImperativeHandle(ref, () => ({
 
   const toggleFullscreen = async () => {
     const container = containerRef.current;
+    const video = videoRef.current;
     if (!container) return;
 
     try {
       if (!document.fullscreenElement) {
-        await container.requestFullscreen();
+        // Try standard fullscreen first, fallback to webkit (iOS)
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if ((video as any)?.webkitEnterFullscreen) {
+          (video as any).webkitEnterFullscreen();
+        }
       } else {
         await document.exitFullscreen();
       }
     } catch (error) {
-      console.error('Error toggling fullscreen:', error);
+      // Fallback for iOS: try video element fullscreen
+      if (video && (video as any).webkitEnterFullscreen) {
+        try {
+          (video as any).webkitEnterFullscreen();
+        } catch (e) {
+          console.error('Error toggling fullscreen:', e);
+        }
+      }
     }
   };
 
@@ -305,10 +318,9 @@ useImperativeHandle(ref, () => ({
         onClick={togglePlay}
       />
 
-      {/* Play/Pause overlay */}
+      {/* Play/Pause overlay - only visible when paused */}
       <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
-        style={{ opacity: isPlaying ? 0 : 1, transition: 'opacity 0.3s' }}
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10 transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}
       >
         <div className="w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
           <Play className="w-10 h-10 text-black ml-1" />
@@ -335,8 +347,8 @@ useImperativeHandle(ref, () => ({
         )}
       </div>
 
-      {/* Progress bar - at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm">
+      {/* Progress bar - at bottom, hidden when playing */}
+      <div className={`absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}>
         <div className="flex items-center gap-2 px-3 py-2">
           <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
@@ -354,8 +366,8 @@ useImperativeHandle(ref, () => ({
         </div>
       </div>
 
-      {/* Fullscreen button - top right corner */}
-      <div className="absolute top-4 right-4 z-30">
+      {/* Fullscreen button - visible on mobile too, hidden when playing */}
+      <div className={`absolute top-4 right-4 z-30 transition-opacity duration-300 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button
           onClick={toggleFullscreen}
           className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
