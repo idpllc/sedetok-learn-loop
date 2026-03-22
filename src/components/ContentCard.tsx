@@ -640,8 +640,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           </div>
         )}
 
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0" />
+        {/* Overlay gradient - hidden when video is playing */}
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-0' : 'opacity-100'}`} />
 
         {/* Desktop volume controls - top left corner like TikTok */}
         {videoUrl && (
