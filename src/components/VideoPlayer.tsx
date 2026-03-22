@@ -347,8 +347,8 @@ useImperativeHandle(ref, () => ({
         )}
       </div>
 
-      {/* Progress bar - at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm">
+      {/* Progress bar - at bottom, hidden when playing */}
+      <div className={`absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}>
         <div className="flex items-center gap-2 px-3 py-2">
           <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
           <div 
@@ -366,8 +366,8 @@ useImperativeHandle(ref, () => ({
         </div>
       </div>
 
-      {/* Fullscreen button - top right corner */}
-      <div className="absolute top-4 right-4 z-30">
+      {/* Fullscreen button - visible on mobile too, hidden when playing */}
+      <div className={`absolute top-4 right-4 z-30 transition-opacity duration-300 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button
           onClick={toggleFullscreen}
           className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
