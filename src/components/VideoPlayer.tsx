@@ -253,16 +253,29 @@ useImperativeHandle(ref, () => ({
 
   const toggleFullscreen = async () => {
     const container = containerRef.current;
+    const video = videoRef.current;
     if (!container) return;
 
     try {
       if (!document.fullscreenElement) {
-        await container.requestFullscreen();
+        // Try standard fullscreen first, fallback to webkit (iOS)
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if ((video as any)?.webkitEnterFullscreen) {
+          (video as any).webkitEnterFullscreen();
+        }
       } else {
         await document.exitFullscreen();
       }
     } catch (error) {
-      console.error('Error toggling fullscreen:', error);
+      // Fallback for iOS: try video element fullscreen
+      if (video && (video as any).webkitEnterFullscreen) {
+        try {
+          (video as any).webkitEnterFullscreen();
+        } catch (e) {
+          console.error('Error toggling fullscreen:', e);
+        }
+      }
     }
   };
 
