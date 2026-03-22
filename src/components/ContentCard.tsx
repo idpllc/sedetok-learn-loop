@@ -643,10 +643,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         {/* Overlay gradient - hidden when video is playing */}
         <div className={`absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-0' : 'opacity-100'}`} />
 
-        {/* Desktop volume controls - top left corner like TikTok */}
+        {/* Desktop volume controls - top left corner like TikTok - hidden when playing */}
         {videoUrl && (
           <div
-            className="hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl"
+            className={`hidden md:flex absolute left-4 top-4 z-[100] items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-2 shadow-xl transition-opacity duration-300 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
             onClick={(e) => e.stopPropagation()}
             onMouseEnter={() => setShowVolumeSlider(true)}
             onMouseLeave={() => setShowVolumeSlider(false)}
