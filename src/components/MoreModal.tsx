@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X, User, GraduationCap, Calendar, BookOpen, Store, Building2, Smartphone, FileEdit, ClipboardList } from "lucide-react";
+import { User, GraduationCap, Calendar, BookOpen, Store, Building2, Smartphone, FileEdit, ClipboardList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface MoreModalProps {
