@@ -53,33 +53,8 @@ serve(async (req) => {
       );
     }
 
-    // Authentication check
-    const apiKey = req.headers.get('x-api-key');
-    const authHeader = req.headers.get('authorization');
-    const expectedApiKey = Deno.env.get('SEDETOK_API_KEY');
-    const origin = req.headers.get('origin') || '';
-    
-    // Allow localhost/development without authentication
-    const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
-    
-    if (!isLocalhost) {
-      if (!apiKey && !authHeader) {
-        return new Response(
-          JSON.stringify({ error: 'Authentication required' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      if (apiKey && apiKey !== expectedApiKey) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid API key' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
     // Rate limiting
-    const rateLimitKey = apiKey || req.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitKey = req.headers.get('x-forwarded-for') || 'unknown';
     if (!checkRateLimit(rateLimitKey)) {
       return new Response(
         JSON.stringify({ error: 'Rate limit exceeded. Maximum 60 requests per minute.' }),
