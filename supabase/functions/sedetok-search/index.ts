@@ -90,6 +90,7 @@ serve(async (req) => {
     // Parse query parameters
     const url = new URL(req.url);
     const q = url.searchParams.get('q');
+    const documento = url.searchParams.get('documento');
     const grado = url.searchParams.get('grado');
     const asignatura = url.searchParams.get('asignatura');
     const nivel = url.searchParams.get('nivel');
@@ -97,9 +98,9 @@ serve(async (req) => {
     const page = Math.max(parseInt(url.searchParams.get('page') || '1'), 1);
     const sort = url.searchParams.get('sort') || 'relevance_desc';
 
-    if (!q) {
+    if (!q && !documento) {
       return new Response(
-        JSON.stringify({ error: 'Query parameter "q" is required' }),
+        JSON.stringify({ error: 'Query parameter "q" or "documento" is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
