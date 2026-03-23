@@ -219,6 +219,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        ...(creatorProfile ? { creator: creatorProfile } : {}),
         data: results,
         pagination: {
           page,
