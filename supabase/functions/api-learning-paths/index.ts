@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
     const learningType = params.get("tipo_aprendizaje")?.trim();
     const topic = params.get("topic")?.trim();
     const creatorId = params.get("creator_id")?.trim();
+    const documento = params.get("documento")?.trim();
     const sortBy = params.get("sort_by") || "created_at";
     const sortOrder = params.get("sort_order") === "asc" ? true : false;
     const includeContent = params.get("include_content") === "true";
