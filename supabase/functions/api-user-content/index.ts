@@ -5,26 +5,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
-const FALLBACK_KEY = "tucanmistico";
-const API_KEYS = [
-  Deno.env.get("CHAT_JWT_SECRET"),
-  Deno.env.get("WEBHOOK_API_KEY"),
-  FALLBACK_KEY,
-].filter(Boolean) as string[];
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Validate API key
+    // Authentication check using SEDETOK_API_KEY
     const apiKey = req.headers.get("x-api-key");
-    if (!apiKey || !API_KEYS.includes(apiKey)) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "Invalid or missing API key" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const authHeader = req.headers.get("authorization");
+    const expectedApiKey = Deno.env.get("SEDETOK_API_KEY");
+    const origin = req.headers.get("origin") || "";
+    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
+
+    if (!isLocalhost) {
+      if (!apiKey && !authHeader) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized", message: "Authentication required. Provide x-api-key header." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (apiKey && apiKey !== expectedApiKey) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized", message: "Invalid API key" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const url = new URL(req.url);

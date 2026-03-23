@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-api-key",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
@@ -17,6 +17,28 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "Method not allowed. Use GET." }),
       { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+  }
+
+  // Authentication check using SEDETOK_API_KEY
+  const apiKey = req.headers.get('x-api-key');
+  const authHeader = req.headers.get('authorization');
+  const expectedApiKey = Deno.env.get('SEDETOK_API_KEY');
+  const origin = req.headers.get('origin') || '';
+  const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+
+  if (!isLocalhost) {
+    if (!apiKey && !authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authentication required. Provide x-api-key header.' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (apiKey && apiKey !== expectedApiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid API key' }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
   }
 
   try {
