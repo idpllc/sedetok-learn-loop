@@ -184,7 +184,7 @@ serve(async (req) => {
       name: path.title,
       description: path.description || '',
       coverImage: path.cover_url || path.thumbnail_url || '',
-      url: `${baseUrl}/learning-paths/${path.id}`,
+      url: `${baseUrl}/learning-paths/view/${path.id}`,
       level: normalizeLevel(path.level),
       tags: path.tags || [],
     }));

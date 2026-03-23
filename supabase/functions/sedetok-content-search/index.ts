@@ -225,7 +225,7 @@ serve(async (req) => {
             name: p.title,
             description: p.description || '',
             thumbnail: p.thumbnail_url || p.cover_url || '',
-            url: `${baseUrl}/rutas/${p.id}`,
+            url: `${baseUrl}/learning-paths/view/${p.id}`,
             subject: p.subject,
             grade_level: p.grade_level,
             tags: p.tags || [],
