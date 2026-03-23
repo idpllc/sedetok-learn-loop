@@ -177,7 +177,7 @@ serve(async (req) => {
 
     // Transform results to required format
     // Use custom domain if configured, otherwise fall back to default
-    const baseUrl = 'https://sedetok-learn-loop.lovable.app';
+    const baseUrl = 'https://sedefy.com';
     
     const results = (data || []).map(path => ({
       id: path.id,

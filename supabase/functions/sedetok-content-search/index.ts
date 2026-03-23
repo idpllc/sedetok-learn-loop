@@ -100,7 +100,7 @@ serve(async (req) => {
       creatorProfile = profile;
     }
 
-    const baseUrl = 'https://sedetok-learn-loop.lovable.app';
+    const baseUrl = 'https://sedefy.com';
 
     // Determine which resource types to search
     const resourceTypeMap: Record<string, string> = {
