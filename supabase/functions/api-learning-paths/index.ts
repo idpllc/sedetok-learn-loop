@@ -44,6 +44,7 @@ Deno.serve(async (req) => {
     const learningType = params.get("tipo_aprendizaje")?.trim();
     const topic = params.get("topic")?.trim();
     const creatorId = params.get("creator_id")?.trim();
+    const documento = params.get("documento")?.trim();
     const sortBy = params.get("sort_by") || "created_at";
     const sortOrder = params.get("sort_order") === "asc" ? true : false;
     const includeContent = params.get("include_content") === "true";
@@ -123,6 +124,24 @@ Deno.serve(async (req) => {
     if (topic) query = query.ilike("topic", `%${topic}%`);
     if (creatorId) query = query.eq("creator_id", creatorId);
 
+    // Filter by creator document number
+    if (documento) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('numero_documento', documento)
+        .maybeSingle();
+
+      if (profile) {
+        query = query.eq("creator_id", profile.id);
+      } else {
+        // No user found, return empty
+        return new Response(
+          JSON.stringify({ data: [], pagination: { page, limit, total: 0, total_pages: 0, has_next: false, has_prev: false } }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
     // Sorting & pagination
     query = query.order(safeSortBy, { ascending: sortOrder });
     query = query.range(offset, offset + limit - 1);
