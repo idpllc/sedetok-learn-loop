@@ -82,6 +82,7 @@ serve(async (req) => {
     // Parse query parameters
     const url = new URL(req.url);
     const q = url.searchParams.get('q');
+    const documento = url.searchParams.get('documento');
     const grado = url.searchParams.get('grado');
     const asignatura = url.searchParams.get('asignatura');
     const tipo = url.searchParams.get('tipo'); // video, documento, lectura
@@ -89,9 +90,9 @@ serve(async (req) => {
     const page = Math.max(parseInt(url.searchParams.get('page') || '1'), 1);
     const sort = url.searchParams.get('sort') || 'relevance_desc';
 
-    if (!q) {
+    if (!q && !documento) {
       return new Response(
-        JSON.stringify({ error: 'Query parameter "q" is required' }),
+        JSON.stringify({ error: 'Query parameter "q" or "documento" is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -101,15 +102,51 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // If documento is provided, find the creator by document number
+    let creatorId: string | null = null;
+    let creatorProfile: any = null;
+    if (documento) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url, institution')
+        .eq('numero_documento', documento.trim())
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Profile lookup error:', profileError);
+        return new Response(
+          JSON.stringify({ error: 'Error looking up user by document number' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!profile) {
+        return new Response(
+          JSON.stringify({ error: 'No user found with that document number', data: [], pagination: { page: 1, limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false } }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      creatorId = profile.id;
+      creatorProfile = profile;
+    }
+
     // Build query
     let query = supabase
       .from('content')
-      .select('id, title, description, thumbnail_url, video_url, document_url, content_type, grade_level, category, subject, tags, views_count, likes_count, created_at', { count: 'exact' })
+      .select('id, title, description, thumbnail_url, video_url, document_url, content_type, grade_level, category, subject, tags, views_count, likes_count, created_at, creator_id', { count: 'exact' })
       .eq('is_public', true);
 
-    // Full-text search on title and description
-    const searchTerm = q.trim();
-    query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+    // Filter by creator if documento was provided
+    if (creatorId) {
+      query = query.eq('creator_id', creatorId);
+    }
+
+    // Full-text search on title and description (only if q is provided)
+    if (q) {
+      const searchTerm = q.trim();
+      query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+    }
 
     // Apply filters
     if (grado) {
