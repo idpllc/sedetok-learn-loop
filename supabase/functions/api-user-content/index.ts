@@ -11,27 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Authentication check using SEDETOK_API_KEY
-    const apiKey = req.headers.get("x-api-key");
-    const authHeader = req.headers.get("authorization");
-    const expectedApiKey = Deno.env.get("SEDETOK_API_KEY");
-    const origin = req.headers.get("origin") || "";
-    const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1");
-
-    if (!isLocalhost) {
-      if (!apiKey && !authHeader) {
-        return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Authentication required. Provide x-api-key header." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (apiKey && apiKey !== expectedApiKey) {
-        return new Response(
-          JSON.stringify({ error: "Unauthorized", message: "Invalid API key" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    }
 
     const url = new URL(req.url);
     const numeroDocumento = url.searchParams.get("documento");
