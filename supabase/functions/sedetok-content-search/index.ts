@@ -100,8 +100,7 @@ serve(async (req) => {
       creatorProfile = profile;
     }
 
-    const customDomain = Deno.env.get('CUSTOM_DOMAIN');
-    const baseUrl = customDomain || supabaseUrl.replace('.supabase.co', '.lovableproject.com');
+    const baseUrl = 'https://sedetok-learn-loop.lovable.app';
 
     // Determine which resource types to search
     const resourceTypeMap: Record<string, string> = {
@@ -226,7 +225,7 @@ serve(async (req) => {
             name: p.title,
             description: p.description || '',
             thumbnail: p.thumbnail_url || p.cover_url || '',
-            url: `${baseUrl}/rutas/${p.id}`,
+            url: `${baseUrl}/learning-paths/view/${p.id}`,
             subject: p.subject,
             grade_level: p.grade_level,
             tags: p.tags || [],

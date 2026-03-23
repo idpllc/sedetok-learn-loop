@@ -177,15 +177,14 @@ serve(async (req) => {
 
     // Transform results to required format
     // Use custom domain if configured, otherwise fall back to default
-    const customDomain = Deno.env.get('CUSTOM_DOMAIN');
-    const baseUrl = customDomain || supabaseUrl.replace('.supabase.co', '.lovableproject.com');
+    const baseUrl = 'https://sedetok-learn-loop.lovable.app';
     
     const results = (data || []).map(path => ({
       id: path.id,
       name: path.title,
       description: path.description || '',
       coverImage: path.cover_url || path.thumbnail_url || '',
-      url: `${baseUrl}/learning-paths/${path.id}`,
+      url: `${baseUrl}/learning-paths/view/${path.id}`,
       level: normalizeLevel(path.level),
       tags: path.tags || [],
     }));
