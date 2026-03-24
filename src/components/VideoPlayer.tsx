@@ -179,22 +179,31 @@ useImperativeHandle(ref, () => ({
       // Ensure volume settings persist after data loads
       video.volume = volume;
       video.muted = isMuted;
+      setIsBuffering(false);
     };
 
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
 
+    const handleWaiting = () => setIsBuffering(true);
+    const handleCanPlay = () => setIsBuffering(false);
+    const handlePlaying = () => setIsBuffering(false);
+
     // Apply settings immediately if video is already loaded
     if (video.readyState >= 2) {
       video.volume = volume;
       video.muted = isMuted;
+      setIsBuffering(false);
     }
 
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('ended', handleVideoEnded);
     video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('playing', handlePlaying);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     
     return () => {
@@ -202,6 +211,9 @@ useImperativeHandle(ref, () => ({
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('ended', handleVideoEnded);
       video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('playing', handlePlaying);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
