@@ -222,16 +222,22 @@ useImperativeHandle(ref, () => ({
     const video = videoRef.current;
     if (!video) return;
 
-    const newPlayingState = !isPlaying;
-    if (newPlayingState) {
-      video.play();
-      manualPauseRef.current = false;
-    } else {
+    if (isPlaying) {
       video.pause();
+      setIsPlaying(false);
       manualPauseRef.current = true;
+      onPlayStateChange?.(false);
+    } else {
+      setIsBuffering(true);
+      video.play().then(() => {
+        setIsPlaying(true);
+        manualPauseRef.current = false;
+        onPlayStateChange?.(true);
+      }).catch(() => {
+        setIsPlaying(false);
+        setIsBuffering(false);
+      });
     }
-    setIsPlaying(newPlayingState);
-    onPlayStateChange?.(newPlayingState);
   };
 
   const toggleMute = () => {
