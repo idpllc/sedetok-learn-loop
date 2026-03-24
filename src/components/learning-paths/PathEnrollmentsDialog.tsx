@@ -57,6 +57,27 @@ export const PathEnrollmentsDialog = ({
     enabled: open && userIds.length > 0,
   });
 
+  // Get institution memberships for enrolled users
+  const { data: memberships } = useQuery({
+    queryKey: ["enrolled-memberships", pathId, userIds.join(",")],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("institution_members")
+        .select("user_id, member_role, status, institution:institution_id (id, name, logo_url)")
+        .in("user_id", userIds)
+        .eq("status", "active");
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && userIds.length > 0,
+  });
+
+  const membershipMap: Record<string, any> = {};
+  (memberships || []).forEach((m: any) => {
+    membershipMap[m.user_id] = m;
+  });
+
   // Get path content items
   const { data: pathContent } = useQuery({
     queryKey: ["path-content-for-progress", pathId],
