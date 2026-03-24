@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
-import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown, Maximize, Minimize } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown, Maximize, Minimize, Loader2 } from "lucide-react";
 
 interface VideoPlayerProps {
   videoUrl: string;
