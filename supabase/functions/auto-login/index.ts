@@ -387,7 +387,7 @@ Deno.serve(async (req) => {
       else if (role === "student") profileUpdate.tipo_usuario = "Estudiante";
       else if (role === "admin") profileUpdate.tipo_usuario = "Administrador";
       else if (role === "coordinator") profileUpdate.tipo_usuario = "Coordinador";
-      if (email) profileUpdate.institution = institution;
+      if (institution) profileUpdate.institution = institution;
 
       if (Object.keys(profileUpdate).length > 0) {
         await supabase.from("profiles").update(profileUpdate).eq("id", userId);
