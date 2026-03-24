@@ -57,6 +57,27 @@ export const PathEnrollmentsDialog = ({
     enabled: open && userIds.length > 0,
   });
 
+  // Get institution memberships for enrolled users
+  const { data: memberships } = useQuery({
+    queryKey: ["enrolled-memberships", pathId, userIds.join(",")],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("institution_members")
+        .select("user_id, member_role, status, institution:institution_id (id, name, logo_url)")
+        .in("user_id", userIds)
+        .eq("status", "active");
+      if (error) throw error;
+      return data;
+    },
+    enabled: open && userIds.length > 0,
+  });
+
+  const membershipMap: Record<string, any> = {};
+  (memberships || []).forEach((m: any) => {
+    membershipMap[m.user_id] = m;
+  });
+
   // Get path content items
   const { data: pathContent } = useQuery({
     queryKey: ["path-content-for-progress", pathId],
@@ -144,6 +165,7 @@ export const PathEnrollmentsDialog = ({
 
             {enrollments.map((enrollment: any) => {
               const profile = profileMap[enrollment.user_id];
+              const membership = membershipMap[enrollment.user_id];
               const completed = getUserCompletionCount(enrollment.user_id);
               const percentage = totalItems > 0 ? (completed / totalItems) * 100 : 0;
               const isExpanded = expandedUser === enrollment.user_id;
@@ -169,6 +191,11 @@ export const PathEnrollmentsDialog = ({
                         <p className="text-xs text-muted-foreground">
                           Inscrito: {new Date(enrollment.enrolled_at).toLocaleDateString("es")}
                         </p>
+                        {membership?.institution && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            🏫 {(membership.institution as any).name}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={percentage === 100 ? "default" : "secondary"} className="text-xs">
