@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Copy, Loader2 } from "lucide-react";
+import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Copy, Loader2, Users } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { SharePathSheet } from "@/components/SharePathSheet";
+import { PathEnrollmentsDialog } from "@/components/learning-paths/PathEnrollmentsDialog";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePathEnrollment } from "@/hooks/usePathEnrollment";
@@ -52,6 +53,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   const { isEnrolled, enroll } = usePathEnrollment(pathId);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isObjectivesExpanded, setIsObjectivesExpanded] = useState(false);
+  const [showEnrollments, setShowEnrollments] = useState(false);
   
   const MAX_DESCRIPTION_LENGTH = 150;
   const shouldTruncateDescription = description && description.length > MAX_DESCRIPTION_LENGTH;
@@ -229,7 +231,28 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
               </Button>
             }
           />
+
+          {isCreator && (
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setShowEnrollments(true)}
+              className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+            >
+              <Users className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+              Suscritos
+            </Button>
+          )}
         </div>
+
+        {isCreator && (
+          <PathEnrollmentsDialog
+            open={showEnrollments}
+            onOpenChange={setShowEnrollments}
+            pathId={pathId}
+            pathTitle={title}
+          />
+        )}
 
         {/* Hint to scroll */}
         {hasNext && (
