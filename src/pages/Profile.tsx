@@ -372,11 +372,11 @@ const Profile = () => {
     
     const handleContentClick = () => {
       if (item.content_type === 'quiz') {
-        navigate(`/?quiz=${item.id}`);
+        navigate(`/sedetok?quiz=${item.id}`);
       } else if (item.content_type === 'game') {
-        navigate(`/?game=${item.id}`);
+        navigate(`/sedetok?game=${item.id}`);
       } else {
-        navigate(`/?content=${item.id}`);
+        navigate(`/sedetok?content=${item.id}`);
       }
     };
     
