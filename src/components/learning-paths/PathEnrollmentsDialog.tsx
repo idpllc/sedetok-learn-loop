@@ -165,6 +165,7 @@ export const PathEnrollmentsDialog = ({
 
             {enrollments.map((enrollment: any) => {
               const profile = profileMap[enrollment.user_id];
+              const membership = membershipMap[enrollment.user_id];
               const completed = getUserCompletionCount(enrollment.user_id);
               const percentage = totalItems > 0 ? (completed / totalItems) * 100 : 0;
               const isExpanded = expandedUser === enrollment.user_id;
@@ -190,6 +191,11 @@ export const PathEnrollmentsDialog = ({
                         <p className="text-xs text-muted-foreground">
                           Inscrito: {new Date(enrollment.enrolled_at).toLocaleDateString("es")}
                         </p>
+                        {membership?.institution && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            🏫 {(membership.institution as any).name}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={percentage === 100 ? "default" : "secondary"} className="text-xs">
