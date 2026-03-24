@@ -327,6 +327,7 @@ useImperativeHandle(ref, () => ({
         src={videoUrl}
         poster={thumbnail}
         data-content-id={contentId}
+        preload="auto"
         className={`${
           isVertical 
             ? 'w-auto h-full max-w-full object-contain' 
@@ -337,9 +338,16 @@ useImperativeHandle(ref, () => ({
         onClick={togglePlay}
       />
 
-      {/* Play/Pause overlay - only visible when paused */}
+      {/* Buffering spinner */}
+      {isBuffering && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <Loader2 className="w-12 h-12 text-white animate-spin" />
+        </div>
+      )}
+
+      {/* Play/Pause overlay - only visible when paused and not buffering */}
       <div
-        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10 transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-10 transition-opacity duration-300 ${isPlaying || isBuffering ? 'opacity-0' : 'opacity-100'}`}
       >
         <div className="w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
           <Play className="w-10 h-10 text-black ml-1" />
@@ -366,26 +374,36 @@ useImperativeHandle(ref, () => ({
         )}
       </div>
 
-      {/* Progress bar - at bottom, hidden when playing */}
-      <div className={`absolute bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="flex items-center gap-2 px-3 py-2">
-          <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
-          <div 
-            className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
-            onClick={handleProgressClick}
-          >
+      {/* Thin always-visible progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 z-30">
+        {/* Expanded controls - visible when paused */}
+        <div className={`bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="flex items-center gap-2 px-3 py-2">
+            <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(currentTime)}</span>
             <div 
-              className="h-full bg-primary rounded-full transition-all relative group-hover:h-1.5"
-              style={{ width: `${progress}%` }}
+              className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer group"
+              onClick={handleProgressClick}
             >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div 
+                className="h-full bg-primary rounded-full transition-all relative group-hover:h-1.5"
+                style={{ width: `${progress}%` }}
+              >
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
             </div>
+            <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(duration)}</span>
           </div>
-          <span className="text-white text-xs font-medium min-w-[35px]">{formatTime(duration)}</span>
+        </div>
+        {/* Thin progress line - always visible when playing */}
+        <div className={`h-[3px] bg-white/20 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
+          <div 
+            className="h-full bg-primary transition-all"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
 
-      {/* Fullscreen button - visible on mobile too, hidden when playing */}
+      {/* Fullscreen button - visible when paused */}
       <div className={`absolute top-4 right-4 z-30 transition-opacity duration-300 ${isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         <button
           onClick={toggleFullscreen}
