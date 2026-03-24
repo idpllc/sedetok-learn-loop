@@ -378,6 +378,21 @@ Deno.serve(async (req) => {
       userId = profile.id;
       const { data: authUser } = await supabase.auth.admin.getUserById(userId);
       userEmail = authUser?.user?.email ?? `${documento}@sedefy.local`;
+
+      // Always sync profile data for existing users
+      const profileUpdate: Record<string, unknown> = {};
+      if (full_name) profileUpdate.full_name = full_name;
+      if (tipoDoc) profileUpdate.tipo_documento = tipoDoc;
+      if (role === "teacher") profileUpdate.tipo_usuario = "Docente";
+      else if (role === "student") profileUpdate.tipo_usuario = "Estudiante";
+      else if (role === "admin") profileUpdate.tipo_usuario = "Administrador";
+      else if (role === "coordinator") profileUpdate.tipo_usuario = "Coordinador";
+      if (email) profileUpdate.institution = institution;
+
+      if (Object.keys(profileUpdate).length > 0) {
+        await supabase.from("profiles").update(profileUpdate).eq("id", userId);
+        console.log(`Profile updated for existing user ${documento}:`, profileUpdate);
+      }
     } else {
       // Create new user
       isNew = true;
