@@ -23,7 +23,6 @@ interface PathInfoCardProps {
   contentCount: number;
   isPublic?: boolean;
   creatorId?: string;
-  showEnrollmentsButton?: boolean;
   onStart: () => void;
   onNext?: () => void;
   hasNext?: boolean;
@@ -44,7 +43,6 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   contentCount,
   isPublic = true,
   creatorId,
-  showEnrollmentsButton = false,
   onStart,
   onNext,
   hasNext,
@@ -186,74 +184,74 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
         )}
 
         {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 md:gap-4 items-center justify-center w-full max-w-md mb-2 md:mb-4">
-          <Button
-            size="lg"
-            onClick={() => {
-              if (!isCreator && !isEnrolled && user) {
-                enroll.mutate(undefined, { onSuccess: () => onStart() });
-              } else {
-                onStart();
+        <div className="flex w-full max-w-xl flex-col gap-2 md:gap-4 items-center justify-center mb-2 md:mb-4">
+          <div className="flex w-full flex-col sm:flex-row gap-2 md:gap-4 items-center justify-center">
+            <Button
+              size="lg"
+              onClick={() => {
+                if (!isCreator && !isEnrolled && user) {
+                  enroll.mutate(undefined, { onSuccess: () => onStart() });
+                } else {
+                  onStart();
+                }
+              }}
+              disabled={enroll.isPending}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm md:text-xl px-6 py-3 md:px-12 md:py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+            >
+              {enroll.isPending ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : null}
+              {isEnrolled || isCreator ? "Continuar Ruta" : "Empezar Ruta"}
+              <ChevronRight className="w-5 h-5 md:w-6 md:h-6 ml-2" />
+            </Button>
+
+            {isCreator && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => navigate(`/learning-paths/edit/${pathId}`)}
+                className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+              >
+                <Edit className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                Editar
+              </Button>
+            )}
+          </div>
+
+          <div className="grid w-full max-w-md grid-cols-2 gap-2 md:gap-4">
+            <SharePathSheet
+              pathId={pathId}
+              pathTitle={title}
+              isPublic={isPublic}
+              trigger={
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="font-semibold text-sm md:text-lg px-4 py-4 md:px-8 md:py-6 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full"
+                >
+                  <Share2 className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+                  Compartir
+                </Button>
               }
-            }}
-            disabled={enroll.isPending}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm md:text-xl px-6 py-3 md:px-12 md:py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto"
-          >
-            {enroll.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            ) : null}
-            {isEnrolled || isCreator ? "Continuar Ruta" : "Empezar Ruta"}
-            <ChevronRight className="w-5 h-5 md:w-6 md:h-6 ml-2" />
-          </Button>
-          
-          {isCreator && (
+            />
+
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate(`/learning-paths/edit/${pathId}`)}
-              className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+              onClick={() => setShowEnrollments(true)}
+              className="font-semibold text-sm md:text-lg px-4 py-4 md:px-8 md:py-6 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full"
             >
-              <Edit className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              Editar
+              <Users className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+              Suscritos
             </Button>
-          )}
-          
-          <SharePathSheet
+          </div>
+
+          <PathEnrollmentsDialog
+            open={showEnrollments}
+            onOpenChange={setShowEnrollments}
             pathId={pathId}
             pathTitle={title}
-            isPublic={isPublic}
-            trigger={
-              <Button
-                size="lg"
-                variant="outline"
-                className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
-              >
-                <Share2 className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                Compartir
-              </Button>
-            }
           />
-
-          {showEnrollmentsButton && (
-            <>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => setShowEnrollments(true)}
-                className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
-              >
-                <Users className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-                Suscritos
-              </Button>
-
-              <PathEnrollmentsDialog
-                open={showEnrollments}
-                onOpenChange={setShowEnrollments}
-                pathId={pathId}
-                pathTitle={title}
-              />
-            </>
-          )}
         </div>
 
         {/* Hint to scroll */}
