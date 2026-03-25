@@ -11,11 +11,12 @@ import { useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { usePathProgress } from "@/hooks/usePathProgress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
-import { ArrowLeft, Map, List, Share2 } from "lucide-react";
+import { ArrowLeft, Map, List, Share2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PathMapView } from "@/components/learning-paths/PathMapView";
 import { PathInfoCard } from "@/components/PathInfoCard";
 import { SharePathSheet } from "@/components/SharePathSheet";
+import { PathEnrollmentsDialog } from "@/components/learning-paths/PathEnrollmentsDialog";
 
 const ViewLearningPath = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,7 @@ const ViewLearningPath = () => {
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<"map" | "cards">("cards");
+  const [showEnrollments, setShowEnrollments] = useState(false);
   const completedIds = getCompletedIds();
 
   // Fetch learning path info
@@ -250,7 +252,7 @@ const ViewLearningPath = () => {
             variant="secondary"
             size="icon"
             onClick={() => navigate("/learning-paths")}
-            className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+            className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
           >
             <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
@@ -264,7 +266,7 @@ const ViewLearningPath = () => {
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+                  className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
                 >
                   <Share2 className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
@@ -273,8 +275,17 @@ const ViewLearningPath = () => {
             <Button
               variant="secondary"
               size="icon"
+              onClick={() => setShowEnrollments(true)}
+              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+              title="Ver suscritos"
+            >
+              <Users className="w-4 h-4 md:w-5 md:h-5" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
               onClick={() => setViewMode("cards")}
-              className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
             >
               <List className="w-4 h-4 md:w-5 md:h-5" />
             </Button>
@@ -287,6 +298,13 @@ const ViewLearningPath = () => {
           contents={contentData}
           completedIds={completedIds}
           onContentClick={handleContentClick}
+        />
+
+        <PathEnrollmentsDialog
+          open={showEnrollments}
+          onOpenChange={setShowEnrollments}
+          pathId={id!}
+          pathTitle={pathTitle}
         />
       </div>
     );
@@ -301,7 +319,7 @@ const ViewLearningPath = () => {
           variant="secondary"
           size="icon"
           onClick={() => navigate("/learning-paths")}
-          className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+            className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
         >
           <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
         </Button>
@@ -315,17 +333,26 @@ const ViewLearningPath = () => {
               <Button
                 variant="secondary"
                 size="icon"
-                className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+                  className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
               >
                 <Share2 className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
             }
           />
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => setShowEnrollments(true)}
+              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+              title="Ver suscritos"
+            >
+              <Users className="w-4 h-4 md:w-5 md:h-5" />
+            </Button>
           <Button
             variant="secondary"
             size="icon"
             onClick={() => setViewMode("map")}
-            className="rounded-full bg-black/60 backdrop-blur-md shadow-lg text-white hover:bg-black/70 h-9 w-9 md:h-10 md:w-10"
+              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
           >
             <Map className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
@@ -364,6 +391,13 @@ const ViewLearningPath = () => {
             }
           }}
           hasNext={contentData.length > 0}
+        />
+
+        <PathEnrollmentsDialog
+          open={showEnrollments}
+          onOpenChange={setShowEnrollments}
+          pathId={id!}
+          pathTitle={pathTitle}
         />
         
         {/* Content cards */}
