@@ -232,27 +232,23 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             }
           />
 
-          {isCreator && (
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => setShowEnrollments(true)}
-              className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
-            >
-              <Users className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              Suscritos
-            </Button>
-          )}
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => setShowEnrollments(true)}
+            className="font-semibold text-sm md:text-lg px-6 py-4 md:px-8 md:py-8 rounded-2xl shadow-lg hover:scale-105 transition-all duration-300 w-full sm:w-auto"
+          >
+            <Users className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+            Suscritos
+          </Button>
         </div>
 
-        {isCreator && (
-          <PathEnrollmentsDialog
-            open={showEnrollments}
-            onOpenChange={setShowEnrollments}
-            pathId={pathId}
-            pathTitle={title}
-          />
-        )}
+        <PathEnrollmentsDialog
+          open={showEnrollments}
+          onOpenChange={setShowEnrollments}
+          pathId={pathId}
+          pathTitle={title}
+        />
 
         {/* Hint to scroll */}
         {hasNext && (
@@ -264,17 +260,6 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
           </div>
         )}
 
-        {/* Navigation arrow for next */}
-        {hasNext && onNext && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onNext}
-            className="absolute bottom-4 right-4 md:bottom-8 md:right-8 rounded-full w-10 h-10 md:w-14 md:h-14 bg-background/50 backdrop-blur-sm hover:bg-background/80"
-          >
-            <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-          </Button>
-        )}
       </div>
     </div>
   );
