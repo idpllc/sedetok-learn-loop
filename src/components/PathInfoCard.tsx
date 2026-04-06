@@ -4,6 +4,7 @@ import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Loader2, Us
 import { forwardRef, useState } from "react";
 import { SharePathSheet } from "@/components/SharePathSheet";
 import { PathEnrollmentsDialog } from "@/components/learning-paths/PathEnrollmentsDialog";
+import { AuthModal } from "@/components/AuthModal";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePathEnrollment } from "@/hooks/usePathEnrollment";
@@ -54,6 +55,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isObjectivesExpanded, setIsObjectivesExpanded] = useState(false);
   const [showEnrollments, setShowEnrollments] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   
   const MAX_DESCRIPTION_LENGTH = 150;
   const shouldTruncateDescription = description && description.length > MAX_DESCRIPTION_LENGTH;
@@ -189,7 +191,11 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             <Button
               size="lg"
               onClick={() => {
-                if (!isCreator && !isEnrolled && user) {
+                if (!user) {
+                  setAuthModalOpen(true);
+                  return;
+                }
+                if (!isCreator && !isEnrolled) {
                   enroll.mutate(undefined, { onSuccess: () => onStart() });
                 } else {
                   onStart();
@@ -251,6 +257,14 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             onOpenChange={setShowEnrollments}
             pathId={pathId}
             pathTitle={title}
+          />
+
+          <AuthModal
+            open={authModalOpen}
+            onOpenChange={setAuthModalOpen}
+            onSuccess={() => {
+              setAuthModalOpen(false);
+            }}
           />
         </div>
 
