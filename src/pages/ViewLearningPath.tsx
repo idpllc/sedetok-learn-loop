@@ -252,7 +252,7 @@ const ViewLearningPath = () => {
             variant="secondary"
             size="icon"
             onClick={() => navigate("/learning-paths")}
-            className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+            className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
           >
             <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
@@ -266,7 +266,7 @@ const ViewLearningPath = () => {
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+                  className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
                 >
                   <Share2 className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
@@ -276,7 +276,7 @@ const ViewLearningPath = () => {
               variant="secondary"
               size="icon"
               onClick={() => setShowEnrollments(true)}
-              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+              className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
               title="Ver suscritos"
             >
               <Users className="w-4 h-4 md:w-5 md:h-5" />
@@ -285,7 +285,7 @@ const ViewLearningPath = () => {
               variant="secondary"
               size="icon"
               onClick={() => setViewMode("cards")}
-              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+              className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
             >
               <List className="w-4 h-4 md:w-5 md:h-5" />
             </Button>
@@ -319,7 +319,7 @@ const ViewLearningPath = () => {
           variant="secondary"
           size="icon"
           onClick={() => navigate("/learning-paths")}
-            className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+            className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
         >
           <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
         </Button>
@@ -333,26 +333,26 @@ const ViewLearningPath = () => {
               <Button
                 variant="secondary"
                 size="icon"
-                  className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+                className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
               >
                 <Share2 className="w-4 h-4 md:w-5 md:h-5" />
               </Button>
             }
           />
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => setShowEnrollments(true)}
-              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
-              title="Ver suscritos"
-            >
-              <Users className="w-4 h-4 md:w-5 md:h-5" />
-            </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => setShowEnrollments(true)}
+            className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
+            title="Ver suscritos"
+          >
+            <Users className="w-4 h-4 md:w-5 md:h-5" />
+          </Button>
           <Button
             variant="secondary"
             size="icon"
             onClick={() => setViewMode("map")}
-              className="h-9 w-9 rounded-full bg-background/80 backdrop-blur-md shadow-lg hover:bg-background md:h-10 md:w-10"
+            className="h-9 w-9 rounded-full bg-black/50 text-white backdrop-blur-md shadow-lg hover:bg-black/70 md:h-10 md:w-10"
           >
             <Map className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
