@@ -29,6 +29,7 @@ const CreateLearningPath = () => {
   const [isCloning, setIsCloning] = useState(!!cloneId);
   const [originalPathTitle, setOriginalPathTitle] = useState<string>("");
   const [canPublishPath, setCanPublishPath] = useState(false);
+  const [showIntroDialog, setShowIntroDialog] = useState(!id && !cloneId);
   const [pathData, setPathData] = useState<any>({
     title: "",
     description: "",
