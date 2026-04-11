@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, BookOpen, Layers, ListChecks, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PathBasicInfo } from "@/components/learning-paths/wizard/PathBasicInfo";
 import { PathBuilder } from "@/components/learning-paths/wizard/PathBuilder";
 import { PathReview } from "@/components/learning-paths/wizard/PathReview";
@@ -28,6 +29,7 @@ const CreateLearningPath = () => {
   const [isCloning, setIsCloning] = useState(!!cloneId);
   const [originalPathTitle, setOriginalPathTitle] = useState<string>("");
   const [canPublishPath, setCanPublishPath] = useState(false);
+  const [showIntroDialog, setShowIntroDialog] = useState(!id && !cloneId);
   const [pathData, setPathData] = useState<any>({
     title: "",
     description: "",
@@ -303,6 +305,58 @@ const CreateLearningPath = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 pt-14 md:pt-0">
+      <Dialog open={showIntroDialog} onOpenChange={setShowIntroDialog}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="w-6 h-6 text-primary" />
+              ¿Qué es una Ruta de Aprendizaje?
+            </DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Una ruta de aprendizaje es una secuencia organizada de contenidos educativos que guía al estudiante paso a paso hacia un objetivo de aprendizaje.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="flex gap-3 items-start p-3 rounded-xl bg-primary/5 border border-primary/10">
+              <BookOpen className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">1. Define la información básica</p>
+                <p className="text-sm text-muted-foreground">Título, descripción, materia, nivel y objetivos claros de lo que el estudiante aprenderá.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 items-start p-3 rounded-xl bg-primary/5 border border-primary/10">
+              <Layers className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">2. Agrega cápsulas de contenido</p>
+                <p className="text-sm text-muted-foreground">Añade al menos 3 cápsulas: videos, lecturas, quizzes o juegos. Ordénalas de forma lógica y progresiva.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 items-start p-3 rounded-xl bg-primary/5 border border-primary/10">
+              <ListChecks className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">3. Revisa y publica</p>
+                <p className="text-sm text-muted-foreground">Verifica que todo esté correcto, configura opciones avanzadas y publica tu ruta para que otros puedan aprenderla.</p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-accent/50 border border-accent">
+              <p className="text-sm text-muted-foreground">
+                💡 <strong>Consejo:</strong> Una buena ruta combina diferentes tipos de contenido (videos, lecturas, quizzes) para mantener al estudiante motivado y reforzar el aprendizaje.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setShowIntroDialog(false)} className="w-full sm:w-auto">
+              ¡Entendido, empezar!
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <header className="sticky top-0 z-10 bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
