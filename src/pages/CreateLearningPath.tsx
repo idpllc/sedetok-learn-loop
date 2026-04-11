@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, BookOpen, Layers, ListChecks, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { PathBasicInfo } from "@/components/learning-paths/wizard/PathBasicInfo";
 import { PathBuilder } from "@/components/learning-paths/wizard/PathBuilder";
 import { PathReview } from "@/components/learning-paths/wizard/PathReview";
