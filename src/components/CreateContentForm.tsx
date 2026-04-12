@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save } from "lucide-react";
+import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save, BookOpen, Layers, ListChecks, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +28,7 @@ import { GameStep3 } from "./game/GameStep3";
 import { WordWheelQuestionsEditor } from "./game/WordWheelQuestionsEditor";
 import { useGames, useGameQuestions, GameQuestion } from "@/hooks/useGames";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Combobox } from "@/components/ui/combobox";
@@ -111,6 +112,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     tipo_aprendizaje: "",
     estimated_duration: 0,
   });
+  const [showPathIntroDialog, setShowPathIntroDialog] = useState(false);
 
   // Detect URL parameter for content type
   useEffect(() => {
@@ -118,12 +120,18 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     const typeParam = searchParams.get('type');
     if (typeParam && !editMode) {
       if (typeParam === 'learning_path') {
-        setFormData(prev => ({ ...prev, content_type: 'learning_path' as any }));
+        setShowPathIntroDialog(true);
       } else {
         setFormData(prev => ({ ...prev, content_type: typeParam as ContentType }));
       }
     }
   }, [editMode]);
+
+  const handleStartLearningPath = () => {
+    setShowPathIntroDialog(false);
+    setPathStep(1);
+    setFormData((prev) => ({ ...prev, content_type: 'learning_path' as any }));
+  };
   
   // Load quiz questions if editing a quiz
   const quizId = editMode && contentData?.content_type === 'quiz' ? contentData?.id : undefined;
@@ -1182,7 +1190,61 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
   // Normal form or quiz step 1 (basic data)
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <Dialog open={showPathIntroDialog} onOpenChange={setShowPathIntroDialog}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="w-6 h-6 text-primary" />
+              ¿Qué es una Ruta de Aprendizaje?
+            </DialogTitle>
+            <DialogDescription className="text-base pt-2">
+              Una ruta de aprendizaje es una secuencia organizada de contenidos educativos que guía al estudiante paso a paso hacia un objetivo claro.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="flex gap-3 items-start rounded-xl border border-primary/10 bg-primary/5 p-3">
+              <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="text-sm font-semibold">1. Define la información básica</p>
+                <p className="text-sm text-muted-foreground">Escribe un título claro, una descripción útil, el nivel, la materia y los objetivos de aprendizaje.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 items-start rounded-xl border border-primary/10 bg-primary/5 p-3">
+              <Layers className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="text-sm font-semibold">2. Agrega cápsulas de contenido</p>
+                <p className="text-sm text-muted-foreground">Incluye al menos 3 cápsulas entre videos, lecturas, quizzes o juegos, en un orden progresivo.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 items-start rounded-xl border border-primary/10 bg-primary/5 p-3">
+              <ListChecks className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div>
+                <p className="text-sm font-semibold">3. Revisa y publica</p>
+                <p className="text-sm text-muted-foreground">Comprueba que la secuencia tenga sentido pedagógico y publica la ruta cuando esté lista.</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-accent bg-accent/50 p-3 text-sm text-muted-foreground">
+              💡 <strong>Consejo:</strong> mezcla formatos distintos para mantener el interés y reforzar el aprendizaje.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPathIntroDialog(false)}>
+              Ahora no
+            </Button>
+            <Button onClick={handleStartLearningPath}>
+              Entendido, empezar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Tipo de contenido primero */}
       <div className="space-y-2">
         <Label htmlFor="content_type">Tipo de Contenido *</Label>
@@ -1190,9 +1252,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           value={formData.content_type}
           onValueChange={(value) => {
             if (value === 'learning_path') {
-              setFormData({ ...formData, content_type: value as any });
+              setShowPathIntroDialog(true);
             } else {
-              setFormData({ ...formData, content_type: value as ContentType });
+              setFormData((prev) => ({ ...prev, content_type: value as ContentType }));
             }
           }}
           required
@@ -1665,6 +1727,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           )}
         </Button>
       )}
-    </form>
+      </form>
+    </>
   );
 };

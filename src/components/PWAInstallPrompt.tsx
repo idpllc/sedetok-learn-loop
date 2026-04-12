@@ -3,6 +3,7 @@ import { Share, Plus, Download, Smartphone, Zap, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -15,12 +16,22 @@ interface BeforeInstallPromptEvent extends Event {
 
 export const PWAInstallPrompt = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
+    const isBlockedRoute =
+      location.pathname === "/create" ||
+      location.pathname === "/learning-paths/create";
+
+    if (isBlockedRoute) {
+      setShowPrompt(false);
+      return;
+    }
+
     // Check if already installed
     const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true;
@@ -66,7 +77,7 @@ export const PWAInstallPrompt = () => {
       window.removeEventListener('appinstalled', installedHandler);
       clearTimeout(timer);
     };
-  }, [user]);
+  }, [user, location.pathname]);
 
   const handleInstall = async () => {
     if (deferredPrompt) {
