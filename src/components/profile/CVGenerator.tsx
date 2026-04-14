@@ -4,6 +4,7 @@ import { FileText, Download, Loader2, Layers } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CVGeneratorProps {
   profile: any;
@@ -15,6 +16,7 @@ export const CVGenerator = ({ profile, metrics, isOwnProfile = true }: CVGenerat
   const [generating, setGenerating] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const generateCV = async (format: "full" | "summary") => {
     setGenerating(true);
@@ -22,6 +24,7 @@ export const CVGenerator = ({ profile, metrics, isOwnProfile = true }: CVGenerat
     try {
       const location = [profile?.municipio, profile?.departamento, profile?.pais].filter(Boolean).join(', ');
       const socialLinks = profile?.social_links || {};
+      const contactEmail = user?.email || profile?.email || "";
       
       const cvContent = `
         <!DOCTYPE html>
@@ -153,7 +156,7 @@ export const CVGenerator = ({ profile, metrics, isOwnProfile = true }: CVGenerat
               <div class="header-info">
                 <h1>${(profile?.full_name || profile?.username || '').toUpperCase()}</h1>
                 <div class="contact-info">
-                  ${location ? `${location} | ` : ''}${socialLinks.linkedin ? `<a href="${socialLinks.linkedin}" style="color: #000; text-decoration: none;">${socialLinks.linkedin}</a> | ` : ''}${profile?.email || 'email@example.com'}
+                  ${[location, socialLinks.linkedin ? `<a href="${socialLinks.linkedin}" style="color: #000; text-decoration: none;">${socialLinks.linkedin}</a>` : '', contactEmail].filter(Boolean).join(' | ')}
                 </div>
               </div>
             </div>
