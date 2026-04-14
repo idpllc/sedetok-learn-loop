@@ -6,6 +6,7 @@ import { ArrowLeft, Download, Edit, Star, Sparkles, Building2, Calendar, Share2,
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ViewCVVariationProps {
   variation: any;
@@ -18,6 +19,7 @@ interface ViewCVVariationProps {
 export const ViewCVVariation = ({ variation, profile, onBack, onEdit, onToggleFavorite }: ViewCVVariationProps) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const cvUrl = `${window.location.origin}/cv/${variation.id}`;
 
@@ -48,6 +50,14 @@ export const ViewCVVariation = ({ variation, profile, onBack, onEdit, onToggleFa
   const handleDownload = () => {
     const location = [profile?.municipio, profile?.departamento, profile?.pais].filter(Boolean).join(', ');
     const socialLinks = profile?.social_links || {};
+    const contactEmail = user?.email || profile?.email || "";
+    const contactDetails = [
+      location,
+      socialLinks.linkedin
+        ? `<a href="${socialLinks.linkedin}" style="color: #000; text-decoration: none;">${socialLinks.linkedin}</a>`
+        : "",
+      contactEmail,
+    ].filter(Boolean).join(' | ');
     
     const cvContent = `
       <!DOCTYPE html>
@@ -184,7 +194,7 @@ export const ViewCVVariation = ({ variation, profile, onBack, onEdit, onToggleFa
             <div class="header-info">
               <h1>${(profile?.full_name || profile?.username || '').toUpperCase()}</h1>
               <div class="contact-info">
-                ${location ? `${location} | ` : ''}${socialLinks.linkedin ? `<a href="${socialLinks.linkedin}" style="color: #000; text-decoration: none;">${socialLinks.linkedin}</a> | ` : ''}${profile?.email || 'email@example.com'}
+                ${contactDetails}
               </div>
             </div>
           </div>
@@ -356,6 +366,7 @@ export const ViewCVVariation = ({ variation, profile, onBack, onEdit, onToggleFa
                     <span>{profile.social_links.linkedin}</span>
                   )}
                 </p>
+                {(user?.email || profile?.email) && <p>{user?.email || profile?.email}</p>}
               </div>
             </div>
           </div>
