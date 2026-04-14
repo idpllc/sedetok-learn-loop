@@ -22,6 +22,9 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
   const [mode, setMode] = useState<"manual" | "ai">(variation?.created_with_ai ? "ai" : "manual");
   const [generating, setGenerating] = useState(false);
   const isEditing = !!variation;
+  const complementaryEducationFromVariation = Array.isArray(variation?.additional_sections?.complementary_education)
+    ? variation.additional_sections.complementary_education
+    : [];
 
   const [formData, setFormData] = useState({
     title: variation?.title || "",
@@ -32,7 +35,7 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
     highlighted_skills: variation?.highlighted_skills || [] as any[],
     highlighted_experience: variation?.highlighted_experience || [] as any[],
     highlighted_education: variation?.highlighted_education || [] as any[],
-    highlighted_complementary: variation?.highlighted_complementary_education || [] as any[],
+    highlighted_complementary: complementaryEducationFromVariation,
     highlighted_projects: variation?.highlighted_projects || [] as any[],
   });
 
@@ -66,6 +69,11 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
   };
 
   const handleSave = async () => {
+    const normalizedAdditionalSections =
+      variation?.additional_sections && typeof variation.additional_sections === "object" && !Array.isArray(variation.additional_sections)
+        ? variation.additional_sections
+        : {};
+
     const data: Record<string, any> = {
       title: formData.title || `CV para ${formData.target_position}`,
       target_position: formData.target_position,
@@ -78,9 +86,10 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
       highlighted_projects: formData.highlighted_projects,
       created_with_ai: mode === "ai",
       ai_prompt: mode === "ai" ? formData.job_description : null,
-      additional_sections: formData.highlighted_complementary.length > 0 
-        ? { complementary_education: formData.highlighted_complementary } 
-        : null,
+      additional_sections: {
+        ...normalizedAdditionalSections,
+        complementary_education: formData.highlighted_complementary,
+      },
     };
 
     if (isEditing) {
