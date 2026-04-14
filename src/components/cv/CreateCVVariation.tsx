@@ -66,7 +66,7 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
   };
 
   const handleSave = async () => {
-    const data = {
+    const data: Record<string, any> = {
       title: formData.title || `CV para ${formData.target_position}`,
       target_position: formData.target_position,
       company_name: formData.company_name,
@@ -75,10 +75,12 @@ export const CreateCVVariation = ({ profile, variation, onBack, onSuccess }: Cre
       highlighted_skills: formData.highlighted_skills,
       highlighted_experience: formData.highlighted_experience,
       highlighted_education: formData.highlighted_education,
-      highlighted_complementary_education: formData.highlighted_complementary,
       highlighted_projects: formData.highlighted_projects,
       created_with_ai: mode === "ai",
       ai_prompt: mode === "ai" ? formData.job_description : null,
+      additional_sections: formData.highlighted_complementary.length > 0 
+        ? { complementary_education: formData.highlighted_complementary } 
+        : null,
     };
 
     if (isEditing) {
