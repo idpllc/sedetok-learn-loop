@@ -17,6 +17,7 @@ const CVVariations = () => {
   const { user } = useAuth();
   const { profile } = useProfileUpdate();
   const { toggleFavorite } = useCVVariations(user?.id);
+  const enrichedProfile = profile ? { ...profile, email: user?.email } : null;
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
 
@@ -65,7 +66,7 @@ const CVVariations = () => {
 
           {viewMode === "create" && profile && (
             <CreateCVVariation
-              profile={profile}
+              profile={enrichedProfile}
               onBack={handleBack}
               onSuccess={handleBack}
             />
@@ -74,7 +75,7 @@ const CVVariations = () => {
           {viewMode === "view" && selectedVariation && (
             <ViewCVVariation
               variation={selectedVariation}
-              profile={profile}
+              profile={enrichedProfile}
               onBack={handleBack}
               onEdit={() => setViewMode("edit")}
               onToggleFavorite={() => {
@@ -92,7 +93,7 @@ const CVVariations = () => {
 
           {viewMode === "edit" && selectedVariation && profile && (
             <CreateCVVariation
-              profile={profile}
+              profile={enrichedProfile}
               variation={selectedVariation}
               onBack={handleBack}
               onSuccess={handleBack}
