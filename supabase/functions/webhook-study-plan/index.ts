@@ -51,11 +51,9 @@ serve(async (req) => {
 
   try {
     const webhookKey = req.headers.get('x-webhook-key');
-    const FALLBACK_KEY = "tucanmistico";
     const validKeys = [
       Deno.env.get('WEBHOOK_API_KEY'),
       Deno.env.get('CHAT_JWT_SECRET'),
-      FALLBACK_KEY,
     ].filter(Boolean) as string[];
 
     if (!webhookKey || !validKeys.includes(webhookKey)) {
