@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { level, userId: bodyUserId } = await req.json();
+    const { level } = await req.json();
     if (!level) {
       return new Response(
         JSON.stringify({ error: 'level is required' }),
@@ -26,24 +26,25 @@ serve(async (req) => {
     // Admin client to bypass RLS for matchmaking logic
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Try to resolve user id from auth header; fallback to body param
-    let userId = bodyUserId as string | undefined;
-    try {
-      const authHeader = req.headers.get('Authorization');
-      if (authHeader) {
-        const supabaseUserClient = createClient(supabaseUrl, serviceRoleKey, {
-          global: { headers: { Authorization: authHeader } },
-        });
-        const { data: userData } = await supabaseUserClient.auth.getUser();
-        if (userData?.user?.id) userId = userData.user.id;
-      }
-    } catch (_) {
-      // ignore, will use body userId
+    // Resolve user id ONLY from verified JWT in the Authorization header.
+    // Never trust a client-supplied userId — it would allow impersonation.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: missing Authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!userId) {
+    const supabaseUserClient = createClient(supabaseUrl, serviceRoleKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await supabaseUserClient.auth.getUser();
+    const userId = userData?.user?.id;
+
+    if (userErr || !userId) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized: userId not provided' }),
+        JSON.stringify({ error: 'Unauthorized: invalid session' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
