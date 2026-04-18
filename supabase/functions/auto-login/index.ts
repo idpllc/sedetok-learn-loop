@@ -5,7 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SECRET_KEY = "tucanmistico";
+const SECRET_KEY = Deno.env.get("AUTO_LOGIN_SECRET") ?? Deno.env.get("CHAT_JWT_SECRET") ?? "";
+if (!SECRET_KEY) {
+  console.error("AUTO_LOGIN_SECRET (or CHAT_JWT_SECRET) is not configured");
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
