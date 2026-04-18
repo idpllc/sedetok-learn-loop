@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { registerSW } from 'virtual:pwa-register';
+import Clarity from '@microsoft/clarity';
+
+// Initialize Microsoft Clarity
+Clarity.init('wdsodbxujo');
 
 // Register Service Worker for PWA
 if (import.meta.env.PROD) {
