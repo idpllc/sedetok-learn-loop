@@ -201,7 +201,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
                   setAuthModalOpen(true);
                   return;
                 }
-                if (!isCreator && !isEnrolled) {
+                if (!isCreator && !isEnrolled && !isCourse) {
                   enroll.mutate(undefined, { onSuccess: () => onStart() });
                 } else {
                   onStart();
