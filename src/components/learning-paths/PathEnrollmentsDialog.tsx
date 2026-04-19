@@ -108,40 +108,41 @@ export const PathEnrollmentsDialog = ({
     membershipMap[m.user_id] = m;
   });
 
-  // Get path content items
+  // Get path content items (across all child paths if course)
   const { data: pathContent } = useQuery({
-    queryKey: ["path-content-for-progress", pathId],
+    queryKey: ["path-content-for-progress", pathId, isCourse, targetPathIds.join(",")],
     queryFn: async () => {
+      if (targetPathIds.length === 0) return [];
       const { data, error } = await supabase
         .from("learning_path_content")
         .select(`
-          id, order_index, section_name, is_required,
+          id, path_id, order_index, section_name, is_required,
           content:content_id (id, title, content_type),
           quiz:quiz_id (id, title),
           game:game_id (id, title)
         `)
-        .eq("path_id", pathId)
+        .in("path_id", targetPathIds)
         .order("order_index");
       if (error) throw error;
       return data;
     },
-    enabled: open && !!pathId,
+    enabled: open && (isCourse ? !!coursePathIds : !!pathId),
   });
 
-  // Get all progress records for this path from all enrolled users
+  // Get all progress records (across all paths if course)
   const { data: allProgress } = useQuery({
-    queryKey: ["all-users-path-progress", pathId, userIds.join(",")],
+    queryKey: ["all-users-path-progress", pathId, isCourse, targetPathIds.join(","), userIds.join(",")],
     queryFn: async () => {
-      if (userIds.length === 0) return [];
+      if (userIds.length === 0 || targetPathIds.length === 0) return [];
       const { data, error } = await supabase
         .from("user_path_progress")
         .select("*")
-        .eq("path_id", pathId)
+        .in("path_id", targetPathIds)
         .in("user_id", userIds);
       if (error) throw error;
       return data;
     },
-    enabled: open && userIds.length > 0,
+    enabled: open && userIds.length > 0 && targetPathIds.length > 0,
   });
 
   const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]));
