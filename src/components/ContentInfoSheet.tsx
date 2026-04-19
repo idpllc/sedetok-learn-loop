@@ -54,6 +54,7 @@ export function ContentInfoSheet({
   };
   
   const { comments, isLoading, addComment, deleteComment } = useComments(contentId, isQuiz, isGame, handleCommentAdded);
+  const displayCount = comments?.length ?? commentsCount;
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
@@ -123,7 +124,7 @@ export function ContentInfoSheet({
 
               {/* Comments section */}
               <div className="pt-4 border-t">
-                <h4 className="text-base font-semibold mb-4">Comentarios ({commentsCount})</h4>
+                <h4 className="text-base font-semibold mb-4">Comentarios ({displayCount})</h4>
                 {isLoading ? (
                   <div className="text-center py-8 text-muted-foreground">Cargando comentarios...</div>
                 ) : comments.length === 0 ? (
