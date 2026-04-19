@@ -55,6 +55,31 @@ export const useCourses = (filter?: "created" | "all") => {
 
       const { data, error } = await query;
       if (error) throw error;
+
+      // Hide courses with fewer than 3 routes, except for their creator
+      if (filter !== "created" && data && data.length > 0) {
+        const candidateIds = data
+          .filter((c: any) => !user || c.creator_id !== user.id)
+          .map((c: any) => c.id);
+
+        if (candidateIds.length === 0) return data;
+
+        const { data: routes } = await supabase
+          .from("course_routes")
+          .select("course_id")
+          .in("course_id", candidateIds);
+
+        const counts = new Map<string, number>();
+        (routes || []).forEach((r: any) => {
+          counts.set(r.course_id, (counts.get(r.course_id) || 0) + 1);
+        });
+
+        return data.filter((c: any) => {
+          if (user && c.creator_id === user.id) return true;
+          return (counts.get(c.id) || 0) >= 3;
+        });
+      }
+
       return data;
     },
     enabled: filter !== 'created' || !!user,
