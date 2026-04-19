@@ -47,6 +47,20 @@ const ViewLearningPath = () => {
     },
     enabled: !!id,
   });
+
+  const { data: pathCreatorProfile } = useQuery({
+    queryKey: ["path-creator-profile", pathInfo?.creator_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, institution")
+        .eq("id", pathInfo!.creator_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!pathInfo?.creator_id,
+  });
   
   const { data: creators } = useQuery({
     queryKey: ['path-creators', id, (pathContent || []).map((i: any) => i.quiz?.creator_id || i.content?.creator_id).join(',')],
