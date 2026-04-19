@@ -356,6 +356,7 @@ const ViewCourse = () => {
           contentCount={allContent.length}
           isPublic={course.is_public ?? true}
           creatorId={course.creator_id}
+          pathType="curso"
           onStart={() => {
             const container = document.querySelector('.snap-y');
             if (container && container.children.length > 1) {
