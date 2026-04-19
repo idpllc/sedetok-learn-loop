@@ -40,10 +40,13 @@ export const useComments = (contentId: string, isQuiz?: boolean, isGame?: boolea
           user_id: user.id,
           comment_text,
         })
-        .select()
-        .single();
+        .select("*")
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting comment:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -55,8 +58,9 @@ export const useComments = (contentId: string, isQuiz?: boolean, isGame?: boolea
         onCommentAdded();
       }
     },
-    onError: () => {
-      toast.error("Error al agregar comentario");
+    onError: (error: any) => {
+      console.error("Comment error:", error);
+      toast.error(error?.message || "Error al agregar comentario");
     },
   });
 
