@@ -89,7 +89,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           .order("created_at", { ascending: false });
         
         if (error) throw error;
-        return (data || []) as any[];
+        return (await filterShallowCourses((data || []) as any[], userId)) as any[];
       } else {
         // All public published paths + own (including drafts) when logged in
         let query = supabase
@@ -108,7 +108,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         const { data, error } = await query;
         
         if (error) throw error;
-        return (data || []) as any[];
+        return (await filterShallowCourses((data || []) as any[], userId)) as any[];
       }
     },
   }) as { data: any[] | undefined; isLoading: boolean };
