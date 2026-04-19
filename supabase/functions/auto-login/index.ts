@@ -348,6 +348,22 @@ Deno.serve(async (req) => {
 
     // ── MODE: Smart auto-login / register ─────────────────────────────────
     // Requires: documento + institution + member_role
+    // SECURITY: This mode can issue a session for ANY user given just a document
+    // number, so it MUST be gated by a server-to-server API key. Only trusted
+    // backends (institutional sync, webhooks) should call it.
+    const WEBHOOK_API_KEY = Deno.env.get("WEBHOOK_API_KEY") ?? "";
+    const providedApiKey =
+      req.headers.get("x-api-key") ??
+      req.headers.get("X-API-Key") ??
+      "";
+    if (!WEBHOOK_API_KEY || providedApiKey !== WEBHOOK_API_KEY) {
+      console.warn("auto-login smart mode: missing or invalid x-api-key");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: this endpoint requires a valid x-api-key header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!documento) {
       return new Response(JSON.stringify({ error: "Se requiere 'documento'" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
