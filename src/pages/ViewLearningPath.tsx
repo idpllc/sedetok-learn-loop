@@ -391,6 +391,8 @@ const ViewLearningPath = () => {
           contentCount={contentData.length}
           isPublic={pathInfo?.is_public ?? true}
           creatorId={pathInfo?.creator_id}
+          creatorName={pathCreatorProfile ? getDisplayName(pathCreatorProfile) : undefined}
+          creatorAvatar={pathCreatorProfile?.avatar_url || undefined}
           pathType={(pathInfo as any)?.path_type === "curso" ? "curso" : "ruta"}
           onStart={() => {
             // Scroll to first content capsule
