@@ -28,6 +28,7 @@ export const CommentsSheet = ({ contentId, commentsCount, isQuiz = false, isGame
   };
   
   const { comments, isLoading, addComment, deleteComment } = useComments(contentId, isQuiz, isGame, handleCommentAdded);
+  const displayCount = comments?.length ?? commentsCount;
 
   const handleAddComment = () => {
     if (!newComment.trim()) return;
@@ -42,12 +43,12 @@ export const CommentsSheet = ({ contentId, commentsCount, isQuiz = false, isGame
           <div className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-white">
             <MessageCircle className="w-5 h-5 text-black" />
           </div>
-          <span className="text-xs font-semibold text-white drop-shadow-lg">{commentsCount}</span>
+          <span className="text-xs font-semibold text-white drop-shadow-lg">{displayCount}</span>
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[80vh] bg-background z-[70] md:inset-x-auto md:left-[calc(50%+8rem)] md:w-[min(calc(100vw-18rem),56rem)] md:-translate-x-1/2 md:rounded-t-3xl">
         <SheetHeader>
-          <SheetTitle>Comentarios ({commentsCount})</SheetTitle>
+          <SheetTitle>Comentarios ({displayCount})</SheetTitle>
         </SheetHeader>
 
         <div className="flex flex-col h-[calc(100%-60px)] mt-4">
