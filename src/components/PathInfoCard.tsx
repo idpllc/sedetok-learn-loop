@@ -213,7 +213,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
               {enroll.isPending ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
               ) : null}
-              {isEnrolled || isCreator ? "Continuar Ruta" : "Empezar Ruta"}
+              {isEnrolled || isCreator ? continueLabel : startLabel}
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6 ml-2" />
             </Button>
 
