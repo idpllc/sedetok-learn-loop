@@ -113,9 +113,27 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
         </div>
 
         {/* Title */}
-        <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-center mb-2 md:mb-6 text-foreground leading-tight">
+        <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-center mb-2 md:mb-4 text-foreground leading-tight">
           {title}
         </h1>
+
+        {/* Creator */}
+        {creatorName && (
+          <button
+            onClick={() => creatorId && navigate(`/profile/${creatorId}`)}
+            className="flex items-center gap-2 mb-3 md:mb-5 hover:opacity-80 transition-opacity"
+          >
+            <Avatar className="w-6 h-6 md:w-8 md:h-8">
+              <AvatarImage src={creatorAvatar} />
+              <AvatarFallback className="text-xs">
+                {creatorName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm md:text-base text-muted-foreground">
+              Por <span className="font-semibold text-foreground">{creatorName}</span>
+            </span>
+          </button>
+        )}
 
         {/* Subject and Level */}
         {(subject || level) && (
