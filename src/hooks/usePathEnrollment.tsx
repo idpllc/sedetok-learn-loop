@@ -30,16 +30,28 @@ export const usePathEnrollment = (pathId?: string) => {
         .from("path_enrollments")
         .insert({ user_id: user.id, path_id: pathId })
         .select()
-        .single();
-      if (error) throw error;
+        .maybeSingle();
+
+      // Treat duplicate enrollment as success (idempotent)
+      if (error) {
+        const code = (error as any).code;
+        const msg = (error as any).message || "";
+        const isDuplicate =
+          code === "23505" || /duplicate key|already exists|unique constraint/i.test(msg);
+        if (!isDuplicate) {
+          console.error("[path-enrollment] enroll failed:", error);
+          throw error;
+        }
+      }
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["path-enrollment", pathId, user?.id] });
-      toast.success("¡Ruta iniciada! Buena suerte 🚀");
+      toast.success("¡Listo! Buena suerte 🚀");
     },
-    onError: () => {
-      toast.error("Error al iniciar la ruta");
+    onError: (err: any) => {
+      console.error("[path-enrollment] mutation error:", err);
+      toast.error(err?.message ? `No se pudo iniciar: ${err.message}` : "No se pudo iniciar");
     },
   });
 
