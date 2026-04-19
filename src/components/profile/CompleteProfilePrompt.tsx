@@ -87,23 +87,13 @@ export const CompleteProfilePrompt = ({ profile, isOwnProfile }: CompleteProfile
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={(o) => { if (!o) handleDismiss(); else setOpen(true); }}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <Sparkles className="w-5 h-5 text-yellow-500" />
-              ¡Completa tu Perfil Profesional!
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={handleDismiss}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center gap-2 text-xl pr-6">
+            <Sparkles className="w-5 h-5 text-yellow-500" />
+            ¡Completa tu Perfil Profesional!
+          </DialogTitle>
           <DialogDescription className="text-base">
             Tu perfil está <strong>{completionPercentage}% completo</strong>. Complétalo para desbloquear todos los beneficios.
           </DialogDescription>
