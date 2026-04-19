@@ -371,6 +371,8 @@ const ViewCourse = () => {
           contentCount={allContent.length}
           isPublic={course.is_public ?? true}
           creatorId={course.creator_id}
+          creatorName={creatorProfile ? getDisplayName(creatorProfile) : undefined}
+          creatorAvatar={creatorProfile?.avatar_url || undefined}
           pathType="curso"
           onStart={() => {
             const container = document.querySelector('.snap-y');
