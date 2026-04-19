@@ -49,6 +49,21 @@ const ViewCourse = () => {
     enabled: !!id,
   });
 
+  // Fetch creator profile
+  const { data: creatorProfile } = useQuery({
+    queryKey: ["course-creator", course?.creator_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, institution")
+        .eq("id", course!.creator_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!course?.creator_id,
+  });
+
   // Fetch course levels
   const { data: levels, isLoading: levelsLoading } = useQuery({
     queryKey: ["course-levels", id],
@@ -356,6 +371,8 @@ const ViewCourse = () => {
           contentCount={allContent.length}
           isPublic={course.is_public ?? true}
           creatorId={course.creator_id}
+          creatorName={creatorProfile ? getDisplayName(creatorProfile) : undefined}
+          creatorAvatar={creatorProfile?.avatar_url || undefined}
           pathType="curso"
           onStart={() => {
             const container = document.querySelector('.snap-y');

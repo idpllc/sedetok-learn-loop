@@ -16,6 +16,7 @@ interface PathEnrollmentsDialogProps {
   onOpenChange: (open: boolean) => void;
   pathId: string;
   pathTitle: string;
+  pathType?: "ruta" | "curso";
 }
 
 export const PathEnrollmentsDialog = ({
@@ -23,22 +24,51 @@ export const PathEnrollmentsDialog = ({
   onOpenChange,
   pathId,
   pathTitle,
+  pathType = "ruta",
 }: PathEnrollmentsDialogProps) => {
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const isCourse = pathType === "curso";
+  const entityLabel = isCourse ? "curso" : "ruta";
 
-  // Get all enrollments for this path
-  const { data: enrollments, isLoading: enrollmentsLoading } = useQuery({
-    queryKey: ["path-enrollments", pathId],
+  // For courses: get all child path IDs first
+  const { data: coursePathIds } = useQuery({
+    queryKey: ["course-path-ids", pathId],
     queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_routes")
+        .select("path_id")
+        .eq("course_id", pathId);
+      if (error) throw error;
+      return (data || []).map((r: any) => r.path_id).filter(Boolean);
+    },
+    enabled: open && isCourse && !!pathId,
+  });
+
+  const targetPathIds = isCourse ? (coursePathIds || []) : [pathId];
+
+  // Get all enrollments (for course: across all child paths, deduped per user)
+  const { data: enrollments, isLoading: enrollmentsLoading } = useQuery({
+    queryKey: ["path-enrollments", pathId, isCourse, targetPathIds.join(",")],
+    queryFn: async () => {
+      if (targetPathIds.length === 0) return [];
       const { data, error } = await supabase
         .from("path_enrollments")
         .select("*")
-        .eq("path_id", pathId)
+        .in("path_id", targetPathIds)
         .order("enrolled_at", { ascending: false });
       if (error) throw error;
-      return data;
+      if (!isCourse) return data;
+      // Dedupe by user_id, keep earliest enrollment date
+      const map = new Map<string, any>();
+      for (const e of data || []) {
+        const existing = map.get(e.user_id);
+        if (!existing || new Date(e.enrolled_at) < new Date(existing.enrolled_at)) {
+          map.set(e.user_id, e);
+        }
+      }
+      return Array.from(map.values());
     },
-    enabled: open && !!pathId,
+    enabled: open && (isCourse ? !!coursePathIds : !!pathId),
   });
 
   // Get profiles for enrolled users
@@ -78,40 +108,41 @@ export const PathEnrollmentsDialog = ({
     membershipMap[m.user_id] = m;
   });
 
-  // Get path content items
+  // Get path content items (across all child paths if course)
   const { data: pathContent } = useQuery({
-    queryKey: ["path-content-for-progress", pathId],
+    queryKey: ["path-content-for-progress", pathId, isCourse, targetPathIds.join(",")],
     queryFn: async () => {
+      if (targetPathIds.length === 0) return [];
       const { data, error } = await supabase
         .from("learning_path_content")
         .select(`
-          id, order_index, section_name, is_required,
+          id, path_id, order_index, section_name, is_required,
           content:content_id (id, title, content_type),
           quiz:quiz_id (id, title),
           game:game_id (id, title)
         `)
-        .eq("path_id", pathId)
+        .in("path_id", targetPathIds)
         .order("order_index");
       if (error) throw error;
       return data;
     },
-    enabled: open && !!pathId,
+    enabled: open && (isCourse ? !!coursePathIds : !!pathId),
   });
 
-  // Get all progress records for this path from all enrolled users
+  // Get all progress records (across all paths if course)
   const { data: allProgress } = useQuery({
-    queryKey: ["all-users-path-progress", pathId, userIds.join(",")],
+    queryKey: ["all-users-path-progress", pathId, isCourse, targetPathIds.join(","), userIds.join(",")],
     queryFn: async () => {
-      if (userIds.length === 0) return [];
+      if (userIds.length === 0 || targetPathIds.length === 0) return [];
       const { data, error } = await supabase
         .from("user_path_progress")
         .select("*")
-        .eq("path_id", pathId)
+        .in("path_id", targetPathIds)
         .in("user_id", userIds);
       if (error) throw error;
       return data;
     },
-    enabled: open && userIds.length > 0,
+    enabled: open && userIds.length > 0 && targetPathIds.length > 0,
   });
 
   const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]));
@@ -155,7 +186,7 @@ export const PathEnrollmentsDialog = ({
         {(!enrollments || enrollments.length === 0) ? (
           <div className="text-center py-12 text-muted-foreground">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Ningún estudiante ha empezado esta ruta aún</p>
+            <p>Ningún estudiante ha empezado este {entityLabel} aún</p>
           </div>
         ) : (
           <div className="space-y-3">
