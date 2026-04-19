@@ -369,6 +369,7 @@ const ViewCourse = () => {
           totalXp={course.total_xp}
           coverUrl={course.cover_url}
           contentCount={allContent.length}
+          routeCount={courseRoutes?.length || 0}
           isPublic={course.is_public ?? true}
           creatorId={course.creator_id}
           creatorName={creatorProfile ? getDisplayName(creatorProfile) : undefined}
