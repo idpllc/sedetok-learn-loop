@@ -24,8 +24,10 @@ import {
   Building2,
   Webhook,
   GraduationCap,
+  Activity,
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
+import { InteractionsAnalytics } from "@/components/admin/InteractionsAnalytics";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { ApiConfiguration } from "@/components/admin/ApiConfiguration";
 import { VerificationManagement } from "@/components/admin/VerificationManagement";
@@ -84,10 +86,14 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-2">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 gap-2">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Resumen</span>
+            </TabsTrigger>
+            <TabsTrigger value="interactions" className="flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              <span className="hidden sm:inline">Interacciones</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
@@ -298,6 +304,10 @@ export default function AdminDashboard() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="interactions">
+            <InteractionsAnalytics />
           </TabsContent>
 
           <TabsContent value="content">
