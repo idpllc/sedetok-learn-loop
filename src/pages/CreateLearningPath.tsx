@@ -40,6 +40,7 @@ const CreateLearningPath = () => {
     level: "",
     language: "Español",
     category: "matematicas",
+    path_type: "ruta",
     is_public: false,
     cover_url: "",
     enforce_order: false,
