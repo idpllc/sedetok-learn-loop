@@ -288,19 +288,25 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
                   setAuthModalOpen(true);
                   return;
                 }
-                if (!isCreator && !isEnrolled && !isCourse) {
+                if (isCourse) {
+                  if (isCreator || isCourseEnrolled) {
+                    onStart();
+                  } else {
+                    enrollInCourse.mutate(undefined, { onSuccess: () => onStart() });
+                  }
+                } else if (!isCreator && !isEnrolled) {
                   enroll.mutate(undefined, { onSuccess: () => onStart() });
                 } else {
                   onStart();
                 }
               }}
-              disabled={enroll.isPending}
+              disabled={enroll.isPending || enrollInCourse.isPending}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm md:text-xl px-6 py-3 md:px-12 md:py-8 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-300 w-full sm:w-auto"
             >
-              {enroll.isPending ? (
+              {(enroll.isPending || enrollInCourse.isPending) ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
               ) : null}
-              {(isCourse ? isCreator : (isEnrolled || isCreator)) ? continueLabel : startLabel}
+              {(isCourse ? (isCreator || isCourseEnrolled) : (isEnrolled || isCreator)) ? continueLabel : startLabel}
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6 ml-2" />
             </Button>
 
