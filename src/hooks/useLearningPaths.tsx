@@ -6,6 +6,34 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Hide courses (path_type='curso') with fewer than 3 capsules.
+  // The creator can always see their own (regardless of capsule count).
+  const filterShallowCourses = async (paths: any[], currentUserId?: string) => {
+    if (!paths || paths.length === 0) return paths;
+    const courseIds = paths
+      .filter((p) => p.path_type === "curso" && (!currentUserId || p.creator_id !== currentUserId))
+      .map((p) => p.id);
+    if (courseIds.length === 0) return paths;
+
+    const { data: counts, error } = await supabase
+      .from("learning_path_content")
+      .select("path_id")
+      .in("path_id", courseIds);
+    if (error) {
+      console.error("[learning-paths] count fetch failed:", error);
+      return paths;
+    }
+    const countMap = new Map<string, number>();
+    (counts || []).forEach((row: any) => {
+      countMap.set(row.path_id, (countMap.get(row.path_id) || 0) + 1);
+    });
+    return paths.filter((p) => {
+      if (p.path_type !== "curso") return true;
+      if (currentUserId && p.creator_id === currentUserId) return true;
+      return (countMap.get(p.id) || 0) >= 3;
+    });
+  };
+
   const { data: paths, isLoading } = useQuery({
     queryKey: ["learning-paths", userId, filter],
     queryFn: async () => {
@@ -22,7 +50,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           .order("created_at", { ascending: false });
         
         if (error) throw error;
-        return (data || []) as any[];
+        return (await filterShallowCourses((data || []) as any[])) as any[];
       }
 
       if (filter === 'created') {
@@ -61,7 +89,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
           .order("created_at", { ascending: false });
         
         if (error) throw error;
-        return (data || []) as any[];
+        return (await filterShallowCourses((data || []) as any[], userId)) as any[];
       } else {
         // All public published paths + own (including drafts) when logged in
         let query = supabase
@@ -80,7 +108,7 @@ export const useLearningPaths = (userId?: string, filter?: 'created' | 'taken' |
         const { data, error } = await query;
         
         if (error) throw error;
-        return (data || []) as any[];
+        return (await filterShallowCourses((data || []) as any[], userId)) as any[];
       }
     },
   }) as { data: any[] | undefined; isLoading: boolean };
