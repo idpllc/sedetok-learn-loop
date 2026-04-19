@@ -24,6 +24,8 @@ interface PathInfoCardProps {
   contentCount: number;
   isPublic?: boolean;
   creatorId?: string;
+  creatorName?: string;
+  creatorAvatar?: string;
   pathType?: "ruta" | "curso";
   onStart: () => void;
   onNext?: () => void;
@@ -45,6 +47,8 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   contentCount,
   isPublic = true,
   creatorId,
+  creatorName,
+  creatorAvatar,
   pathType = "ruta",
   onStart,
   onNext,
