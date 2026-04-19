@@ -88,7 +88,14 @@ export const CompleteProfilePrompt = ({ profile, isOwnProfile }: CompleteProfile
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleDismiss(); else setOpen(true); }}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto [&>button]:hidden">
+        <button
+          onClick={handleDismiss}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+          aria-label="Cerrar"
+        >
+          <X className="h-4 w-4" />
+        </button>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl pr-6">
             <Sparkles className="w-5 h-5 text-yellow-500" />
