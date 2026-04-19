@@ -97,7 +97,26 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="space-y-4">
         <div>
-          <Label htmlFor="title">Título de la ruta *</Label>
+          <Label htmlFor="path_type">Tipo *</Label>
+          <Select
+            value={data.path_type || "ruta"}
+            onValueChange={(value) => onChange({ ...data, path_type: value })}
+          >
+            <SelectTrigger id="path_type" className="mt-1.5">
+              <SelectValue placeholder="Seleccionar tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ruta">🗺️ Ruta de aprendizaje</SelectItem>
+              <SelectItem value="curso">📚 Curso</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground mt-1">
+            Elige "Curso" si es un programa estructurado por niveles; "Ruta" para una secuencia de aprendizaje.
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="title">Título *</Label>
           <Input
             id="title"
             placeholder="Ej: Introducción a la Geometría"
