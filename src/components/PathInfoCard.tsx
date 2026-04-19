@@ -26,6 +26,7 @@ interface PathInfoCardProps {
   objectives?: string;
   coverUrl?: string;
   contentCount: number;
+  routeCount?: number;
   isPublic?: boolean;
   creatorId?: string;
   creatorName?: string;
@@ -49,6 +50,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   objectives,
   coverUrl,
   contentCount,
+  routeCount,
   isPublic = true,
   creatorId,
   creatorName,
@@ -234,11 +236,21 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
 
         {/* Stats row */}
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-6 mb-4 md:mb-8">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
-            <span className="font-semibold text-sm md:text-base">{contentCount}</span>
-            <span className="text-xs md:text-sm">Cápsulas</span>
-          </div>
+          {isCourse && routeCount !== undefined && routeCount > 0 && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="font-semibold text-sm md:text-base">{routeCount}</span>
+              <span className="text-xs md:text-sm">Rutas</span>
+            </div>
+          )}
+
+          {contentCount > 0 && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <BookOpen className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="font-semibold text-sm md:text-base">{contentCount}</span>
+              <span className="text-xs md:text-sm">Cápsulas</span>
+            </div>
+          )}
           
           {estimatedDuration && estimatedDuration > 0 && (
             <div className="flex items-center gap-1.5 text-muted-foreground">
