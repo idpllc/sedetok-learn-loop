@@ -89,6 +89,9 @@ export const PathCard = ({ path }: PathCardProps) => {
             <Badge className={getStatusColor(path.status)}>
               {getStatusLabel(path.status)}
             </Badge>
+            {path.path_type === "curso" && (
+              <Badge className="bg-primary text-primary-foreground">📚 Curso</Badge>
+            )}
             {path.is_public && (
               <Badge variant="secondary">Pública</Badge>
             )}
