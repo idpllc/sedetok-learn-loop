@@ -202,7 +202,7 @@ export const InteractionsAnalytics = () => {
         <StatCard icon={MessageCircle} label="Comentarios" value={stats?.totalComments} color="#8B5CF6" />
         <StatCard icon={Bookmark} label="Guardados" value={stats?.totalSaves} color="#06B6D4" />
         <StatCard icon={Share2} label="Compartidos" value={stats?.totalShares} color="#10B981" />
-        <StatCard icon={UserPlus} label="Suscripciones" value={stats?.totalFollows} color="#F59E0B" />
+        <StatCard icon={UserPlus} label="Seguimientos" value={stats?.totalFollows} color="#F59E0B" />
         <StatCard icon={Eye} label="Visualizaciones" value={stats?.totalViews} color="hsl(var(--primary))" />
       </div>
 
@@ -226,7 +226,7 @@ export const InteractionsAnalytics = () => {
                 <Legend />
                 <Line type="monotone" dataKey="likes" stroke="#F6339A" strokeWidth={2} name="Likes" />
                 <Line type="monotone" dataKey="comments" stroke="#8B5CF6" strokeWidth={2} name="Comentarios" />
-                <Line type="monotone" dataKey="follows" stroke="#F59E0B" strokeWidth={2} name="Suscripciones" />
+                <Line type="monotone" dataKey="follows" stroke="#F59E0B" strokeWidth={2} name="Seguimientos" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -296,9 +296,12 @@ export const InteractionsAnalytics = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
-            Creadores con más suscriptores
+            Usuarios más seguidos
           </CardTitle>
-          <CardDescription>Top 10 usuarios por seguidores</CardDescription>
+          <CardDescription>
+            Top 10 por número de seguidores · Total de seguimientos en el sistema:{" "}
+            <span className="font-bold text-foreground">{stats?.totalFollows.toLocaleString()}</span>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={Math.max(280, (topCreators?.length || 0) * 36)}>
