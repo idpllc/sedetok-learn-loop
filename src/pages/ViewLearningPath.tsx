@@ -377,6 +377,7 @@ const ViewLearningPath = () => {
           contentCount={contentData.length}
           isPublic={pathInfo?.is_public ?? true}
           creatorId={pathInfo?.creator_id}
+          pathType={(pathInfo as any)?.path_type === "curso" ? "curso" : "ruta"}
           onStart={() => {
             // Scroll to first content capsule
             const container = document.querySelector('.snap-y');
