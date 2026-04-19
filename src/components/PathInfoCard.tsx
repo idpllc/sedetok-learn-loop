@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BookOpen, Clock, Award, Target, ChevronRight, Share2, Edit, Loader2, Users } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { SharePathSheet } from "@/components/SharePathSheet";
