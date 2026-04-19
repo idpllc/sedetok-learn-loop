@@ -186,7 +186,7 @@ export const PathEnrollmentsDialog = ({
         {(!enrollments || enrollments.length === 0) ? (
           <div className="text-center py-12 text-muted-foreground">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Ningún estudiante ha empezado esta ruta aún</p>
+            <p>Ningún estudiante ha empezado este {entityLabel} aún</p>
           </div>
         ) : (
           <div className="space-y-3">

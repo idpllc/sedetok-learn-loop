@@ -263,6 +263,7 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
             onOpenChange={setShowEnrollments}
             pathId={pathId}
             pathTitle={title}
+            pathType={pathType}
           />
 
           <AuthModal
