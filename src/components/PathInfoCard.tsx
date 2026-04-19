@@ -64,8 +64,69 @@ export const PathInfoCard = forwardRef<HTMLDivElement, PathInfoCardProps>(({
   const continueLabel = isCourse ? "Continuar Curso" : "Continuar Ruta";
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const isCreator = Boolean(user?.id && creatorId && user.id === creatorId);
   const { isEnrolled, enroll } = usePathEnrollment(pathId);
+
+  // For courses: fetch child path IDs and check if user is enrolled in any of them
+  const { data: coursePathIds } = useQuery({
+    queryKey: ["course-path-ids-for-enroll", pathId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("course_routes")
+        .select("path_id")
+        .eq("course_id", pathId);
+      if (error) throw error;
+      return (data || []).map((r: any) => r.path_id).filter(Boolean) as string[];
+    },
+    enabled: isCourse && !!pathId,
+  });
+
+  const { data: courseEnrollment } = useQuery({
+    queryKey: ["course-enrollment", pathId, user?.id, (coursePathIds || []).join(",")],
+    queryFn: async () => {
+      if (!user || !coursePathIds || coursePathIds.length === 0) return null;
+      const { data, error } = await supabase
+        .from("path_enrollments")
+        .select("id")
+        .eq("user_id", user.id)
+        .in("path_id", coursePathIds)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: isCourse && !!user && !!coursePathIds && coursePathIds.length > 0,
+  });
+
+  const isCourseEnrolled = !!courseEnrollment;
+
+  const enrollInCourse = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("No autenticado");
+      if (!coursePathIds || coursePathIds.length === 0) return;
+      const rows = coursePathIds.map((pid) => ({ user_id: user.id, path_id: pid }));
+      const { error } = await supabase
+        .from("path_enrollments")
+        .upsert(rows, { onConflict: "user_id,path_id", ignoreDuplicates: true });
+      if (error) {
+        const code = (error as any).code;
+        const msg = (error as any).message || "";
+        const isDuplicate = code === "23505" || /duplicate|already exists|unique/i.test(msg);
+        if (!isDuplicate) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["course-enrollment", pathId] });
+      queryClient.invalidateQueries({ queryKey: ["path-enrollments", pathId] });
+      toast.success("¡Listo! Buena suerte 🚀");
+    },
+    onError: (err: any) => {
+      console.error("[course-enrollment] failed:", err);
+      toast.error(err?.message ? `No se pudo iniciar: ${err.message}` : "No se pudo iniciar");
+    },
+  });
+
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isObjectivesExpanded, setIsObjectivesExpanded] = useState(false);
   const [showEnrollments, setShowEnrollments] = useState(false);
