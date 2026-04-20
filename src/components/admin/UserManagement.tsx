@@ -57,6 +57,7 @@ export function UserManagement() {
   const [educoinsAmount, setEducoinsAmount] = useState("");
   const [educoinsReason, setEducoinsReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | undefined>();
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
 
   // Fetch users using admin RPC (supports searching by username, full_name, document, email)
   const { data: users, isLoading } = useQuery({
@@ -176,7 +177,28 @@ export function UserManagement() {
     },
   });
 
-  // Search now happens server-side via RPC; no client-side filter needed
+  // Delete user mutation (permanent)
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.rpc("admin_delete_user", { _user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setDeleteDialog({ open: false });
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario ha sido eliminado de forma permanente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
   const filteredUsers = users;
 
   const { page, setPage, totalPages, totalItems, paged: pagedUsers, pageSize } = usePagination(filteredUsers, PAGE_SIZE);
