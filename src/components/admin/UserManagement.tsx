@@ -29,7 +29,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2, FilterX } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,11 +54,15 @@ export function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [missingDocOnly, setMissingDocOnly] = useState(false);
   const [educoinsDialog, setEducoinsDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
   const [educoinsAmount, setEducoinsAmount] = useState("");
   const [educoinsReason, setEducoinsReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | undefined>();
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Fetch users using admin RPC (supports searching by username, full_name, document, email)
   const { data: users, isLoading } = useQuery({
@@ -199,12 +204,57 @@ export function UserManagement() {
       });
     },
   });
-  const filteredUsers = users;
+  const filteredUsers = missingDocOnly
+    ? (users || []).filter((u: any) => !u.numero_documento || String(u.numero_documento).trim() === "")
+    : users;
 
   const { page, setPage, totalPages, totalItems, paged: pagedUsers, pageSize } = usePagination(filteredUsers, PAGE_SIZE);
 
-  // Reset page when search changes
-  useEffect(() => { setPage(1); }, [searchTerm]);
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [searchTerm, missingDocOnly]);
+
+  // Clear selection when page or filter changes
+  useEffect(() => { setSelectedIds(new Set()); }, [page, searchTerm, missingDocOnly]);
+
+  const pageIds = (pagedUsers || []).map((u: any) => u.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const somePageSelected = pageIds.some((id) => selectedIds.has(id));
+
+  const togglePageSelection = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) pageIds.forEach((id) => next.add(id));
+      else pageIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const runBulkDelete = async () => {
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      const { error } = await supabase.rpc("admin_delete_user", { _user_id: id });
+      if (error) fail++; else ok++;
+    }
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    toast({
+      title: "Eliminación masiva completada",
+      description: `${ok} eliminados${fail ? `, ${fail} con error` : ""}.`,
+      variant: fail ? "destructive" : "default",
+    });
+  };
 
 
   const getRoleIcon = (role: string) => {
@@ -240,7 +290,7 @@ export function UserManagement() {
         <CardDescription>Administra usuarios y sus roles en el sistema</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-3 mb-6 md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
@@ -250,6 +300,28 @@ export function UserManagement() {
               className="pl-10"
             />
           </div>
+          <Button
+            type="button"
+            variant={missingDocOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMissingDocOnly((v) => !v)}
+            className="gap-2"
+          >
+            <FilterX className="w-4 h-4" />
+            Sin documento
+          </Button>
+          {selectedIds.size > 0 && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setBulkDeleteOpen(true)}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar ({selectedIds.size})
+            </Button>
+          )}
           <span className="text-sm text-muted-foreground self-center">{totalItems} usuarios</span>
         </div>
 
@@ -261,6 +333,13 @@ export function UserManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                      onCheckedChange={(c) => togglePageSelection(!!c)}
+                      aria-label="Seleccionar todos"
+                    />
+                  </TableHead>
                   <TableHead>Usuario</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Institución</TableHead>
@@ -278,6 +357,13 @@ export function UserManagement() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => setDetailUserId(user.id)}
                   >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(user.id)}
+                        onCheckedChange={(c) => toggleOne(user.id, !!c)}
+                        aria-label={`Seleccionar ${user.username}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">@{user.username}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
@@ -481,6 +567,27 @@ export function UserManagement() {
               disabled={deleteUserMutation.isPending}
             >
               {deleteUserMutation.isPending ? "Eliminando..." : "Eliminar definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={(o) => !bulkDeleting && setBulkDeleteOpen(o)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar {selectedIds.size} usuarios de forma permanente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará definitivamente a los usuarios seleccionados junto con sus perfiles y datos asociados. No se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => { e.preventDefault(); runBulkDelete(); }}
+              disabled={bulkDeleting}
+            >
+              {bulkDeleting ? "Eliminando..." : `Eliminar ${selectedIds.size}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
