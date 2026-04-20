@@ -16,6 +16,7 @@ const ProfessionalProfile = () => {
   const { userId: urlUserId } = useParams();
   const { user, loading: authLoading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   
   // Determine the target user ID - either from URL or current user
   const targetUserId = urlUserId || user?.id;
