@@ -239,10 +239,34 @@ const EditProfile = () => {
   const saveBasicInfo = async () => {
     setSaving(true);
     try {
+      const docTrim = formData.numero_documento ? formData.numero_documento.trim() : "";
+
+      // Pre-validación: si el usuario está estableciendo o cambiando su documento,
+      // verificamos que no exista otro perfil con ese mismo documento para mostrar
+      // un mensaje claro indicando a quién pertenece.
+      if (docTrim && docTrim !== (profile?.numero_documento || "")) {
+        const { data: dup } = await supabase
+          .from("profiles")
+          .select("id, username, full_name")
+          .eq("numero_documento", docTrim)
+          .neq("id", user!.id)
+          .maybeSingle();
+        if (dup) {
+          const owner = dup.full_name || dup.username || "otro usuario";
+          toast({
+            title: "Documento ya registrado",
+            description: `El documento ${docTrim} ya pertenece a la cuenta @${dup.username} (${owner}). Si es un error, contacta a soporte.`,
+            variant: "destructive",
+          });
+          setSaving(false);
+          return;
+        }
+      }
+
       const updates: any = {
         full_name: formData.full_name || null,
         tipo_documento: formData.tipo_documento || null,
-        numero_documento: formData.numero_documento ? formData.numero_documento.trim() : null,
+        numero_documento: docTrim || null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
         genero: formData.genero || null,
         pais: formData.pais || null,
