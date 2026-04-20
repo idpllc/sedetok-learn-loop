@@ -285,19 +285,35 @@ export const useMatchRanking = (enabled: boolean = true) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trivia_1v1_matches")
-        .select(`winner_id, profiles:winner_id (username, full_name, avatar_url)`)
+        .select("winner_id")
         .eq("status", "finished")
         .not("winner_id", "is", null);
       if (error) throw error;
 
-      const winCounts = (data || []).reduce((acc: any, match: any) => {
-        const winnerId = match.winner_id;
-        if (!acc[winnerId]) { acc[winnerId] = { user_id: winnerId, wins: 0, profiles: match.profiles }; }
-        acc[winnerId].wins += 1;
+      const winCounts = (data || []).reduce((acc: Record<string, number>, match: any) => {
+        const winnerId = match.winner_id as string;
+        acc[winnerId] = (acc[winnerId] || 0) + 1;
         return acc;
       }, {});
 
-      return Object.values(winCounts).sort((a: any, b: any) => b.wins - a.wins).slice(0, 100);
+      const userIds = Object.keys(winCounts);
+      if (userIds.length === 0) return [];
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, institution")
+        .in("id", userIds);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      return userIds
+        .map((user_id) => ({
+          user_id,
+          wins: winCounts[user_id],
+          profiles: profileMap.get(user_id) || null,
+        }))
+        .sort((a, b) => b.wins - a.wins)
+        .slice(0, 100);
     },
     enabled,
     staleTime: 2 * 60 * 1000,
