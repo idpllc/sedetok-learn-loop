@@ -41,46 +41,77 @@ export const useStudyPlan = () => {
   const { user } = useAuth();
 
   // First get the user's document number from their profile
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ['profile-document', user?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('numero_documento')
         .eq('id', user!.id)
-        .single();
-      return data;
+        .maybeSingle();
+      if (error) {
+        console.error('[useStudyPlan] profile fetch error', error);
+      }
+      return data ?? { numero_documento: null };
     },
     enabled: !!user,
   });
 
+  const documentNumber = profile?.numero_documento ?? null;
+
   const { data: studyPlans, isLoading, error } = useQuery({
-    queryKey: ['study-plans', user?.id, profile?.numero_documento],
+    queryKey: ['study-plans', user?.id, documentNumber],
     queryFn: async () => {
-      // Query by user_id OR by document_number matching the profile's numero_documento
-      let query = supabase
+      // Fetch by user_id
+      const byUserPromise = supabase
         .from('student_study_plans')
         .select('*')
-        .order('academic_year', { ascending: false });
+        .eq('user_id', user!.id);
 
-      if (profile?.numero_documento) {
-        // Use OR filter: user_id matches OR document_number matches
-        query = query.or(`user_id.eq.${user!.id},document_number.eq.${profile.numero_documento}`);
-      } else {
-        query = query.eq('user_id', user!.id);
+      // Fetch by document_number (if available) — runs as separate query to avoid
+      // any URL-encoding pitfalls with .or() and special chars in document numbers.
+      const byDocPromise = documentNumber
+        ? supabase
+            .from('student_study_plans')
+            .select('*')
+            .eq('document_number', documentNumber)
+        : Promise.resolve({ data: [], error: null } as any);
+
+      const [byUserRes, byDocRes] = await Promise.all([byUserPromise, byDocPromise]);
+
+      if (byUserRes.error) {
+        console.error('[useStudyPlan] error by user_id', byUserRes.error);
+        throw byUserRes.error;
+      }
+      if (byDocRes.error) {
+        console.error('[useStudyPlan] error by document_number', byDocRes.error);
       }
 
-      const { data, error } = await query;
+      // Merge & dedupe by id
+      const merged = new Map<string, any>();
+      [...(byUserRes.data || []), ...(byDocRes.data || [])].forEach((p) => {
+        merged.set(p.id, p);
+      });
 
-      if (error) throw error;
-      
-      return (data || []).map((plan: any) => ({
+      const all = Array.from(merged.values()).sort((a, b) =>
+        String(b.academic_year).localeCompare(String(a.academic_year))
+      );
+
+      console.log('[useStudyPlan] loaded plans:', {
+        userId: user!.id,
+        documentNumber,
+        byUserCount: byUserRes.data?.length ?? 0,
+        byDocCount: byDocRes.data?.length ?? 0,
+        total: all.length,
+      });
+
+      return all.map((plan: any) => ({
         ...plan,
         periodos: (plan.periodos || []) as Periodo[],
       })) as StudyPlan[];
     },
-    enabled: !!user && profile !== undefined,
+    enabled: !!user && !profileLoading,
   });
 
-  return { studyPlans, isLoading, error };
+  return { studyPlans, isLoading: isLoading || profileLoading, error, documentNumber };
 };
