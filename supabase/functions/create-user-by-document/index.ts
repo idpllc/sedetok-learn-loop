@@ -70,22 +70,57 @@ serve(async (req) => {
       );
     }
 
-    // Verificar si el usuario ya existe por número de documento
-    const { data: existingProfile } = await supabase
+    // Normalizar documento para evitar duplicados por espacios
+    const docNormalizado = String(numero_documento).trim();
+
+    // Verificar si el usuario ya existe por número de documento (maybeSingle evita errores PGRST116)
+    const { data: existingProfile, error: lookupError } = await supabase
       .from('profiles')
-      .select('id')
-      .eq('numero_documento', numero_documento)
-      .single();
+      .select('id, full_name, numero_documento')
+      .eq('numero_documento', docNormalizado)
+      .maybeSingle();
+
+    if (lookupError) {
+      console.error('Error buscando perfil existente:', lookupError);
+      return new Response(
+        JSON.stringify({ error: 'Error al verificar duplicados', details: lookupError.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (existingProfile) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Ya existe un usuario con ese número de documento' 
-        }),
-        { 
-          status: 409, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      console.log(`Usuario ya existe con documento ${docNormalizado}, id: ${existingProfile.id}`);
+      // Si vino con NIT institucional, intentamos vincularlo a la institución (idempotente)
+      if (nit_institucion && nit_institucion.trim() !== '') {
+        const { data: inst } = await supabase
+          .from('institutions')
+          .select('id, admin_user_id')
+          .eq('nit', nit_institucion.trim())
+          .maybeSingle();
+        if (inst) {
+          const finalRole = member_role && ['student', 'teacher', 'parent', 'admin'].includes(member_role)
+            ? member_role : 'student';
+          await supabase.from('institution_members').upsert({
+            institution_id: inst.id,
+            user_id: existingProfile.id,
+            member_role: finalRole,
+            invited_by: inst.admin_user_id,
+            status: 'active',
+          }, { onConflict: 'institution_id,user_id', ignoreDuplicates: true });
         }
+      }
+      return new Response(
+        JSON.stringify({
+          success: true,
+          existed: true,
+          user: {
+            id: existingProfile.id,
+            numero_documento: docNormalizado,
+            full_name: existingProfile.full_name,
+            message: 'Usuario ya existía con ese documento. No se creó duplicado.',
+          },
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
