@@ -29,6 +29,18 @@ const ProfessionalProfile = () => {
     }
   }, [authLoading, urlUserId, user]);
 
+  // Auto-show info modal first time the owner visits their professional profile
+  useEffect(() => {
+    if (!isOwnProfile || !user) return;
+    try {
+      if (!localStorage.getItem(PROFESSIONAL_PROFILE_INFO_STORAGE_KEY)) {
+        setShowInfoModal(true);
+      }
+    } catch {
+      setShowInfoModal(true);
+    }
+  }, [isOwnProfile, user]);
+
   // Fetch profile data with caching
   const { data: profileData, isLoading } = useQuery({
     queryKey: ["profile", targetUserId],
