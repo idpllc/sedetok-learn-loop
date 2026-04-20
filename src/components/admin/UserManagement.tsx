@@ -290,7 +290,7 @@ export function UserManagement() {
         <CardDescription>Administra usuarios y sus roles en el sistema</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-3 mb-6 md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
@@ -300,6 +300,28 @@ export function UserManagement() {
               className="pl-10"
             />
           </div>
+          <Button
+            type="button"
+            variant={missingDocOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMissingDocOnly((v) => !v)}
+            className="gap-2"
+          >
+            <FilterX className="w-4 h-4" />
+            Sin documento
+          </Button>
+          {selectedIds.size > 0 && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setBulkDeleteOpen(true)}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Eliminar ({selectedIds.size})
+            </Button>
+          )}
           <span className="text-sm text-muted-foreground self-center">{totalItems} usuarios</span>
         </div>
 
