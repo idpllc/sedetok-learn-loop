@@ -1,9 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/Sidebar";
 import { ProfessionalProfile as ProfessionalProfileComponent } from "@/components/ProfessionalProfile";
 import { CompleteProfilePrompt } from "@/components/profile/CompleteProfilePrompt";
+import { ProfessionalProfileInfoModal, PROFESSIONAL_PROFILE_INFO_STORAGE_KEY } from "@/components/profile/ProfessionalProfileInfoModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ const ProfessionalProfile = () => {
   const { userId: urlUserId } = useParams();
   const { user, loading: authLoading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   
   // Determine the target user ID - either from URL or current user
   const targetUserId = urlUserId || user?.id;
@@ -26,6 +28,18 @@ const ProfessionalProfile = () => {
       setShowAuthModal(true);
     }
   }, [authLoading, urlUserId, user]);
+
+  // Auto-show info modal first time the owner visits their professional profile
+  useEffect(() => {
+    if (!isOwnProfile || !user) return;
+    try {
+      if (!localStorage.getItem(PROFESSIONAL_PROFILE_INFO_STORAGE_KEY)) {
+        setShowInfoModal(true);
+      }
+    } catch {
+      setShowInfoModal(true);
+    }
+  }, [isOwnProfile, user]);
 
   // Fetch profile data with caching
   const { data: profileData, isLoading } = useQuery({
@@ -109,12 +123,30 @@ const ProfessionalProfile = () => {
                 }
               </p>
             </div>
+            {isOwnProfile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowInfoModal(true)}
+                aria-label="Información sobre el Perfil Profesional"
+              >
+                <Info className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </header>
 
         <main className="max-w-6xl mx-auto px-4 py-6">
           <ProfessionalProfileComponent userId={targetUserId} />
         </main>
+
+        {/* Info modal: auto-show first time for own profile, controllable via header button */}
+        {isOwnProfile && (
+          <ProfessionalProfileInfoModal
+            open={showInfoModal}
+            onOpenChange={setShowInfoModal}
+          />
+        )}
 
         {/* Complete Profile Prompt */}
         {profileData && (
