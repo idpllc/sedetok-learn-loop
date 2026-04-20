@@ -29,7 +29,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2, FilterX } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
