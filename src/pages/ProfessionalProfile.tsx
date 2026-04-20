@@ -111,12 +111,31 @@ const ProfessionalProfile = () => {
                 }
               </p>
             </div>
+            {isOwnProfile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowInfoModal(true)}
+                aria-label="Información sobre el Perfil Profesional"
+              >
+                <Info className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </header>
 
         <main className="max-w-6xl mx-auto px-4 py-6">
           <ProfessionalProfileComponent userId={targetUserId} />
         </main>
+
+        {/* Info modal: auto-show first time for own profile, controllable via header button */}
+        {isOwnProfile && (
+          <ProfessionalProfileInfoModal
+            autoShow
+            open={showInfoModal || undefined}
+            onOpenChange={setShowInfoModal}
+          />
+        )}
 
         {/* Complete Profile Prompt */}
         {profileData && (
