@@ -274,15 +274,43 @@ Deno.serve(async (req) => {
       redirect: url.searchParams.get("redirect"),
     };
 
-    // Merge body if present
+    // Merge body if present (support common aliases)
+    const aliasMap: Record<string, string[]> = {
+      documento: ["numero_documento", "document", "doc"],
+      institution: ["institution_name", "institucion", "institucion_name"],
+      sede: ["sede_name", "campus"],
+      grupo: ["group", "grado"],
+      course_name: ["course", "curso"],
+      member_role: ["role", "rol"],
+      tipo_documento: ["document_type", "tipo_doc"],
+    };
+
     if (req.headers.get("content-type")?.includes("application/json")) {
       try {
         const body = await req.json();
         for (const key of Object.keys(params)) {
-          if (params[key] === null && body[key] !== undefined) {
+          // First, try exact match
+          if (params[key] === null && body[key] !== undefined && body[key] !== null) {
             params[key] = String(body[key]);
+            continue;
+          }
+          // Then, try aliases
+          if (params[key] === null && aliasMap[key]) {
+            for (const alias of aliasMap[key]) {
+              if (body[alias] !== undefined && body[alias] !== null) {
+                params[key] = String(body[alias]);
+                break;
+              }
+            }
           }
         }
+        console.log("auto-login received params:", {
+          documento: params.documento,
+          institution: params.institution,
+          member_role: params.member_role,
+          sede: params.sede,
+          grupo: params.grupo,
+        });
       } catch { /* no body */ }
     }
 
