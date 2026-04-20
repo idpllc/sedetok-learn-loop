@@ -242,7 +242,7 @@ const EditProfile = () => {
       const updates: any = {
         full_name: formData.full_name || null,
         tipo_documento: formData.tipo_documento || null,
-        numero_documento: formData.numero_documento || null,
+        numero_documento: formData.numero_documento ? formData.numero_documento.trim() : null,
         fecha_nacimiento: formData.fecha_nacimiento || null,
         genero: formData.genero || null,
         pais: formData.pais || null,
@@ -261,8 +261,19 @@ const EditProfile = () => {
       await updateProfile(updates);
       toast({ title: "Datos guardados", description: "Información básica actualizada correctamente" });
       setLastSaved(new Date());
-    } catch (error) {
-      toast({ title: "Error", description: "No se pudo guardar la información", variant: "destructive" });
+    } catch (error: any) {
+      console.error('[saveBasicInfo] error:', error);
+      const msg = String(error?.message || "");
+      const code = String(error?.code || "");
+      let description = "No se pudo guardar la información";
+      if (code === "23505" || msg.includes("unique_numero_documento") || msg.includes("unique_user_document") || msg.toLowerCase().includes("duplicate")) {
+        description = "Este número de documento ya está registrado en otra cuenta. Verifica el número o contacta a soporte si crees que es un error.";
+      } else if (code === "42501" || msg.toLowerCase().includes("row-level security") || msg.toLowerCase().includes("permission")) {
+        description = "No tienes permiso para actualizar este perfil. Inicia sesión nuevamente.";
+      } else if (msg) {
+        description = msg;
+      }
+      toast({ title: "Error al guardar", description, variant: "destructive" });
     } finally {
       setSaving(false);
     }

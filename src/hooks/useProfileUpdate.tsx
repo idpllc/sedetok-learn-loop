@@ -33,7 +33,11 @@ export const useProfileUpdate = () => {
       .update(updates)
       .eq("id", user.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('[useProfileUpdate] update error:', error);
+      // Re-throw original error so callers can read .code/.message/.details
+      throw error;
+    }
     
     queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
   };
