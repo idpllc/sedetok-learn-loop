@@ -337,6 +337,13 @@ export function UserManagement() {
                           <Coins className="w-4 h-4 mr-1" />
                           Educoins
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setDeleteDialog({ open: true, userId: user.id, username: user.username })}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                         <Select
                           onValueChange={(value) => {
                             if (value.startsWith("add-")) {
@@ -454,6 +461,30 @@ export function UserManagement() {
         open={!!detailUserId}
         onOpenChange={(open) => !open && setDetailUserId(undefined)}
       />
+
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar usuario de forma permanente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará definitivamente a <strong>@{deleteDialog.username}</strong> junto con su perfil y datos asociados. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteDialog.userId) deleteUserMutation.mutate(deleteDialog.userId);
+              }}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? "Eliminando..." : "Eliminar definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
