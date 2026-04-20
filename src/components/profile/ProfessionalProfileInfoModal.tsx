@@ -1,47 +1,20 @@
-import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Sparkles, GraduationCap, Infinity as InfinityIcon, Info } from "lucide-react";
+import { Briefcase, Sparkles, GraduationCap, Infinity as InfinityIcon } from "lucide-react";
 
-const STORAGE_KEY = "professional_profile_info_seen_v1";
+export const PROFESSIONAL_PROFILE_INFO_STORAGE_KEY = "professional_profile_info_seen_v1";
 
 interface ProfessionalProfileInfoModalProps {
-  /** If provided, controls the modal externally (used by the "info" button). */
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  /** When true, auto-opens the first time the user visits (uncontrolled mode). */
-  autoShow?: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const ProfessionalProfileInfoModal = ({
-  open: controlledOpen,
-  onOpenChange,
-  autoShow = false,
-}: ProfessionalProfileInfoModalProps) => {
-  const isControlled = controlledOpen !== undefined;
-  const [internalOpen, setInternalOpen] = useState(false);
-
-  useEffect(() => {
-    if (isControlled || !autoShow) return;
-    try {
-      const seen = localStorage.getItem(STORAGE_KEY);
-      if (!seen) setInternalOpen(true);
-    } catch {
-      setInternalOpen(true);
-    }
-  }, [isControlled, autoShow]);
-
-  const open = isControlled ? !!controlledOpen : internalOpen;
-
+export const ProfessionalProfileInfoModal = ({ open, onOpenChange }: ProfessionalProfileInfoModalProps) => {
   const handleOpenChange = (next: boolean) => {
     if (!next) {
-      try { localStorage.setItem(STORAGE_KEY, "1"); } catch {}
+      try { localStorage.setItem(PROFESSIONAL_PROFILE_INFO_STORAGE_KEY, "1"); } catch {}
     }
-    if (isControlled) {
-      onOpenChange?.(next);
-    } else {
-      setInternalOpen(next);
-    }
+    onOpenChange(next);
   };
 
   return (
@@ -100,5 +73,3 @@ export const ProfessionalProfileInfoModal = ({
     </Dialog>
   );
 };
-
-export { Info as ProfessionalProfileInfoIcon };
