@@ -172,6 +172,21 @@ const StudyPlan = () => {
               <p className="text-sm text-muted-foreground">
                 Tu institución aún no ha enviado tu plan de estudios. Contacta a tu coordinador académico para más información.
               </p>
+              {!documentNumber && (
+                <div className="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-left">
+                  <p className="text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>
+                      No tienes un número de documento registrado en tu perfil. Para vincular tu plan de estudios institucional, agrégalo desde tu perfil.
+                    </span>
+                  </p>
+                </div>
+              )}
+              {documentNumber && (
+                <p className="text-xs text-muted-foreground mt-3">
+                  Documento registrado: <span className="font-mono">{documentNumber}</span>
+                </p>
+              )}
             </Card>
           ) : (
             <>
