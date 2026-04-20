@@ -3562,6 +3562,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_user_detail: { Args: { _user_id: string }; Returns: Json }
       admin_search_users: {
         Args: { _search: string }

@@ -29,7 +29,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Shield, UserCog, Crown, Coins, Eye } from "lucide-react";
+import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -47,6 +57,7 @@ export function UserManagement() {
   const [educoinsAmount, setEducoinsAmount] = useState("");
   const [educoinsReason, setEducoinsReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | undefined>();
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
 
   // Fetch users using admin RPC (supports searching by username, full_name, document, email)
   const { data: users, isLoading } = useQuery({
@@ -166,7 +177,28 @@ export function UserManagement() {
     },
   });
 
-  // Search now happens server-side via RPC; no client-side filter needed
+  // Delete user mutation (permanent)
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.rpc("admin_delete_user", { _user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setDeleteDialog({ open: false });
+      toast({
+        title: "Usuario eliminado",
+        description: "El usuario ha sido eliminado de forma permanente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
   const filteredUsers = users;
 
   const { page, setPage, totalPages, totalItems, paged: pagedUsers, pageSize } = usePagination(filteredUsers, PAGE_SIZE);
@@ -305,6 +337,13 @@ export function UserManagement() {
                           <Coins className="w-4 h-4 mr-1" />
                           Educoins
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setDeleteDialog({ open: true, userId: user.id, username: user.username })}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                         <Select
                           onValueChange={(value) => {
                             if (value.startsWith("add-")) {
@@ -422,6 +461,30 @@ export function UserManagement() {
         open={!!detailUserId}
         onOpenChange={(open) => !open && setDetailUserId(undefined)}
       />
+
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar usuario de forma permanente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará definitivamente a <strong>@{deleteDialog.username}</strong> junto con su perfil y datos asociados. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteDialog.userId) deleteUserMutation.mutate(deleteDialog.userId);
+              }}
+              disabled={deleteUserMutation.isPending}
+            >
+              {deleteUserMutation.isPending ? "Eliminando..." : "Eliminar definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
