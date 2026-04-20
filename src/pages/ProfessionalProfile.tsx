@@ -143,8 +143,7 @@ const ProfessionalProfile = () => {
         {/* Info modal: auto-show first time for own profile, controllable via header button */}
         {isOwnProfile && (
           <ProfessionalProfileInfoModal
-            autoShow
-            open={showInfoModal ? true : undefined}
+            open={showInfoModal}
             onOpenChange={setShowInfoModal}
           />
         )}
