@@ -54,11 +54,15 @@ export function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [missingDocOnly, setMissingDocOnly] = useState(false);
   const [educoinsDialog, setEducoinsDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
   const [educoinsAmount, setEducoinsAmount] = useState("");
   const [educoinsReason, setEducoinsReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | undefined>();
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Fetch users using admin RPC (supports searching by username, full_name, document, email)
   const { data: users, isLoading } = useQuery({
