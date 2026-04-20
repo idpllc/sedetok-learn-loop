@@ -29,12 +29,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Shield, UserCog, Crown, Coins } from "lucide-react";
+import { Search, Shield, UserCog, Crown, Coins, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { UserDetailDialog } from "./UserDetailDialog";
 
 const PAGE_SIZE = 20;
 
