@@ -1,9 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sidebar } from "@/components/Sidebar";
 import { ProfessionalProfile as ProfessionalProfileComponent } from "@/components/ProfessionalProfile";
 import { CompleteProfilePrompt } from "@/components/profile/CompleteProfilePrompt";
+import { ProfessionalProfileInfoModal } from "@/components/profile/ProfessionalProfileInfoModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
