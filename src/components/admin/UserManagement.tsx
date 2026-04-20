@@ -204,12 +204,57 @@ export function UserManagement() {
       });
     },
   });
-  const filteredUsers = users;
+  const filteredUsers = missingDocOnly
+    ? (users || []).filter((u: any) => !u.numero_documento || String(u.numero_documento).trim() === "")
+    : users;
 
   const { page, setPage, totalPages, totalItems, paged: pagedUsers, pageSize } = usePagination(filteredUsers, PAGE_SIZE);
 
-  // Reset page when search changes
-  useEffect(() => { setPage(1); }, [searchTerm]);
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [searchTerm, missingDocOnly]);
+
+  // Clear selection when page or filter changes
+  useEffect(() => { setSelectedIds(new Set()); }, [page, searchTerm, missingDocOnly]);
+
+  const pageIds = (pagedUsers || []).map((u: any) => u.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const somePageSelected = pageIds.some((id) => selectedIds.has(id));
+
+  const togglePageSelection = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) pageIds.forEach((id) => next.add(id));
+      else pageIds.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
+
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+
+  const runBulkDelete = async () => {
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    let ok = 0, fail = 0;
+    for (const id of ids) {
+      const { error } = await supabase.rpc("admin_delete_user", { _user_id: id });
+      if (error) fail++; else ok++;
+    }
+    setBulkDeleting(false);
+    setBulkDeleteOpen(false);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    toast({
+      title: "Eliminación masiva completada",
+      description: `${ok} eliminados${fail ? `, ${fail} con error` : ""}.`,
+      variant: fail ? "destructive" : "default",
+    });
+  };
 
 
   const getRoleIcon = (role: string) => {
