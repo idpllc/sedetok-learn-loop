@@ -291,8 +291,22 @@ Deno.serve(async (req) => {
             es_director_grupo } = params;
     const tipo_documento_raw = params.tipo_documento;
 
-    // ── MODE: Legacy HMAC token ────────────────────────────────────────────
-    if (token && !documento && !institution) {
+    // ── REQUIRED: documento siempre obligatorio ────────────────────────────
+    // Para garantizar la identificación inequívoca del usuario, el endpoint
+    // exige siempre el número de documento, incluso cuando se utilice un
+    // token HMAC firmado.
+    if (!documento || String(documento).trim() === "") {
+      return new Response(
+        JSON.stringify({
+          error: "El campo 'documento' es obligatorio",
+          details: "El auto-login requiere siempre el número de documento del usuario en el payload (query string o body).",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── MODE: HMAC token + documento (sin institución) ─────────────────────
+    if (token && !institution) {
       const parts = token.split(".");
       if (parts.length !== 2) {
         return new Response(JSON.stringify({ error: "Formato de token inválido" }),
@@ -318,20 +332,26 @@ Deno.serve(async (req) => {
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
+      // El documento del token debe coincidir con el del payload (defensa en profundidad)
+      if (dDoc && String(dDoc).trim() !== String(documento).trim()) {
+        return new Response(
+          JSON.stringify({ error: "El documento del payload no coincide con el del token" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Resolver email/password siempre a partir del documento del payload
       let loginEmail = dEmail;
-      let loginPassword = dPass;
-      if (!loginEmail && dDoc) {
-        const { data: p } = await supabase.from("profiles").select("id")
-          .eq("numero_documento", dDoc).maybeSingle();
-        if (p) {
-          const { data: au } = await supabase.auth.admin.getUserById(p.id);
-          loginEmail = au?.user?.email;
-          if (!loginPassword) loginPassword = dDoc;
-        }
+      let loginPassword = dPass ?? documento;
+      const { data: p } = await supabase.from("profiles").select("id")
+        .eq("numero_documento", documento).maybeSingle();
+      if (p) {
+        const { data: au } = await supabase.auth.admin.getUserById(p.id);
+        if (!loginEmail) loginEmail = au?.user?.email;
       }
 
       if (!loginEmail || !loginPassword) {
-        return new Response(JSON.stringify({ error: "Credenciales incompletas en el token" }),
+        return new Response(JSON.stringify({ error: "Credenciales incompletas para el documento proporcionado" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
