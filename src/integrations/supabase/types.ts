@@ -3562,6 +3562,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_user_detail: { Args: { _user_id: string }; Returns: Json }
+      admin_search_users: {
+        Args: { _search: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          educoins: number
+          email: string
+          experience_points: number
+          full_name: string
+          id: string
+          institution: string
+          numero_documento: string
+          roles: string[]
+          username: string
+        }[]
+      }
       award_xp_for_action: {
         Args: {
           p_action_type: string
