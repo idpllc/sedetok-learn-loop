@@ -114,7 +114,7 @@ const CompetenciaItem = ({ competencia }: { competencia: Competencia }) => {
 
 const StudyPlan = () => {
   const { user, loading: authLoading } = useAuth();
-  const { studyPlans, isLoading } = useStudyPlan();
+  const { studyPlans, isLoading, documentNumber } = useStudyPlan();
   const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
 
