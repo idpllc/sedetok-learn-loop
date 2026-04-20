@@ -333,6 +333,13 @@ export function UserManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                      onCheckedChange={(c) => togglePageSelection(!!c)}
+                      aria-label="Seleccionar todos"
+                    />
+                  </TableHead>
                   <TableHead>Usuario</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Institución</TableHead>
@@ -343,6 +350,20 @@ export function UserManagement() {
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
+              <TableBody>
+                {pagedUsers?.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setDetailUserId(user.id)}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(user.id)}
+                        onCheckedChange={(c) => toggleOne(user.id, !!c)}
+                        aria-label={`Seleccionar ${user.username}`}
+                      />
+                    </TableCell>
               <TableBody>
                 {pagedUsers?.map((user) => (
                   <TableRow
