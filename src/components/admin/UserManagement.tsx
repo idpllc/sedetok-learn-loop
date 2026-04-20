@@ -364,13 +364,6 @@ export function UserManagement() {
                         aria-label={`Seleccionar ${user.username}`}
                       />
                     </TableCell>
-              <TableBody>
-                {pagedUsers?.map((user) => (
-                  <TableRow
-                    key={user.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setDetailUserId(user.id)}
-                  >
                     <TableCell className="font-medium">@{user.username}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
