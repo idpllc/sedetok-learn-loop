@@ -15,19 +15,19 @@ const AutoLogin = () => {
       const documento = searchParams.get("documento");
       const redirect = searchParams.get("redirect") || "/chat";
 
-      if (!token && !documento) {
-        toast.error("Token o documento de acceso no proporcionado");
+      // El número de documento es OBLIGATORIO para identificar al usuario
+      if (!documento) {
+        toast.error("El número de documento es obligatorio para iniciar sesión");
         setStatus("error");
         setTimeout(() => navigate("/auth"), 2000);
         return;
       }
 
       try {
-        console.log("Iniciando auto-login...", { hasToken: !!token, hasDocumento: !!documento });
+        console.log("Iniciando auto-login...", { hasToken: !!token, documento });
 
-        const body: Record<string, string> = {};
+        const body: Record<string, string> = { documento };
         if (token) body.token = token;
-        if (documento) body.documento = documento;
 
         const { data, error } = await supabase.functions.invoke("auto-login", {
           body,
