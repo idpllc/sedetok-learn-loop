@@ -35,6 +35,8 @@ import { InstitutionManagement } from "@/components/admin/InstitutionManagement"
 import { WebhookDocumentation } from "@/components/admin/WebhookDocumentation";
 import { StudyPlanWebhookDocs } from "@/components/admin/StudyPlanWebhookDocs";
 import { StudyPlanManagement } from "@/components/admin/StudyPlanManagement";
+import { TriviaAdminPanel } from "@/components/trivia/TriviaAdminPanel";
+import { Brain } from "lucide-react";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -86,7 +88,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 gap-2">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-10 gap-2">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Resumen</span>
@@ -114,6 +116,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="study-plans" className="flex items-center gap-2">
               <GraduationCap className="w-4 h-4" />
               <span className="hidden sm:inline">Planes</span>
+            </TabsTrigger>
+            <TabsTrigger value="trivia" className="flex items-center gap-2">
+              <Brain className="w-4 h-4" />
+              <span className="hidden sm:inline">Trivia</span>
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="flex items-center gap-2">
               <Webhook className="w-4 h-4" />
@@ -328,6 +334,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="study-plans">
             <StudyPlanManagement />
+          </TabsContent>
+
+          <TabsContent value="trivia">
+            <TriviaAdminPanel />
           </TabsContent>
 
           <TabsContent value="webhooks" className="space-y-6">
