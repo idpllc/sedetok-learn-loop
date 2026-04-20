@@ -132,7 +132,7 @@ const ProfessionalProfile = () => {
         {isOwnProfile && (
           <ProfessionalProfileInfoModal
             autoShow
-            open={showInfoModal || undefined}
+            open={showInfoModal ? true : undefined}
             onOpenChange={setShowInfoModal}
           />
         )}
