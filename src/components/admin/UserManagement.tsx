@@ -29,12 +29,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Search, Shield, UserCog, Crown, Coins } from "lucide-react";
+import { Search, Shield, UserCog, Crown, Coins, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { usePagination } from "@/hooks/usePagination";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { UserDetailDialog } from "./UserDetailDialog";
 
 const PAGE_SIZE = 20;
 
@@ -45,30 +46,15 @@ export function UserManagement() {
   const [educoinsDialog, setEducoinsDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
   const [educoinsAmount, setEducoinsAmount] = useState("");
   const [educoinsReason, setEducoinsReason] = useState("");
+  const [detailUserId, setDetailUserId] = useState<string | undefined>();
 
-  // Fetch all users with their roles
+  // Fetch users using admin RPC (supports searching by username, full_name, document, email)
   const { data: users, isLoading } = useQuery({
-    queryKey: ["admin-users"],
+    queryKey: ["admin-users", searchTerm],
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (profilesError) throw profilesError;
-
-      // Fetch roles for each user
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-      
-      if (rolesError) throw rolesError;
-
-      // Combine profiles with roles
-      return profiles.map(profile => ({
-        ...profile,
-        roles: roles?.filter(r => r.user_id === profile.id).map(r => r.role) || [],
-      }));
+      const { data, error } = await supabase.rpc("admin_search_users", { _search: searchTerm || "" });
+      if (error) throw error;
+      return (data || []) as any[];
     },
   });
 
@@ -180,10 +166,8 @@ export function UserManagement() {
     },
   });
 
-  const filteredUsers = users?.filter(user =>
-    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Search now happens server-side via RPC; no client-side filter needed
+  const filteredUsers = users;
 
   const { page, setPage, totalPages, totalItems, paged: pagedUsers, pageSize } = usePagination(filteredUsers, PAGE_SIZE);
 
@@ -228,7 +212,7 @@ export function UserManagement() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Buscar usuarios..."
+              placeholder="Buscar por nombre, usuario, documento o correo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -257,9 +241,19 @@ export function UserManagement() {
               </TableHeader>
               <TableBody>
                 {pagedUsers?.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow
+                    key={user.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => setDetailUserId(user.id)}
+                  >
                     <TableCell className="font-medium">@{user.username}</TableCell>
-                    <TableCell>{user.full_name || 'Sin nombre'}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span>{user.full_name || 'Sin nombre'}</span>
+                        {user.email && <span className="text-xs text-muted-foreground">{user.email}</span>}
+                        {user.numero_documento && <span className="text-xs text-muted-foreground">Doc: {user.numero_documento}</span>}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {user.institution || 'Sin institución'}
                     </TableCell>
@@ -293,8 +287,16 @@ export function UserManagement() {
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: es })}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex gap-2 justify-end">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setDetailUserId(user.id)}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -414,6 +416,12 @@ export function UserManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UserDetailDialog
+        userId={detailUserId}
+        open={!!detailUserId}
+        onOpenChange={(open) => !open && setDetailUserId(undefined)}
+      />
     </Card>
   );
 }
