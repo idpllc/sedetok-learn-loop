@@ -409,6 +409,38 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                 }
               />
             </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="show_answers">Mostrar respuestas al finalizar</Label>
+                <p className="text-xs text-muted-foreground">
+                  Si se desactiva, los usuarios no verán cuáles eran las respuestas correctas
+                </p>
+              </div>
+              <Switch
+                id="show_answers"
+                checked={formData.show_answers_after_completion}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, show_answers_after_completion: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="disable_helpers">Deshabilitar ayudas</Label>
+                <p className="text-xs text-muted-foreground">
+                  Bloquea ayudas como ver respuestas o ganar tiempo extra durante el evento
+                </p>
+              </div>
+              <Switch
+                id="disable_helpers"
+                checked={formData.disable_helpers}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, disable_helpers: checked })
+                }
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-2">
