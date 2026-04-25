@@ -208,7 +208,14 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     return saved ? parseFloat(saved) : 1;
   });
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoPlayerRef = useRef<VideoPlayerRef>(null);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
   useViews(id);
   
   // Visibility detection to show action buttons only for the in-view card (desktop)
@@ -641,7 +648,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         )}
 
         {/* Overlay gradient - hidden when video is playing */}
-        <div className={`absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-100 md:opacity-0' : 'opacity-100'}`} />
+        <div className={`absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent pointer-events-none z-0 transition-opacity duration-300 ${videoUrl && isPlaying && isFullscreen ? 'opacity-0' : 'opacity-100'}`} />
 
         {/* Desktop volume controls - top left corner like TikTok - hidden when playing */}
         {videoUrl && (
@@ -677,7 +684,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         )}
 
         {/* Content info - hidden when video is playing */}
-        <div className={`absolute bottom-16 md:bottom-6 lg:bottom-8 left-0 right-0 px-4 md:px-6 pb-4 z-10 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-100 md:opacity-0 md:pointer-events-none' : 'opacity-100'}`}>
+        <div className={`absolute bottom-16 md:bottom-6 lg:bottom-8 left-0 right-0 px-4 md:px-6 pb-4 z-10 transition-opacity duration-300 ${videoUrl && isPlaying && isFullscreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="space-y-2">
             <div>
               <button 
@@ -729,7 +736,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Action buttons - floating on the right, centered vertically */}
-        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-100 md:opacity-0 md:pointer-events-none' : 'opacity-100'} ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
+        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 transition-opacity duration-300 ${videoUrl && isPlaying && isFullscreen ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
           {/* Creator avatar with follow button */}
           <div className="relative flex flex-col items-center">
             <button
