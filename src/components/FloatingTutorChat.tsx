@@ -20,7 +20,8 @@ type ChatState = "collapsed" | "hidden" | "selecting" | "connecting" | "active";
 
 export const FloatingTutorChat = () => {
   const { user } = useAuth();
-  const [chatState, setChatState] = useState<ChatState>("collapsed");
+  const isSedetok = typeof window !== "undefined" && window.location.pathname.startsWith("/sedetok");
+  const [chatState, setChatState] = useState<ChatState>(isSedetok ? "hidden" : "collapsed");
   const [selectedAgent, setSelectedAgent] = useState<VoiceAgent | null>(null);
   const [transcript, setTranscript] = useState<Array<{ role: "user" | "agent"; text: string }>>([]);
   const transcriptRef = useRef<HTMLDivElement>(null);
