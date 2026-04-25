@@ -17,7 +17,7 @@ export const useSearchUsers = (searchQuery: string) => {
         .or(
           `username.ilike.%${safe}%,full_name.ilike.%${safe}%,numero_documento.ilike.%${safe}%`
         )
-        .limit(20);
+        .limit(50);
 
       if (error) throw error;
       return data || [];
