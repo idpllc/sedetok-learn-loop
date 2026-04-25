@@ -26,13 +26,14 @@ export const FloatingTutorChat = () => {
   const [chatState, setChatState] = useState<ChatState>(isSedetok ? "hidden" : "collapsed");
   const [selectedAgent, setSelectedAgent] = useState<VoiceAgent | null>(null);
 
-  // En /sedetok mantener el botón colapsado a la derecha por defecto
+  // En /sedetok, al entrar (cambio de ruta) colapsar a la derecha. No forzar después.
   useEffect(() => {
-    if (isSedetok && (chatState === "collapsed" || chatState === "selecting")) {
+    if (isSedetok) {
       setChatState("hidden");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSedetok, location.pathname]);
+  }, [location.pathname]);
+
 
   const [transcript, setTranscript] = useState<Array<{ role: "user" | "agent"; text: string }>>([]);
   const transcriptRef = useRef<HTMLDivElement>(null);
