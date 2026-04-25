@@ -413,11 +413,11 @@ const Search = () => {
                       if (isLearningPath) {
                         navigate(`/learning-paths/${item.id}`);
                       } else if (isQuiz) {
-                        navigate(`/?quiz=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
+                        navigate(`/sedetok?quiz=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
                       } else if (item.content_type === 'game') {
-                        navigate(`/?game=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
+                        navigate(`/sedetok?game=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
                       } else {
-                        navigate(`/?content=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
+                        navigate(`/sedetok?content=${item.id}&searchResults=${searchResults.join(',')}&searchTypes=${searchResultsType.join(',')}`);
                       }
                     }}
                   >
