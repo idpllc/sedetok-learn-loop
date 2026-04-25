@@ -32,6 +32,8 @@ interface CreateEvaluationEventInput {
   require_authentication?: boolean;
   allow_multiple_attempts?: boolean;
   show_results_immediately?: boolean;
+  show_answers_after_completion?: boolean;
+  disable_helpers?: boolean;
 }
 
 export const useEvaluationEvents = (quizId?: string, gameId?: string, pathId?: string, eventId?: string) => {
