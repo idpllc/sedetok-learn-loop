@@ -677,7 +677,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         )}
 
         {/* Content info - hidden when video is playing */}
-        <div className={`absolute bottom-16 md:bottom-6 lg:bottom-8 left-0 right-0 px-4 md:px-6 pb-4 z-10 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div className={`absolute bottom-16 md:bottom-6 lg:bottom-8 left-0 right-0 px-4 md:px-6 pb-4 z-10 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-100 md:opacity-0 md:pointer-events-none' : 'opacity-100'}`}>
           <div className="space-y-2">
             <div>
               <button 
