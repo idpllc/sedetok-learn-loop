@@ -290,7 +290,7 @@ Deno.serve(async (req) => {
             }
           }
         } catch (err) {
-          log.errors.push(`Error procesando ${userData.numero_documento}: ${err.message}`);
+          log.errors.push(`Error procesando ${userData.numero_documento}: ${err instanceof Error ? err.message : String(err)}`);
         }
       }));
     }
@@ -362,7 +362,7 @@ Deno.serve(async (req) => {
           .eq("group_id", groupId);
 
         if (members && members.length > 0) {
-          const participants = members.map((m) => ({
+          const participants: any[] = members.map((m: any) => ({
             conversation_id: conv.id,
             user_id: m.user_id,
             role: m.role === "teacher" ? "admin" : "member",
@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
 
           // Also add the director if not already in members
           if (groupData?.director_user_id) {
-            const directorInMembers = participants.some(p => p.user_id === groupData.director_user_id);
+            const directorInMembers = participants.some((p: any) => p.user_id === groupData.director_user_id);
             if (!directorInMembers) {
               participants.push({
                 conversation_id: conv.id,
@@ -383,7 +383,7 @@ Deno.serve(async (req) => {
           await supabase.from("chat_participants").insert(participants);
         }
       } catch (err) {
-        log.errors.push(`Error en chat grupo ${groupName}: ${err.message}`);
+        log.errors.push(`Error en chat grupo ${groupName}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
 
@@ -422,7 +422,7 @@ Deno.serve(async (req) => {
             .in("member_role", ["admin", "teacher", "coordinator"]);
 
           if (staffMembers && staffMembers.length > 0) {
-            const staffParticipants = staffMembers.map((m) => ({
+            const staffParticipants = staffMembers.map((m: any) => ({
               conversation_id: newInstChat.id,
               user_id: m.user_id,
               role: m.member_role === "admin" ? "admin" : "member",
@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
         }
       }
     } catch (err) {
-      log.errors.push(`Error creando chat institucional: ${err.message}`);
+      log.errors.push(`Error creando chat institucional: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     // Update institution sync timestamp
@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Sync batch error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Error interno" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) || "Error interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

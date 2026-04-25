@@ -80,7 +80,7 @@ serve(async (req) => {
         if (insertErr) continue;
 
         // Activate match. If current_player_id is null, player 1 already played — give turn to player 2
-        const nextPlayerId = match.current_player_id || userId;
+        const nextPlayerId = (match as any).current_player_id || userId;
         await supabaseAdmin
           .from('trivia_1v1_matches')
           .update({

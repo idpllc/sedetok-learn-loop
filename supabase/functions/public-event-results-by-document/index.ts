@@ -127,7 +127,7 @@ serve(async (req) => {
         .eq('user_id', profile.id)
         .order('completed_at', { ascending: false, nullsFirst: false });
       if (error) console.error('Path results error:', error);
-      attempts = (data || []).map((r) => ({
+      attempts = (data || []).map((r: any) => ({
         id: r.id,
         type: 'path',
         total_items: r.total_items,
@@ -145,7 +145,7 @@ serve(async (req) => {
         .eq('user_id', profile.id)
         .order('completed_at', { ascending: false });
       if (error) console.error('Quiz results error:', error);
-      attempts = (data || []).map((r) => ({
+      attempts = (data || []).map((r: any) => ({
         id: r.id,
         type: evaluationType,
         score: r.score,
