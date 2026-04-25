@@ -490,7 +490,172 @@ export default function LearningPathSearch() {
           </CardContent>
         </Card>
 
+        {/* Endpoint: Eventos por documento */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge className="bg-blue-500/10 text-blue-600">GET</Badge>
+              <CardTitle className="text-lg font-mono">/public-events-by-document</CardTitle>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Devuelve los eventos evaluativos (quizzes, juegos y rutas) asignados o accesibles para un usuario,
+              identificado por su número de documento. Útil para integraciones que necesitan listar las actividades
+              evaluativas de un estudiante.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-sm mb-2">URL</h4>
+              <CodeBlock language="url" code={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-events-by-document`} />
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Parámetros (query string)</h4>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left">
+                  <thead className="bg-muted/50">
+                    <tr className="border-b border-border">
+                      <th className="py-2 px-4 text-xs font-semibold">Nombre</th>
+                      <th className="py-2 px-4 text-xs font-semibold">Tipo</th>
+                      <th className="py-2 px-4 text-xs font-semibold">Requerido</th>
+                      <th className="py-2 px-4 text-xs font-semibold">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ParamRow name="documento" type="string" required description="Número de documento del usuario" />
+                    <ParamRow name="estado" type="enum" description="Filtra por estado: activa | finalizada | programada" />
+                    <ParamRow name="limit" type="number" description="Máximo de eventos a devolver (1–100, default 50)" />
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Ejemplo de petición</h4>
+              <CodeBlock code={`curl "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-events-by-document?documento=1234567890&estado=activa&limit=20"`} />
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Ejemplo de respuesta</h4>
+              <CodeBlock language="json" code={`{
+  "user": {
+    "id": "uuid",
+    "username": "string",
+    "full_name": "string",
+    "numero_documento": "1234567890",
+    "institution": "string"
+  },
+  "total": 3,
+  "events": [
+    {
+      "id": "uuid",
+      "title": "Evaluación de Matemáticas",
+      "description": "string",
+      "access_code": "ABC12345",
+      "start_date": "2026-04-25T08:00:00Z",
+      "end_date": "2026-04-30T23:59:00Z",
+      "status": "activa",
+      "type": "quiz",
+      "quiz_id": "uuid",
+      "game_id": null,
+      "path_id": null,
+      "url": "https://sedefy.com/quiz-evaluation/ABC12345"
+    }
+  ]
+}`} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Endpoint: Resultados de evento por documento */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge className="bg-blue-500/10 text-blue-600">GET</Badge>
+              <CardTitle className="text-lg font-mono">/public-event-results-by-document</CardTitle>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Devuelve los resultados (intentos y respuestas) de un usuario en una actividad evaluativa específica,
+              identificada por <code className="font-mono text-xs">access_code</code> o <code className="font-mono text-xs">event_id</code>.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-semibold text-sm mb-2">URL</h4>
+              <CodeBlock language="url" code={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-event-results-by-document`} />
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Parámetros (query string)</h4>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left">
+                  <thead className="bg-muted/50">
+                    <tr className="border-b border-border">
+                      <th className="py-2 px-4 text-xs font-semibold">Nombre</th>
+                      <th className="py-2 px-4 text-xs font-semibold">Tipo</th>
+                      <th className="py-2 px-4 text-xs font-semibold">Requerido</th>
+                      <th className="py-2 px-4 text-xs font-semibold">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ParamRow name="documento" type="string" required description="Número de documento del usuario" />
+                    <ParamRow name="access_code" type="string" description="Código de acceso del evento (alternativa a event_id)" />
+                    <ParamRow name="event_id" type="uuid" description="ID del evento evaluativo (alternativa a access_code)" />
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                ⚠️ Debes enviar al menos uno: <code>access_code</code> o <code>event_id</code>.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Ejemplo de petición</h4>
+              <CodeBlock code={`curl "${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-event-results-by-document?documento=1234567890&access_code=ABC12345"`} />
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Ejemplo de respuesta</h4>
+              <CodeBlock language="json" code={`{
+  "user": {
+    "id": "uuid",
+    "full_name": "string",
+    "numero_documento": "1234567890"
+  },
+  "event": {
+    "id": "uuid",
+    "title": "Evaluación de Matemáticas",
+    "access_code": "ABC12345",
+    "type": "quiz"
+  },
+  "total_attempts": 1,
+  "attempts": [
+    {
+      "id": "uuid",
+      "started_at": "2026-04-25T08:15:00Z",
+      "completed_at": "2026-04-25T08:42:00Z",
+      "score": 85,
+      "max_score": 100,
+      "passed": true,
+      "responses": [
+        {
+          "question_id": "uuid",
+          "question_text": "string",
+          "selected_answer": "string",
+          "correct_answer": "string",
+          "is_correct": true,
+          "points_earned": 10
+        }
+      ]
+    }
+  ]
+}`} />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Errors */}
+
         <Card>
           <CardHeader><CardTitle className="text-lg">⚠️ Códigos de error</CardTitle></CardHeader>
           <CardContent>
