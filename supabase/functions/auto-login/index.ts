@@ -46,7 +46,7 @@ function normalizeTipoDoc(raw?: string): string {
 /** Finds or creates a chat conversation (group) by name within an institution.
  *  Returns the conversation id. */
 async function upsertChatGroup(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   name: string,
   institutionId: string
 ): Promise<string> {
@@ -73,7 +73,7 @@ async function upsertChatGroup(
 
 /** Adds a user to a chat conversation if not already a member. */
 async function addToGroup(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   conversationId: string,
   userId: string,
   role = "member"
@@ -97,7 +97,7 @@ async function addToGroup(
 // ── Institution / sede / academic-group helpers ────────────────────────────────
 
 async function upsertInstitution(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   institutionName: string,
   adminUserId: string
 ): Promise<string> {
@@ -120,7 +120,7 @@ async function upsertInstitution(
 }
 
 async function upsertSede(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   sedeName: string,
   institutionId: string
 ): Promise<string> {
@@ -146,7 +146,7 @@ async function upsertSede(
 /** Creates or finds an academic group.
  *  Display name: "{grupoName} - {courseName}" */
 async function upsertAcademicGroup(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   grupoName: string,
   courseName: string,
   institutionId: string,
@@ -185,7 +185,7 @@ async function upsertAcademicGroup(
 }
 
 async function addMemberToAcademicGroup(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   groupId: string,
   userId: string,
   role: string
@@ -207,7 +207,7 @@ async function addMemberToAcademicGroup(
 }
 
 async function ensureInstitutionMember(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   institutionId: string,
   userId: string,
   memberRole: string
@@ -231,7 +231,7 @@ async function ensureInstitutionMember(
 
 /** Fetches all sede names for an institution */
 async function getAllSedeNames(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   institutionId: string
 ): Promise<string[]> {
   const { data } = await supabase
