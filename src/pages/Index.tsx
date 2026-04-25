@@ -595,6 +595,11 @@ const Index = () => {
             <OnboardingTeaser onOpenOnboarding={openOnboarding} />
           </>
         )}
+        <UsersSearchModal
+          open={showUsersModal}
+          onOpenChange={setShowUsersModal}
+          initialQuery={searchQuery}
+        />
       </div>
     </>
   );
