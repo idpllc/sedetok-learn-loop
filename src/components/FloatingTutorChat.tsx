@@ -142,7 +142,7 @@ export const FloatingTutorChat = () => {
             exit={{ x: 60 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             onClick={() => setChatState("selecting")}
-            className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex items-center gap-1 px-1.5 py-4 rounded-l-xl bg-primary text-primary-foreground shadow-lg hover:pr-3 transition-all"
+            className="fixed right-0 bottom-6 z-50 flex items-center gap-1 px-1.5 py-4 rounded-l-xl bg-primary text-primary-foreground shadow-lg hover:pr-3 transition-all"
             aria-label="Abrir tutor"
           >
             <ChevronLeft className="w-4 h-4" />
