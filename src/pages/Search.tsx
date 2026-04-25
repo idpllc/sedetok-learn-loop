@@ -28,10 +28,10 @@ const Search = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // Initialize state from sessionStorage or URL
+  // Initialize state from URL (priority) or sessionStorage
   const getInitialSearchQuery = () => {
     const urlQuery = searchParams.get('q');
-    if (urlQuery) return urlQuery;
+    if (urlQuery !== null) return urlQuery;
     return sessionStorage.getItem('search_query') || '';
   };
   
@@ -77,15 +77,13 @@ const Search = () => {
     sessionStorage.setItem('search_grade', selectedGrade);
   }, [searchQuery, selectedType, selectedSubject, selectedGrade]);
 
-  // Inicializar el query desde la URL solo si no hay estado guardado
+  // El query de la URL siempre tiene prioridad — sincroniza el state cuando cambia
   useEffect(() => {
     const queryFromUrl = searchParams.get('q');
-    const savedQuery = sessionStorage.getItem('search_query');
-    
-    // Only use URL param if there's no saved state
-    if (queryFromUrl && !savedQuery) {
+    if (queryFromUrl !== null && queryFromUrl !== searchQuery) {
       setSearchQuery(queryFromUrl);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // Combine content from all pages
