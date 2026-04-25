@@ -187,160 +187,76 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!quizId && !gameId && (
-            <Tabs value={selectedType} onValueChange={(v) => setSelectedType(v as "quiz" | "game")}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="quiz">
-                  <Brain className="h-4 w-4 mr-2" />
-                  Quiz
-                </TabsTrigger>
-                <TabsTrigger value="game">
-                  <Gamepad2 className="h-4 w-4 mr-2" />
-                  Juego
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="quiz" className="space-y-2 mt-4">
-                <div className="flex items-center justify-between">
-                  <Label>Quiz a Evaluar *</Label>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Quiz a Evaluar *</Label>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => window.open('/create?type=quiz', '_blank')}
+                  className="h-auto p-0"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Crear nuevo quiz
+                </Button>
+              </div>
+              <Tabs value={quizSource} onValueChange={(v) => { setQuizSource(v as "mine" | "community"); setSelectedQuizId(""); }}>
+                <TabsList className="grid w-full grid-cols-2 h-9">
+                  <TabsTrigger value="mine" className="text-xs">
+                    Mis quizzes ({myQuizzes.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="community" className="text-xs">
+                    <Globe className="h-3 w-3 mr-1" />
+                    Comunidad ({communityQuizzes.length})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                <PopoverTrigger asChild>
                   <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    onClick={() => window.open('/create?type=quiz', '_blank')}
-                    className="h-auto p-0"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openCombobox}
+                    className="w-full justify-between"
                   >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Crear nuevo quiz
+                    {selectedQuiz ? selectedQuiz.title : "Selecciona un quiz..."}
+                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
-                </div>
-                <Tabs value={quizSource} onValueChange={(v) => { setQuizSource(v as "mine" | "community"); setSelectedQuizId(""); }}>
-                  <TabsList className="grid w-full grid-cols-2 h-9">
-                    <TabsTrigger value="mine" className="text-xs">
-                      Mis quizzes ({myQuizzes.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="community" className="text-xs">
-                      <Globe className="h-3 w-3 mr-1" />
-                      Comunidad ({communityQuizzes.length})
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <Popover open={openCombobox && selectedType === "quiz"} onOpenChange={setOpenCombobox}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openCombobox}
-                      className="w-full justify-between"
-                    >
-                      {selectedQuiz ? selectedQuiz.title : "Selecciona un quiz..."}
-                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100]" align="start">
-                    <Command>
-                      <CommandInput placeholder={`Buscar en ${quizSource === "mine" ? "mis quizzes" : "la comunidad"}...`} />
-                      <CommandEmpty>
-                        {loadingQuizzes ? "Cargando..." : "No se encontró ningún quiz"}
-                      </CommandEmpty>
-                      <CommandGroup className="max-h-72 overflow-y-auto">
-                        {visibleQuizzes.map((quiz) => (
-                          <CommandItem
-                            key={quiz.id}
-                            value={quiz.title}
-                            onSelect={() => {
-                              setSelectedQuizId(quiz.id);
-                              setOpenCombobox(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedQuizId === quiz.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            <span className="flex-1 truncate">{quiz.title}</span>
-                            {quizSource === "community" && (
-                              <Badge variant="secondary" className="ml-2 text-[10px]">Pública</Badge>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100]" align="start">
+                  <Command>
+                    <CommandInput placeholder={`Buscar en ${quizSource === "mine" ? "mis quizzes" : "la comunidad"}...`} />
+                    <CommandEmpty>
+                      {loadingQuizzes ? "Cargando..." : "No se encontró ningún quiz"}
+                    </CommandEmpty>
+                    <CommandGroup className="max-h-72 overflow-y-auto">
+                      {visibleQuizzes.map((quiz) => (
+                        <CommandItem
+                          key={quiz.id}
+                          value={quiz.title}
+                          onSelect={() => {
+                            setSelectedQuizId(quiz.id);
+                            setOpenCombobox(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedQuizId === quiz.id ? "opacity-100" : "opacity-0"
                             )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </TabsContent>
-
-              <TabsContent value="game" className="space-y-2 mt-4">
-                <div className="flex items-center justify-between">
-                  <Label>Juego a Evaluar *</Label>
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    onClick={() => window.open('/create?type=game', '_blank')}
-                    className="h-auto p-0"
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Crear nuevo juego
-                  </Button>
-                </div>
-                <Tabs value={gameSource} onValueChange={(v) => { setGameSource(v as "mine" | "community"); setSelectedGameId(""); }}>
-                  <TabsList className="grid w-full grid-cols-2 h-9">
-                    <TabsTrigger value="mine" className="text-xs">
-                      Mis juegos ({myGames.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="community" className="text-xs">
-                      <Globe className="h-3 w-3 mr-1" />
-                      Comunidad ({communityGames.length})
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <Popover open={openCombobox && selectedType === "game"} onOpenChange={setOpenCombobox}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openCombobox}
-                      className="w-full justify-between"
-                    >
-                      {selectedGame ? selectedGame.title : "Selecciona un juego..."}
-                      <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100]" align="start">
-                    <Command>
-                      <CommandInput placeholder={`Buscar en ${gameSource === "mine" ? "mis juegos" : "la comunidad"}...`} />
-                      <CommandEmpty>
-                        {loadingGames ? "Cargando..." : "No se encontró ningún juego"}
-                      </CommandEmpty>
-                      <CommandGroup className="max-h-72 overflow-y-auto">
-                        {visibleGames.map((game) => (
-                          <CommandItem
-                            key={game.id}
-                            value={game.title}
-                            onSelect={() => {
-                              setSelectedGameId(game.id);
-                              setOpenCombobox(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedGameId === game.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            <span className="flex-1 truncate">{game.title}</span>
-                            {gameSource === "community" && (
-                              <Badge variant="secondary" className="ml-2 text-[10px]">Público</Badge>
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </TabsContent>
-            </Tabs>
+                          />
+                          <span className="flex-1 truncate">{quiz.title}</span>
+                          {quizSource === "community" && (
+                            <Badge variant="secondary" className="ml-2 text-[10px]">Pública</Badge>
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
           )}
 
           {(quizId || gameId) && (
