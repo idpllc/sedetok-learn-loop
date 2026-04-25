@@ -82,6 +82,8 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
     require_authentication: true,
     allow_multiple_attempts: false,
     show_results_immediately: true,
+    show_answers_after_completion: true,
+    disable_helpers: true,
   });
 
   useEffect(() => {
