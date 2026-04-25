@@ -340,7 +340,8 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                   </PopoverContent>
                 </Popover>
               </TabsContent>
-
+            </Tabs>
+          )}
 
           {(quizId || gameId) && (
             <Alert className="bg-primary/5 border-primary/20">
