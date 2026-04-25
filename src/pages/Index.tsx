@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { OnboardingTeaser } from "@/components/OnboardingTeaser";
+import { UsersSearchModal } from "@/components/UsersSearchModal";
 
 import { useOnboardingTrigger } from "@/hooks/useOnboardingTrigger";
 import { useInfiniteContent, useUserLikes, useUserSaves } from "@/hooks/useContent";
@@ -44,6 +45,7 @@ const Index = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">('all');
   const [showExtraFilters, setShowExtraFilters] = useState(false);
+  const [showUsersModal, setShowUsersModal] = useState(false);
   
   // Onboarding hook
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
@@ -327,13 +329,23 @@ const Index = () => {
           {/* Users Section - Only show when searching */}
           {searchQuery && searchedUsers && searchedUsers.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="w-5 h-5 text-primary" />
-                <h2 className="text-xl font-semibold">Usuarios</h2>
-                <Badge variant="secondary">{searchedUsers.length}</Badge>
+              <div className="flex items-center justify-between mb-4 gap-2">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Usuarios</h2>
+                  <Badge variant="secondary">{searchedUsers.length}</Badge>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUsersModal(true)}
+                >
+                  <SearchIcon className="w-4 h-4 mr-2" />
+                  Buscar usuarios
+                </Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
-                {searchedUsers.map((profile) => (
+                {searchedUsers.slice(0, 4).map((profile) => (
                   <Card 
                     key={profile.id} 
                     className="cursor-pointer hover:shadow-lg transition-shadow"
@@ -371,6 +383,16 @@ const Index = () => {
                   </Card>
                 ))}
               </div>
+              {searchedUsers.length > 4 && (
+                <div className="flex justify-center mb-8 -mt-4">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowUsersModal(true)}
+                  >
+                    Ver más usuarios ({searchedUsers.length - 4})
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -573,6 +595,11 @@ const Index = () => {
             <OnboardingTeaser onOpenOnboarding={openOnboarding} />
           </>
         )}
+        <UsersSearchModal
+          open={showUsersModal}
+          onOpenChange={setShowUsersModal}
+          initialQuery={searchQuery}
+        />
       </div>
     </>
   );
