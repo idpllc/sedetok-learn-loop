@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useConversation } from "@11labs/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff, X, ChevronLeft, ChevronRight, MessageCircle, Loader2, Volume2 } from "lucide-react";
