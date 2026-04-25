@@ -24,6 +24,15 @@ const QuizEvaluations = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { eventResults, resultsLoading } = useEvaluationEvents(undefined, undefined, undefined, eventId);
 
+  const handleBack = () => {
+    const sameOrigin = document.referrer && document.referrer.startsWith(window.location.origin);
+    if (sameOrigin && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
   const createQuizId = searchParams.get("createQuizId");
   const createGameId = searchParams.get("createGameId");
 
