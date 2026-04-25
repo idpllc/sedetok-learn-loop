@@ -10,6 +10,70 @@ import { useSearchUsers } from "@/hooks/useSearchUsers";
 import { useFollow } from "@/hooks/useFollow";
 import { useAuth } from "@/hooks/useAuth";
 
+interface UserRowProps {
+  profile: any;
+  currentUserId?: string;
+  onVisit: (username: string) => void;
+}
+
+const UserRow = ({ profile, currentUserId, onVisit }: UserRowProps) => {
+  const isMe = currentUserId === profile.id;
+  const { isFollowing, toggleFollow, isProcessing } = useFollow(isMe ? undefined : profile.id);
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+      <button
+        onClick={() => onVisit(profile.username)}
+        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+      >
+        <Avatar className="w-10 h-10 shrink-0">
+          <AvatarImage src={profile.avatar_url || ""} alt={profile.full_name || profile.username} />
+          <AvatarFallback>
+            {(profile.full_name || profile.username || "?").charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm truncate">
+            {profile.full_name || profile.username}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            @{profile.username} · {profile.followers_count || 0} seguidores
+          </p>
+        </div>
+      </button>
+      {!isMe && currentUserId && (
+        <Button
+          size="sm"
+          variant={isFollowing ? "outline" : "default"}
+          onClick={() => toggleFollow(profile.id)}
+          disabled={isProcessing}
+          className="shrink-0"
+        >
+          {isFollowing ? (
+            <>
+              <UserCheck className="w-4 h-4 mr-1" />
+              Siguiendo
+            </>
+          ) : (
+            <>
+              <UserPlus className="w-4 h-4 mr-1" />
+              Seguir
+            </>
+          )}
+        </Button>
+      )}
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={() => onVisit(profile.username)}
+        className="shrink-0"
+      >
+        Ver perfil
+      </Button>
+    </div>
+  );
+};
+
 interface UsersSearchModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,7 +85,6 @@ export const UsersSearchModal = ({ open, onOpenChange, initialQuery = "" }: User
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: users, isLoading } = useSearchUsers(query);
-  const { followingIds, toggleFollow, isToggling } = useFollow();
 
   const handleVisit = (username: string) => {
     onOpenChange(false);
@@ -60,65 +123,14 @@ export const UsersSearchModal = ({ open, onOpenChange, initialQuery = "" }: User
             </p>
           ) : users && users.length > 0 ? (
             <div className="space-y-2 py-2">
-              {users.map((profile: any) => {
-                const isFollowing = followingIds?.includes(profile.id);
-                const isMe = user?.id === profile.id;
-                return (
-                  <div
-                    key={profile.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                  >
-                    <button
-                      onClick={() => handleVisit(profile.username)}
-                      className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                    >
-                      <Avatar className="w-10 h-10 shrink-0">
-                        <AvatarImage src={profile.avatar_url || ""} alt={profile.full_name || profile.username} />
-                        <AvatarFallback>
-                          {(profile.full_name || profile.username || "?").charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">
-                          {profile.full_name || profile.username}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          @{profile.username} · {profile.followers_count || 0} seguidores
-                        </p>
-                      </div>
-                    </button>
-                    {!isMe && user && (
-                      <Button
-                        size="sm"
-                        variant={isFollowing ? "outline" : "default"}
-                        onClick={() => toggleFollow(profile.id)}
-                        disabled={isToggling}
-                        className="shrink-0"
-                      >
-                        {isFollowing ? (
-                          <>
-                            <UserCheck className="w-4 h-4 mr-1" />
-                            Siguiendo
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="w-4 h-4 mr-1" />
-                            Seguir
-                          </>
-                        )}
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleVisit(profile.username)}
-                      className="shrink-0"
-                    >
-                      Ver perfil
-                    </Button>
-                  </div>
-                );
-              })}
+              {users.map((profile: any) => (
+                <UserRow
+                  key={profile.id}
+                  profile={profile}
+                  currentUserId={user?.id}
+                  onVisit={handleVisit}
+                />
+              ))}
             </div>
           ) : (
             <p className="text-center text-sm text-muted-foreground py-8">
