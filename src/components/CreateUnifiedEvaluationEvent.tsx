@@ -213,6 +213,17 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                     Crear nuevo quiz
                   </Button>
                 </div>
+                <Tabs value={quizSource} onValueChange={(v) => { setQuizSource(v as "mine" | "community"); setSelectedQuizId(""); }}>
+                  <TabsList className="grid w-full grid-cols-2 h-9">
+                    <TabsTrigger value="mine" className="text-xs">
+                      Mis quizzes ({myQuizzes.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="community" className="text-xs">
+                      <Globe className="h-3 w-3 mr-1" />
+                      Comunidad ({communityQuizzes.length})
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <Popover open={openCombobox && selectedType === "quiz"} onOpenChange={setOpenCombobox}>
                   <PopoverTrigger asChild>
                     <Button
@@ -227,14 +238,15 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                   </PopoverTrigger>
                   <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100]" align="start">
                     <Command>
-                      <CommandInput placeholder="Buscar quiz..." />
+                      <CommandInput placeholder={`Buscar en ${quizSource === "mine" ? "mis quizzes" : "la comunidad"}...`} />
                       <CommandEmpty>
                         {loadingQuizzes ? "Cargando..." : "No se encontró ningún quiz"}
                       </CommandEmpty>
-                      <CommandGroup>
-                        {quizzes?.map((quiz) => (
+                      <CommandGroup className="max-h-72 overflow-y-auto">
+                        {visibleQuizzes.map((quiz) => (
                           <CommandItem
                             key={quiz.id}
+                            value={quiz.title}
                             onSelect={() => {
                               setSelectedQuizId(quiz.id);
                               setOpenCombobox(false);
@@ -246,7 +258,10 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                                 selectedQuizId === quiz.id ? "opacity-100" : "opacity-0"
                               )}
                             />
-                            {quiz.title}
+                            <span className="flex-1 truncate">{quiz.title}</span>
+                            {quizSource === "community" && (
+                              <Badge variant="secondary" className="ml-2 text-[10px]">Pública</Badge>
+                            )}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -269,6 +284,17 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                     Crear nuevo juego
                   </Button>
                 </div>
+                <Tabs value={gameSource} onValueChange={(v) => { setGameSource(v as "mine" | "community"); setSelectedGameId(""); }}>
+                  <TabsList className="grid w-full grid-cols-2 h-9">
+                    <TabsTrigger value="mine" className="text-xs">
+                      Mis juegos ({myGames.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="community" className="text-xs">
+                      <Globe className="h-3 w-3 mr-1" />
+                      Comunidad ({communityGames.length})
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <Popover open={openCombobox && selectedType === "game"} onOpenChange={setOpenCombobox}>
                   <PopoverTrigger asChild>
                     <Button
@@ -283,14 +309,15 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                   </PopoverTrigger>
                   <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[100]" align="start">
                     <Command>
-                      <CommandInput placeholder="Buscar juego..." />
+                      <CommandInput placeholder={`Buscar en ${gameSource === "mine" ? "mis juegos" : "la comunidad"}...`} />
                       <CommandEmpty>
                         {loadingGames ? "Cargando..." : "No se encontró ningún juego"}
                       </CommandEmpty>
-                      <CommandGroup>
-                        {games?.map((game) => (
+                      <CommandGroup className="max-h-72 overflow-y-auto">
+                        {visibleGames.map((game) => (
                           <CommandItem
                             key={game.id}
+                            value={game.title}
                             onSelect={() => {
                               setSelectedGameId(game.id);
                               setOpenCombobox(false);
@@ -302,7 +329,10 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                                 selectedGameId === game.id ? "opacity-100" : "opacity-0"
                               )}
                             />
-                            {game.title}
+                            <span className="flex-1 truncate">{game.title}</span>
+                            {gameSource === "community" && (
+                              <Badge variant="secondary" className="ml-2 text-[10px]">Público</Badge>
+                            )}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -310,8 +340,7 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                   </PopoverContent>
                 </Popover>
               </TabsContent>
-            </Tabs>
-          )}
+
 
           {(quizId || gameId) && (
             <Alert className="bg-primary/5 border-primary/20">
