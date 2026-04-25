@@ -736,7 +736,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         </div>
 
         {/* Action buttons - floating on the right, centered vertically */}
-        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 transition-opacity duration-300 ${videoUrl && isPlaying ? 'opacity-100 md:opacity-0 md:pointer-events-none' : 'opacity-100'} ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
+        <div className={`absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 transition-opacity duration-300 ${videoUrl && isPlaying && isFullscreen ? 'opacity-0 pointer-events-none' : 'opacity-100'} ${isInView ? 'md:fixed md:flex' : 'md:hidden'}`}>
           {/* Creator avatar with follow button */}
           <div className="relative flex flex-col items-center">
             <button
