@@ -62,37 +62,28 @@ export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEvent
     return <div className="text-center py-8">Cargando eventos...</div>;
   }
 
-  // Filter events by status
+  // Filter events by status AND only quiz events (avoid duplication with game/path lists)
   const filteredEvents = events?.filter((event: any) => {
+    // Only show quiz events in this list
+    if (!event.quiz_id) return false;
+
     if (status === "all") return true;
-    
+
     const now = new Date();
     const start = new Date(event.start_date);
     const end = new Date(event.end_date);
-    
+
     if (status === "active") {
       return now >= start && now <= end;
     } else if (status === "finished") {
       return now > end;
     }
-    
+
     return true;
   }) || [];
 
-  if (!events || events.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No hay eventos de evaluación creados
-      </div>
-    );
-  }
-
   if (filteredEvents.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No hay eventos {status === "active" ? "activos" : status === "finished" ? "finalizados" : ""} en este momento
-      </div>
-    );
+    return null;
   }
 
   return (

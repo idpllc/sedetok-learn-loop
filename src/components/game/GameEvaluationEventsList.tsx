@@ -65,17 +65,10 @@ export const GameEvaluationEventsList = ({ gameId, status = "all" }: GameEvaluat
     return <div className="text-center py-8">Cargando eventos...</div>;
   }
 
-  if (!events || events.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          No hay eventos de evaluación creados aún
-        </CardContent>
-      </Card>
-    );
-  }
+  const filteredEvents = (events || []).filter((event: any) => {
+    // Only show game events in this list (avoid duplication with quiz/path lists)
+    if (!event.game_id) return false;
 
-  const filteredEvents = events.filter((event) => {
     if (status === "all") return true;
     const eventStatus = getEventStatus(event.start_date, event.end_date);
     if (status === "active") return eventStatus.label === "Activo";
@@ -84,13 +77,7 @@ export const GameEvaluationEventsList = ({ gameId, status = "all" }: GameEvaluat
   });
 
   if (filteredEvents.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          No hay eventos {status === "active" ? "activos" : "finalizados"}
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
