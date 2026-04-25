@@ -62,6 +62,7 @@ interface CreateUnifiedEvaluationEventProps {
 }
 
 export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChange }: CreateUnifiedEvaluationEventProps) => {
+  const { user } = useAuth();
   const { createEvent } = useEvaluationEvents();
   const { quizzes, isLoading: loadingQuizzes } = useQuizzes();
   const [games, setGames] = useState<any[]>([]);
@@ -70,6 +71,8 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
   const [selectedQuizId, setSelectedQuizId] = useState(quizId || "");
   const [selectedGameId, setSelectedGameId] = useState(gameId || "");
   const [openCombobox, setOpenCombobox] = useState(false);
+  const [quizSource, setQuizSource] = useState<"mine" | "community">("mine");
+  const [gameSource, setGameSource] = useState<"mine" | "community">("mine");
   const [timezone, setTimezone] = useState("America/Bogota");
   const [formData, setFormData] = useState({
     title: "",
@@ -97,22 +100,36 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
       setLoadingGames(true);
       const { supabase } = await import("@/integrations/supabase/client");
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-      
+      if (!userData.user) {
+        setLoadingGames(false);
+        return;
+      }
+
+      // Trae los propios + públicos de la comunidad (RLS ya restringe lo visible)
       const { data } = await supabase
         .from("games")
         .select("*")
-        .eq("creator_id", userData.user.id)
-        .order("created_at", { ascending: false });
-      
+        .or(`creator_id.eq.${userData.user.id},is_public.eq.true`)
+        .order("created_at", { ascending: false })
+        .limit(500);
+
       setGames(data || []);
       setLoadingGames(false);
     };
-    
+
     if (open) {
       fetchGames();
     }
   }, [open]);
+
+  const myQuizzes = quizzes?.filter((q) => q.creator_id === user?.id) ?? [];
+  const communityQuizzes = quizzes?.filter((q) => q.creator_id !== user?.id && q.is_public) ?? [];
+  const visibleQuizzes = quizSource === "mine" ? myQuizzes : communityQuizzes;
+
+  const myGames = games?.filter((g) => g.creator_id === user?.id) ?? [];
+  const communityGames = games?.filter((g) => g.creator_id !== user?.id && g.is_public) ?? [];
+  const visibleGames = gameSource === "mine" ? myGames : communityGames;
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
