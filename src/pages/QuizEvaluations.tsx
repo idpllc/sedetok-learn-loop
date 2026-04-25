@@ -24,6 +24,15 @@ const QuizEvaluations = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { eventResults, resultsLoading } = useEvaluationEvents(undefined, undefined, undefined, eventId);
 
+  const handleBack = () => {
+    const sameOrigin = document.referrer && document.referrer.startsWith(window.location.origin);
+    if (sameOrigin && window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
   const createQuizId = searchParams.get("createQuizId");
   const createGameId = searchParams.get("createGameId");
 
@@ -82,7 +91,7 @@ const QuizEvaluations = () => {
       <div className="container mx-auto py-8 px-4 max-w-full">
         <div className="space-y-6">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" onClick={handleBack}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
@@ -138,7 +147,7 @@ const QuizEvaluations = () => {
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
             <div className="flex-1 flex justify-between items-center">
