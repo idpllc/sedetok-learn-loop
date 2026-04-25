@@ -208,11 +208,11 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
               <Tabs value={quizSource} onValueChange={(v) => { setQuizSource(v as "mine" | "community"); setSelectedQuizId(""); }}>
                 <TabsList className="grid w-full grid-cols-2 h-9">
                   <TabsTrigger value="mine" className="text-xs">
-                    Mis quizzes ({myQuizzes.length})
+                    Mis quizzes
                   </TabsTrigger>
                   <TabsTrigger value="community" className="text-xs">
                     <Globe className="h-3 w-3 mr-1" />
-                    Comunidad ({communityQuizzes.length})
+                    Comunidad
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
