@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Users, UserPlus, UserCheck, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -82,14 +82,23 @@ interface UsersSearchModalProps {
 
 export const UsersSearchModal = ({ open, onOpenChange, initialQuery = "" }: UsersSearchModalProps) => {
   const [query, setQuery] = useState(initialQuery);
+  const [visibleCount, setVisibleCount] = useState(10);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: users, isLoading } = useSearchUsers(query);
+
+  // Reset visible count when query changes
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [query]);
 
   const handleVisit = (username: string) => {
     onOpenChange(false);
     navigate(`/profile/${username}`);
   };
+
+  const visibleUsers = users?.slice(0, visibleCount) || [];
+  const hasMore = users && users.length > visibleCount;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,7 +121,7 @@ export const UsersSearchModal = ({ open, onOpenChange, initialQuery = "" }: User
           />
         </div>
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
+        <ScrollArea className="flex-1 -mx-6 px-6 overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -123,7 +132,7 @@ export const UsersSearchModal = ({ open, onOpenChange, initialQuery = "" }: User
             </p>
           ) : users && users.length > 0 ? (
             <div className="space-y-2 py-2">
-              {users.map((profile: any) => (
+              {visibleUsers.map((profile: any) => (
                 <UserRow
                   key={profile.id}
                   profile={profile}
@@ -131,6 +140,16 @@ export const UsersSearchModal = ({ open, onOpenChange, initialQuery = "" }: User
                   onVisit={handleVisit}
                 />
               ))}
+              {hasMore && (
+                <div className="flex justify-center pt-2 pb-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setVisibleCount((c) => c + 10)}
+                  >
+                    Cargar más ({users.length - visibleCount} restantes)
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-center text-sm text-muted-foreground py-8">
