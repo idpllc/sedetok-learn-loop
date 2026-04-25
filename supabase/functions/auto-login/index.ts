@@ -239,7 +239,7 @@ async function getAllSedeNames(
     .select("name")
     .eq("institution_id", institutionId);
 
-  return (data ?? []).map((s) => s.name);
+  return (data ?? []).map((s: any) => s.name);
 }
 
 // ── Main handler ───────────────────────────────────────────────────────────────
@@ -596,7 +596,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: "Error interno del servidor", details: error.message }),
+      JSON.stringify({ error: "Error interno del servidor", details: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

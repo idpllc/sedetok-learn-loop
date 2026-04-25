@@ -2222,12 +2222,14 @@ export type Database = {
           created_at: string | null
           creator_id: string
           description: string | null
+          disable_helpers: boolean
           end_date: string
           game_id: string | null
           id: string
           path_id: string | null
           quiz_id: string | null
           require_authentication: boolean | null
+          show_answers_after_completion: boolean
           show_results_immediately: boolean | null
           start_date: string
           title: string
@@ -2239,12 +2241,14 @@ export type Database = {
           created_at?: string | null
           creator_id: string
           description?: string | null
+          disable_helpers?: boolean
           end_date: string
           game_id?: string | null
           id?: string
           path_id?: string | null
           quiz_id?: string | null
           require_authentication?: boolean | null
+          show_answers_after_completion?: boolean
           show_results_immediately?: boolean | null
           start_date: string
           title: string
@@ -2256,12 +2260,14 @@ export type Database = {
           created_at?: string | null
           creator_id?: string
           description?: string | null
+          disable_helpers?: boolean
           end_date?: string
           game_id?: string | null
           id?: string
           path_id?: string | null
           quiz_id?: string | null
           require_authentication?: boolean | null
+          show_answers_after_completion?: boolean
           show_results_immediately?: boolean | null
           start_date?: string
           title?: string

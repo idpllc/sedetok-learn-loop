@@ -82,6 +82,8 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
     require_authentication: true,
     allow_multiple_attempts: false,
     show_results_immediately: true,
+    show_answers_after_completion: true,
+    disable_helpers: true,
   });
 
   useEffect(() => {
@@ -169,6 +171,8 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
       require_authentication: true,
       allow_multiple_attempts: false,
       show_results_immediately: true,
+      show_answers_after_completion: true,
+      disable_helpers: true,
     });
   };
 
@@ -204,11 +208,11 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
               <Tabs value={quizSource} onValueChange={(v) => { setQuizSource(v as "mine" | "community"); setSelectedQuizId(""); }}>
                 <TabsList className="grid w-full grid-cols-2 h-9">
                   <TabsTrigger value="mine" className="text-xs">
-                    Mis quizzes ({myQuizzes.length})
+                    Mis quizzes
                   </TabsTrigger>
                   <TabsTrigger value="community" className="text-xs">
                     <Globe className="h-3 w-3 mr-1" />
-                    Comunidad ({communityQuizzes.length})
+                    Comunidad
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -402,6 +406,38 @@ export const CreateUnifiedEvaluationEvent = ({ quizId, gameId, open, onOpenChang
                 checked={formData.show_results_immediately}
                 onCheckedChange={(checked) =>
                   setFormData({ ...formData, show_results_immediately: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="show_answers">Mostrar respuestas al finalizar</Label>
+                <p className="text-xs text-muted-foreground">
+                  Si se desactiva, los usuarios no verán cuáles eran las respuestas correctas
+                </p>
+              </div>
+              <Switch
+                id="show_answers"
+                checked={formData.show_answers_after_completion}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, show_answers_after_completion: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="disable_helpers">Deshabilitar ayudas</Label>
+                <p className="text-xs text-muted-foreground">
+                  Bloquea ayudas como ver respuestas o ganar tiempo extra durante el evento
+                </p>
+              </div>
+              <Switch
+                id="disable_helpers"
+                checked={formData.disable_helpers}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, disable_helpers: checked })
                 }
               />
             </div>

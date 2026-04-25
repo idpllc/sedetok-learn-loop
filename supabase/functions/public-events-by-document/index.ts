@@ -169,7 +169,7 @@ serve(async (req) => {
     });
 
     if (estado === 'activa' || estado === 'finalizada' || estado === 'programada') {
-      results = results.filter((r) => r.status === estado);
+      results = results.filter((r: any) => r.status === estado);
     }
 
     return new Response(JSON.stringify({
