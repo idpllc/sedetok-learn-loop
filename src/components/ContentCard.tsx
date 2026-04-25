@@ -208,7 +208,14 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
     return saved ? parseFloat(saved) : 1;
   });
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoPlayerRef = useRef<VideoPlayerRef>(null);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
   useViews(id);
   
   // Visibility detection to show action buttons only for the in-view card (desktop)
