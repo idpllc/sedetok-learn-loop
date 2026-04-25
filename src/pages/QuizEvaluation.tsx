@@ -51,12 +51,20 @@ const QuizEvaluation = () => {
   });
 
   useEffect(() => {
+    // Only (re)load when the access code or auth-loading state changes.
+    // We intentionally exclude `user` from deps: once the event is loaded and
+    // the quiz has started, a refreshed `user` reference (e.g. token refresh)
+    // would otherwise re-trigger loadEvent → toggle `loading` → unmount
+    // <QuizViewer/>, causing the quiz to reset back to the start screen.
     if (accessCode && !authLoading) {
-      loadEvent(accessCode);
+      if (!event) {
+        loadEvent(accessCode);
+      }
     } else if (!accessCode) {
       setLoading(false);
     }
-  }, [accessCode, authLoading, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessCode, authLoading]);
 
   const loadEvent = async (code: string) => {
     try {
