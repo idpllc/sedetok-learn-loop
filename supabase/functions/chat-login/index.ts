@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     
-    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    const adminClient: any = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
@@ -436,7 +436,7 @@ Deno.serve(async (req) => {
 
     // ── Sign in to get a real session ─────────────────────────────────────────
     console.log(`[chat-login] Signing in user ${email} to get session...`);
-    const anonClient = createClient(supabaseUrl, anonKey, {
+    const anonClient: any = createClient(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
