@@ -82,20 +82,8 @@ export const EvaluationEventsList = ({ quizId, status = "all" }: EvaluationEvent
     return true;
   }) || [];
 
-  if (!events || events.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No hay eventos de evaluación creados
-      </div>
-    );
-  }
-
   if (filteredEvents.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No hay eventos {status === "active" ? "activos" : status === "finished" ? "finalizados" : ""} en este momento
-      </div>
-    );
+    return null;
   }
 
   return (
