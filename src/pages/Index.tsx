@@ -45,6 +45,7 @@ const Index = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedGrade, setSelectedGrade] = useState<GradeLevel | "all">('all');
   const [showExtraFilters, setShowExtraFilters] = useState(false);
+  const [showUsersModal, setShowUsersModal] = useState(false);
   
   // Onboarding hook
   const { shouldShowOnboarding, initialStep, openOnboarding, closeOnboarding } = useOnboardingTrigger();
