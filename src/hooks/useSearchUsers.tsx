@@ -20,7 +20,8 @@ export const useSearchUsers = (searchQuery: string) => {
         .limit(50);
 
       if (error) throw error;
-      return data || [];
+      // Hide profiles whose username is just a document number (all digits)
+      return (data || []).filter((p: any) => !/^\d+$/.test((p.username || "").trim()));
     },
     enabled: !!searchQuery && searchQuery.trim() !== "",
   });
