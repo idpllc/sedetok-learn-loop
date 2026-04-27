@@ -533,6 +533,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             ? "¡Quiz publicado!" 
             : "Quiz guardado como borrador"
       );
+      clearQuizDraft();
       navigate("/profile");
     } catch (error) {
       console.error("Error saving quiz:", error);
