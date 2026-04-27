@@ -32,13 +32,19 @@ serve(async (req) => {
     let toolParameters: any = {};
 
     if (gameType === 'word_order') {
-      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar preguntas para el juego "Ordenar Palabras" donde los estudiantes deben construir oraciones correctas ordenando palabras desordenadas.
+      systemPrompt = `Eres un experto creador de juegos educativos en ESPAÑOL LATINOAMERICANO. Tu tarea es generar preguntas para el juego "Ordenar Palabras" donde los estudiantes deben construir oraciones correctas ordenando palabras desordenadas.
 
-REGLAS:
+REGLAS ESTRICTAS DE CARACTERES:
+- USA EXCLUSIVAMENTE caracteres del alfabeto español estándar: a-z, A-Z, áéíóúñÁÉÍÓÚÑ, ¿¡?!.,;: y espacios normales
+- PROHIBIDO usar caracteres CJK (chinos/japoneses/coreanos como 直, 中, の, etc.), emojis, símbolos Unicode raros, guiones largos (—) o comillas tipográficas (" " ' ')
+- USA SOLO el espacio ASCII normal (U+0020) entre palabras. NUNCA uses espacios especiales (no-break space, ideographic space, etc.)
+
+REGLAS DE CONTENIDO:
 - Genera oraciones educativas y apropiadas para el nivel educativo indicado
 - Las oraciones deben tener entre 4 y 10 palabras
-- Deben ser gramaticalmente correctas y con sentido claro
-- El array "words" debe contener EXACTAMENTE las mismas palabras que "correct_sentence", separadas por espacios
+- Deben ser gramaticalmente correctas, completas y con sentido claro
+- Cada palabra del array "words" debe ser una palabra real separada (sin caracteres pegados ni símbolos extraños entre letras)
+- El array "words" debe contener EXACTAMENTE las mismas palabras que "correct_sentence", en el mismo orden, separadas por espacios simples
 - Incluye una instrucción clara de lo que se pide en question_text`;
 
       userPrompt = `Genera ${numQuestions} preguntas del juego "Ordenar Palabras" para:
