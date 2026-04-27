@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePathContent } from "@/hooks/useLearningPaths";
 import { useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { usePathProgress } from "@/hooks/usePathProgress";
+import { usePathEnrollment } from "@/hooks/usePathEnrollment";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { ArrowLeft, Map, List, Share2, Users } from "lucide-react";
@@ -26,6 +27,7 @@ const ViewLearningPath = () => {
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   const { markComplete, getCompletedIds, isCompleted } = usePathProgress(id);
+  const { isEnrolled, enroll } = usePathEnrollment(id);
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<"map" | "cards">("cards");
@@ -416,9 +418,52 @@ const ViewLearningPath = () => {
           pathId={id!}
           pathTitle={pathTitle}
         />
-        
-        {/* Content cards */}
-        {contentData.map((item: any, index: number) => {
+
+        {/* Enrollment gate: block content access if subscription is required */}
+        {(() => {
+          const requireEnrollment = !!(pathInfo as any)?.require_enrollment;
+          const isCreator = !!user && pathInfo?.creator_id === user.id;
+          const isLocked = requireEnrollment && !isCreator && !isEnrolled;
+
+          if (isLocked) {
+            return (
+              <div className="h-screen w-full snap-start snap-always flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-6">
+                <div className="max-w-md w-full text-center space-y-6 bg-card/80 backdrop-blur-md border border-border rounded-3xl p-8 shadow-2xl">
+                  <div className="text-6xl">🔐</div>
+                  <h2 className="text-2xl font-bold">Suscripción requerida</h2>
+                  <p className="text-muted-foreground">
+                    Para acceder a las cápsulas de esta ruta primero debes suscribirte. Pulsa <strong>Empezar Ruta</strong> para inscribirte.
+                  </p>
+                  <Button
+                    size="lg"
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/auth", { state: { from: `/learning-paths/view/${id}` } });
+                        return;
+                      }
+                      enroll.mutate(undefined, {
+                        onSuccess: () => {
+                          // Scroll to first capsule once enrolled
+                          setTimeout(() => {
+                            const container = document.querySelector('.snap-y');
+                            if (container && container.children.length > 1) {
+                              container.children[1]?.scrollIntoView({ behavior: 'smooth' });
+                            }
+                          }, 200);
+                        },
+                      });
+                    }}
+                    disabled={enroll.isPending}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-6 rounded-2xl shadow-lg"
+                  >
+                    {enroll.isPending ? "Inscribiendo..." : "Empezar Ruta"}
+                  </Button>
+                </div>
+              </div>
+            );
+          }
+
+          return contentData.map((item: any, index: number) => {
           const videoRef = (ref: VideoPlayerRef | null) => {
             if (ref) {
               videoRefs.current[item.id] = ref;
@@ -498,7 +543,8 @@ const ViewLearningPath = () => {
               hasNext={index < contentData.length - 1}
             />
           );
-        })}
+        });
+        })()}
       </div>
 
       {/* Bottom navigation */}
