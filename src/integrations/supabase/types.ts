@@ -1401,6 +1401,7 @@ export type Database = {
           level: string | null
           objectives: string | null
           path_type: string
+          require_enrollment: boolean
           require_quiz_pass: boolean | null
           required_routes: string[] | null
           status: string | null
@@ -1431,6 +1432,7 @@ export type Database = {
           level?: string | null
           objectives?: string | null
           path_type?: string
+          require_enrollment?: boolean
           require_quiz_pass?: boolean | null
           required_routes?: string[] | null
           status?: string | null
@@ -1461,6 +1463,7 @@ export type Database = {
           level?: string | null
           objectives?: string | null
           path_type?: string
+          require_enrollment?: boolean
           require_quiz_pass?: boolean | null
           required_routes?: string[] | null
           status?: string | null
