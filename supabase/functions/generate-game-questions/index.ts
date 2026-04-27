@@ -32,13 +32,19 @@ serve(async (req) => {
     let toolParameters: any = {};
 
     if (gameType === 'word_order') {
-      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar preguntas para el juego "Ordenar Palabras" donde los estudiantes deben construir oraciones correctas ordenando palabras desordenadas.
+      systemPrompt = `Eres un experto creador de juegos educativos en ESPAÑOL LATINOAMERICANO. Tu tarea es generar preguntas para el juego "Ordenar Palabras" donde los estudiantes deben construir oraciones correctas ordenando palabras desordenadas.
 
-REGLAS:
+REGLAS ESTRICTAS DE CARACTERES:
+- USA EXCLUSIVAMENTE caracteres del alfabeto español estándar: a-z, A-Z, áéíóúñÁÉÍÓÚÑ, ¿¡?!.,;: y espacios normales
+- PROHIBIDO usar caracteres CJK (chinos/japoneses/coreanos como 直, 中, の, etc.), emojis, símbolos Unicode raros, guiones largos (—) o comillas tipográficas (" " ' ')
+- USA SOLO el espacio ASCII normal (U+0020) entre palabras. NUNCA uses espacios especiales (no-break space, ideographic space, etc.)
+
+REGLAS DE CONTENIDO:
 - Genera oraciones educativas y apropiadas para el nivel educativo indicado
 - Las oraciones deben tener entre 4 y 10 palabras
-- Deben ser gramaticalmente correctas y con sentido claro
-- El array "words" debe contener EXACTAMENTE las mismas palabras que "correct_sentence", separadas por espacios
+- Deben ser gramaticalmente correctas, completas y con sentido claro
+- Cada palabra del array "words" debe ser una palabra real separada (sin caracteres pegados ni símbolos extraños entre letras)
+- El array "words" debe contener EXACTAMENTE las mismas palabras que "correct_sentence", en el mismo orden, separadas por espacios simples
 - Incluye una instrucción clara de lo que se pide en question_text`;
 
       userPrompt = `Genera ${numQuestions} preguntas del juego "Ordenar Palabras" para:
@@ -71,18 +77,22 @@ Genera oraciones variadas y educativas apropiadas para este contexto.`;
         additionalProperties: false
       };
     } else if (gameType === 'word_wheel') {
-      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar preguntas para el juego "Ruleta de Palabras" (estilo Pasapalabra).
+      systemPrompt = `Eres un experto creador de juegos educativos en ESPAÑOL LATINOAMERICANO. Tu tarea es generar preguntas para el juego "Ruleta de Palabras" (estilo Pasapalabra).
 
-REGLAS ESTRICTAS:
-- Genera EXACTAMENTE 26 preguntas, una por cada letra del alfabeto español: A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ñ, O, P, Q, R, S, T, U, V, W, X, Y, Z
-- Si no se usa Ñ, genera 27 con las 26 letras estándar A-Z
+REGLAS ESTRICTAS DE CARACTERES:
+- USA EXCLUSIVAMENTE caracteres del alfabeto español estándar: a-z, A-Z, áéíóúñÁÉÍÓÚÑ, ¿¡?!.,;: y espacios normales
+- PROHIBIDO usar caracteres CJK (chinos/japoneses como 直, 中), emojis, símbolos Unicode raros o comillas tipográficas
+- USA SOLO el espacio ASCII normal entre palabras
+
+REGLAS:
+- Genera EXACTAMENTE 26 preguntas, una por cada letra del alfabeto: A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
 - Cada pregunta debe tener:
-  - initial_letter: la letra mayúscula (A, B, C, etc.)
-  - question_text: una definición o pista clara que describe la palabra
-  - correct_sentence: la palabra correcta que DEBE empezar con esa letra
+  - initial_letter: la letra mayúscula (A, B, C, etc.) - UN SOLO CARÁCTER
+  - question_text: una definición o pista clara que describe la palabra (sin revelarla)
+  - correct_sentence: la palabra correcta que DEBE empezar con esa letra (UNA SOLA PALABRA, sin espacios)
 - Las palabras deben estar relacionadas con la asignatura y tema indicados
 - Las definiciones deben ser claras y apropiadas para el nivel educativo
-- Para letras difíciles (W, X, Y), usa palabras que CONTENGAN esa letra si no existe una que empiece con ella, pero indica "Contiene la letra X:" en la pista`;
+- Para letras difíciles (W, X, Y), usa palabras que CONTENGAN esa letra si no existe una que empiece con ella, e indica "Contiene la letra X:" en la pista`;
 
       userPrompt = `Genera 26 preguntas del juego "Ruleta de Palabras" (una por cada letra A-Z) para:
 
@@ -118,7 +128,12 @@ Genera una palabra y definición para CADA una de las 26 letras del alfabeto.`;
         additionalProperties: false
       };
     } else if (gameType === 'column_match') {
-      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar pares de items para el juego "Conectar Columnas" donde los estudiantes deben emparejar conceptos relacionados.
+      systemPrompt = `Eres un experto creador de juegos educativos en ESPAÑOL LATINOAMERICANO. Tu tarea es generar pares de items para el juego "Conectar Columnas" donde los estudiantes deben emparejar conceptos relacionados.
+
+REGLAS ESTRICTAS DE CARACTERES:
+- USA EXCLUSIVAMENTE caracteres del alfabeto español estándar: a-z, A-Z, áéíóúñÁÉÍÓÚÑ, ¿¡?!.,;: y espacios normales
+- PROHIBIDO usar caracteres CJK (chinos/japoneses), emojis o símbolos Unicode raros
+- USA SOLO el espacio ASCII normal entre palabras
 
 REGLAS:
 - Genera pares de conceptos relacionados lógicamente
@@ -230,24 +245,46 @@ Genera pares de conceptos relacionados apropiados para este contexto.`;
       throw new Error('No se pudieron extraer las preguntas de la respuesta de IA');
     }
     
+    // Sanitiza texto: elimina caracteres CJK, símbolos raros y normaliza espacios
+    const sanitizeText = (text: string): string => {
+      if (!text || typeof text !== 'string') return '';
+      return text
+        // Elimina caracteres CJK (chino, japonés, coreano)
+        .replace(/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]/g, ' ')
+        // Elimina emojis y pictogramas
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}]/gu, ' ')
+        // Normaliza comillas tipográficas
+        .replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'")
+        // Normaliza espacios especiales a espacio normal
+        .replace(/[\u00A0\u2000-\u200B\u2028\u2029\u3000]/g, ' ')
+        // Colapsa espacios múltiples
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
     if (gameType === 'column_match') {
       return new Response(
         JSON.stringify({ 
-          left_items: generatedData.left_items,
-          right_items: generatedData.right_items
+          left_items: (generatedData.left_items || []).map(sanitizeText).filter(Boolean),
+          right_items: (generatedData.right_items || []).map(sanitizeText).filter(Boolean)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
       const questions = generatedData.questions || [];
-      const formattedQuestions = questions.map((q: any, index: number) => ({
-        question_text: q.question_text || '',
-        correct_sentence: q.correct_sentence || '',
-        words: q.words || [],
-        initial_letter: (q.initial_letter || '').toUpperCase(),
-        points: 10,
-        order_index: index,
-      }));
+      const formattedQuestions = questions.map((q: any, index: number) => {
+        const cleanSentence = sanitizeText(q.correct_sentence || '');
+        // Reconstruye words desde la oración limpia para garantizar consistencia
+        const cleanWords = cleanSentence ? cleanSentence.split(' ').filter(Boolean) : [];
+        return {
+          question_text: sanitizeText(q.question_text || ''),
+          correct_sentence: cleanSentence,
+          words: cleanWords,
+          initial_letter: sanitizeText(q.initial_letter || '').toUpperCase().slice(0, 1),
+          points: 10,
+          order_index: index,
+        };
+      }).filter((q: any) => q.correct_sentence || q.initial_letter);
 
       console.log(`Returning ${formattedQuestions.length} formatted questions`);
 
