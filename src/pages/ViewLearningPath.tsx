@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePathContent } from "@/hooks/useLearningPaths";
 import { useUserLikes, useUserSaves } from "@/hooks/useContent";
 import { usePathProgress } from "@/hooks/usePathProgress";
+import { usePathEnrollment } from "@/hooks/usePathEnrollment";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { ArrowLeft, Map, List, Share2, Users } from "lucide-react";
