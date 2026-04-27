@@ -397,6 +397,19 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
           />
         </div>
 
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>🔐 Requerir suscripción para empezar</Label>
+            <p className="text-sm text-muted-foreground">
+              Los estudiantes deberán suscribirse antes de ver las cápsulas. Al pulsar "Empezar Ruta" quedarán inscritos automáticamente.
+            </p>
+          </div>
+          <Switch
+            checked={!!data.require_enrollment}
+            onCheckedChange={(checked) => onChange({ ...data, require_enrollment: checked })}
+          />
+        </div>
+
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2">
             <div className="space-y-0.5">
