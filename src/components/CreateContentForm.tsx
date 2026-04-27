@@ -213,6 +213,81 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     }
   }, [loadedQuestions, editMode]);
 
+  // ===== Quiz draft auto-save (localStorage) =====
+  // Persists the in-progress quiz so the user never loses questions, answers,
+  // images or config when navigating between steps, refreshing, or on errors.
+  const QUIZ_DRAFT_KEY = !editMode && user?.id ? `quiz_draft_${user.id}` : null;
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  // Restore draft on mount (only for new quizzes, not edit mode)
+  useEffect(() => {
+    if (!QUIZ_DRAFT_KEY || editMode || draftRestored) return;
+    try {
+      const raw = localStorage.getItem(QUIZ_DRAFT_KEY);
+      if (!raw) {
+        setDraftRestored(true);
+        return;
+      }
+      const draft = JSON.parse(raw);
+      if (draft && draft.formData?.content_type === 'quiz') {
+        setFormData((prev) => ({ ...prev, ...draft.formData }));
+        if (Array.isArray(draft.tags)) setTags(draft.tags);
+        if (typeof draft.isPublic === 'boolean') setIsPublic(draft.isPublic);
+        if (typeof draft.richText === 'string') setRichText(draft.richText);
+        if (Array.isArray(draft.quizQuestions)) setQuizQuestions(draft.quizQuestions);
+        if (draft.quizConfig) setQuizConfig((prev) => ({ ...prev, ...draft.quizConfig }));
+        if (typeof draft.quizStep === 'number') setQuizStep(draft.quizStep);
+        if (draft.quizQuestions?.length > 0 || draft.formData?.title) {
+          toast.success("Borrador del quiz restaurado", {
+            description: "Recuperamos tu progreso anterior.",
+            action: {
+              label: "Descartar",
+              onClick: () => {
+                localStorage.removeItem(QUIZ_DRAFT_KEY);
+                window.location.reload();
+              },
+            },
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo restaurar el borrador del quiz:", e);
+    } finally {
+      setDraftRestored(true);
+    }
+  }, [QUIZ_DRAFT_KEY, editMode, draftRestored]);
+
+  // Save draft on every relevant change (debounced via microtask batching)
+  useEffect(() => {
+    if (!QUIZ_DRAFT_KEY || editMode || !draftRestored) return;
+    if (formData.content_type !== 'quiz') return;
+    // Avoid persisting empty drafts
+    const hasContent = !!formData.title || quizQuestions.length > 0 || quizStep > 0;
+    if (!hasContent) return;
+    try {
+      const draft = {
+        formData,
+        tags,
+        isPublic,
+        richText,
+        quizQuestions,
+        quizConfig,
+        quizStep,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(QUIZ_DRAFT_KEY, JSON.stringify(draft));
+    } catch (e) {
+      // Likely quota exceeded (large base64 images). Fall back gracefully.
+      console.warn("No se pudo guardar el borrador del quiz:", e);
+    }
+  }, [QUIZ_DRAFT_KEY, editMode, draftRestored, formData, tags, isPublic, richText, quizQuestions, quizConfig, quizStep]);
+
+  const clearQuizDraft = () => {
+    if (QUIZ_DRAFT_KEY) {
+      try { localStorage.removeItem(QUIZ_DRAFT_KEY); } catch {}
+    }
+  };
+
   // Update page title based on content type
   useEffect(() => {
     if (onTitleChange) {
@@ -362,7 +437,6 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       toast.error("Debes iniciar sesión para crear un quiz");
       return;
     }
-    setIsSubmittingQuiz(true);
 
     if (quizQuestions.length < 5) {
       toast.error("Debes agregar al menos 5 preguntas antes de guardar el quiz");
@@ -381,6 +455,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         return;
       }
     }
+
+    setIsSubmittingQuiz(true);
 
     try {
       const quizData = {
@@ -458,6 +534,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             ? "¡Quiz publicado!" 
             : "Quiz guardado como borrador"
       );
+      clearQuizDraft();
       navigate("/profile");
     } catch (error) {
       console.error("Error saving quiz:", error);
