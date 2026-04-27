@@ -77,18 +77,22 @@ Genera oraciones variadas y educativas apropiadas para este contexto.`;
         additionalProperties: false
       };
     } else if (gameType === 'word_wheel') {
-      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar preguntas para el juego "Ruleta de Palabras" (estilo Pasapalabra).
+      systemPrompt = `Eres un experto creador de juegos educativos en ESPAÑOL LATINOAMERICANO. Tu tarea es generar preguntas para el juego "Ruleta de Palabras" (estilo Pasapalabra).
 
-REGLAS ESTRICTAS:
-- Genera EXACTAMENTE 26 preguntas, una por cada letra del alfabeto español: A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ñ, O, P, Q, R, S, T, U, V, W, X, Y, Z
-- Si no se usa Ñ, genera 27 con las 26 letras estándar A-Z
+REGLAS ESTRICTAS DE CARACTERES:
+- USA EXCLUSIVAMENTE caracteres del alfabeto español estándar: a-z, A-Z, áéíóúñÁÉÍÓÚÑ, ¿¡?!.,;: y espacios normales
+- PROHIBIDO usar caracteres CJK (chinos/japoneses como 直, 中), emojis, símbolos Unicode raros o comillas tipográficas
+- USA SOLO el espacio ASCII normal entre palabras
+
+REGLAS:
+- Genera EXACTAMENTE 26 preguntas, una por cada letra del alfabeto: A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
 - Cada pregunta debe tener:
-  - initial_letter: la letra mayúscula (A, B, C, etc.)
-  - question_text: una definición o pista clara que describe la palabra
-  - correct_sentence: la palabra correcta que DEBE empezar con esa letra
+  - initial_letter: la letra mayúscula (A, B, C, etc.) - UN SOLO CARÁCTER
+  - question_text: una definición o pista clara que describe la palabra (sin revelarla)
+  - correct_sentence: la palabra correcta que DEBE empezar con esa letra (UNA SOLA PALABRA, sin espacios)
 - Las palabras deben estar relacionadas con la asignatura y tema indicados
 - Las definiciones deben ser claras y apropiadas para el nivel educativo
-- Para letras difíciles (W, X, Y), usa palabras que CONTENGAN esa letra si no existe una que empiece con ella, pero indica "Contiene la letra X:" en la pista`;
+- Para letras difíciles (W, X, Y), usa palabras que CONTENGAN esa letra si no existe una que empiece con ella, e indica "Contiene la letra X:" en la pista`;
 
       userPrompt = `Genera 26 preguntas del juego "Ruleta de Palabras" (una por cada letra A-Z) para:
 
