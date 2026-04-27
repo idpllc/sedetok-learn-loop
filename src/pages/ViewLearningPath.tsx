@@ -27,6 +27,7 @@ const ViewLearningPath = () => {
   const { likes } = useUserLikes();
   const { saves } = useUserSaves();
   const { markComplete, getCompletedIds, isCompleted } = usePathProgress(id);
+  const { isEnrolled, enroll } = usePathEnrollment(id);
   const videoRefs = useRef<{ [key: string]: VideoPlayerRef | null }>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewMode, setViewMode] = useState<"map" | "cards">("cards");
