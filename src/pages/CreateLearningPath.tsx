@@ -46,6 +46,7 @@ const CreateLearningPath = () => {
     enforce_order: false,
     require_quiz_pass: false,
     allow_collaboration: false,
+    require_enrollment: false,
     required_routes: [],
     tipo_aprendizaje: "",
     estimated_duration: 0,
