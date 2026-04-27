@@ -128,7 +128,12 @@ Genera una palabra y definición para CADA una de las 26 letras del alfabeto.`;
         additionalProperties: false
       };
     } else if (gameType === 'column_match') {
-      systemPrompt = `Eres un experto creador de juegos educativos en español. Tu tarea es generar pares de items para el juego "Conectar Columnas" donde los estudiantes deben emparejar conceptos relacionados.
+      systemPrompt = `Eres un experto creador de juegos educativos en ESPAÑOL LATINOAMERICANO. Tu tarea es generar pares de items para el juego "Conectar Columnas" donde los estudiantes deben emparejar conceptos relacionados.
+
+REGLAS ESTRICTAS DE CARACTERES:
+- USA EXCLUSIVAMENTE caracteres del alfabeto español estándar: a-z, A-Z, áéíóúñÁÉÍÓÚÑ, ¿¡?!.,;: y espacios normales
+- PROHIBIDO usar caracteres CJK (chinos/japoneses), emojis o símbolos Unicode raros
+- USA SOLO el espacio ASCII normal entre palabras
 
 REGLAS:
 - Genera pares de conceptos relacionados lógicamente
