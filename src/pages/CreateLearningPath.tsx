@@ -125,6 +125,7 @@ const CreateLearningPath = () => {
             enforce_order: data.enforce_order ?? false,
             require_quiz_pass: data.require_quiz_pass ?? false,
             allow_collaboration: data.allow_collaboration ?? false,
+            require_enrollment: (data as any).require_enrollment ?? false,
             required_routes: data.required_routes || [],
             tipo_aprendizaje: data.tipo_aprendizaje || "",
             estimated_duration: data.estimated_duration || 0,
