@@ -543,7 +543,8 @@ const ViewLearningPath = () => {
               hasNext={index < contentData.length - 1}
             />
           );
-        })}
+        });
+        })()}
       </div>
 
       {/* Bottom navigation */}
