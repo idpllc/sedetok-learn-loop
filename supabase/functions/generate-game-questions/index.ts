@@ -236,24 +236,46 @@ Genera pares de conceptos relacionados apropiados para este contexto.`;
       throw new Error('No se pudieron extraer las preguntas de la respuesta de IA');
     }
     
+    // Sanitiza texto: elimina caracteres CJK, símbolos raros y normaliza espacios
+    const sanitizeText = (text: string): string => {
+      if (!text || typeof text !== 'string') return '';
+      return text
+        // Elimina caracteres CJK (chino, japonés, coreano)
+        .replace(/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]/g, ' ')
+        // Elimina emojis y pictogramas
+        .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{27BF}]/gu, ' ')
+        // Normaliza comillas tipográficas
+        .replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'")
+        // Normaliza espacios especiales a espacio normal
+        .replace(/[\u00A0\u2000-\u200B\u2028\u2029\u3000]/g, ' ')
+        // Colapsa espacios múltiples
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
     if (gameType === 'column_match') {
       return new Response(
         JSON.stringify({ 
-          left_items: generatedData.left_items,
-          right_items: generatedData.right_items
+          left_items: (generatedData.left_items || []).map(sanitizeText).filter(Boolean),
+          right_items: (generatedData.right_items || []).map(sanitizeText).filter(Boolean)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
       const questions = generatedData.questions || [];
-      const formattedQuestions = questions.map((q: any, index: number) => ({
-        question_text: q.question_text || '',
-        correct_sentence: q.correct_sentence || '',
-        words: q.words || [],
-        initial_letter: (q.initial_letter || '').toUpperCase(),
-        points: 10,
-        order_index: index,
-      }));
+      const formattedQuestions = questions.map((q: any, index: number) => {
+        const cleanSentence = sanitizeText(q.correct_sentence || '');
+        // Reconstruye words desde la oración limpia para garantizar consistencia
+        const cleanWords = cleanSentence ? cleanSentence.split(' ').filter(Boolean) : [];
+        return {
+          question_text: sanitizeText(q.question_text || ''),
+          correct_sentence: cleanSentence,
+          words: cleanWords,
+          initial_letter: sanitizeText(q.initial_letter || '').toUpperCase().slice(0, 1),
+          points: 10,
+          order_index: index,
+        };
+      }).filter((q: any) => q.correct_sentence || q.initial_letter);
 
       console.log(`Returning ${formattedQuestions.length} formatted questions`);
 
