@@ -438,8 +438,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       return;
     }
 
-    if (quizQuestions.length < 5) {
-      toast.error("Debes agregar al menos 5 preguntas antes de guardar el quiz");
+    // Para publicar se requieren al menos 5 preguntas; para borrador basta con 1.
+    if (status === "publicado" && quizQuestions.length < 5) {
+      toast.error("Debes agregar al menos 5 preguntas antes de publicar el quiz");
+      return;
+    }
+    if (status === "borrador" && quizQuestions.length < 1) {
+      toast.error("Agrega al menos una pregunta para guardar el borrador");
+      return;
+    }
+
+    // Validar título mínimo
+    if (!formData.title?.trim()) {
+      toast.error("El quiz necesita un título para guardarse");
       return;
     }
 
