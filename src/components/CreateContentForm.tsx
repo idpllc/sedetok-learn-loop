@@ -438,8 +438,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       return;
     }
 
-    if (quizQuestions.length < 5) {
-      toast.error("Debes agregar al menos 5 preguntas antes de guardar el quiz");
+    // Para publicar se requieren al menos 5 preguntas; para borrador basta con 1.
+    if (status === "publicado" && quizQuestions.length < 5) {
+      toast.error("Debes agregar al menos 5 preguntas antes de publicar el quiz");
+      return;
+    }
+    if (status === "borrador" && quizQuestions.length < 1) {
+      toast.error("Agrega al menos una pregunta para guardar el borrador");
+      return;
+    }
+
+    // Validar título mínimo
+    if (!formData.title?.trim()) {
+      toast.error("El quiz necesita un título para guardarse");
       return;
     }
 
@@ -1024,22 +1035,24 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           </Button>
 
           <div className="flex gap-2">
+            {/* Botón Guardar borrador disponible en cualquier paso del wizard */}
+            <Button
+              variant="outline"
+              onClick={() => handleQuizSubmit("borrador")}
+              disabled={quizQuestions.length === 0 || isSubmittingQuiz || !formData.title?.trim()}
+              title={!formData.title?.trim() ? "Agrega un título para guardar" : quizQuestions.length === 0 ? "Agrega al menos una pregunta" : ""}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSubmittingQuiz ? "Guardando..." : "Guardar borrador"}
+            </Button>
+
             {quizStep === 2 && (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => handleQuizSubmit("borrador")}
-                  disabled={quizQuestions.length === 0 || isSubmittingQuiz}
-                >
-                  {isSubmittingQuiz ? "Guardando..." : "Guardar borrador"}
-                </Button>
-                <Button
-                  onClick={() => handleQuizSubmit("publicado")}
-                  disabled={quizQuestions.length === 0 || isSubmittingQuiz}
-                >
-                  {isSubmittingQuiz ? "Publicando..." : "Publicar"}
-                </Button>
-              </>
+              <Button
+                onClick={() => handleQuizSubmit("publicado")}
+                disabled={quizQuestions.length < 5 || isSubmittingQuiz}
+              >
+                {isSubmittingQuiz ? "Publicando..." : "Publicar"}
+              </Button>
             )}
 
             {quizStep < 2 && (
