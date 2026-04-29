@@ -98,6 +98,10 @@ export const useAdminStats = () => {
         completedQuizzesCount: completedQuizzesCount || 0,
         chatGroupsCount: chatGroupsCount || 0,
         chatMessagesCount: chatMessagesCount || 0,
+        aiMessagesTotal,
+        sedeAiMessagesCount,
+        alexMessagesCount,
+        mostUsedAgent,
       };
     },
   });
