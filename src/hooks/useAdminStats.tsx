@@ -41,10 +41,33 @@ export const useAdminStats = () => {
         .from("chat_conversations")
         .select("*", { count: "exact", head: true });
 
-      // Get total chat messages count
+      // Get total user-to-user chat messages count (excluding deleted)
       const { count: chatMessagesCount } = await supabase
         .from("chat_messages")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .is("deleted_at", null);
+
+      // Get AI messages (Sede AI + Language Tutor Alex), differentiated by conversation title prefix
+      // Conversations starting with "[ALEX]" belong to the language tutor agent; the rest are Sede AI
+      const { data: aiConversations } = await (supabase as any)
+        .from("ai_chat_messages")
+        .select("role, conversation_id, ai_chat_conversations!inner(title)")
+        .eq("role", "user");
+
+      let sedeAiMessagesCount = 0;
+      let alexMessagesCount = 0;
+      (aiConversations || []).forEach((m: any) => {
+        const title: string = m.ai_chat_conversations?.title || "";
+        if (title.startsWith("[ALEX]")) alexMessagesCount++;
+        else sedeAiMessagesCount++;
+      });
+      const aiMessagesTotal = sedeAiMessagesCount + alexMessagesCount;
+      const mostUsedAgent =
+        aiMessagesTotal === 0
+          ? "—"
+          : sedeAiMessagesCount >= alexMessagesCount
+          ? "Sede AI"
+          : "Alex (Tutor de Inglés)";
 
       // Calculate stats from content
       let videosCount = 0;
