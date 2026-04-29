@@ -1,1 +1,16 @@
 project_id = "drufbocmgrewzlplfivc"
+
+[functions.sedetok-content-search]
+verify_jwt = false
+
+[functions.sedetok-search]
+verify_jwt = false
+
+[functions.sedetok-evaluations-search]
+verify_jwt = false
+
+[functions.public-events-by-document]
+verify_jwt = false
+
+[functions.public-event-results-by-document]
+verify_jwt = false
