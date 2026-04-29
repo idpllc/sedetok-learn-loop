@@ -56,12 +56,8 @@ serve(async (req) => {
     const page = Math.max(parseInt(url.searchParams.get('page') || '1'), 1);
     const sort = url.searchParams.get('sort') || 'created_desc';
 
-    if (!q && !documento) {
-      return new Response(
-        JSON.stringify({ error: 'Query parameter "q" or "documento" is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // q y documento son ambos opcionales: si no se envían, devolvemos los últimos
+    // contenidos creados ordenados por created_at desc (respetando filtros opcionales).
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
