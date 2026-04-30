@@ -422,7 +422,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                           window.URL.revokeObjectURL(url);
                         }
                         onDocumentDownload?.();
-                        // Post automatic download comment
+                        // Post automatic download comment + mark progress in enrolled paths
                         if (user) {
                           try {
                             const { data: existing } = await supabase
@@ -441,6 +441,51 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                             }
                           } catch (err) {
                             console.error("Error posting download comment:", err);
+                          }
+
+                          // Mark progress in all enrolled paths that contain this content
+                          try {
+                            const { data: pathItems } = await supabase
+                              .from("learning_path_content")
+                              .select("path_id")
+                              .eq("content_id", id);
+                            const pathIds = Array.from(new Set((pathItems || []).map((p: any) => p.path_id)));
+                            if (pathIds.length > 0) {
+                              const { data: enrollments } = await supabase
+                                .from("path_enrollments")
+                                .select("path_id")
+                                .eq("user_id", user.id)
+                                .in("path_id", pathIds);
+                              const enrolledPathIds = (enrollments || []).map((e: any) => e.path_id);
+                              for (const pId of enrolledPathIds) {
+                                const { data: existingProgress } = await supabase
+                                  .from("user_path_progress")
+                                  .select("id")
+                                  .eq("user_id", user.id)
+                                  .eq("path_id", pId)
+                                  .eq("content_id", id)
+                                  .is("quiz_id", null)
+                                  .is("game_id", null)
+                                  .maybeSingle();
+                                const payload: any = {
+                                  user_id: user.id,
+                                  path_id: pId,
+                                  content_id: id,
+                                  quiz_id: null,
+                                  game_id: null,
+                                  completed: true,
+                                  completed_at: new Date().toISOString(),
+                                  progress_data: { downloaded: true },
+                                };
+                                if (existingProgress) {
+                                  await supabase.from("user_path_progress").update(payload).eq("id", existingProgress.id);
+                                } else {
+                                  await supabase.from("user_path_progress").insert(payload);
+                                }
+                              }
+                            }
+                          } catch (err) {
+                            console.error("Error marking path progress on download:", err);
                           }
                         }
                       } catch (error) {
