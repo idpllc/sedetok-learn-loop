@@ -40,14 +40,14 @@ export const usePathProgress = (pathId?: string) => {
       if (!user || !pathId) throw new Error("Usuario no autenticado");
 
       // Check if a row already exists for this exact item to decide insert vs update
-      let existingQuery = supabase
+      let existingQuery: any = (supabase as any)
         .from("user_path_progress")
         .select("id")
         .eq("user_id", user.id)
         .eq("path_id", pathId);
       if (contentId) existingQuery = existingQuery.eq("content_id", contentId).is("quiz_id", null).is("game_id", null);
       else if (quizId) existingQuery = existingQuery.eq("quiz_id", quizId).is("content_id", null).is("game_id", null);
-      else if (gameId) existingQuery = existingQuery.eq("game_id" as any, gameId).is("content_id", null).is("quiz_id", null);
+      else if (gameId) existingQuery = existingQuery.eq("game_id", gameId).is("content_id", null).is("quiz_id", null);
 
       const { data: existing } = await existingQuery.maybeSingle();
 
