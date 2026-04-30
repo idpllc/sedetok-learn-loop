@@ -248,7 +248,10 @@ export const PathEnrollmentsDialog = ({
                           const itemTitle = item.content?.title || item.quiz?.title || item.game?.title || "Sin título";
                           const itemType = item.content ? item.content.content_type : item.quiz ? "quiz" : "juego";
                           const isCompleted = userProgressItems.some(
-                            (p: any) => p.content_id === item.content?.id || p.quiz_id === item.quiz?.id
+                            (p: any) =>
+                              (item.content?.id && p.content_id === item.content?.id) ||
+                              (item.quiz?.id && p.quiz_id === item.quiz?.id) ||
+                              (item.game?.id && p.game_id === item.game?.id)
                           );
 
                           return (

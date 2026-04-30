@@ -39,20 +39,32 @@ export const usePathProgress = (pathId?: string) => {
     }) => {
       if (!user || !pathId) throw new Error("Usuario no autenticado");
 
-      const { data, error } = await supabase
+      // Check if a row already exists for this exact item to decide insert vs update
+      let existingQuery: any = (supabase as any)
         .from("user_path_progress")
-        .upsert({
-          user_id: user.id,
-          path_id: pathId,
-          content_id: contentId || null,
-          quiz_id: quizId || null,
-          game_id: gameId || null,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          progress_data: progressData || {},
-        } as any)
-        .select()
-        .single();
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("path_id", pathId);
+      if (contentId) existingQuery = existingQuery.eq("content_id", contentId).is("quiz_id", null).is("game_id", null);
+      else if (quizId) existingQuery = existingQuery.eq("quiz_id", quizId).is("content_id", null).is("game_id", null);
+      else if (gameId) existingQuery = existingQuery.eq("game_id", gameId).is("content_id", null).is("quiz_id", null);
+
+      const { data: existing } = await existingQuery.maybeSingle();
+
+      const payload: any = {
+        user_id: user.id,
+        path_id: pathId,
+        content_id: contentId || null,
+        quiz_id: quizId || null,
+        game_id: gameId || null,
+        completed: true,
+        completed_at: new Date().toISOString(),
+        progress_data: progressData || {},
+      };
+
+      const { data, error } = existing
+        ? await supabase.from("user_path_progress").update(payload).eq("id", existing.id).select().single()
+        : await supabase.from("user_path_progress").insert(payload).select().single();
 
       if (error) throw error;
       return data;
@@ -83,20 +95,31 @@ export const usePathProgress = (pathId?: string) => {
     }) => {
       if (!user || !pathId) throw new Error("Usuario no autenticado");
 
-      const { data, error } = await supabase
+      let existingQuery: any = (supabase as any)
         .from("user_path_progress")
-        .upsert({
-          user_id: user.id,
-          path_id: pathId,
-          content_id: contentId || null,
-          quiz_id: quizId || null,
-          game_id: gameId || null,
-          completed: completed || false,
-          completed_at: completed ? new Date().toISOString() : null,
-          progress_data: progressData,
-        } as any)
-        .select()
-        .single();
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("path_id", pathId);
+      if (contentId) existingQuery = existingQuery.eq("content_id", contentId).is("quiz_id", null).is("game_id", null);
+      else if (quizId) existingQuery = existingQuery.eq("quiz_id", quizId).is("content_id", null).is("game_id", null);
+      else if (gameId) existingQuery = existingQuery.eq("game_id", gameId).is("content_id", null).is("quiz_id", null);
+
+      const { data: existing } = await existingQuery.maybeSingle();
+
+      const payload: any = {
+        user_id: user.id,
+        path_id: pathId,
+        content_id: contentId || null,
+        quiz_id: quizId || null,
+        game_id: gameId || null,
+        completed: completed || false,
+        completed_at: completed ? new Date().toISOString() : null,
+        progress_data: progressData,
+      };
+
+      const { data, error } = existing
+        ? await supabase.from("user_path_progress").update(payload).eq("id", existing.id).select().single()
+        : await supabase.from("user_path_progress").insert(payload).select().single();
 
       if (error) throw error;
       return data;
