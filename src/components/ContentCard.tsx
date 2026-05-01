@@ -15,7 +15,7 @@ import { MindMapViewer } from "./mindmap/MindMapViewer";
 import { QuizViewer } from "./QuizViewer";
 import { GameViewer } from "./GameViewer";
 import { useQuizAttempts } from "@/hooks/useQuizAttempts";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Brain } from "lucide-react";
 import { ContentInfoSheet } from "./ContentInfoSheet";
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
