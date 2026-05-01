@@ -697,6 +697,31 @@ const NotebookView = () => {
         const existing = (prev[opt.id] || []).filter((r) => r.id !== newResult.id);
         return { ...prev, [opt.id]: [newResult, ...existing].slice(0, 6) };
       });
+      // Also propagate this capsule to the per-source caches it should belong to,
+      // so it shows up under the originating source(s) in the studio panel.
+      // - If created from a specific source: also add to the "all" cache.
+      // - If created from "all sources": also add to every individual source cache.
+      try {
+        if (!id) throw new Error("no notebook id");
+        const sourceIds = (sources.list.data || []).map((s) => s.id);
+        const targetScopes: string[] = [];
+        if (activeSourceId) {
+          targetScopes.push("all", activeSourceId);
+        } else {
+          targetScopes.push("all", ...sourceIds);
+        }
+        for (const scope of targetScopes) {
+          const key = `notebook:studioCache:v2:${id}:${scope}`;
+          let bucket: Record<string, SedefyResult[]> = {};
+          try {
+            const raw = localStorage.getItem(key);
+            bucket = raw ? JSON.parse(raw) : {};
+          } catch { bucket = {}; }
+          const existing = (bucket[opt.id] || []).filter((r) => r.id !== newResult.id);
+          bucket[opt.id] = [newResult, ...existing].slice(0, 6);
+          try { localStorage.setItem(key, JSON.stringify(bucket)); } catch {}
+        }
+      } catch {}
       setHighlightedResultId(newResult.id);
       setTimeout(() => {
         setHighlightedResultId((cur) => (cur === newResult.id ? null : cur));
