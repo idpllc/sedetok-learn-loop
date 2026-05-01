@@ -496,6 +496,28 @@ const NotebookView = () => {
           )}
         </header>
 
+        {/* Mobile tabs (Fuentes / Chat / Studio) */}
+        <div className="md:hidden flex border-b shrink-0 bg-background">
+          {([
+            { id: "fuentes", label: "Fuentes" },
+            { id: "chat", label: "Chat" },
+            { id: "studio", label: "Studio" },
+          ] as const).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setMobileTab(t.id)}
+              className={`flex-1 h-11 text-sm font-medium relative transition ${
+                mobileTab === t.id ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {t.label}
+              {mobileTab === t.id && (
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+
         {/* 3-column layout — right column grows when viewing a capsule (expandable) */}
         <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
@@ -507,7 +529,11 @@ const NotebookView = () => {
           }`}
         >
           {/* Sources */}
-          <aside className="border-r overflow-y-auto p-3 hidden md:block">
+          <aside
+            className={`border-r overflow-y-auto p-3 md:block ${
+              mobileTab === "fuentes" ? "block" : "hidden"
+            }`}
+          >
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Fuentes</h2>
               <Button size="sm" variant="ghost" onClick={() => setShowAdd(true)} className="gap-1 h-7">
