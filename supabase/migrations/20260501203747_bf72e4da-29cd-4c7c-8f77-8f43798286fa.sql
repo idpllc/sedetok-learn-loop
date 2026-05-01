@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.get_user_path_progress_duplicate_preflight() TO service_role;
