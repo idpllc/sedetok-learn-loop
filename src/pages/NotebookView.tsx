@@ -265,8 +265,25 @@ const NotebookView = () => {
   const { user, loading } = useAuth();
   const { rename } = useNotebooks();
   const sources = useNotebookSources(id);
-  const chat = useNotebookChat(id);
-  const sedefySearch = useNotebookSearch(id);
+
+  // Active source: when set, chat + studio are scoped to that single source.
+  // null = "todas las fuentes" (default behaviour). Persisted per-notebook.
+  const activeSourceKey = id ? `notebook:activeSource:${id}` : null;
+  const [activeSourceId, setActiveSourceIdState] = useState<string | null>(() => {
+    if (!activeSourceKey) return null;
+    try { return localStorage.getItem(activeSourceKey) || null; } catch { return null; }
+  });
+  const setActiveSourceId = (sid: string | null) => {
+    setActiveSourceIdState(sid);
+    if (!activeSourceKey) return;
+    try {
+      if (sid) localStorage.setItem(activeSourceKey, sid);
+      else localStorage.removeItem(activeSourceKey);
+    } catch {}
+  };
+
+  const chat = useNotebookChat(id, activeSourceId);
+  const sedefySearch = useNotebookSearch(id, activeSourceId);
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
