@@ -77,6 +77,8 @@ export const RichContentEditor = ({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
+        link: false,
+        underline: false,
       }),
       Underline,
       Image.configure({ inline: false, allowBase64: false }),
