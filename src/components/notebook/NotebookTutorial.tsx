@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, X, Sparkles, HelpCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
-const STORAGE_KEY = "notebook_tutorial_completed_v5";
-const STATE_KEY = "notebook_tutorial_state_v1";
+const STORAGE_KEY = "notebook_tutorial_completed_v6";
+const STATE_KEY = "notebook_tutorial_state_v2";
 const TRIGGER_KEY = "notebook_tutorial_open";
 
 type StepAction = {
@@ -192,15 +192,17 @@ export const NotebookTutorial = () => {
           const nextIndex = STEPS[parsed.stepIndex || 0]?.routeMatcher(location.pathname)
             ? parsed.stepIndex || 0
             : firstStepForRoute(location.pathname);
+          enteredRef.current = -1;
           setStepIndex(nextIndex);
           setActive(true);
           return;
         }
       }
       const completed = localStorage.getItem(STORAGE_KEY) === "true";
-      if (!completed && isListRoute(location.pathname)) {
+      if (!completed && (isListRoute(location.pathname) || isDetailRoute(location.pathname))) {
         const t = setTimeout(() => {
-          setStepIndex(0);
+          enteredRef.current = -1;
+          setStepIndex(firstStepForRoute(location.pathname));
           setActive(true);
         }, 800);
         return () => clearTimeout(t);
@@ -218,8 +220,14 @@ export const NotebookTutorial = () => {
   // Manual relaunch
   useEffect(() => {
     const handler = () => {
-      setStepIndex(firstStepForRoute(location.pathname));
-      setActive(true);
+      const nextIndex = firstStepForRoute(window.location.pathname);
+      enteredRef.current = -1;
+      try { sessionStorage.removeItem(STATE_KEY); } catch {}
+      setActive(false);
+      window.setTimeout(() => {
+        setStepIndex(nextIndex);
+        setActive(true);
+      }, 0);
     };
     window.addEventListener(TRIGGER_KEY, handler);
     return () => window.removeEventListener(TRIGGER_KEY, handler);
