@@ -56,7 +56,7 @@ const Notebook = () => {
                 Tus cuadernos con fuentes y chat con SEDE AI
               </p>
             </div>
-            <Button onClick={handleCreate} disabled={creating} size="lg" className="gap-2">
+            <Button onClick={handleCreate} disabled={creating} size="lg" className="gap-2" data-tour="create-notebook">
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Crear cuaderno
             </Button>
