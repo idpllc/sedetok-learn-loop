@@ -484,7 +484,7 @@ const NodeBox = ({
         minHeight: laid.height,
       }}
     >
-      {hasChildren && (
+      {hasChildren && !hideControls && (
         <button
           type="button"
           onClick={(e) => {
