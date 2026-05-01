@@ -447,6 +447,40 @@ const NotebookView = () => {
     }
   }, [id, sources.list.isLoading, sources.list.data]);
 
+  // Detect sources that just finished processing and announce them in chat.
+  useEffect(() => {
+    const list = sources.list.data || [];
+    const ready = list.filter((s) => s.status === "ready");
+    const newOnes = ready.filter((s) => !announcedIds.has(s.id));
+    if (newOnes.length === 0) return;
+
+    setAnnouncedSources((prev) => {
+      const existing = new Set(prev.map((p) => p.id));
+      const additions: AnnouncedSource[] = newOnes
+        .filter((s) => !existing.has(s.id))
+        .map((s) => {
+          const full = (s.extracted_text || "").trim();
+          const preview = full.length > 220 ? full.slice(0, 220) + "…" : full;
+          return {
+            id: s.id,
+            title: s.title,
+            preview: preview || "(sin contenido extraído)",
+            fullText: full || "(sin contenido extraído)",
+            sourceType: s.source_type,
+          };
+        });
+      return [...prev, ...additions];
+    });
+    setAnnouncedIds((prev) => {
+      const next = new Set(prev);
+      newOnes.forEach((s) => next.add(s.id));
+      try {
+        if (announcedKey) localStorage.setItem(announcedKey, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  }, [sources.list.data, announcedIds, announcedKey]);
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
