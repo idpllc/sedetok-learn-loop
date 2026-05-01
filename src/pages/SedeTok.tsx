@@ -326,7 +326,9 @@ const SedeTok = () => {
       const newContent = feed[newIndex];
       const ct = newContent.content_type;
       const param = ct === "quiz" ? "quiz" : ct === "game" ? "game" : "content";
-      setSearchParams({ [param]: newContent.id }, { replace: true });
+      const next: Record<string, string> = { [param]: newContent.id };
+      if (playlistParam) next.playlist = playlistParam;
+      setSearchParams(next, { replace: true });
     }
   };
 
