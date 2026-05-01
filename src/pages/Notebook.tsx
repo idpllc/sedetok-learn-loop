@@ -73,7 +73,7 @@ const Notebook = () => {
               <p className="text-muted-foreground mb-6">
                 Crea tu primer cuaderno para empezar a conversar con SEDE AI sobre tus fuentes
               </p>
-              <Button onClick={handleCreate} disabled={creating} className="gap-2">
+              <Button onClick={handleCreate} disabled={creating} className="gap-2" data-tour="create-notebook">
                 <Plus className="h-4 w-4" /> Crear mi primer cuaderno
               </Button>
             </Card>
