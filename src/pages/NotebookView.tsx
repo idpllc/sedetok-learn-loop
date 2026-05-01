@@ -17,6 +17,8 @@ import {
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useNotebookSearch, type SedefyResult } from "@/hooks/useNotebookSearch";
+import { X } from "lucide-react";
 
 const TYPE_ICONS: Record<string, any> = {
   pdf: FileText, docx: FileText, xlsx: FileText, text: Type, url: LinkIcon, video: Video, competence: GraduationCap,
