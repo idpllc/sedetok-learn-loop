@@ -47,10 +47,20 @@ const STEPS: Step[] = [
     shouldAutoAdvance: () => isDetailRoute(window.location.pathname),
   },
   {
-    selector: '[data-tour="source-text-title"]',
-    title: "2. Escribe el título: la asignatura",
+    selector: '[data-tour="source-text-form"]',
+    title: "2. Añade tu primera fuente",
     description:
-      "En el campo Título escribe el nombre de la asignatura (por ejemplo: 'Matemáticas', 'Biología' o 'Lengua'). Así identificarás fácilmente esta fuente.",
+      "Vamos a crear una fuente de tipo Texto. En el campo TÍTULO pondrás el nombre de la asignatura, y en CONTENIDO la competencia o temática que quieres aprender.",
+    routeMatcher: isDetailRoute,
+    placement: "right",
+    allowInteraction: true,
+    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
+  },
+  {
+    selector: '[data-tour="source-text-title"]',
+    title: "3. Escribe el título: la asignatura",
+    description:
+      "👉 Escribe aquí el nombre de la asignatura (por ejemplo: 'Matemáticas', 'Biología' o 'Lengua').",
     routeMatcher: isDetailRoute,
     placement: "bottom",
     allowInteraction: true,
@@ -58,22 +68,24 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="source-text-content"]',
-    title: "3. Escribe el contenido: la competencia o temática",
+    title: "4. Escribe el contenido: la competencia o temática",
     description:
-      "En Contenido escribe la competencia o temática que quieres aprender (ej: 'Resolver ecuaciones lineales' o 'Comprender la fotosíntesis'). SEDE AI usará esto como contexto.",
+      "👉 Escribe aquí la competencia o temática que quieres aprender (ej: 'Resolver ecuaciones lineales' o 'Comprender la fotosíntesis').",
     routeMatcher: isDetailRoute,
     placement: "top",
     allowInteraction: true,
+    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
   },
   {
     selector: '[data-tour="source-text-submit"]',
-    title: "4. Añade tu fuente",
+    title: "5. Añade tu fuente",
     description:
       "Pulsa 'Añadir texto'. SEDE AI procesará tu fuente para usarla como contexto en todo el cuaderno.",
     routeMatcher: isDetailRoute,
     placement: "top",
     allowInteraction: true,
     hideNext: true,
+    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
     shouldAutoAdvance: () => {
       // Advance when the AddSource dialog closes (no longer in DOM).
       return !document.querySelector('[data-tour="source-text-submit"]');
