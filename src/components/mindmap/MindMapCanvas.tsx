@@ -145,8 +145,11 @@ const buildLayout = (data: MindMapData, collapsedIds: Set<string>): Layout => {
 };
 
 // Truncate the tree so `maxDepth` means visible levels, counting the root as level 1.
-const truncateTree = (node: MindMapNode, depth: number, maxDepth: number): MindMapNode => {
-  if (depth + 1 >= maxDepth) return { ...node, children: [] };
+// Nodes whose children are truncated get a `_truncated` flag so the UI can hint at more content.
+const truncateTree = (node: MindMapNode, depth: number, maxDepth: number): MindMapNode & { _truncated?: boolean } => {
+  if (depth + 1 >= maxDepth) {
+    return { ...node, children: [], _truncated: node.children.length > 0 } as MindMapNode & { _truncated?: boolean };
+  }
   return {
     ...node,
     children: node.children.map((c) => truncateTree(c, depth + 1, maxDepth)),
@@ -422,6 +425,7 @@ export const MindMapCanvas = ({
             onRemove={() => onRemoveNode?.(ln.id)}
             collapsed={ln.collapsed}
             hasChildren={ln.node.children.length > 0}
+            hasTruncatedChildren={(ln.node as MindMapNode & { _truncated?: boolean })._truncated === true}
             onToggleCollapse={() => toggleCollapse(ln.id)}
             hideControls={preview}
           />
@@ -446,6 +450,7 @@ interface NodeBoxProps {
   onRemove: () => void;
   collapsed: boolean;
   hasChildren: boolean;
+  hasTruncatedChildren?: boolean;
   onToggleCollapse: () => void;
   hideControls?: boolean;
 }
@@ -464,6 +469,7 @@ const NodeBox = ({
   onRemove,
   collapsed,
   hasChildren,
+  hasTruncatedChildren = false,
   onToggleCollapse,
   hideControls = false,
 }: NodeBoxProps) => {
@@ -472,6 +478,9 @@ const NodeBox = ({
     : laid.depth === 1
     ? "bg-accent/40 border-accent-foreground/30 text-foreground"
     : "bg-card border-border text-foreground";
+
+  const showInteractiveToggle = hasChildren && !hideControls;
+  const showTruncatedHint = !hasChildren && hasTruncatedChildren;
 
   return (
     <div
@@ -484,7 +493,7 @@ const NodeBox = ({
         minHeight: laid.height,
       }}
     >
-      {hasChildren && !hideControls && (
+      {showInteractiveToggle && (
         <button
           type="button"
           onClick={(e) => {
@@ -499,6 +508,14 @@ const NodeBox = ({
             {collapsed ? "<" : ">"}
           </span>
         </button>
+      )}
+      {showTruncatedHint && (
+        <div
+          className="absolute top-1/2 -translate-y-1/2 -right-3 z-10 w-6 h-6 rounded-full bg-background border-2 border-primary/40 text-primary flex items-center justify-center shadow-sm pointer-events-none"
+          aria-hidden="true"
+        >
+          <span className="text-xs font-bold leading-none">{">"}</span>
+        </div>
       )}
       <div className="flex items-start gap-1 p-2">
 
