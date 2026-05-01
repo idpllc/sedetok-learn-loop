@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft
+  Maximize2, Minimize2, ChevronLeft, Check
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import ReactMarkdown from "react-markdown";
