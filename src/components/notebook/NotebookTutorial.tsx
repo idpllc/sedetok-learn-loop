@@ -400,7 +400,7 @@ export const NotebookTutorial = () => {
   const allowInteraction = !!step.allowInteraction;
 
   return createPortal(
-    <div className="fixed inset-0 z-[110] pointer-events-none">
+    <div className="fixed inset-0 z-[110] pointer-events-none" data-notebook-tutorial="true">
       {/* Dimming layers — these block clicks. The highlight gap does NOT, so
           the user can click the real element. */}
       {dimRects.map((d, i) => (
@@ -429,7 +429,8 @@ export const NotebookTutorial = () => {
 
       {/* Popover */}
       <div
-          className="absolute z-[120] rounded-xl bg-background border shadow-2xl p-4 pointer-events-auto"
+        className="absolute z-[120] rounded-xl bg-background border shadow-2xl p-4 pointer-events-auto"
+        data-notebook-tutorial="true"
         style={{ top: popTop, left: popLeft, width: popW }}
         role="dialog"
         aria-label={step.title}
