@@ -40,21 +40,12 @@ ALTER TABLE public.user_path_progress
     OR (content_id IS NULL AND quiz_id IS NULL AND game_id IS NOT NULL)
   );
 
--- 2) Replace UNIQUE constraint with partial indexes including game_id
+-- 2) Remove the legacy UNIQUE constraint.
+-- The partial unique indexes are created later by 20260501182957 after Live data
+-- has been sanitized. Keeping CREATE UNIQUE INDEX here is what blocks publishing
+-- when Live has duplicate historical progress rows.
 ALTER TABLE public.user_path_progress
   DROP CONSTRAINT IF EXISTS user_path_progress_user_id_path_id_content_id_quiz_id_key;
-
-CREATE UNIQUE INDEX IF NOT EXISTS user_path_progress_unique_content
-  ON public.user_path_progress (user_id, path_id, content_id)
-  WHERE content_id IS NOT NULL;
-
-CREATE UNIQUE INDEX IF NOT EXISTS user_path_progress_unique_quiz
-  ON public.user_path_progress (user_id, path_id, quiz_id)
-  WHERE quiz_id IS NOT NULL;
-
-CREATE UNIQUE INDEX IF NOT EXISTS user_path_progress_unique_game
-  ON public.user_path_progress (user_id, path_id, game_id)
-  WHERE game_id IS NOT NULL;
 
 -- 3) Allow public read of progress
 DROP POLICY IF EXISTS "Progress viewable by owner, path creator, or institution staff" ON public.user_path_progress;
