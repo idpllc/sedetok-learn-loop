@@ -778,17 +778,29 @@ const NotebookView = () => {
                             {s.status === "error" && <span className="text-destructive">Error</span>}
                           </p>
                         </div>
-                        <button
-                          className="opacity-0 group-hover:opacity-100 transition"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (activeSourceId === s.id) setActiveSourceId(null);
-                            sources.remove.mutate(s.id);
-                          }}
-                          aria-label="Eliminar fuente"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </button>
+                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingSourceId(s.id);
+                              setEditSourceTitle(s.title);
+                              setEditSourceContent(s.extracted_text || "");
+                            }}
+                            aria-label="Editar fuente"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (activeSourceId === s.id) setActiveSourceId(null);
+                              sources.remove.mutate(s.id);
+                            }}
+                            aria-label="Eliminar fuente"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </button>
+                        </div>
                       </div>
                     </li>
                   );
