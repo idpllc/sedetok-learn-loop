@@ -19,6 +19,13 @@ export type ReadingSubtype = "resumen" | "glosario" | "notas" | "otro";
 /**
  * Spanish + English stopwords for keyword extraction.
  */
+/** Strip diacritics for accent-insensitive matching */
+const norm = (s: string) =>
+  (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
 const STOPWORDS = new Set([
   // ES
   "para","pero","como","este","esta","estos","estas","sobre","entre","cuando",
