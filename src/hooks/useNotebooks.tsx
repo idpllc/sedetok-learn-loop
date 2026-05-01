@@ -139,6 +139,8 @@ export const useNotebookSources = (notebookId: string | undefined) => {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["notebook_sources", notebookId] });
+      qc.invalidateQueries({ queryKey: ["notebook", notebookId] });
+      qc.invalidateQueries({ queryKey: ["notebooks"] });
       toast({ title: "Fuente añadida", description: "Procesando contenido…" });
     },
     onError: (e: any) => {
