@@ -423,6 +423,7 @@ export const MindMapCanvas = ({
             collapsed={ln.collapsed}
             hasChildren={ln.node.children.length > 0}
             onToggleCollapse={() => toggleCollapse(ln.id)}
+            hideControls={preview}
           />
         ))}
       </div>
