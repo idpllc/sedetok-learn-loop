@@ -221,11 +221,28 @@ const SedeTok = () => {
       setIsLoading(true);
       try {
         if (isPlaylistMode) {
-          // Strict mode: load exactly the playlist items, in order.
-          const items = await Promise.all(
-            playlist!.map((p) => fetchSingleItem(p.id, p.type))
-          );
-          setFeed(items.filter(Boolean) as FeedItem[]);
+          // Strict mode: load the FIRST item ASAP, show it, then fetch the
+          // rest in the background. This makes the iframe usable instantly.
+          const first = playlist![0];
+          const firstItem = await fetchSingleItem(first.id, first.type);
+          setFeed(firstItem ? [firstItem] : []);
+          setIsLoading(false);
+          if (playlist!.length > 1) {
+            // Background-fetch remaining items, don't block the UI.
+            (async () => {
+              const rest = await Promise.all(
+                playlist!.slice(1).map((p) => fetchSingleItem(p.id, p.type))
+              );
+              const restItems = rest.filter(Boolean) as FeedItem[];
+              if (restItems.length > 0) {
+                setFeed((prev) => {
+                  const seen = new Set(prev.map((f) => f.id));
+                  return [...prev, ...restItems.filter((r) => !seen.has(r.id))];
+                });
+              }
+            })();
+          }
+          return;
         } else if (currentId) {
           const mainItem = await fetchSingleItem(currentId, currentType);
           if (!mainItem) {
@@ -233,8 +250,19 @@ const SedeTok = () => {
             setIsLoading(false);
             return;
           }
-          const related = await fetchRelatedContent([currentId], mainItem.subject, 10);
-          setFeed([mainItem, ...related]);
+          // Show the main item right away, then fetch related in the background.
+          setFeed([mainItem]);
+          setIsLoading(false);
+          (async () => {
+            const related = await fetchRelatedContent([currentId], mainItem.subject, 10);
+            if (related.length > 0) {
+              setFeed((prev) => {
+                const seen = new Set(prev.map((f) => f.id));
+                return [...prev, ...related.filter((r) => !seen.has(r.id))];
+              });
+            }
+          })();
+          return;
         } else {
           const generalFeed = await fetchRelatedContent([], null, 15);
           setFeed(generalFeed);
