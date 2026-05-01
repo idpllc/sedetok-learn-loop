@@ -384,6 +384,20 @@ const NotebookView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sources.list.data, activeSourceId]);
 
+  // Auto-open the "Add source" dialog the first time the user lands on a
+  // notebook that still has no sources.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current) return;
+    if (!id) return;
+    if (sources.list.isLoading) return;
+    const count = sources.list.data?.length || 0;
+    if (count === 0) {
+      autoOpenedRef.current = true;
+      setShowAdd(true);
+    }
+  }, [id, sources.list.isLoading, sources.list.data]);
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
