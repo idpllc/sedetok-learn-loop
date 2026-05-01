@@ -350,6 +350,10 @@ const NotebookView = () => {
       const raw = localStorage.getItem(cacheKey);
       setStudioCache(raw ? JSON.parse(raw) : {});
     } catch { setStudioCache({}); }
+    try {
+      const rawD = dismissedKey ? localStorage.getItem(dismissedKey) : null;
+      setDismissedIds(new Set<string>(rawD ? JSON.parse(rawD) : []));
+    } catch { setDismissedIds(new Set()); }
     setStudioActive(null);
     setStudioResults([]);
     setStudioOffset(0);
@@ -365,6 +369,12 @@ const NotebookView = () => {
     if (!cacheKey) return;
     try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
   }, [cacheKey, studioCache]);
+
+  // Persist dismissed IDs whenever they change
+  useEffect(() => {
+    if (!dismissedKey) return;
+    try { localStorage.setItem(dismissedKey, JSON.stringify([...dismissedIds])); } catch {}
+  }, [dismissedKey, dismissedIds]);
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
