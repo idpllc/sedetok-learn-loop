@@ -447,6 +447,7 @@ interface NodeBoxProps {
   collapsed: boolean;
   hasChildren: boolean;
   onToggleCollapse: () => void;
+  hideControls?: boolean;
 }
 
 const NodeBox = ({
