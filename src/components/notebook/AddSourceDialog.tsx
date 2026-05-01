@@ -175,10 +175,10 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="file" className="gap-1"><Upload className="h-4 w-4" />Archivo</TabsTrigger>
+            <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
             <TabsTrigger value="text" className="gap-1"><Type className="h-4 w-4" />Texto</TabsTrigger>
             <TabsTrigger value="url" className="gap-1"><LinkIcon className="h-4 w-4" />Web</TabsTrigger>
             <TabsTrigger value="video" className="gap-1"><Video className="h-4 w-4" />Video</TabsTrigger>
-            <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
           </TabsList>
 
           <TabsContent value="file" className="py-6">
