@@ -1155,6 +1155,56 @@ const NotebookView = () => {
       </div>
 
       <AddSourceDialog open={showAdd} onClose={() => setShowAdd(false)} notebookId={id!} />
+
+      <Dialog open={!!editingSourceId} onOpenChange={(v) => { if (!v) setEditingSourceId(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar fuente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Título</label>
+              <Input
+                value={editSourceTitle}
+                onChange={(e) => setEditSourceTitle(e.target.value)}
+                placeholder="Título de la fuente"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Contenido</label>
+              <Textarea
+                rows={12}
+                value={editSourceContent}
+                onChange={(e) => setEditSourceContent(e.target.value)}
+                placeholder="Contenido de la fuente…"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Este texto es lo que SEDE AI usará como contexto al chatear sobre esta fuente.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingSourceId(null)} disabled={sources.update.isPending}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!editingSourceId) return;
+                await sources.update.mutateAsync({
+                  id: editingSourceId,
+                  title: editSourceTitle.trim() || "Sin título",
+                  extracted_text: editSourceContent,
+                });
+                setEditingSourceId(null);
+              }}
+              disabled={sources.update.isPending}
+            >
+              {sources.update.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Guardar cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
