@@ -183,20 +183,50 @@ const SedeTok = () => {
   const contentId = searchParams.get("content");
   const quizId = searchParams.get("quiz");
   const gameId = searchParams.get("game");
+  const playlistParam = searchParams.get("playlist");
   const currentId = contentId || quizId || gameId;
   const currentType: "content" | "quiz" | "game" = quizId ? "quiz" : gameId ? "game" : "content";
 
-  // Initial load: fetch the target item + related content, or general feed if no ID
+  // Parse playlist (e.g. "id1:quiz,id2:quiz"). When present, the feed is
+  // limited strictly to these items — no random related fill, no infinite scroll.
+  const playlist = (() => {
+    if (!playlistParam) return null;
+    try {
+      return decodeURIComponent(playlistParam)
+        .split(",")
+        .filter(Boolean)
+        .map((entry) => {
+          const [pid, ptype] = entry.split(":");
+          const t = (ptype === "quiz" || ptype === "game" ? ptype : "content") as
+            | "content"
+            | "quiz"
+            | "game";
+          return { id: pid, type: t };
+        });
+    } catch {
+      return null;
+    }
+  })();
+  const playlistKey = playlist ? playlist.map((p) => `${p.id}:${p.type}`).join(",") : null;
+  const isPlaylistMode = !!(playlist && playlist.length > 0);
+
+  // Initial load: fetch playlist items strictly, OR target + related, OR general feed.
   useEffect(() => {
-    if (currentId && currentInitId.current === currentId) return;
-    if (!currentId && loadedInitial.current) return;
-    currentInitId.current = currentId || "__general__";
+    const initKey = (currentId || "__general__") + "|" + (playlistKey || "");
+    if (currentInitId.current === initKey) return;
+    currentInitId.current = initKey;
     loadedInitial.current = true;
 
     const load = async () => {
       setIsLoading(true);
       try {
-        if (currentId) {
+        if (isPlaylistMode) {
+          // Strict mode: load exactly the playlist items, in order.
+          const items = await Promise.all(
+            playlist!.map((p) => fetchSingleItem(p.id, p.type))
+          );
+          setFeed(items.filter(Boolean) as FeedItem[]);
+        } else if (currentId) {
           const mainItem = await fetchSingleItem(currentId, currentType);
           if (!mainItem) {
             setFeed([]);
@@ -206,7 +236,6 @@ const SedeTok = () => {
           const related = await fetchRelatedContent([currentId], mainItem.subject, 10);
           setFeed([mainItem, ...related]);
         } else {
-          // No specific item — load general feed
           const generalFeed = await fetchRelatedContent([], null, 15);
           setFeed(generalFeed);
         }
@@ -218,17 +247,18 @@ const SedeTok = () => {
     };
 
     load();
-  }, [currentId, currentType]);
+  }, [currentId, currentType, playlistKey]);
 
-  // Load more related content when scrolling near bottom
+  // Load more related content when scrolling near bottom (disabled in playlist mode).
   const loadMore = useCallback(async () => {
+    if (isPlaylistMode) return;
     if (loadingMore || feed.length === 0) return;
     setLoadingMore(true);
     try {
       const existingIds = new Set(feed.map((f) => f.id));
       const moreContent = await fetchRelatedContent(
         Array.from(existingIds),
-        null, // don't filter by subject for infinite scroll — get anything new
+        null,
         10
       );
       const newItems = moreContent.filter((item) => !existingIds.has(item.id));
@@ -240,7 +270,7 @@ const SedeTok = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [feed, loadingMore]);
+  }, [feed, loadingMore, isPlaylistMode]);
 
   // Infinite scroll detection
   useEffect(() => {
@@ -296,7 +326,9 @@ const SedeTok = () => {
       const newContent = feed[newIndex];
       const ct = newContent.content_type;
       const param = ct === "quiz" ? "quiz" : ct === "game" ? "game" : "content";
-      setSearchParams({ [param]: newContent.id }, { replace: true });
+      const next: Record<string, string> = { [param]: newContent.id };
+      if (playlistParam) next.playlist = playlistParam;
+      setSearchParams(next, { replace: true });
     }
   };
 
