@@ -89,9 +89,8 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     try { sessionStorage.removeItem(textDraftKey); } catch {}
   };
 
-  const handleClose = ({ resetDraft = true }: { resetDraft?: boolean } = {}) => {
+  const handleClose = () => {
     if (uploading || ingest.isPending) return;
-    if (resetDraft) reset();
     onClose();
   };
 
@@ -139,6 +138,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
       title: textTitle.trim() || "Texto pegado",
       textContent,
     });
+    reset();
     handleClose();
   };
 
