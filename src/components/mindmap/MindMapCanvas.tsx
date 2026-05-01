@@ -144,6 +144,15 @@ const buildLayout = (data: MindMapData, collapsedIds: Set<string>): Layout => {
   return { nodes, edges, bounds: { minX, minY, maxX, maxY } };
 };
 
+// Truncate the tree so that nodes beyond `maxDepth` are not rendered
+const truncateTree = (node: MindMapNode, depth: number, maxDepth: number): MindMapNode => {
+  if (depth >= maxDepth) return { ...node, children: [] };
+  return {
+    ...node,
+    children: node.children.map((c) => truncateTree(c, depth + 1, maxDepth)),
+  };
+};
+
 // ===== Canvas Component =====
 interface MindMapCanvasProps {
   data: MindMapData;
@@ -153,6 +162,8 @@ interface MindMapCanvasProps {
   onRemoveNode?: (id: string) => void;
   toolbar?: ReactNode;
   className?: string;
+  preview?: boolean;
+  maxDepth?: number;
 }
 
 export const MindMapCanvas = ({
@@ -163,6 +174,8 @@ export const MindMapCanvas = ({
   onRemoveNode,
   toolbar,
   className,
+  preview = false,
+  maxDepth,
 }: MindMapCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -172,6 +185,11 @@ export const MindMapCanvas = ({
   const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number; active: boolean }>({
     startX: 0, startY: 0, panX: 0, panY: 0, active: false,
   });
+
+  const effectiveData = useMemo(() => {
+    if (maxDepth === undefined) return data;
+    return { root: truncateTree(data.root, 0, maxDepth) };
+  }, [data, maxDepth]);
 
   const layout = useMemo(() => buildLayout(data, collapsed), [data, collapsed]);
 
