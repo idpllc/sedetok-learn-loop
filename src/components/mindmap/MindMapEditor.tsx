@@ -19,9 +19,11 @@ interface MindMapEditorProps {
   value?: MindMapData | null;
   onChange: (data: MindMapData) => void;
   topicHint?: string;
+  height?: number | string;
+  fillParent?: boolean;
 }
 
-export const MindMapEditor = ({ value, onChange, topicHint }: MindMapEditorProps) => {
+export const MindMapEditor = ({ value, onChange, topicHint, height = 600, fillParent = false }: MindMapEditorProps) => {
   const [data, setData] = useState<MindMapData>(value || createEmptyMindMap());
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
