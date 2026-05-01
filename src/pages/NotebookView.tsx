@@ -291,6 +291,8 @@ const NotebookView = () => {
       return raw ? JSON.parse(raw) : {};
     } catch { return {}; }
   });
+  // Highlight the freshly-created capsule for a few seconds
+  const [highlightedResultId, setHighlightedResultId] = useState<string | null>(null);
   // Mobile tabs: fuentes | chat | studio
   const [mobileTab, setMobileTab] = useState<"fuentes" | "chat" | "studio">("chat");
 
