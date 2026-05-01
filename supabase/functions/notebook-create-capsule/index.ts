@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { notebookId, type } = await req.json();
+    const { notebookId, type, notebookSourceId } = await req.json();
     if (!notebookId || !type) return ERR("Faltan parámetros", 400);
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
