@@ -230,9 +230,15 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
 
           <TabsContent value="competence" className="py-4 max-h-96 overflow-auto space-y-3">
             {!studyPlans?.length ? (
-              <p className="text-sm text-muted-foreground text-center py-6">
-                No tienes plan de estudios registrado todavía.
-              </p>
+              <div className="text-center py-8 space-y-3">
+                <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Aún no tienes un plan de estudios. Créalo primero para usar tus competencias como fuente.
+                </p>
+                <Button asChild size="sm">
+                  <a href="/study-plan">Crear mi plan de estudios</a>
+                </Button>
+              </div>
             ) : (
               studyPlans.map((plan: any) => (
                 <div key={plan.id} className="border rounded-lg p-3">
