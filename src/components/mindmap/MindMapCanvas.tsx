@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, ReactNode } from "react";
 import { MindMapData, MindMapNode } from "./types";
-import { ZoomIn, ZoomOut, Maximize2, Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // ===== Layout types =====
