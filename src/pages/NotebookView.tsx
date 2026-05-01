@@ -318,12 +318,24 @@ const NotebookView = () => {
   const cacheKey = id
     ? `notebook:studioCache:v2:${id}:${activeSourceId || "all"}`
     : null;
+  // Per-notebook+source set of result IDs the user explicitly dismissed.
+  // Dismissed items are filtered out of cached results AND of new searches.
+  const dismissedKey = id
+    ? `notebook:studioDismissed:v1:${id}:${activeSourceId || "all"}`
+    : null;
   const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>(() => {
     if (!cacheKey) return {};
     try {
       const raw = localStorage.getItem(cacheKey);
       return raw ? JSON.parse(raw) : {};
     } catch { return {}; }
+  });
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+    if (!dismissedKey) return new Set();
+    try {
+      const raw = localStorage.getItem(dismissedKey);
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
   });
   // Highlight the freshly-created capsule for a few seconds
   const [highlightedResultId, setHighlightedResultId] = useState<string | null>(null);
@@ -338,6 +350,10 @@ const NotebookView = () => {
       const raw = localStorage.getItem(cacheKey);
       setStudioCache(raw ? JSON.parse(raw) : {});
     } catch { setStudioCache({}); }
+    try {
+      const rawD = dismissedKey ? localStorage.getItem(dismissedKey) : null;
+      setDismissedIds(new Set<string>(rawD ? JSON.parse(rawD) : []));
+    } catch { setDismissedIds(new Set()); }
     setStudioActive(null);
     setStudioResults([]);
     setStudioOffset(0);
@@ -353,6 +369,12 @@ const NotebookView = () => {
     if (!cacheKey) return;
     try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
   }, [cacheKey, studioCache]);
+
+  // Persist dismissed IDs whenever they change
+  useEffect(() => {
+    if (!dismissedKey) return;
+    try { localStorage.setItem(dismissedKey, JSON.stringify([...dismissedIds])); } catch {}
+  }, [dismissedKey, dismissedIds]);
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
@@ -426,16 +448,21 @@ const NotebookView = () => {
     // prompt asking the user if they want to continue — only once.
     const cached = studioCache[opt.id];
     if (cached && cached.length > 0) {
-      setStudioResults(cached);
-      setStudioHasMore(cached.length >= 3);
-      const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
-      const alreadyShown = chat.messages.some(
-        (m) => m.role === "assistant" && m.content === continuePrompt
-      );
-      if (!alreadyShown) {
-        chat.appendAssistantTransient(continuePrompt);
+      // Filter out anything the user previously dismissed.
+      const filtered = cached.filter((r) => !dismissedIds.has(r.id));
+      if (filtered.length > 0) {
+        setStudioResults(filtered);
+        setStudioHasMore(filtered.length >= 3);
+        const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
+        const alreadyShown = chat.messages.some(
+          (m) => m.role === "assistant" && m.content === continuePrompt
+        );
+        if (!alreadyShown) {
+          chat.appendAssistantTransient(continuePrompt);
+        }
+        return;
       }
-      return;
+      // Otherwise fall through to a fresh search (all cached items dismissed).
     }
 
     setStudioResults([]);
@@ -451,10 +478,10 @@ const NotebookView = () => {
     const progressIndex = await chat.appendProgressLocal(userMsg, searchingMsg);
 
     try {
-      const results = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
+      const rawResults = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
+      const results = rawResults.filter((r) => !dismissedIds.has(r.id));
       setStudioResults(results);
       setStudioHasMore(results.length === 3);
-      // Cache the first 3 results so the button shows a "ready" state.
       setStudioCache((prev) => ({ ...prev, [opt.id]: results.slice(0, 3) }));
 
       if (results.length === 0) {
@@ -481,12 +508,13 @@ const NotebookView = () => {
     if (!studioActive || studioSearching) return;
     setStudioSearching(true);
     try {
-      const next = await sedefySearch.search(
+      const rawNext = await sedefySearch.search(
         studioActive.searchType,
         studioOffset + 3,
         3,
         studioActive.readingSubtype
       );
+      const next = rawNext.filter((r) => !dismissedIds.has(r.id));
       setStudioResults((prev) => [...prev, ...next]);
       setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
@@ -496,7 +524,21 @@ const NotebookView = () => {
   };
 
   const handleRemoveResult = (rid: string) => {
+    // Remove from current view AND remember the dismissal so future searches
+    // and cached restores skip this item permanently for this notebook+source.
     setStudioResults((prev) => prev.filter((r) => r.id !== rid));
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      next.add(rid);
+      return next;
+    });
+    setStudioCache((prev) => {
+      const next: Record<string, SedefyResult[]> = {};
+      for (const [k, list] of Object.entries(prev)) {
+        next[k] = (list || []).filter((r) => r.id !== rid);
+      }
+      return next;
+    });
   };
 
   const resultUrl = (r: SedefyResult) => {
