@@ -25,6 +25,7 @@ import {
   Webhook,
   GraduationCap,
   Activity,
+  AlertTriangle,
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { InteractionsAnalytics } from "@/components/admin/InteractionsAnalytics";
@@ -331,6 +332,20 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/admin/publishing-error")}
+                    className="flex w-full items-center justify-between gap-4 rounded-md border bg-muted/40 p-4 text-left transition-colors hover:bg-muted"
+                  >
+                    <span className="flex items-center gap-3 text-sm">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                      <span>
+                        <span className="block font-medium text-foreground">Ver detalle del error de publicación</span>
+                        <span className="text-muted-foreground">Migración bloqueante en Live y SQL sospechoso</span>
+                      </span>
+                    </span>
+                    <span className="text-sm font-medium text-primary">Abrir</span>
+                  </button>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="w-2 h-2 rounded-full bg-primary"></div>
                     <span className="text-muted-foreground">Sistema funcionando correctamente</span>
