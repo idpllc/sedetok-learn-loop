@@ -540,7 +540,7 @@ const Index = () => {
                           ) : item.content_type === 'lectura' && item.rich_text ? (
                             <div className="absolute inset-0 p-4 overflow-hidden">
                               <p className="text-xs leading-relaxed text-muted-foreground line-clamp-[8] whitespace-pre-wrap font-serif">
-                                {item.rich_text}
+                                {stripHtml(item.rich_text)}
                               </p>
                               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-amber-50 dark:from-amber-950/40 to-transparent" />
                             </div>
