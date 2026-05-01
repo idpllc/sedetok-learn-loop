@@ -466,8 +466,16 @@ const NotebookView = () => {
           )}
         </header>
 
-        {/* 3-column layout */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr_300px] overflow-hidden">
+        {/* 3-column layout — right column grows when viewing a capsule (expandable) */}
+        <div
+          className={`flex-1 grid grid-cols-1 overflow-hidden ${
+            viewing
+              ? viewerExpanded
+                ? "md:grid-cols-[280px_1fr_70%]"
+                : "md:grid-cols-[280px_1fr_30%]"
+              : "md:grid-cols-[280px_1fr_320px]"
+          }`}
+        >
           {/* Sources */}
           <aside className="border-r overflow-y-auto p-3 hidden md:block">
             <div className="flex items-center justify-between mb-3">
