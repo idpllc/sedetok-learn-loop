@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft
+  Maximize2, Minimize2, ChevronLeft, Check
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import ReactMarkdown from "react-markdown";
@@ -281,6 +281,8 @@ const NotebookView = () => {
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
+  // Cache of the first 3 results per studio option id (after a search has run)
+  const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>({});
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
@@ -321,8 +323,18 @@ const NotebookView = () => {
   const handleStudio = async (opt: StudioOption) => {
     if (chat.isStreaming || studioSearching) return;
     setStudioActive(opt);
-    setStudioResults([]);
     setStudioOffset(0);
+
+    // If we already cached results for this option, restore them without
+    // running the search again or polluting the chat.
+    const cached = studioCache[opt.id];
+    if (cached && cached.length > 0) {
+      setStudioResults(cached);
+      setStudioHasMore(cached.length >= 3);
+      return;
+    }
+
+    setStudioResults([]);
     setStudioHasMore(true);
     setStudioSearching(true);
 
@@ -336,6 +348,8 @@ const NotebookView = () => {
       const results = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
       setStudioResults(results);
       setStudioHasMore(results.length === 3);
+      // Cache the first 3 results so the button shows a "ready" state.
+      setStudioCache((prev) => ({ ...prev, [opt.id]: results.slice(0, 3) }));
 
       if (results.length === 0) {
         const article = opt.id === "path" || opt.id.startsWith("reading") ? "una" : "un";
@@ -696,17 +710,27 @@ const NotebookView = () => {
                   {STUDIO_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
                     const isActive = studioActive?.id === opt.id;
+                    const cachedCount = studioCache[opt.id]?.length ?? 0;
+                    const hasResults = cachedCount > 0;
                     return (
                       <button
                         key={opt.id}
                         onClick={() => handleStudio(opt)}
                         disabled={chat.isStreaming || studioSearching || noSources}
-                        className={`flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
+                        className={`relative flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
                           isActive ? "ring-2 ring-offset-1 ring-current shadow-sm" : ""
-                        }`}
+                        } ${hasResults ? "border-emerald-500/60" : ""}`}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-[11px] font-semibold leading-tight text-foreground">{opt.label}</span>
+                        {hasResults && (
+                          <span
+                            className="absolute top-1 right-1 flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shadow-sm"
+                            title={`${cachedCount} resultado${cachedCount === 1 ? "" : "s"} guardado${cachedCount === 1 ? "" : "s"}`}
+                          >
+                            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                          </span>
+                        )}
                       </button>
                     );
                   })}
