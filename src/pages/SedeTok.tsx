@@ -249,15 +249,16 @@ const SedeTok = () => {
     load();
   }, [currentId, currentType, playlistKey]);
 
-  // Load more related content when scrolling near bottom
+  // Load more related content when scrolling near bottom (disabled in playlist mode).
   const loadMore = useCallback(async () => {
+    if (isPlaylistMode) return;
     if (loadingMore || feed.length === 0) return;
     setLoadingMore(true);
     try {
       const existingIds = new Set(feed.map((f) => f.id));
       const moreContent = await fetchRelatedContent(
         Array.from(existingIds),
-        null, // don't filter by subject for infinite scroll — get anything new
+        null,
         10
       );
       const newItems = moreContent.filter((item) => !existingIds.has(item.id));
@@ -269,7 +270,7 @@ const SedeTok = () => {
     } finally {
       setLoadingMore(false);
     }
-  }, [feed, loadingMore]);
+  }, [feed, loadingMore, isPlaylistMode]);
 
   // Infinite scroll detection
   useEffect(() => {
