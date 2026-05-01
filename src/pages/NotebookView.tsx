@@ -710,17 +710,27 @@ const NotebookView = () => {
                   {STUDIO_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
                     const isActive = studioActive?.id === opt.id;
+                    const cachedCount = studioCache[opt.id]?.length ?? 0;
+                    const hasResults = cachedCount > 0;
                     return (
                       <button
                         key={opt.id}
                         onClick={() => handleStudio(opt)}
                         disabled={chat.isStreaming || studioSearching || noSources}
-                        className={`flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
+                        className={`relative flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
                           isActive ? "ring-2 ring-offset-1 ring-current shadow-sm" : ""
-                        }`}
+                        } ${hasResults ? "border-emerald-500/60" : ""}`}
                       >
                         <Icon className="h-5 w-5" />
                         <span className="text-[11px] font-semibold leading-tight text-foreground">{opt.label}</span>
+                        {hasResults && (
+                          <span
+                            className="absolute top-1 right-1 flex items-center justify-center h-4 w-4 rounded-full bg-emerald-500 text-white shadow-sm"
+                            title={`${cachedCount} resultado${cachedCount === 1 ? "" : "s"} guardado${cachedCount === 1 ? "" : "s"}`}
+                          >
+                            <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                          </span>
+                        )}
                       </button>
                     );
                   })}
