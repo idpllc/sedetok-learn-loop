@@ -479,7 +479,7 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (error) throw error;
-      result = { contentId: path.id, type, route: `/learning-paths/view/${path.id}` };
+      result = { contentId: path.id, type, route: `/learning-paths/view/${path.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
     else {
