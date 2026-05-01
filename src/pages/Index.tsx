@@ -583,6 +583,9 @@ const Index = () => {
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
                               <span className="ml-1">
                                 {getContentLabel(isLearningPath ? "learning_path" : item.content_type)}
+                                {item.content_type === "lectura" && readingSubtypeLabel(item.reading_type) && (
+                                  <span className="opacity-80"> · {readingSubtypeLabel(item.reading_type)}</span>
+                                )}
                               </span>
                             </Badge>
                           </div>
@@ -590,7 +593,7 @@ const Index = () => {
                         <div className="px-3 py-2 space-y-1">
                           <h3 className="font-semibold text-sm line-clamp-1">{item.title}</h3>
                           {item.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{stripHtml(item.description)}</p>
                           )}
                           <div className="flex items-center justify-end">
                             {!isLearningPath && (
