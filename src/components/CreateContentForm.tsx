@@ -711,6 +711,54 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     }
   };
 
+  const handleMindMapSave = async (status: "borrador" | "publicado") => {
+    if (!user) {
+      toast.error("Debes iniciar sesión");
+      return;
+    }
+    if (!formData.title || !formData.category || !formData.grade_level) {
+      toast.error("Completa título, asignatura y nivel antes de guardar");
+      setMindMapStep(0);
+      return;
+    }
+    if (!mindMapData || !mindMapData.root?.title?.trim()) {
+      toast.error("Define al menos el tema central del mapa.");
+      return;
+    }
+
+    setIsSavingMindMapDraft(true);
+    try {
+      const payload = {
+        title: formData.title,
+        description: null,
+        category: formData.category,
+        subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
+        grade_level: formData.grade_level,
+        content_type: 'mapa_mental' as ContentType,
+        tags: tags,
+        is_public: status === "publicado" ? isPublic : false,
+        rich_text: null,
+        reading_type: null,
+        mind_map_data: mindMapData,
+      };
+
+      if (editMode && contentData?.id && onUpdate) {
+        await onUpdate(contentData.id, payload);
+        toast.success(status === "publicado" ? "Mapa mental actualizado" : "Borrador guardado");
+        navigate("/profile");
+      } else {
+        await createMutation.mutateAsync(payload);
+        toast.success(status === "publicado" ? "¡Mapa mental publicado!" : "Borrador guardado");
+        navigate(status === "publicado" ? "/" : "/profile");
+      }
+    } catch (err: any) {
+      console.error("Error saving mind map:", err);
+      toast.error(err.message || "Error al guardar el mapa mental");
+    } finally {
+      setIsSavingMindMapDraft(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
