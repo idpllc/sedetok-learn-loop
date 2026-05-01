@@ -323,8 +323,18 @@ const NotebookView = () => {
   const handleStudio = async (opt: StudioOption) => {
     if (chat.isStreaming || studioSearching) return;
     setStudioActive(opt);
-    setStudioResults([]);
     setStudioOffset(0);
+
+    // If we already cached results for this option, restore them without
+    // running the search again or polluting the chat.
+    const cached = studioCache[opt.id];
+    if (cached && cached.length > 0) {
+      setStudioResults(cached);
+      setStudioHasMore(cached.length >= 3);
+      return;
+    }
+
+    setStudioResults([]);
     setStudioHasMore(true);
     setStudioSearching(true);
 
@@ -338,6 +348,8 @@ const NotebookView = () => {
       const results = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
       setStudioResults(results);
       setStudioHasMore(results.length === 3);
+      // Cache the first 3 results so the button shows a "ready" state.
+      setStudioCache((prev) => ({ ...prev, [opt.id]: results.slice(0, 3) }));
 
       if (results.length === 0) {
         const article = opt.id === "path" || opt.id.startsWith("reading") ? "una" : "un";
