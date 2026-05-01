@@ -75,6 +75,11 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     onClose();
   };
 
+  const shouldIgnoreOpenChange = (eventTarget: EventTarget | null) => {
+    const node = eventTarget instanceof Element ? eventTarget : null;
+    return !!node?.closest('[data-notebook-tutorial="true"]');
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -215,7 +220,12 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   const busy = uploading || ingest.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v && !shouldIgnoreOpenChange(document.activeElement)) handleClose();
+      }}
+    >
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Añadir fuente al cuaderno</DialogTitle>
