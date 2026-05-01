@@ -16,6 +16,7 @@ import {
   Maximize2, Minimize2, ChevronLeft, Check
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
+import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
@@ -238,6 +239,7 @@ const parseAssistantContent = (raw: string) => {
   let paths: any[] | null = null;
   let contentItems: any[] | null = null;
   let studioCta: { type: string } | null = null;
+  let generating: { type: string } | null = null;
 
   const pathsMatch = content.match(/\|\|\|PATHS_DATA:(.*?)\|\|\|/);
   if (pathsMatch) {
@@ -254,7 +256,12 @@ const parseAssistantContent = (raw: string) => {
     try { studioCta = JSON.parse(ctaMatch[1]); } catch {}
     content = content.replace(/\|\|\|STUDIO_CTA:.*?\|\|\|/, "").trim();
   }
-  return { content, paths, contentItems, studioCta };
+  const genMatch = content.match(/\|\|\|GENERATING:(.*?)\|\|\|/);
+  if (genMatch) {
+    try { generating = JSON.parse(genMatch[1]); } catch {}
+    content = content.replace(/\|\|\|GENERATING:.*?\|\|\|/, "").trim();
+  }
+  return { content, paths, contentItems, studioCta, generating };
 };
 
 // ----- Main page -----
@@ -477,9 +484,12 @@ const NotebookView = () => {
     if (!id || creatingType) return;
 
     setCreatingType(type);
-    await chat.appendLocal(
+    setMobileTab("chat");
+    // Insert a transient progress card as an assistant message (not persisted yet)
+    const progressMarker = `|||GENERATING:${JSON.stringify({ type })}|||`;
+    const progressIndex = await chat.appendProgressLocal(
       `Crear ${opt.label.toLowerCase()} con IA`,
-      `Estoy generando ${opt.label.toLowerCase()} con IA usando tus fuentes. Esto puede tardar unos segundos…`
+      progressMarker
     );
 
     try {
@@ -487,10 +497,11 @@ const NotebookView = () => {
         body: { notebookId: id, type, notebookSourceId: activeSourceId },
       });
       if (error) throw error;
-      if (!data?.route) throw new Error("Respuesta inválida");
+      if (!data?.route) throw new Error("Respuesta inválida del generador");
 
-      await chat.appendLocal(
-        "",
+      // Replace the progress card with the final success message (this gets persisted).
+      await chat.finalizeProgress(
+        progressIndex,
         `✅ Listo. He creado tu ${opt.label.toLowerCase()} y ya está disponible en el panel de Studio.`
       );
 
@@ -520,10 +531,13 @@ const NotebookView = () => {
         setHighlightedResultId((cur) => (cur === newResult.id ? null : cur));
       }, 4000);
     } catch (e: any) {
-      console.error(e);
-      await chat.appendLocal(
-        "",
-        `❌ No pude crear la cápsula con IA: ${e?.message || "error desconocido"}.`
+      console.error("create-capsule error", e);
+      const msg = e?.context?.body
+        ? (() => { try { return JSON.parse(e.context.body)?.error; } catch { return null; } })()
+        : null;
+      await chat.finalizeProgress(
+        progressIndex,
+        `❌ No pude crear la cápsula con IA: ${msg || e?.message || "error desconocido"}.`
       );
     } finally {
       setCreatingType(null);
@@ -736,7 +750,16 @@ const NotebookView = () => {
                         </div>
                       );
                     }
-                    const { content, paths, contentItems, studioCta } = parseAssistantContent(m.content);
+                    const { content, paths, contentItems, studioCta, generating } = parseAssistantContent(m.content);
+                    if (generating) {
+                      return (
+                        <div key={i} className="flex justify-start">
+                          <div className="max-w-[95%] w-full rounded-2xl px-4 py-5 bg-muted">
+                            <CapsuleProgressCard capsuleType={generating.type} />
+                          </div>
+                        </div>
+                      );
+                    }
                     return (
                       <div key={i} className="flex justify-start">
                         <div className="max-w-[95%] w-full rounded-2xl px-4 py-3 bg-muted">

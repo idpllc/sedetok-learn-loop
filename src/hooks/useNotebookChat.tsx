@@ -184,5 +184,55 @@ export const useNotebookChat = (
     [conversationId]
   );
 
-  return { messages, sendMessage, isStreaming, conversationId, appendLocal };
+  /**
+   * Append a transient assistant card (e.g. progress indicator) WITHOUT persisting it.
+   * Persist the user message so the conversation history is consistent.
+   * Returns the index of the assistant placeholder so it can be replaced later.
+   */
+  const appendProgressLocal = useCallback(
+    async (userText: string, progressContent: string) => {
+      if (!conversationId) return -1;
+      let assistantIndex = -1;
+      setMessages((prev) => {
+        const next = [
+          ...prev,
+          { role: "user", content: userText } as ChatMessage,
+          { role: "assistant", content: progressContent } as ChatMessage,
+        ];
+        assistantIndex = next.length - 1;
+        return next;
+      });
+      await supabase.from("ai_chat_messages").insert([
+        { conversation_id: conversationId, role: "user", content: userText },
+      ]);
+      return assistantIndex;
+    },
+    [conversationId]
+  );
+
+  /**
+   * Replace the assistant message at `index` with the final content and persist it.
+   * If `index` is invalid, falls back to appending a new assistant message.
+   */
+  const finalizeProgress = useCallback(
+    async (index: number, finalContent: string) => {
+      if (!conversationId) return;
+      setMessages((prev) => {
+        if (index < 0 || index >= prev.length) {
+          return [...prev, { role: "assistant", content: finalContent }];
+        }
+        const next = [...prev];
+        next[index] = { role: "assistant", content: finalContent };
+        return next;
+      });
+      await supabase.from("ai_chat_messages").insert({
+        conversation_id: conversationId,
+        role: "assistant",
+        content: finalContent,
+      });
+    },
+    [conversationId]
+  );
+
+  return { messages, sendMessage, isStreaming, conversationId, appendLocal, appendProgressLocal, finalizeProgress };
 };

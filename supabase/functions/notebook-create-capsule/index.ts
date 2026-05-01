@@ -60,8 +60,16 @@ const callAI = async (
   }
   const data = await res.json();
   const tc = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (!tc?.function?.arguments) throw new Error("no-tool-call");
-  return JSON.parse(tc.function.arguments);
+  if (!tc?.function?.arguments) {
+    console.error("AI no devolvió tool_call. Respuesta completa:", JSON.stringify(data).slice(0, 2000));
+    throw new Error("La IA no devolvió un resultado válido. Intenta de nuevo.");
+  }
+  try {
+    return JSON.parse(tc.function.arguments);
+  } catch (e) {
+    console.error("AI devolvió JSON inválido:", tc.function.arguments?.slice(0, 1000));
+    throw new Error("La IA devolvió un formato inválido. Intenta de nuevo.");
+  }
 };
 
 const META_PARAMS = {
@@ -310,10 +318,11 @@ Deno.serve(async (req) => {
 
       const ai = await callAI(
         systemPrompt,
-        `${baseUserPrompt}Genera un quiz de selección múltiple con 8-10 preguntas basadas estrictamente en las fuentes.`,
+        `${baseUserPrompt}Genera un quiz de selección múltiple con 8-10 preguntas basadas estrictamente en las fuentes. Cada pregunta debe tener exactamente 4 opciones (con prefijo "A. ", "B. ", "C. ", "D. ") y exactamente UNA opción marcada como is_correct=true. Asigna 10 puntos por pregunta. Incluye feedback breve para correcto e incorrecto.`,
         "create_quiz",
         params,
-        apiKey
+        apiKey,
+        "google/gemini-2.5-pro"
       );
 
       const { data: quiz, error: e1 } = await supabase
