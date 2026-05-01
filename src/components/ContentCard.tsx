@@ -532,23 +532,34 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             </div>
           </div>
         ) : contentType === 'mapa_mental' && mindMapData?.root ? (
-          <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
-            <div className="w-full max-w-3xl bg-background/95 backdrop-blur-sm rounded-lg p-4 shadow-xl overflow-hidden max-h-[70vh] flex flex-col">
-              <div className="flex-1 overflow-auto pointer-events-auto">
-                <MindMapViewer data={mindMapData} />
-              </div>
-              <div className="mt-4 flex justify-center">
-                <Button
-                  size="lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsMindMapModalOpen(true);
-                  }}
-                  className="flex items-center gap-2 shadow-lg pointer-events-auto"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Abrir mapa
-                </Button>
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100 dark:from-emerald-950/60 dark:via-teal-950/60 dark:to-cyan-950/60" >
+            <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
+              <div className="w-full max-w-3xl bg-background/95 backdrop-blur-sm rounded-2xl p-5 shadow-2xl overflow-hidden max-h-[78vh] flex flex-col border border-border">
+                <div className="flex items-center gap-2 pb-3 border-b border-border mb-3">
+                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
+                    <Brain className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Mapa Mental</p>
+                    <h3 className="text-base font-bold truncate">{title || mindMapData.root.title}</h3>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden pointer-events-auto rounded-lg border border-border bg-muted/20 min-h-[200px]">
+                  <MindMapViewer data={mindMapData} height="100%" />
+                </div>
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMindMapModalOpen(true);
+                    }}
+                    className="flex items-center gap-2 shadow-lg pointer-events-auto"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    Abrir mapa
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
