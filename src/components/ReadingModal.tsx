@@ -8,6 +8,7 @@ import { VOICE_AGENTS } from "@/lib/voiceAgents";
 import { toast } from "sonner";
 import sofiaAvatar from "@/assets/avatars/sofia-avatar.png";
 import alejandroAvatar from "@/assets/avatars/alejandro-avatar.png";
+import { renderRichContent } from "@/lib/renderRichContent";
 
 const avatarImages: Record<string, string> = {
   sofia: sofiaAvatar,

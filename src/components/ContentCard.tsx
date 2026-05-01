@@ -23,6 +23,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
 import { supabase } from "@/integrations/supabase/client";
 import { PrintableQuiz } from "./quiz/PrintableQuiz";
+import { renderRichContent } from "@/lib/renderRichContent";
 
 interface ContentCardProps {
   id: string;
