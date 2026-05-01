@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
+import { RichContentEditor } from "./RichContentEditor";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
