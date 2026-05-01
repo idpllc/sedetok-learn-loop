@@ -70,7 +70,9 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
       } else {
         sessionStorage.removeItem(textDraftKey);
       }
-    } catch {}
+    } catch {
+      // Draft persistence is best-effort only.
+    }
   }, [textContent, textDraftKey, textTitle]);
 
   // URL source
@@ -86,7 +88,9 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     setUrl("");
     setVideoUrl("");
     setVideoTitle("");
-    try { sessionStorage.removeItem(textDraftKey); } catch {}
+    try { sessionStorage.removeItem(textDraftKey); } catch {
+      // Draft persistence is best-effort only.
+    }
   };
 
   const handleClose = () => {
