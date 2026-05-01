@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
 
     const baseUserPrompt = `Contexto del cuaderno "${notebook.title}":\n\n${context}\n\n---\n`;
 
-    let result: { contentId?: string; route: string; type: string };
+    let result: { contentId?: string; route: string; type: string; title?: string; subject?: string | null; cover_url?: string | null; readingSubtype?: string };
 
     // ---------- READING ----------
     if (type.startsWith("reading")) {
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (error) throw error;
-      result = { contentId: row.id, type: "reading", route: `/sedetok?content=${row.id}` };
+      result = { contentId: row.id, type: "reading", route: `/sedetok?content=${row.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null, readingSubtype: subtype };
     }
 
     // ---------- MIND MAP ----------
@@ -266,7 +266,7 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (error) throw error;
-      result = { contentId: row.id, type: "mindmap", route: `/sedetok?content=${row.id}` };
+      result = { contentId: row.id, type: "mindmap", route: `/sedetok?content=${row.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
     // ---------- QUIZ ----------
@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      result = { contentId: quiz.id, type: "quiz", route: `/?quiz=${quiz.id}` };
+      result = { contentId: quiz.id, type: "quiz", route: `/?quiz=${quiz.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
     // ---------- GAME (word_order by default) ----------
@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
         const { error: eq } = await supabase.from("game_questions").insert(rows);
         if (eq) throw eq;
       }
-      result = { contentId: game.id, type: "game", route: `/?game=${game.id}` };
+      result = { contentId: game.id, type: "game", route: `/?game=${game.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
     // ---------- LEARNING PATH / COURSE ----------
@@ -479,7 +479,7 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (error) throw error;
-      result = { contentId: path.id, type, route: `/learning-paths/view/${path.id}` };
+      result = { contentId: path.id, type, route: `/learning-paths/view/${path.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
     else {
