@@ -27,66 +27,121 @@ const norm = (s: string) =>
     .replace(/[\u0300-\u036f]/g, "");
 
 const STOPWORDS = new Set([
-  // ES
+  // ES — pronombres, preposiciones, conjunciones, determinantes
   "para","pero","como","este","esta","estos","estas","sobre","entre","cuando",
-  "donde","más","menos","sin","sus","sus","han","sido","ser","son","fue","era","eres",
+  "donde","más","menos","sin","sus","han","sido","ser","son","fue","era","eres",
   "tus","mis","les","nos","nuestro","nuestra","ellos","ellas","ese","esa","eso",
-  "del","las","los","una","unos","unas","con","por","que","qué","los","las",
+  "del","las","los","una","unos","unas","con","por","que","qué",
   "ante","bajo","cabe","contra","desde","durante","hacia","hasta","mediante","según",
   "tras","versus","muy","tan","también","tambien","asi","así","aun","aún","ya",
   "porque","aunque","mientras","cada","todo","toda","todos","todas","otro","otra",
   "otros","otras","mismo","misma","cual","cuales","cuyo","cuya","aqui","aquí",
   "alli","allí","entonces","luego","despues","después","antes","ahora","hoy",
   "ayer","mañana","manana","siempre","nunca","jamas","jamás","quiza","quizá",
+  // ES — verbos didácticos y comodín que aparecen en cualquier descripción educativa
+  "explica","explicar","explican","explicacion","explicación","explicado","explicada",
+  "explicando","explicadas","explicados","explicativa","explicativo",
+  "tema","temas","video","videos","clase","clases","material","contenido","contenidos",
+  "leccion","lección","lecciones","aprender","aprende","aprendes","aprendizaje",
+  "estudiante","estudiantes","alumno","alumnos","profesor","profesora","maestro",
+  "ejemplo","ejemplos","texto","textos","articulo","artículo","articulos","artículos",
+  "concepto","conceptos","capitulo","capítulo","capitulos","capítulos",
+  "principal","principales","general","generales","basico","básico","basica","básica",
+  "introduccion","introducción","resumen","resumir","puntos","punto","clave","claves",
+  "haciendo","énfasis","enfasis","tales","fundamentaban",
+  "rasgos","proceso","procesos","elementos","contexto",
   // EN
   "the","and","for","with","that","this","from","have","has","had","not","but",
   "what","when","where","which","while","there","their","they","them","then",
-  "into","upon","over","under","about","because","because","could","would","should",
+  "into","upon","over","under","about","because","could","would","should",
   "your","yours","ours","mine","each","also","very","just","such","more","less",
-  "some","most","both","other","others","same","than","then","only","being","been",
+  "some","most","both","other","others","same","than","only","being","been",
+  "video","videos","lesson","topic","content","example","examples",
 ]);
+
+type Keyword = { token: string; fromTitle: boolean; weight: number };
 
 /**
  * Extract relevance-ranked keywords from notebook sources.
- * - Heavily weights TITLE tokens (x4)
- * - Truncates extracted_text to first 600 chars per source (intro is most relevant)
- * - Returns top 8 unique tokens by weighted count
+ * - Title tokens are TRUSTED keywords (must match for a result to be considered)
+ * - extracted_text tokens are SUPPORTING keywords (boost score but cannot match alone)
  */
-const extractKeywords = (sources: any[]): string[] => {
-  const counts = new Map<string, number>();
+const extractKeywords = (sources: any[]): { titleKeywords: string[]; supportKeywords: string[] } => {
+  const titleCounts = new Map<string, number>();
+  const textCounts = new Map<string, number>();
 
-  const addTokens = (text: string, weight: number) => {
+  const tokenize = (text: string, target: Map<string, number>, weight: number) => {
     if (!text) return;
     for (const raw of norm(text).split(/[^a-z0-9ñ]+/i)) {
       const t = raw.trim();
-      if (t.length < 5) continue; // require longer tokens for precision
+      if (t.length < 5) continue;
       if (STOPWORDS.has(t)) continue;
       if (/^\d+$/.test(t)) continue;
-      counts.set(t, (counts.get(t) || 0) + weight);
+      target.set(t, (target.get(t) || 0) + weight);
     }
   };
 
   for (const s of sources || []) {
-    addTokens(s.title || "", 5);
-    addTokens((s.extracted_text || "").slice(0, 1200), 1);
+    tokenize(s.title || "", titleCounts, 5);
+    tokenize((s.extracted_text || "").slice(0, 1200), textCounts, 1);
   }
 
-  return [...counts.entries()]
+  const titleKeywords = [...titleCounts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
+    .slice(0, 6)
     .map(([k]) => k);
+
+  // Support keywords = top body terms that are NOT already title keywords
+  const titleSet = new Set(titleKeywords);
+  const supportKeywords = [...textCounts.entries()]
+    .filter(([k]) => !titleSet.has(k))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([k]) => k);
+
+  return { titleKeywords, supportKeywords };
 };
 
-/** Scores how relevant a row is given the keywords (higher = better). */
-const scoreRow = (row: any, keywords: string[]): number => {
+/**
+ * Scores a row given title-derived and support keywords.
+ * Hard requirement: a row MUST contain at least one TITLE keyword in its
+ * title or description; otherwise the score is 0 and it is rejected.
+ */
+const scoreRow = (
+  row: any,
+  titleKeywords: string[],
+  supportKeywords: string[]
+): number => {
   const title = norm(row.title || "");
   const desc = norm(row.description || "");
+  const subject = norm(row.subject || "");
+
+  let titleHits = 0;
   let score = 0;
-  for (const k of keywords) {
+
+  for (const k of titleKeywords) {
     if (!k) continue;
-    if (title.includes(k)) score += 5;
+    if (title.includes(k)) {
+      score += 10;
+      titleHits++;
+    } else if (desc.includes(k)) {
+      score += 4;
+      titleHits++;
+    } else if (subject.includes(k)) {
+      score += 3;
+      titleHits++;
+    }
+  }
+
+  // Hard gate: at least ONE title keyword must hit somewhere.
+  if (titleHits === 0) return 0;
+
+  for (const k of supportKeywords) {
+    if (!k) continue;
+    if (title.includes(k)) score += 2;
     else if (desc.includes(k)) score += 1;
   }
+
   return score;
 };
 
@@ -126,20 +181,27 @@ export const useNotebookSearch = (
         if (sourceId) srcQuery = srcQuery.eq("id", sourceId);
         const { data: sources } = await srcQuery;
 
-        const keywords = extractKeywords(sources || []);
-        const orFilter = keywords.length > 0 ? buildOr(keywords) : null;
+        const { titleKeywords, supportKeywords } = extractKeywords(sources || []);
+
+        // If we couldn't extract any TITLE keywords, refuse to return any
+        // results — better to show nothing than off-topic content.
+        if (titleKeywords.length === 0) {
+          return [];
+        }
+
+        // The DB pre-filter only uses TITLE keywords, so we never even fetch
+        // rows that lack at least one strong topical match.
+        const orFilter = buildOr(titleKeywords);
 
         // Fetch a wider window than requested so we can rank locally.
-        // Window grows with offset to support "Buscar más" pagination after re-ranking.
         const fetchLimit = Math.max(20, (offset + limit) * 4);
 
-        // Require a strong match: a title hit (>=5) OR at least 2 keyword hits in description.
-        // This prevents off-topic results when only weak/incidental tokens overlap.
-        const MIN_SCORE = 5;
+        // Require a strong total score so a single weak match is not enough.
+        const MIN_SCORE = 10;
         const rank = (rows: any[]) =>
           rows
-            .map((r) => ({ row: r, score: scoreRow(r, keywords) }))
-            .filter((x) => keywords.length === 0 ? false : x.score >= MIN_SCORE)
+            .map((r) => ({ row: r, score: scoreRow(r, titleKeywords, supportKeywords) }))
+            .filter((x) => x.score >= MIN_SCORE)
             .sort((a, b) => b.score - a.score)
             .slice(offset, offset + limit);
 
