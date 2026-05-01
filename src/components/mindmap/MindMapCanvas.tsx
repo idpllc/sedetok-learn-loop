@@ -230,7 +230,13 @@ export const MindMapCanvas = ({
       e.preventDefault();
       const delta = -e.deltaY * 0.002;
       setZoom((z) => Math.min(2, Math.max(0.3, z + delta)));
+      return;
     }
+    // Plain wheel = pan the canvas (vertical + horizontal via shift)
+    setPan((p) => ({
+      x: p.x - (e.shiftKey ? e.deltaY : e.deltaX),
+      y: p.y - (e.shiftKey ? 0 : e.deltaY),
+    }));
   };
 
   const onMouseDown = (e: React.MouseEvent) => {
