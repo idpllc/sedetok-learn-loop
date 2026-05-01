@@ -1291,6 +1291,44 @@ const NotebookView = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal: full processed content of a source */}
+      <Dialog open={!!viewingSource} onOpenChange={(v) => { if (!v) setViewingSource(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              {viewingSource?.title || "Contenido procesado"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Este es el contenido que SEDE AI usará como contexto para esta fuente.
+            </p>
+            <div className="max-h-[60vh] overflow-y-auto rounded-md border bg-muted/30 p-3">
+              <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">
+                {viewingSource?.fullText || ""}
+              </pre>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setViewingSource(null)}>Cerrar</Button>
+            {viewingSource && (
+              <Button
+                onClick={() => {
+                  setEditingSourceId(viewingSource.id);
+                  setEditSourceTitle(viewingSource.title);
+                  setEditSourceContent(viewingSource.fullText);
+                  setViewingSource(null);
+                }}
+                className="gap-2"
+              >
+                <Pencil className="h-4 w-4" /> Editar fuente
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
