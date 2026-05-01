@@ -870,7 +870,7 @@ const NotebookView = () => {
           {/* Chat */}
           <section className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
-              {chat.messages.length === 0 ? (
+              {chat.messages.length === 0 && announcedSources.length === 0 ? (
                 <div className="max-w-2xl mx-auto text-center py-12">
                   <Sparkles className="h-12 w-12 mx-auto text-primary mb-4" />
                   <h2 className="text-2xl font-bold mb-2">{notebook?.title || "Cuaderno"}</h2>
@@ -900,6 +900,34 @@ const NotebookView = () => {
                 </div>
               ) : (
                 <div className="max-w-3xl mx-auto space-y-4">
+                  {/* Announced sources: shown as user-style cards above the conversation */}
+                  {announcedSources.map((src) => {
+                    const Icon = TYPE_ICONS[src.sourceType] || FileText;
+                    return (
+                      <div key={`announced-${src.id}`} className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setViewingSource(src)}
+                          className="max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground text-left hover:opacity-95 transition shadow-sm"
+                          title="Ver contenido procesado"
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
+                              Fuente procesada
+                            </span>
+                          </div>
+                          <p className="font-semibold text-sm mb-1 line-clamp-1">{src.title}</p>
+                          <p className="text-xs opacity-90 whitespace-pre-wrap line-clamp-4">
+                            {src.preview}
+                          </p>
+                          <p className="text-[10px] opacity-75 mt-2 underline">
+                            Toca para ver el contenido completo
+                          </p>
+                        </button>
+                      </div>
+                    );
+                  })}
                   {chat.messages.map((m, i) => {
                     if (m.role === "user") {
                       return (
