@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, X, Sparkles, HelpCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
-const STORAGE_KEY = "notebook_tutorial_completed_v2";
+const STORAGE_KEY = "notebook_tutorial_completed_v3";
 const TRIGGER_KEY = "notebook_tutorial_open";
 
 type StepAction = {
@@ -89,7 +89,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="studio-panel"]',
-    title: "6. Studio: genera cápsulas",
+    title: "6. Studio: tu fábrica de cápsulas",
     description:
       "Desde Studio puedes transformar tus fuentes en cápsulas de estudio: lecturas, mapas mentales, juegos y quizzes.",
     routeMatcher: isDetailRoute,
@@ -97,26 +97,50 @@ const STEPS: Step[] = [
     onEnter: { event: "notebook:set-mobile-tab", payload: { tab: "studio" } },
   },
   {
-    selector: '[data-tour="studio-quiz"]',
-    title: "7. Crea un Quiz",
+    selector: '[data-tour="studio-mindmap"]',
+    title: "7. Selecciona Mapa mental",
     description:
-      "Selecciona Quiz para que SEDE AI genere preguntas a partir de tu fuente y puedas autoevaluar lo aprendido.",
+      "Empecemos por un Mapa mental: visualiza el tema de tu fuente como un esquema con conceptos conectados. Pulsa el botón resaltado para seleccionarlo.",
+    routeMatcher: isDetailRoute,
+    placement: "left",
+    allowInteraction: true,
+    hideNext: true,
+    // Advance when the user actually activates the mindmap option (search results appear)
+    shouldAutoAdvance: () => {
+      const btn = document.querySelector('[data-tour="studio-mindmap"]') as HTMLElement | null;
+      return !!btn && btn.className.includes("ring-2");
+    },
+  },
+  {
+    selector: '[data-tour="studio-panel"]',
+    title: "8. Cápsulas existentes en Sedefy",
+    description:
+      "Sedefy busca automáticamente mapas mentales ya creados por la comunidad sobre tu tema. Puedes pulsar 'Buscar más' para ver más resultados o usar uno directamente.",
+    routeMatcher: isDetailRoute,
+    placement: "left",
+    allowInteraction: true,
+  },
+  {
+    selector: '[data-tour="studio-generate-ai"]',
+    title: "9. O genera tu propio mapa mental con IA",
+    description:
+      "Si prefieres uno hecho a tu medida, pulsa 'Generar mapa mental con IA'. SEDE AI creará un mapa mental personalizado a partir de tu fuente.",
     routeMatcher: isDetailRoute,
     placement: "left",
     allowInteraction: true,
   },
   {
     selector: '[data-tour="chat-panel"]',
-    title: "8. Conversa con SEDE AI",
+    title: "10. Conversa con SEDE AI",
     description:
-      "Vuelve al chat cuando quieras pedirle resúmenes, explicaciones o ejercicios sobre tu fuente.",
+      "Vuelve al chat cuando quieras pedirle resúmenes, explicaciones o ejercicios sobre tu fuente. La IA responde usando tus fuentes como contexto.",
     routeMatcher: isDetailRoute,
     placement: "top",
     onEnter: { event: "notebook:set-mobile-tab", payload: { tab: "chat" } },
   },
   {
     selector: '[data-tour="chat-input"]',
-    title: "9. ¡Empieza a estudiar!",
+    title: "11. ¡Empieza a estudiar!",
     description:
       "Escribe aquí tu pregunta. Ya tienes todo lo necesario para estudiar con tu Notebook Sedefy.",
     routeMatcher: isDetailRoute,
