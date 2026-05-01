@@ -17,6 +17,8 @@ import {
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useNotebookSearch, type SedefyResult } from "@/hooks/useNotebookSearch";
+import { X } from "lucide-react";
 
 const TYPE_ICONS: Record<string, any> = {
   pdf: FileText, docx: FileText, xlsx: FileText, text: Type, url: LinkIcon, video: Video, competence: GraduationCap,
@@ -226,12 +228,20 @@ const NotebookView = () => {
   const { rename } = useNotebooks();
   const sources = useNotebookSources(id);
   const chat = useNotebookChat(id);
+  const sedefySearch = useNotebookSearch(id);
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Studio search state
+  const [studioActive, setStudioActive] = useState<StudioOption | null>(null);
+  const [studioResults, setStudioResults] = useState<SedefyResult[]>([]);
+  const [studioOffset, setStudioOffset] = useState(0);
+  const [studioSearching, setStudioSearching] = useState(false);
+  const [studioHasMore, setStudioHasMore] = useState(true);
 
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
@@ -265,20 +275,70 @@ const NotebookView = () => {
     chat.sendMessage(text);
   };
 
-  const handleStudio = (opt: StudioOption) => {
-    if (chat.isStreaming) return;
-    chat.sendMessage(opt.prompt, opt.id);
+  const handleStudio = async (opt: StudioOption) => {
+    if (chat.isStreaming || studioSearching) return;
+    setStudioActive(opt);
+    setStudioResults([]);
+    setStudioOffset(0);
+    setStudioHasMore(true);
+    setStudioSearching(true);
+
+    // Friendly chat message describing the action (no AI call)
+    const verbalType = opt.label.toLowerCase();
+    const userMsg = `Buscar ${verbalType} en SEDEFY`;
+    const assistantMsg = `Estoy buscando en SEDEFY ${opt.label.toLowerCase()}s que coincidan con tus fuentes…`;
+    await chat.appendLocal(userMsg, assistantMsg);
+
+    try {
+      const results = await sedefySearch.search(opt.searchType, 0, 3);
+      setStudioResults(results);
+      setStudioHasMore(results.length === 3);
+
+      if (results.length === 0) {
+        const noneMsg =
+          opt.createRoute
+            ? `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${opt.id === "path" || opt.id === "reading" ? "una" : "un"} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
+            : `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
+        await chat.appendLocal("", noneMsg);
+        // Trim the empty user message we just inserted
+        // (keep simple: leave it; UI shows empty bubble — better: skip)
+      }
+    } finally {
+      setStudioSearching(false);
+    }
+  };
+
+  const handleSearchMore = async () => {
+    if (!studioActive || studioSearching) return;
+    setStudioSearching(true);
+    try {
+      const next = await sedefySearch.search(studioActive.searchType, studioOffset + 3, 3);
+      setStudioResults((prev) => [...prev, ...next]);
+      setStudioOffset((o) => o + 3);
+      if (next.length < 3) setStudioHasMore(false);
+    } finally {
+      setStudioSearching(false);
+    }
+  };
+
+  const handleRemoveResult = (rid: string) => {
+    setStudioResults((prev) => prev.filter((r) => r.id !== rid));
+  };
+
+  const openResult = (r: SedefyResult) => {
+    if (r.type === "quiz") window.open(`/?quiz=${r.id}`, "_blank");
+    else if (r.type === "game") window.open(`/?game=${r.id}`, "_blank");
+    else if (r.type === "path" || r.type === "course") window.open(`/learning-paths/view/${r.id}`, "_blank");
+    else window.open(`/sedetok?content=${r.id}`, "_blank");
   };
 
   const handleCreateCapsule = (type: string) => {
     const opt = STUDIO_BY_ID[type];
     if (!opt) return;
     if (!opt.createRoute) {
-      // Video case: send to upload page
       navigate("/create?type=video");
       return;
     }
-    // Pass notebook id so creator pages can use sources for AI generation
     const sep = opt.createRoute.includes("?") ? "&" : "?";
     navigate(`${opt.createRoute}${sep}notebook=${id}`);
   };
@@ -491,12 +551,15 @@ const NotebookView = () => {
             <div className="grid grid-cols-2 gap-2">
               {STUDIO_OPTIONS.map((opt) => {
                 const Icon = opt.icon;
+                const isActive = studioActive?.id === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => handleStudio(opt)}
-                    disabled={chat.isStreaming || noSources}
-                    className="flex flex-col items-start gap-1 p-3 rounded-lg border bg-card hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition text-left"
+                    disabled={chat.isStreaming || studioSearching || noSources}
+                    className={`flex flex-col items-start gap-1 p-3 rounded-lg border bg-card hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${
+                      isActive ? "border-primary ring-1 ring-primary" : ""
+                    }`}
                   >
                     <Icon className="h-5 w-5 text-primary" />
                     <span className="text-xs font-medium">{opt.label}</span>
@@ -504,10 +567,119 @@ const NotebookView = () => {
                 );
               })}
             </div>
+
             {noSources && (
               <p className="text-[11px] text-muted-foreground mt-3 text-center">
                 Añade fuentes para activar Studio
               </p>
+            )}
+
+            {/* Studio search results */}
+            {studioActive && (
+              <div className="mt-4 pt-3 border-t">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-semibold flex items-center gap-1.5">
+                    <studioActive.icon className="h-3.5 w-3.5 text-primary" />
+                    {studioActive.label}s sugeridos
+                  </h3>
+                  <button
+                    className="text-[10px] text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setStudioActive(null);
+                      setStudioResults([]);
+                    }}
+                  >
+                    Cerrar
+                  </button>
+                </div>
+
+                {studioSearching && studioResults.length === 0 ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  </div>
+                ) : studioResults.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground text-center py-3">
+                    Sin resultados
+                  </p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {studioResults.map((r) => (
+                      <li
+                        key={r.id}
+                        className="group relative flex gap-2 p-1.5 rounded-md border bg-card hover:bg-accent transition cursor-pointer"
+                        onClick={() => openResult(r)}
+                      >
+                        <div className="w-12 h-12 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                          {r.cover_url ? (
+                            <img
+                              src={r.cover_url}
+                              alt={r.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              width={48}
+                              height={48}
+                            />
+                          ) : (
+                            <studioActive.icon className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0 pr-5">
+                          <p className="text-[11px] font-medium line-clamp-2 leading-tight">{r.title}</p>
+                          {r.subject && (
+                            <p className="text-[10px] text-muted-foreground truncate">{r.subject}</p>
+                          )}
+                        </div>
+                        <button
+                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-0.5 rounded hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveResult(r.id);
+                          }}
+                          aria-label="Quitar"
+                        >
+                          <X className="h-3 w-3 text-destructive" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Actions */}
+                <div className="mt-2.5 flex flex-col gap-1.5">
+                  {studioHasMore && studioResults.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-7 text-[11px]"
+                      onClick={handleSearchMore}
+                      disabled={studioSearching}
+                    >
+                      {studioSearching ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        "Buscar más"
+                      )}
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    className="w-full h-7 text-[11px] gap-1"
+                    onClick={() => handleCreateCapsule(studioActive.id)}
+                  >
+                    {studioActive.createRoute ? (
+                      <>
+                        <Wand2 className="h-3 w-3" />
+                        Generar {studioActive.label.toLowerCase()} con IA
+                      </>
+                    ) : (
+                      <>
+                        <ExternalLink className="h-3 w-3" />
+                        Subir un video
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             )}
           </aside>
         </div>

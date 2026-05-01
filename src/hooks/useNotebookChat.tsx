@@ -149,5 +149,25 @@ export const useNotebookChat = (notebookId: string | undefined) => {
     [user, session, conversationId, notebookId, toast]
   );
 
-  return { messages, sendMessage, isStreaming, conversationId };
+  /**
+   * Append a synthetic assistant/user message pair without hitting the AI.
+   * Used for Studio "Estoy buscando..." flow and "no results" notices.
+   */
+  const appendLocal = useCallback(
+    async (userText: string, assistantText: string) => {
+      if (!conversationId) return;
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: userText },
+        { role: "assistant", content: assistantText },
+      ]);
+      await supabase.from("ai_chat_messages").insert([
+        { conversation_id: conversationId, role: "user", content: userText },
+        { conversation_id: conversationId, role: "assistant", content: assistantText },
+      ]);
+    },
+    [conversationId]
+  );
+
+  return { messages, sendMessage, isStreaming, conversationId, appendLocal };
 };
