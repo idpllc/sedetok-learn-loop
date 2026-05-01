@@ -146,6 +146,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     content_type: "" as ContentType,
     difficulty: "basico" as "basico" | "intermedio" | "avanzado",
     document_url: "" as string | undefined,
+    reading_type: "" as "" | "libro" | "resumen" | "ensayo" | "notas" | "glosario",
   });
   
   const [tags, setTags] = useState<string[]>([]);
