@@ -127,7 +127,7 @@ export const FloatingTutorChat = () => {
   };
 
   // Don't show on certain routes
-  const hiddenRoutes = ["/auth", "/chat/login", "/auto-login"];
+  const hiddenRoutes = ["/auth", "/chat/login", "/auto-login", "/notebook"];
   if (typeof window !== "undefined" && hiddenRoutes.some((r) => window.location.pathname.startsWith(r))) {
     return null;
   }
