@@ -307,11 +307,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         quiz: "Crear Quiz",
         learning_path: "Crear Ruta de Aprendizaje",
         game: "Crear Juego",
-        mapa_mental: "Crear Mapa Mental",
+        mapa_mental: mindMapStep === 1 ? "Constructor de Mapa Mental" : "Crear Mapa Mental",
       };
       onTitleChange(formData.content_type ? titles[formData.content_type as ContentType | 'learning_path'] : "Crear Contenido");
     }
-  }, [formData.content_type, onTitleChange]);
+  }, [formData.content_type, mindMapStep, onTitleChange]);
 
   const detectFileType = (file: File): 'video' | 'document' | 'image' | null => {
     const videoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
