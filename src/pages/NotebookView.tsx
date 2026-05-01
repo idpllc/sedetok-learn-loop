@@ -910,7 +910,7 @@ const NotebookView = () => {
         {/* Mobile: floating add sources button (only on Fuentes tab) */}
         {mobileTab === "fuentes" && (
           <Button
-            className="md:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
+            className="lg:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
             size="icon"
             onClick={() => setShowAdd(true)}
           >
