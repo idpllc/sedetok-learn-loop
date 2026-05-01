@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, X, Sparkles, HelpCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
-const STORAGE_KEY = "notebook_tutorial_completed_v4";
+const STORAGE_KEY = "notebook_tutorial_completed_v5";
+const STATE_KEY = "notebook_tutorial_state_v1";
 const TRIGGER_KEY = "notebook_tutorial_open";
 
 type StepAction = {
@@ -176,12 +177,28 @@ export const NotebookTutorial = () => {
   const [, force] = useState(0);
   const enteredRef = useRef<number>(-1);
 
-  // Auto-start once when entering /notebook
+  const firstStepForRoute = useCallback((pathname: string) => {
+    const index = STEPS.findIndex((s) => s.routeMatcher(pathname));
+    return Math.max(0, index);
+  }, []);
+
+  // Auto-start once when entering /notebook, or resume after creating a notebook.
   useEffect(() => {
-    if (!isListRoute(location.pathname)) return;
     try {
+      const saved = sessionStorage.getItem(STATE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as { active?: boolean; stepIndex?: number };
+        if (parsed.active) {
+          const nextIndex = STEPS[parsed.stepIndex || 0]?.routeMatcher(location.pathname)
+            ? parsed.stepIndex || 0
+            : firstStepForRoute(location.pathname);
+          setStepIndex(nextIndex);
+          setActive(true);
+          return;
+        }
+      }
       const completed = localStorage.getItem(STORAGE_KEY) === "true";
-      if (!completed) {
+      if (!completed && isListRoute(location.pathname)) {
         const t = setTimeout(() => {
           setStepIndex(0);
           setActive(true);
@@ -189,17 +206,24 @@ export const NotebookTutorial = () => {
         return () => clearTimeout(t);
       }
     } catch {}
-  }, [location.pathname]);
+  }, [firstStepForRoute, location.pathname]);
+
+  useEffect(() => {
+    try {
+      if (active) sessionStorage.setItem(STATE_KEY, JSON.stringify({ active: true, stepIndex }));
+      else sessionStorage.removeItem(STATE_KEY);
+    } catch {}
+  }, [active, stepIndex]);
 
   // Manual relaunch
   useEffect(() => {
     const handler = () => {
-      setStepIndex(0);
+      setStepIndex(firstStepForRoute(location.pathname));
       setActive(true);
     };
     window.addEventListener(TRIGGER_KEY, handler);
     return () => window.removeEventListener(TRIGGER_KEY, handler);
-  }, []);
+  }, [firstStepForRoute, location.pathname]);
 
   const step = STEPS[stepIndex];
   const stepMatchesRoute = step ? step.routeMatcher(location.pathname) : false;
