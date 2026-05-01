@@ -175,14 +175,46 @@ export const MindMapCanvas = ({
 
   const layout = useMemo(() => buildLayout(data, collapsed), [data, collapsed]);
 
-  // Center root on first mount
+  // Auto fit-view on mount and when layout dimensions change significantly
+  const didInitialFit = useRef(false);
   useEffect(() => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setPan({ x: 60, y: rect.height / 2 - 80 });
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const w = layout.bounds.maxX - layout.bounds.minX + 80;
+    const h = layout.bounds.maxY - layout.bounds.minY + 80;
+    const z = Math.min(rect.width / w, rect.height / h, 1);
+    if (!didInitialFit.current) {
+      setZoom(z);
+      setPan({
+        x: 40 - layout.bounds.minX * z,
+        y: rect.height / 2 - ((layout.bounds.minY + layout.bounds.maxY) / 2) * z,
+      });
+      didInitialFit.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [layout]);
+
+  // Re-fit when container resizes (e.g., modal opens full-screen)
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect || rect.width === 0 || rect.height === 0) return;
+      if (!didInitialFit.current) {
+        const w = layout.bounds.maxX - layout.bounds.minX + 80;
+        const h = layout.bounds.maxY - layout.bounds.minY + 80;
+        const z = Math.min(rect.width / w, rect.height / h, 1);
+        setZoom(z);
+        setPan({
+          x: 40 - layout.bounds.minX * z,
+          y: rect.height / 2 - ((layout.bounds.minY + layout.bounds.maxY) / 2) * z,
+        });
+        didInitialFit.current = true;
+      }
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [layout]);
 
   const toggleCollapse = (id: string) => {
     setCollapsed((prev) => {
