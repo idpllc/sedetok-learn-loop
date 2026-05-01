@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, BookOpen, Trash2, Loader2 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
 
 const Notebook = () => {
   const navigate = useNavigate();
