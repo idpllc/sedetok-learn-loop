@@ -731,6 +731,17 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       return;
     }
 
+    if (formData.content_type === 'mapa_mental') {
+      if (!mindMapData || !mindMapData.root?.title?.trim()) {
+        toastHook({
+          title: "Mapa mental incompleto",
+          description: "Define al menos el tema central del mapa.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
       let videoUrl: string | undefined;
       let documentUrl: string | undefined;
@@ -757,9 +768,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         thumbnailUrl = await uploadFile(uploadedThumbnail, "raw");
       }
 
+      const isMapaMental = formData.content_type === 'mapa_mental';
+      const isLectura = formData.content_type === 'lectura';
       const contentPayload = {
         title: formData.title,
-        description: formData.content_type === 'lectura' ? null : formData.description,
+        description: (isLectura || isMapaMental) ? null : formData.description,
         category: formData.category,
         subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
         grade_level: formData.grade_level,
@@ -769,8 +782,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         video_url: videoUrl || (editMode ? contentData?.video_url : undefined),
         document_url: documentUrl || (editMode ? contentData?.document_url : undefined),
         thumbnail_url: thumbnailUrl || (editMode ? contentData?.thumbnail_url : undefined),
-        rich_text: formData.content_type === 'lectura' ? richText : null,
-        reading_type: formData.content_type === 'lectura' ? formData.reading_type : null,
+        rich_text: isLectura ? richText : null,
+        reading_type: isLectura ? formData.reading_type : null,
+        mind_map_data: isMapaMental ? mindMapData : null,
       };
 
       if (editMode && contentData?.id && onUpdate) {
