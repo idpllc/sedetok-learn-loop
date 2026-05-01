@@ -37,7 +37,7 @@ const CreateContent = () => {
       <Sidebar />
       <div className="min-h-screen bg-background pb-20 md:ml-64 pt-14 md:pt-0">
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
-        <div className={`flex items-center gap-3 mx-auto ${pageTitle.includes("Quiz") || pageTitle.includes("Ruta") ? "container" : "max-w-2xl"}`}>
+        <div className={`flex items-center gap-3 mx-auto ${pageTitle.includes("Quiz") || pageTitle.includes("Ruta") || pageTitle.includes("Mapa Mental") || pageTitle.includes("Constructor") ? "container" : "max-w-2xl"}`}>
           <Button
             variant="ghost"
             size="icon"
@@ -49,7 +49,7 @@ const CreateContent = () => {
         </div>
       </header>
 
-      <main className={`mx-auto px-4 py-6 ${pageTitle.includes("Quiz") || pageTitle.includes("Ruta") ? "container" : "max-w-2xl"}`}>
+      <main className={`mx-auto px-4 py-6 ${pageTitle.includes("Quiz") || pageTitle.includes("Ruta") || pageTitle.includes("Constructor") ? "container" : "max-w-2xl"}`}>
         <CreateContentForm onTitleChange={setPageTitle} />
       </main>
     </div>
