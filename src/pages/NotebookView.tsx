@@ -331,12 +331,14 @@ const NotebookView = () => {
     else if (r.type === "path" || r.type === "course") window.open(`/learning-paths/view/${r.id}`, "_blank");
     else window.open(`/sedetok?content=${r.id}`, "_blank");
   };
+
+  const handleCreateCapsule = (type: string) => {
+    const opt = STUDIO_BY_ID[type];
+    if (!opt) return;
     if (!opt.createRoute) {
-      // Video case: send to upload page
       navigate("/create?type=video");
       return;
     }
-    // Pass notebook id so creator pages can use sources for AI generation
     const sep = opt.createRoute.includes("?") ? "&" : "?";
     navigate(`${opt.createRoute}${sep}notebook=${id}`);
   };
