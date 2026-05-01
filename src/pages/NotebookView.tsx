@@ -303,6 +303,9 @@ const NotebookView = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
+  const [editSourceTitle, setEditSourceTitle] = useState("");
+  const [editSourceContent, setEditSourceContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Studio search state
