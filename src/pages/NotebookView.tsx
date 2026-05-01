@@ -689,12 +689,13 @@ const NotebookView = () => {
           ))}
         </div>
 
-        {/* 3-column layout — right column grows when viewing a capsule (expandable) */}
+        {/* 3-column layout — right column grows when viewing a capsule (expandable);
+            when expanded, the Fuentes column collapses so chat takes the freed width. */}
         <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
               ? viewerExpanded
-                ? "lg:grid-cols-[280px_1fr_70%]"
+                ? "lg:grid-cols-[0px_1fr_70%]"
                 : "lg:grid-cols-[280px_1fr_30%]"
               : "lg:grid-cols-[280px_1fr_320px]"
           }`}
@@ -703,7 +704,7 @@ const NotebookView = () => {
           <aside
             className={`border-r overflow-y-auto p-3 lg:block ${
               mobileTab === "fuentes" ? "block" : "hidden"
-            }`}
+            } ${viewing && viewerExpanded ? "lg:hidden" : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Fuentes</h2>
