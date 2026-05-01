@@ -226,7 +226,15 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
         if (!v && !shouldIgnoreOpenChange(document.activeElement)) handleClose();
       }}
     >
-      <DialogContent className="max-w-2xl">
+      <DialogContent
+        className="max-w-2xl"
+        onPointerDownOutside={(event) => {
+          if (shouldIgnoreOpenChange(event.target)) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (shouldIgnoreOpenChange(event.target)) event.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Añadir fuente al cuaderno</DialogTitle>
         </DialogHeader>
