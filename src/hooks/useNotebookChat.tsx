@@ -161,7 +161,7 @@ export const useNotebookChat = (
         setIsStreaming(false);
       }
     },
-    [user, session, conversationId, notebookId, toast]
+    [user, session, conversationId, notebookId, sourceId, toast]
   );
 
   /**
