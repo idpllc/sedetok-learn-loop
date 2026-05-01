@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId, attachments } = await req.json();
+    const { message, conversationId, attachments, notebookId } = await req.json();
     
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -179,6 +179,30 @@ serve(async (req) => {
       `${p.title} (${p.completed}/${p.total})`
     ).join(', ');
 
+    // Notebook sources context (Sedefy Notebook module)
+    let notebookContext = '';
+    if (notebookId) {
+      const { data: nb } = await supabase
+        .from('notebooks')
+        .select('title, description')
+        .eq('id', notebookId)
+        .maybeSingle();
+      const { data: sources } = await supabase
+        .from('notebook_sources')
+        .select('title, source_type, extracted_text')
+        .eq('notebook_id', notebookId)
+        .eq('status', 'ready')
+        .order('created_at', { ascending: true });
+      if (nb && sources && sources.length > 0) {
+        // Cap each source to ~6000 chars to stay within token limits
+        const sourcesText = sources.map((s: any, i: number) => {
+          const txt = (s.extracted_text || '').slice(0, 6000);
+          return `--- FUENTE ${i + 1} (${s.source_type}): ${s.title} ---\n${txt}`;
+        }).join('\n\n');
+        notebookContext = `\n\n📓 NOTEBOOK ACTIVO: "${nb.title}"\n${nb.description ? nb.description + '\n' : ''}\nFuentes cargadas (${sources.length}):\n${sourcesText}\n\nINSTRUCCIÓN ESPECIAL: El usuario tiene un notebook activo. Responde priorizando la información de las fuentes anteriores. Cita la fuente cuando uses información concreta (ej: "Según la fuente 2..."). Si la pregunta no se puede responder con las fuentes, indícalo y luego puedes complementar con conocimiento general o búsquedas en SEDEFY.`;
+      }
+    }
+
     const userContext = `
 Estudiante: ${profile?.full_name || 'Usuario'}
 Nivel XP: ${profile?.experience_points || 0} puntos
@@ -188,6 +212,7 @@ Rutas activas: ${activePathsCount > 0 ? `${activePathsCount} rutas - ${pathsSumm
 
 ${vocationalProfile ? `Perfil Vocacional: ${vocationalProfile.summary.slice(0, 150)}...` : 'Sin perfil vocacional'}
 ${studyPlanContext}
+${notebookContext}
 `;
 
     const systemPrompt = `Eres SEDE AI, el asistente educativo inteligente de SEDEFY. Tu misión es maximizar el potencial de cada estudiante mediante recomendaciones personalizadas y guía estratégica.
