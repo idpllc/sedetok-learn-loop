@@ -153,7 +153,7 @@ export default function PublishingErrorDetails() {
                 <Badge variant="destructive">Live bloqueado</Badge>
               </div>
               <p className="max-w-3xl text-muted-foreground">
-                Diagnóstico generado desde el estado real de Live y Test. La publicación falla antes de aplicar el módulo Notebook.
+                Diagnóstico generado desde comprobaciones directas en Live. La publicación falla al intentar crear un índice único sobre progreso de rutas.
               </p>
             </div>
             <Button onClick={handleCopy} className="gap-2 self-start lg:self-center">
@@ -167,8 +167,11 @@ export default function PublishingErrorDetails() {
       <section className="container mx-auto space-y-6 px-4 py-8">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Migración exacta bloqueante probable</AlertTitle>
-          <AlertDescription className="break-words font-mono text-xs sm:text-sm">{blockingMigration}</AlertDescription>
+          <AlertTitle>Migración exacta bloqueante confirmada</AlertTitle>
+          <AlertDescription className="space-y-2 break-words text-xs sm:text-sm">
+            <p className="font-mono">{blockingMigration}</p>
+            <p className="font-mono">{blockingStatement}</p>
+          </AlertDescription>
         </Alert>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -216,7 +219,7 @@ export default function PublishingErrorDetails() {
               <FileCode2 className="h-5 w-5 text-primary" />
               Cola de migraciones pendiente en Live
             </CardTitle>
-            <CardDescription>Live se detiene en la primera migración de esta lista.</CardDescription>
+            <CardDescription>Live se detiene en la migración de índices antes de llegar a seguridad y Notebook.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -241,7 +244,7 @@ export default function PublishingErrorDetails() {
 
         <Accordion type="single" collapsible defaultValue="sql" className="rounded-lg border px-4">
           <AccordionItem value="sql" className="border-0">
-            <AccordionTrigger>SQL sospechoso dentro de la migración bloqueante</AccordionTrigger>
+            <AccordionTrigger>SQL exacto dentro de la migración bloqueante</AccordionTrigger>
             <AccordionContent>
               <pre className="max-h-[520px] overflow-auto rounded-md bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
                 <code>{suspectedSql}</code>
