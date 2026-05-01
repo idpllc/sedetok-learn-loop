@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, BookOpen, Trash2, Loader2 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
 
 const Notebook = () => {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ const Notebook = () => {
                 Tus cuadernos con fuentes y chat con SEDE AI
               </p>
             </div>
-            <Button onClick={handleCreate} disabled={creating} size="lg" className="gap-2">
+            <Button onClick={handleCreate} disabled={creating} size="lg" className="gap-2" data-tour="create-notebook">
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Crear cuaderno
             </Button>
@@ -72,7 +73,7 @@ const Notebook = () => {
               <p className="text-muted-foreground mb-6">
                 Crea tu primer cuaderno para empezar a conversar con SEDE AI sobre tus fuentes
               </p>
-              <Button onClick={handleCreate} disabled={creating} className="gap-2">
+              <Button onClick={handleCreate} disabled={creating} className="gap-2" data-tour="create-notebook">
                 <Plus className="h-4 w-4" /> Crear mi primer cuaderno
               </Button>
             </Card>
@@ -109,6 +110,8 @@ const Notebook = () => {
           )}
         </div>
       </main>
+      <NotebookTutorial />
+      <NotebookTutorialHelpButton />
     </>
   );
 };

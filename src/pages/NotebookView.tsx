@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
+import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
@@ -763,13 +764,14 @@ const NotebookView = () => {
         >
           {/* Sources */}
           <aside
+            data-tour="sources-panel"
             className={`border-r overflow-y-auto p-3 lg:block ${
               mobileTab === "fuentes" ? "block" : "hidden"
             } ${viewing && viewerExpanded ? "lg:hidden" : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Fuentes</h2>
-              <Button size="sm" variant="ghost" onClick={() => setShowAdd(true)} className="gap-1 h-7">
+              <Button size="sm" variant="ghost" onClick={() => setShowAdd(true)} className="gap-1 h-7" data-tour="add-source">
                 <Plus className="h-3.5 w-3.5" /> Añadir
               </Button>
             </div>
@@ -868,7 +870,7 @@ const NotebookView = () => {
           </aside>
 
           {/* Chat */}
-          <section className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
+          <section data-tour="chat-panel" className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
               {chat.messages.length === 0 && announcedSources.length === 0 ? (
                 <div className="max-w-2xl mx-auto text-center py-12">
@@ -987,7 +989,7 @@ const NotebookView = () => {
             </div>
 
             {/* Input */}
-            <div className="border-t p-3 md:p-4 shrink-0">
+            <div className="border-t p-3 md:p-4 shrink-0" data-tour="chat-input">
               <div className="max-w-3xl mx-auto flex items-end gap-2">
                 <Textarea
                   rows={1}
@@ -1014,7 +1016,7 @@ const NotebookView = () => {
           </section>
 
           {/* Studio / Capsule Viewer */}
-          <aside className={`border-l overflow-hidden lg:flex lg:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
+          <aside data-tour="studio-panel" className={`border-l overflow-hidden lg:flex lg:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
             {viewing ? (
               // Capsule viewer (replaces the studio selector while open)
               <>
@@ -1078,6 +1080,7 @@ const NotebookView = () => {
                     return (
                       <button
                         key={opt.id}
+                        data-tour={opt.id === "quiz" ? "studio-quiz" : undefined}
                         onClick={() => handleStudio(opt)}
                         disabled={chat.isStreaming || studioSearching || noSources}
                         className={`relative flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
@@ -1329,6 +1332,9 @@ const NotebookView = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <NotebookTutorial />
+      <NotebookTutorialHelpButton />
     </>
   );
 };
