@@ -34,6 +34,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { RichContentEditor } from "./RichContentEditor";
+import { MindMapEditor } from "./mindmap/MindMapEditor";
+import { MindMapData, createEmptyMindMap } from "./mindmap/types";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -160,6 +162,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [fileType, setFileType] = useState<'video' | 'document' | 'image' | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [richText, setRichText] = useState("");
+  const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
 
   useEffect(() => {
     if (editMode && contentData) {
@@ -181,6 +184,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
       setRichText((contentData as any).rich_text || "");
+      setMindMapData((contentData as any).mind_map_data || null);
       
       // Load quiz config if editing a quiz
       if (contentData.content_type === 'quiz') {
@@ -301,6 +305,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         quiz: "Crear Quiz",
         learning_path: "Crear Ruta de Aprendizaje",
         game: "Crear Juego",
+        mapa_mental: "Crear Mapa Mental",
       };
       onTitleChange(formData.content_type ? titles[formData.content_type as ContentType | 'learning_path'] : "Crear Contenido");
     }

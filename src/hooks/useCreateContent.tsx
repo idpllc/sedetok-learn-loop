@@ -21,6 +21,7 @@ interface CreateContentData {
   thumbnail_url?: string;
   rich_text?: string | null;
   reading_type?: string | null;
+  mind_map_data?: any | null;
 }
 
 export const useCreateContent = () => {
