@@ -351,8 +351,8 @@ export const NotebookTutorial = () => {
 
     const preferTopForTallTarget = rect.height > vh * 0.35;
 
-    if (preferTopForTallTarget && tryTop > 16) {
-      popTop = tryTop;
+    if (preferTopForTallTarget) {
+      popTop = Math.max(16, rect.top + 16);
       popLeft = Math.max(16, Math.min(vw - popW - 16, tryLeft));
     } else if (placement === "right" && tryRight + popW < vw - 16) {
       popLeft = tryRight;
@@ -400,7 +400,7 @@ export const NotebookTutorial = () => {
   const allowInteraction = !!step.allowInteraction;
 
   return createPortal(
-    <div className="fixed inset-0 z-[95] pointer-events-none">
+    <div className="fixed inset-0 z-[110] pointer-events-none">
       {/* Dimming layers — these block clicks. The highlight gap does NOT, so
           the user can click the real element. */}
       {dimRects.map((d, i) => (
@@ -429,7 +429,7 @@ export const NotebookTutorial = () => {
 
       {/* Popover */}
       <div
-        className="absolute rounded-xl bg-background border shadow-2xl p-4 pointer-events-auto"
+          className="absolute z-[120] rounded-xl bg-background border shadow-2xl p-4 pointer-events-auto"
         style={{ top: popTop, left: popLeft, width: popW }}
         role="dialog"
         aria-label={step.title}
