@@ -163,6 +163,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [dragActive, setDragActive] = useState(false);
   const [richText, setRichText] = useState("");
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
+  const [mindMapStep, setMindMapStep] = useState<0 | 1>(0); // 0 = basic info, 1 = full-screen builder
+  const [isSavingMindMapDraft, setIsSavingMindMapDraft] = useState(false);
 
   useEffect(() => {
     if (editMode && contentData) {
@@ -305,11 +307,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         quiz: "Crear Quiz",
         learning_path: "Crear Ruta de Aprendizaje",
         game: "Crear Juego",
-        mapa_mental: "Crear Mapa Mental",
+        mapa_mental: mindMapStep === 1 ? "Constructor de Mapa Mental" : "Crear Mapa Mental",
       };
       onTitleChange(formData.content_type ? titles[formData.content_type as ContentType | 'learning_path'] : "Crear Contenido");
     }
-  }, [formData.content_type, onTitleChange]);
+  }, [formData.content_type, mindMapStep, onTitleChange]);
 
   const detectFileType = (file: File): 'video' | 'document' | 'image' | null => {
     const videoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska'];
@@ -706,6 +708,54 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       toast.error(editMode ? "Error al actualizar el juego" : "Error al guardar el juego");
     } finally {
       setIsSubmittingGame(false);
+    }
+  };
+
+  const handleMindMapSave = async (status: "borrador" | "publicado") => {
+    if (!user) {
+      toast.error("Debes iniciar sesión");
+      return;
+    }
+    if (!formData.title || !formData.category || !formData.grade_level) {
+      toast.error("Completa título, asignatura y nivel antes de guardar");
+      setMindMapStep(0);
+      return;
+    }
+    if (!mindMapData || !mindMapData.root?.title?.trim()) {
+      toast.error("Define al menos el tema central del mapa.");
+      return;
+    }
+
+    setIsSavingMindMapDraft(true);
+    try {
+      const payload = {
+        title: formData.title,
+        description: null,
+        category: formData.category,
+        subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
+        grade_level: formData.grade_level,
+        content_type: 'mapa_mental' as ContentType,
+        tags: tags,
+        is_public: status === "publicado" ? isPublic : false,
+        rich_text: null,
+        reading_type: null,
+        mind_map_data: mindMapData,
+      };
+
+      if (editMode && contentData?.id && onUpdate) {
+        await onUpdate(contentData.id, payload);
+        toast.success(status === "publicado" ? "Mapa mental actualizado" : "Borrador guardado");
+        navigate("/profile");
+      } else {
+        await createMutation.mutateAsync(payload);
+        toast.success(status === "publicado" ? "¡Mapa mental publicado!" : "Borrador guardado");
+        navigate(status === "publicado" ? "/" : "/profile");
+      }
+    } catch (err: any) {
+      console.error("Error saving mind map:", err);
+      toast.error(err.message || "Error al guardar el mapa mental");
+    } finally {
+      setIsSavingMindMapDraft(false);
     }
   };
 
@@ -1310,6 +1360,58 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     );
   }
 
+  // Mind Map full-screen builder (step 1)
+  if (formData.content_type === 'mapa_mental' && mindMapStep === 1) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setMindMapStep(0)}
+            disabled={isSavingMindMapDraft || isLoading}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleMindMapSave("borrador")}
+              disabled={isSavingMindMapDraft || isLoading}
+            >
+              {isSavingMindMapDraft ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Guardar borrador
+            </Button>
+            <Button
+              type="button"
+              onClick={() => handleMindMapSave("publicado")}
+              disabled={isSavingMindMapDraft || isLoading}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              {editMode ? "Guardar cambios" : "Publicar"}
+            </Button>
+          </div>
+        </div>
+
+        <div style={{ height: "calc(100vh - 200px)", minHeight: 480 }}>
+          <MindMapEditor
+            value={mindMapData}
+            onChange={setMindMapData}
+            topicHint={formData.title}
+            fillParent
+          />
+        </div>
+      </div>
+    );
+  }
+
   // Normal form or quiz step 1 (basic data)
   return (
     <>
@@ -1724,16 +1826,16 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {!isQuizMode && !isPathMode && !isGameMode && formData.content_type === 'mapa_mental' && (
-        <div className="space-y-2">
-          <Label>Mapa Mental *</Label>
-          <MindMapEditor
-            value={mindMapData}
-            onChange={setMindMapData}
-            topicHint={formData.title}
-          />
-          <p className="text-xs text-muted-foreground">
-            Edita el tema central, agrega ramas con el botón + y construye la estructura jerárquica. También puedes generar un borrador con IA.
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm">
+            En el siguiente paso construirás tu mapa mental en un tablero de pantalla completa.
+            Allí podrás generar un borrador con IA, editar nodos visualmente y guardar el borrador.
           </p>
+          {mindMapData?.root?.title && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Tema central actual: <span className="font-medium">{mindMapData.root.title}</span>
+            </p>
+          )}
         </div>
       )}
 
@@ -1875,6 +1977,25 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         >
           <ArrowRight className="w-4 h-4 mr-2" />
           Configurar Ruta de Aprendizaje
+        </Button>
+      ) : formData.content_type === 'mapa_mental' ? (
+        <Button
+          type="button"
+          className="w-full"
+          onClick={() => {
+            if (!formData.title || !formData.category || !formData.grade_level) {
+              toast.error("Completa título, asignatura y nivel para continuar");
+              return;
+            }
+            if (!mindMapData) {
+              setMindMapData(createEmptyMindMap(formData.title || "Tema central"));
+            }
+            setMindMapStep(1);
+          }}
+          disabled={!formData.title || !formData.category || !formData.grade_level}
+        >
+          <ArrowRight className="w-4 h-4 mr-2" />
+          Continuar con el Mapa Mental
         </Button>
       ) : (
         <Button type="submit" className="w-full" disabled={isLoading}>
