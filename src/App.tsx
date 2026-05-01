@@ -79,6 +79,9 @@ const PWAInstallPrompt = lazy(() =>
 const PWAOpenInAppBanner = lazy(() =>
   import("@/components/PWAOpenInAppBanner").then((m) => ({ default: m.PWAOpenInAppBanner }))
 );
+const NotebookPromoModal = lazy(() =>
+  import("@/components/NotebookPromoModal").then((m) => ({ default: m.NotebookPromoModal }))
+);
 
 const queryClient = new QueryClient();
 
@@ -108,6 +111,7 @@ const GlobalChrome = () => {
       <FloatingTutorChat />
       <PWAInstallPrompt />
       <PWAOpenInAppBanner />
+      <NotebookPromoModal />
     </Suspense>
   );
 };
