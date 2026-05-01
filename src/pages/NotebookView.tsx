@@ -279,6 +279,7 @@ const NotebookView = () => {
   const [studioOffset, setStudioOffset] = useState(0);
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
+  const [creatingType, setCreatingType] = useState<string | null>(null);
 
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
