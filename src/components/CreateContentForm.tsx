@@ -1389,6 +1389,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <SelectItem value="video">🎥 Video</SelectItem>
             <SelectItem value="document">📄 Recurso</SelectItem>
             <SelectItem value="lectura">📖 Lectura</SelectItem>
+            <SelectItem value="mapa_mental">🧠 Mapa Mental</SelectItem>
             <SelectItem value="quiz">📝 Quiz</SelectItem>
             <SelectItem value="game">🎮 Juego</SelectItem>
             <SelectItem value="learning_path">🗺️ Ruta de Aprendizaje</SelectItem>
@@ -1491,7 +1492,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {/* Contenido según tipo */}
-      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type !== 'lectura' && (
+      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
         <>
           {(
 
@@ -1722,7 +1723,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         </>
       )}
 
-      {formData.content_type !== 'lectura' && (
+      {formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
         <div className="space-y-2">
           <Label htmlFor="description">Descripción</Label>
           <Textarea
