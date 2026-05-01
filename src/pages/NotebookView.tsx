@@ -741,8 +741,14 @@ const NotebookView = () => {
                     size="sm"
                     className="w-full h-7 text-[11px] gap-1"
                     onClick={() => handleCreateCapsule(studioActive.id)}
+                    disabled={creatingType === studioActive.id}
                   >
-                    {studioActive.createRoute ? (
+                    {creatingType === studioActive.id ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Generando…
+                      </>
+                    ) : studioActive.createRoute ? (
                       <>
                         <Wand2 className="h-3 w-3" />
                         Generar {studioActive.label.toLowerCase()} con IA
