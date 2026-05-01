@@ -279,6 +279,7 @@ const NotebookView = () => {
   const [studioOffset, setStudioOffset] = useState(0);
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
+  const [creatingType, setCreatingType] = useState<string | null>(null);
 
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
@@ -373,15 +374,44 @@ const NotebookView = () => {
     else window.open(`/sedetok?content=${r.id}`, "_blank");
   };
 
-  const handleCreateCapsule = (type: string) => {
+  const handleCreateCapsule = async (type: string) => {
     const opt = STUDIO_BY_ID[type];
     if (!opt) return;
-    if (!opt.createRoute) {
+    // Video: no AI creator — go to manual upload
+    if (!opt.createRoute || opt.id === "video") {
       navigate("/create?type=video");
       return;
     }
-    const sep = opt.createRoute.includes("?") ? "&" : "?";
-    navigate(`${opt.createRoute}${sep}notebook=${id}`);
+    if (!id || creatingType) return;
+
+    setCreatingType(type);
+    await chat.appendLocal(
+      `Crear ${opt.label.toLowerCase()} con IA`,
+      `Estoy generando ${opt.label.toLowerCase()} con IA usando tus fuentes. Esto puede tardar unos segundos…`
+    );
+
+    try {
+      const { data, error } = await supabase.functions.invoke("notebook-create-capsule", {
+        body: { notebookId: id, type },
+      });
+      if (error) throw error;
+      if (!data?.route) throw new Error("Respuesta inválida");
+
+      await chat.appendLocal(
+        "",
+        `✅ Listo. He creado tu ${opt.label.toLowerCase()} y la he publicado. Abriendo…`
+      );
+      // Open the new capsule in a new tab so the notebook stays open
+      window.open(data.route, "_blank");
+    } catch (e: any) {
+      console.error(e);
+      await chat.appendLocal(
+        "",
+        `❌ No pude crear la cápsula con IA: ${e?.message || "error desconocido"}.`
+      );
+    } finally {
+      setCreatingType(null);
+    }
   };
 
   const handleSaveTitle = async () => {
@@ -537,13 +567,18 @@ const NotebookView = () => {
                                 size="sm"
                                 onClick={() => handleCreateCapsule(studioCta.type)}
                                 className="gap-1.5"
+                                disabled={creatingType === studioCta.type}
                               >
-                                {studioCta.type === "video" ? (
+                                {creatingType === studioCta.type ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : studioCta.type === "video" ? (
                                   <ExternalLink className="h-3.5 w-3.5" />
                                 ) : (
                                   <Wand2 className="h-3.5 w-3.5" />
                                 )}
-                                {STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
+                                {creatingType === studioCta.type
+                                  ? "Generando…"
+                                  : STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
                               </Button>
                             </div>
                           )}
@@ -711,8 +746,14 @@ const NotebookView = () => {
                     size="sm"
                     className="w-full h-7 text-[11px] gap-1"
                     onClick={() => handleCreateCapsule(studioActive.id)}
+                    disabled={creatingType === studioActive.id}
                   >
-                    {studioActive.createRoute ? (
+                    {creatingType === studioActive.id ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Generando…
+                      </>
+                    ) : studioActive.createRoute ? (
                       <>
                         <Wand2 className="h-3 w-3" />
                         Generar {studioActive.label.toLowerCase()} con IA
