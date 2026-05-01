@@ -465,6 +465,7 @@ const NodeBox = ({
   collapsed,
   hasChildren,
   onToggleCollapse,
+  hideControls = false,
 }: NodeBoxProps) => {
   const colorClass = isRoot
     ? "bg-primary/15 border-primary text-foreground"
