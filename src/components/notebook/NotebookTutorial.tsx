@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, X, Sparkles, HelpCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
-const STORAGE_KEY = "notebook_tutorial_completed_v3";
+const STORAGE_KEY = "notebook_tutorial_completed_v4";
 const TRIGGER_KEY = "notebook_tutorial_open";
 
 type StepAction = {
