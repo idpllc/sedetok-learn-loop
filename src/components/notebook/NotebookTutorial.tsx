@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, X, Sparkles, HelpCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
-const STORAGE_KEY = "notebook_tutorial_completed_v4";
+const STORAGE_KEY = "notebook_tutorial_completed_v5";
+const STATE_KEY = "notebook_tutorial_state_v1";
 const TRIGGER_KEY = "notebook_tutorial_open";
 
 type StepAction = {
@@ -176,12 +177,28 @@ export const NotebookTutorial = () => {
   const [, force] = useState(0);
   const enteredRef = useRef<number>(-1);
 
-  // Auto-start once when entering /notebook
+  const firstStepForRoute = useCallback((pathname: string) => {
+    const index = STEPS.findIndex((s) => s.routeMatcher(pathname));
+    return Math.max(0, index);
+  }, []);
+
+  // Auto-start once when entering /notebook, or resume after creating a notebook.
   useEffect(() => {
-    if (!isListRoute(location.pathname)) return;
     try {
+      const saved = sessionStorage.getItem(STATE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as { active?: boolean; stepIndex?: number };
+        if (parsed.active) {
+          const nextIndex = STEPS[parsed.stepIndex || 0]?.routeMatcher(location.pathname)
+            ? parsed.stepIndex || 0
+            : firstStepForRoute(location.pathname);
+          setStepIndex(nextIndex);
+          setActive(true);
+          return;
+        }
+      }
       const completed = localStorage.getItem(STORAGE_KEY) === "true";
-      if (!completed) {
+      if (!completed && isListRoute(location.pathname)) {
         const t = setTimeout(() => {
           setStepIndex(0);
           setActive(true);
@@ -189,17 +206,24 @@ export const NotebookTutorial = () => {
         return () => clearTimeout(t);
       }
     } catch {}
-  }, [location.pathname]);
+  }, [firstStepForRoute, location.pathname]);
+
+  useEffect(() => {
+    try {
+      if (active) sessionStorage.setItem(STATE_KEY, JSON.stringify({ active: true, stepIndex }));
+      else sessionStorage.removeItem(STATE_KEY);
+    } catch {}
+  }, [active, stepIndex]);
 
   // Manual relaunch
   useEffect(() => {
     const handler = () => {
-      setStepIndex(0);
+      setStepIndex(firstStepForRoute(location.pathname));
       setActive(true);
     };
     window.addEventListener(TRIGGER_KEY, handler);
     return () => window.removeEventListener(TRIGGER_KEY, handler);
-  }, []);
+  }, [firstStepForRoute, location.pathname]);
 
   const step = STEPS[stepIndex];
   const stepMatchesRoute = step ? step.routeMatcher(location.pathname) : false;
@@ -215,6 +239,12 @@ export const NotebookTutorial = () => {
       return () => clearTimeout(t);
     }
   }, [active, step, stepIndex, stepMatchesRoute]);
+
+  // If a resumed step belongs to another route, jump to the first valid step here.
+  useEffect(() => {
+    if (!active || !step || stepMatchesRoute) return;
+    setStepIndex(firstStepForRoute(location.pathname));
+  }, [active, firstStepForRoute, location.pathname, step, stepMatchesRoute]);
 
   // Auto-advance polling
   useEffect(() => {
@@ -265,6 +295,7 @@ export const NotebookTutorial = () => {
   const finish = () => {
     try {
       localStorage.setItem(STORAGE_KEY, "true");
+      sessionStorage.removeItem(STATE_KEY);
     } catch {}
     setActive(false);
   };
@@ -318,7 +349,12 @@ export const NotebookTutorial = () => {
     const tryRight = rect.right + 12;
     const tryLeftSide = rect.left - popW - 12;
 
-    if (placement === "right" && tryRight + popW < vw - 16) {
+    const preferTopForTallTarget = rect.height > vh * 0.35;
+
+    if (preferTopForTallTarget) {
+      popTop = Math.max(16, rect.top + 16);
+      popLeft = Math.max(16, Math.min(vw - popW - 16, tryLeft));
+    } else if (placement === "right" && tryRight + popW < vw - 16) {
       popLeft = tryRight;
       popTop = Math.max(16, Math.min(vh - popH - 16, rect.top));
     } else if (placement === "left" && tryLeftSide > 16) {
@@ -364,7 +400,7 @@ export const NotebookTutorial = () => {
   const allowInteraction = !!step.allowInteraction;
 
   return createPortal(
-    <div className="fixed inset-0 z-[95] pointer-events-none">
+    <div className="fixed inset-0 z-[110] pointer-events-none">
       {/* Dimming layers — these block clicks. The highlight gap does NOT, so
           the user can click the real element. */}
       {dimRects.map((d, i) => (
@@ -393,7 +429,7 @@ export const NotebookTutorial = () => {
 
       {/* Popover */}
       <div
-        className="absolute rounded-xl bg-background border shadow-2xl p-4 pointer-events-auto"
+          className="absolute z-[120] rounded-xl bg-background border shadow-2xl p-4 pointer-events-auto"
         style={{ top: popTop, left: popLeft, width: popW }}
         role="dialog"
         aria-label={step.title}
