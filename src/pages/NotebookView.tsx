@@ -17,8 +17,8 @@ import {
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { useNotebookSearch, type SedefyResult } from "@/hooks/useNotebookSearch";
-import { X } from "lucide-react";
+import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
+import { X, FileSearch, NotebookPen, Library } from "lucide-react";
 
 const TYPE_ICONS: Record<string, any> = {
   pdf: FileText, docx: FileText, xlsx: FileText, text: Type, url: LinkIcon, video: Video, competence: GraduationCap,
@@ -28,11 +28,15 @@ type StudioOption = {
   id: string;
   label: string;
   icon: any;
+  /** Tailwind classes for the button color theme */
+  color: string;
+  /** Optional reading subtype to scope the search */
+  readingSubtype?: ReadingSubtype;
   /** Content type filter for SEDEFY library search */
   searchType: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
   /** Route to AI-powered creator. null => no AI creator (e.g., video). */
   createRoute: string | null;
-  /** Prompt sent to AI: forces it to FIRST search existing capsules, then offer to create. */
+  /** Prompt (legacy, unused after local search refactor) */
   prompt: string;
 };
 
