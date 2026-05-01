@@ -281,6 +281,8 @@ const NotebookView = () => {
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
+  // Cache of the first 3 results per studio option id (after a search has run)
+  const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>({});
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
