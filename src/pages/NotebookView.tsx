@@ -898,7 +898,7 @@ const NotebookView = () => {
           </aside>
 
           {/* Chat */}
-          <section data-tour="chat-panel" className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"} ${viewing && viewerExpanded ? "lg:hidden" : ""}`}>
+          <section data-tour="chat-panel" className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
               {chat.messages.length === 0 && announcedSources.length === 0 ? (
                 <div className="max-w-2xl mx-auto text-center py-12">
