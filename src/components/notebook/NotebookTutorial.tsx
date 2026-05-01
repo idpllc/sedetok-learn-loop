@@ -240,6 +240,12 @@ export const NotebookTutorial = () => {
     }
   }, [active, step, stepIndex, stepMatchesRoute]);
 
+  // If a resumed step belongs to another route, jump to the first valid step here.
+  useEffect(() => {
+    if (!active || !step || stepMatchesRoute) return;
+    setStepIndex(firstStepForRoute(location.pathname));
+  }, [active, firstStepForRoute, location.pathname, step, stepMatchesRoute]);
+
   // Auto-advance polling
   useEffect(() => {
     if (!active || !step?.shouldAutoAdvance) return;
@@ -289,6 +295,7 @@ export const NotebookTutorial = () => {
   const finish = () => {
     try {
       localStorage.setItem(STORAGE_KEY, "true");
+      sessionStorage.removeItem(STATE_KEY);
     } catch {}
     setActive(false);
   };
