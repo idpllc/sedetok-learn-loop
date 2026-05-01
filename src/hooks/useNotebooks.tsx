@@ -84,8 +84,12 @@ export const useNotebooks = () => {
         .update({ title, description })
         .eq("id", id);
       if (error) throw error;
+      return { id, title };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["notebooks"] }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["notebooks"] });
+      if (res?.id) qc.invalidateQueries({ queryKey: ["notebook", res.id] });
+    },
   });
 
   return { list, create, remove, rename };
