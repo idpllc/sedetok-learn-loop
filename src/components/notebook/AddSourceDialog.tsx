@@ -33,6 +33,15 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   const { ingest } = useNotebookSources(notebookId);
   const { user } = useAuth();
   const { toast } = useToast();
+  const textDraftKey = `notebook:add-source-text-draft:v1:${notebookId}`;
+  const readTextDraft = () => {
+    try {
+      const raw = sessionStorage.getItem(textDraftKey);
+      return raw ? JSON.parse(raw) as { title?: string; content?: string } : {};
+    } catch {
+      return {};
+    }
+  };
   const [tab, setTab] = useState<string>(defaultTab || "text");
 
   // When the dialog re-opens, honour the requested defaultTab
@@ -51,8 +60,18 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   }, []);
 
   // Text source
-  const [textTitle, setTextTitle] = useState("");
-  const [textContent, setTextContent] = useState("");
+  const [textTitle, setTextTitle] = useState(() => readTextDraft().title || "");
+  const [textContent, setTextContent] = useState(() => readTextDraft().content || "");
+
+  useEffect(() => {
+    try {
+      if (textTitle || textContent) {
+        sessionStorage.setItem(textDraftKey, JSON.stringify({ title: textTitle, content: textContent }));
+      } else {
+        sessionStorage.removeItem(textDraftKey);
+      }
+    } catch {}
+  }, [textContent, textDraftKey, textTitle]);
 
   // URL source
   const [url, setUrl] = useState("");
@@ -67,11 +86,14 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     setUrl("");
     setVideoUrl("");
     setVideoTitle("");
+    try { sessionStorage.removeItem(textDraftKey); } catch {}
   };
 
-  const handleClose = () => {
+  const isTutorialActive = () => !!document.querySelector('[data-notebook-tutorial="true"]');
+
+  const handleClose = ({ resetDraft = true }: { resetDraft?: boolean } = {}) => {
     if (uploading || ingest.isPending) return;
-    reset();
+    if (resetDraft) reset();
     onClose();
   };
 
