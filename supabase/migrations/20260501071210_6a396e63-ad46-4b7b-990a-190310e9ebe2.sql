@@ -30,6 +30,9 @@ GRANT EXECUTE ON FUNCTION public.get_profile_private_fields(uuid) TO authenticat
 
 -- 2) USER_QUIZ_RESULTS: drop public policy, add scoped policies.
 DROP POLICY IF EXISTS "Quiz results are publicly viewable" ON public.user_quiz_results;
+DROP POLICY IF EXISTS "Users can view their own quiz results" ON public.user_quiz_results;
+DROP POLICY IF EXISTS "Institution staff can view student quiz results" ON public.user_quiz_results;
+DROP POLICY IF EXISTS "Superadmins can view all quiz results" ON public.user_quiz_results;
 
 CREATE POLICY "Users can view their own quiz results"
 ON public.user_quiz_results
@@ -51,6 +54,7 @@ USING (public.has_role(auth.uid(), 'superadmin'::app_role));
 
 -- 3) INSTITUTION_MEMBERS: drop public policy, restrict to same-institution members and superadmins.
 DROP POLICY IF EXISTS "Institution members are publicly viewable" ON public.institution_members;
+DROP POLICY IF EXISTS "Members can view co-members of same institution" ON public.institution_members;
 
 CREATE POLICY "Members can view co-members of same institution"
 ON public.institution_members
