@@ -303,6 +303,7 @@ const NotebookView = () => {
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [addSourceTab, setAddSourceTab] = useState<"file" | "text" | "competence">("file");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
@@ -1243,7 +1244,7 @@ const NotebookView = () => {
         )}
       </div>
 
-      <AddSourceDialog open={showAdd} onClose={() => setShowAdd(false)} notebookId={id!} />
+      <AddSourceDialog open={showAdd} onClose={() => setShowAdd(false)} notebookId={id!} defaultTab={addSourceTab} />
 
       <Dialog open={!!editingSourceId} onOpenChange={(v) => { if (!v) setEditingSourceId(null); }}>
         <DialogContent className="max-w-2xl">
