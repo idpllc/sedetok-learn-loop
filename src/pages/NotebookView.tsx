@@ -907,14 +907,16 @@ const NotebookView = () => {
           </aside>
         </div>
 
-        {/* Mobile: floating add sources button */}
-        <Button
-          className="md:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
-          size="icon"
-          onClick={() => setShowAdd(true)}
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
+        {/* Mobile: floating add sources button (only on Fuentes tab) */}
+        {mobileTab === "fuentes" && (
+          <Button
+            className="md:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
+            size="icon"
+            onClick={() => setShowAdd(true)}
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       <AddSourceDialog open={showAdd} onClose={() => setShowAdd(false)} notebookId={id!} />
