@@ -761,11 +761,16 @@ const NotebookView = () => {
                         <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isActive ? "text-primary" : "text-primary/70"}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm truncate" title={s.title}>{s.title}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground line-clamp-2">
                             {s.status === "processing" && (
                               <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Procesando</span>
                             )}
-                            {s.status === "ready" && <span>{s.source_type.toUpperCase()}</span>}
+                            {s.status === "ready" && (
+                              <span title={s.extracted_text || ""}>
+                                {(s.extracted_text || "").trim().slice(0, 120) || s.source_type.toUpperCase()}
+                                {(s.extracted_text || "").length > 120 ? "…" : ""}
+                              </span>
+                            )}
                             {s.status === "error" && <span className="text-destructive">Error</span>}
                           </p>
                         </div>
