@@ -238,6 +238,7 @@ const parseAssistantContent = (raw: string) => {
   let paths: any[] | null = null;
   let contentItems: any[] | null = null;
   let studioCta: { type: string } | null = null;
+  let generating: { type: string } | null = null;
 
   const pathsMatch = content.match(/\|\|\|PATHS_DATA:(.*?)\|\|\|/);
   if (pathsMatch) {
@@ -254,7 +255,12 @@ const parseAssistantContent = (raw: string) => {
     try { studioCta = JSON.parse(ctaMatch[1]); } catch {}
     content = content.replace(/\|\|\|STUDIO_CTA:.*?\|\|\|/, "").trim();
   }
-  return { content, paths, contentItems, studioCta };
+  const genMatch = content.match(/\|\|\|GENERATING:(.*?)\|\|\|/);
+  if (genMatch) {
+    try { generating = JSON.parse(genMatch[1]); } catch {}
+    content = content.replace(/\|\|\|GENERATING:.*?\|\|\|/, "").trim();
+  }
+  return { content, paths, contentItems, studioCta, generating };
 };
 
 // ----- Main page -----
