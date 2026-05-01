@@ -103,6 +103,7 @@ export const useAdminStats = () => {
         completedQuizzesCount: completedQuizzesCount || 0,
         chatGroupsCount: chatGroupsCount || 0,
         chatMessagesCount: chatMessagesCount || 0,
+        notebooksCount: notebooksCount || 0,
         aiMessagesTotal,
         sedeAiMessagesCount,
         alexMessagesCount,
