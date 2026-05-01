@@ -162,6 +162,8 @@ export default function PublishingErrorDetails() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSuperAdmin, loading } = useSuperAdmin();
+  const [preflight, setPreflight] = useState<PreflightResult | null>(null);
+  const [preflightLoading, setPreflightLoading] = useState(false);
 
   const generatedAt = useMemo(
     () =>
@@ -175,6 +177,30 @@ export default function PublishingErrorDetails() {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(copyPayload);
     toast({ title: "Detalle copiado", description: "El diagnóstico de publicación quedó en el portapapeles." });
+  };
+
+  const runPreflight = async () => {
+    setPreflightLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("publishing-preflight", {
+        body: { table: "user_path_progress" },
+      });
+
+      if (error) throw error;
+      if (!data?.result) throw new Error("La verificación no devolvió resultados.");
+
+      setPreflight(data.result as PreflightResult);
+      toast({
+        title: data.result.has_duplicates ? "Preflight bloqueado" : "Preflight correcto",
+        description: data.result.message,
+        variant: data.result.has_duplicates ? "destructive" : "default",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo ejecutar la verificación previa.";
+      toast({ title: "Error en preflight", description: message, variant: "destructive" });
+    } finally {
+      setPreflightLoading(false);
+    }
   };
 
   if (loading) {
