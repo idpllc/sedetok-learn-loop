@@ -12,7 +12,8 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
-  Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink
+  Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
+  Maximize2, Minimize2, ChevronLeft
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import ReactMarkdown from "react-markdown";
@@ -281,6 +282,10 @@ const NotebookView = () => {
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
 
+  // Capsule viewer state (replaces the studio selector when active)
+  const [viewing, setViewing] = useState<SedefyResult | null>(null);
+  const [viewerExpanded, setViewerExpanded] = useState(false);
+
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
     queryFn: async () => {
@@ -367,11 +372,16 @@ const NotebookView = () => {
     setStudioResults((prev) => prev.filter((r) => r.id !== rid));
   };
 
+  const resultUrl = (r: SedefyResult) => {
+    if (r.type === "quiz") return `/?quiz=${r.id}`;
+    if (r.type === "game") return `/?game=${r.id}`;
+    if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}`;
+    return `/sedetok?content=${r.id}`;
+  };
+
   const openResult = (r: SedefyResult) => {
-    if (r.type === "quiz") window.open(`/?quiz=${r.id}`, "_blank");
-    else if (r.type === "game") window.open(`/?game=${r.id}`, "_blank");
-    else if (r.type === "path" || r.type === "course") window.open(`/learning-paths/view/${r.id}`, "_blank");
-    else window.open(`/sedetok?content=${r.id}`, "_blank");
+    setViewing(r);
+    setViewerExpanded(false);
   };
 
   const handleCreateCapsule = async (type: string) => {
@@ -456,8 +466,16 @@ const NotebookView = () => {
           )}
         </header>
 
-        {/* 3-column layout */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-[280px_1fr_300px] overflow-hidden">
+        {/* 3-column layout — right column grows when viewing a capsule (expandable) */}
+        <div
+          className={`flex-1 grid grid-cols-1 overflow-hidden ${
+            viewing
+              ? viewerExpanded
+                ? "md:grid-cols-[280px_1fr_70%]"
+                : "md:grid-cols-[280px_1fr_30%]"
+              : "md:grid-cols-[280px_1fr_320px]"
+          }`}
+        >
           {/* Sources */}
           <aside className="border-r overflow-y-auto p-3 hidden md:block">
             <div className="flex items-center justify-between mb-3">
@@ -618,154 +636,206 @@ const NotebookView = () => {
             </div>
           </section>
 
-          {/* Studio */}
-          <aside className="border-l overflow-y-auto p-3 hidden md:block">
-            <h2 className="font-semibold text-sm mb-3 flex items-center gap-1">
-              <Sparkles className="h-4 w-4 text-primary" /> Studio
-            </h2>
-            <p className="text-xs text-muted-foreground mb-3">Genera cápsulas Sedefy a partir de tus fuentes.</p>
-            <div className="grid grid-cols-2 gap-2">
-              {STUDIO_OPTIONS.map((opt) => {
-                const Icon = opt.icon;
-                const isActive = studioActive?.id === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => handleStudio(opt)}
-                    disabled={chat.isStreaming || studioSearching || noSources}
-                    className={`flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
-                      isActive ? "ring-2 ring-offset-1 ring-current shadow-sm" : ""
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="text-[11px] font-semibold leading-tight text-foreground">{opt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {noSources && (
-              <p className="text-[11px] text-muted-foreground mt-3 text-center">
-                Añade fuentes para activar Studio
-              </p>
-            )}
-
-            {/* Studio search results */}
-            {studioActive && (
-              <div className="mt-4 pt-3 border-t">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className={`text-xs font-semibold flex items-center gap-1.5 ${studioActive.color.split(" ").find(c => c.startsWith("text-")) || "text-primary"}`}>
-                    <studioActive.icon className="h-3.5 w-3.5" />
-                    {studioActive.label} sugeridos
-                  </h3>
-                  <button
-                    className="text-[10px] text-muted-foreground hover:text-foreground"
-                    onClick={() => {
-                      setStudioActive(null);
-                      setStudioResults([]);
-                    }}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-
-                {studioSearching && studioResults.length === 0 ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  </div>
-                ) : studioResults.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground text-center py-3">
-                    Sin resultados
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {studioResults.map((r) => (
-                      <li
-                        key={r.id}
-                        className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color}`}
-                        onClick={() => openResult(r)}
-                      >
-                        <div className="aspect-video w-full overflow-hidden bg-muted/40 relative">
-                          {r.cover_url ? (
-                            <img
-                              src={r.cover_url}
-                              alt={r.title}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              width={260}
-                              height={146}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <studioActive.icon className="h-7 w-7 opacity-60" />
-                            </div>
-                          )}
-                          <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-background/90 backdrop-blur uppercase tracking-wide">
-                            {studioActive.label}
-                          </span>
-                          <button
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveResult(r.id);
-                            }}
-                            aria-label="Quitar"
-                          >
-                            <X className="h-3 w-3 text-destructive" />
-                          </button>
-                        </div>
-                        <div className="p-2">
-                          <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
-                          {r.subject && (
-                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {/* Actions */}
-                <div className="mt-2.5 flex flex-col gap-1.5">
-                  {studioHasMore && studioResults.length > 0 && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full h-7 text-[11px]"
-                      onClick={handleSearchMore}
-                      disabled={studioSearching}
-                    >
-                      {studioSearching ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        "Buscar más"
-                      )}
-                    </Button>
-                  )}
+          {/* Studio / Capsule Viewer */}
+          <aside className="border-l overflow-hidden hidden md:flex md:flex-col">
+            {viewing ? (
+              // Capsule viewer (replaces the studio selector while open)
+              <>
+                <div className="flex items-center gap-1 px-3 h-11 border-b shrink-0">
                   <Button
-                    size="sm"
-                    className="w-full h-7 text-[11px] gap-1"
-                    onClick={() => handleCreateCapsule(studioActive.id)}
-                    disabled={creatingType === studioActive.id}
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    onClick={() => setViewing(null)}
+                    aria-label="Volver al selector"
                   >
-                    {creatingType === studioActive.id ? (
-                      <>
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        Generando…
-                      </>
-                    ) : studioActive.createRoute ? (
-                      <>
-                        <Wand2 className="h-3 w-3" />
-                        Generar {studioActive.label.toLowerCase()} con IA
-                      </>
-                    ) : (
-                      <>
-                        <ExternalLink className="h-3 w-3" />
-                        Subir un video
-                      </>
-                    )}
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs font-semibold flex-1 truncate" title={viewing.title}>
+                    Studio · {viewing.title}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    onClick={() => setViewerExpanded((v) => !v)}
+                    aria-label={viewerExpanded ? "Contraer" : "Expandir"}
+                    title={viewerExpanded ? "Contraer" : "Expandir"}
+                  >
+                    {viewerExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    onClick={() => window.open(resultUrl(viewing), "_blank")}
+                    aria-label="Abrir en nueva pestaña"
+                    title="Abrir en nueva pestaña"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
                 </div>
+                <div className="flex-1 overflow-hidden bg-background">
+                  <iframe
+                    key={viewing.id}
+                    src={resultUrl(viewing)}
+                    title={viewing.title}
+                    className="w-full h-full border-0"
+                    allow="autoplay; fullscreen; clipboard-write"
+                  />
+                </div>
+              </>
+            ) : (
+              // Studio selector + search results
+              <div className="overflow-y-auto p-3 flex-1">
+                <h2 className="font-semibold text-sm mb-3 flex items-center gap-1">
+                  <Sparkles className="h-4 w-4 text-primary" /> Studio
+                </h2>
+                <p className="text-xs text-muted-foreground mb-3">Genera cápsulas Sedefy a partir de tus fuentes.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {STUDIO_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const isActive = studioActive?.id === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => handleStudio(opt)}
+                        disabled={chat.isStreaming || studioSearching || noSources}
+                        className={`flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
+                          isActive ? "ring-2 ring-offset-1 ring-current shadow-sm" : ""
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span className="text-[11px] font-semibold leading-tight text-foreground">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {noSources && (
+                  <p className="text-[11px] text-muted-foreground mt-3 text-center">
+                    Añade fuentes para activar Studio
+                  </p>
+                )}
+
+                {/* Studio search results */}
+                {studioActive && (
+                  <div className="mt-4 pt-3 border-t">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className={`text-xs font-semibold flex items-center gap-1.5 ${studioActive.color.split(" ").find(c => c.startsWith("text-")) || "text-primary"}`}>
+                        <studioActive.icon className="h-3.5 w-3.5" />
+                        {studioActive.label} sugeridos
+                      </h3>
+                      <button
+                        className="text-[10px] text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setStudioActive(null);
+                          setStudioResults([]);
+                        }}
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+
+                    {studioSearching && studioResults.length === 0 ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      </div>
+                    ) : studioResults.length === 0 ? (
+                      <p className="text-[11px] text-muted-foreground text-center py-3">
+                        Sin resultados
+                      </p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {studioResults.map((r) => (
+                          <li
+                            key={r.id}
+                            className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color}`}
+                            onClick={() => openResult(r)}
+                          >
+                            <div className="aspect-video w-full overflow-hidden bg-muted/40 relative">
+                              {r.cover_url ? (
+                                <img
+                                  src={r.cover_url}
+                                  alt={r.title}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  width={260}
+                                  height={146}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <studioActive.icon className="h-7 w-7 opacity-60" />
+                                </div>
+                              )}
+                              <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-background/90 backdrop-blur uppercase tracking-wide">
+                                {studioActive.label}
+                              </span>
+                              <button
+                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveResult(r.id);
+                                }}
+                                aria-label="Quitar"
+                              >
+                                <X className="h-3 w-3 text-destructive" />
+                              </button>
+                            </div>
+                            <div className="p-2">
+                              <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
+                              {r.subject && (
+                                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {/* Actions */}
+                    <div className="mt-2.5 flex flex-col gap-1.5">
+                      {studioHasMore && studioResults.length > 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full h-7 text-[11px]"
+                          onClick={handleSearchMore}
+                          disabled={studioSearching}
+                        >
+                          {studioSearching ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            "Buscar más"
+                          )}
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        className="w-full h-7 text-[11px] gap-1"
+                        onClick={() => handleCreateCapsule(studioActive.id)}
+                        disabled={creatingType === studioActive.id}
+                      >
+                        {creatingType === studioActive.id ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Generando…
+                          </>
+                        ) : studioActive.createRoute ? (
+                          <>
+                            <Wand2 className="h-3 w-3" />
+                            Generar {studioActive.label.toLowerCase()} con IA
+                          </>
+                        ) : (
+                          <>
+                            <ExternalLink className="h-3 w-3" />
+                            Subir un video
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </aside>
