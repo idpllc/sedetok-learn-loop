@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, ReactNode } from "react";
 import { MindMapData, MindMapNode } from "./types";
-import { ZoomIn, ZoomOut, Maximize2, Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { ZoomIn, ZoomOut, Maximize2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // ===== Layout types =====
@@ -230,7 +230,13 @@ export const MindMapCanvas = ({
       e.preventDefault();
       const delta = -e.deltaY * 0.002;
       setZoom((z) => Math.min(2, Math.max(0.3, z + delta)));
+      return;
     }
+    // Plain wheel = pan the canvas (vertical + horizontal via shift)
+    setPan((p) => ({
+      x: p.x - (e.shiftKey ? e.deltaY : e.deltaX),
+      y: p.y - (e.shiftKey ? 0 : e.deltaY),
+    }));
   };
 
   const onMouseDown = (e: React.MouseEvent) => {
@@ -454,20 +460,23 @@ const NodeBox = ({
         minHeight: laid.height,
       }}
     >
+      {hasChildren && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleCollapse();
+          }}
+          className="absolute top-1/2 -translate-y-1/2 -right-3 z-10 w-6 h-6 rounded-full bg-background border-2 border-primary/40 hover:border-primary text-primary flex items-center justify-center shadow-sm transition-colors"
+          title={collapsed ? "Expandir" : "Colapsar"}
+          aria-label={collapsed ? "Expandir" : "Colapsar"}
+        >
+          <span className="text-xs font-bold leading-none">
+            {collapsed ? "<" : ">"}
+          </span>
+        </button>
+      )}
       <div className="flex items-start gap-1 p-2">
-        {hasChildren && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleCollapse();
-            }}
-            className="mt-0.5 text-muted-foreground hover:text-foreground shrink-0"
-            title={collapsed ? "Expandir" : "Colapsar"}
-          >
-            {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </button>
-        )}
 
         <div className="flex-1 min-w-0">
           {isEditing && editable ? (
