@@ -20,38 +20,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-const blockingMigration = "20260501071210_6a396e63-ad46-4b7b-990a-190310e9ebe2.sql";
+const blockingMigration = "20260430032027_ec6dba70-9ae7-40bf-a500-5661fd6653f9.sql";
+const blockingStatement = "CREATE UNIQUE INDEX user_path_progress_unique_content";
 
 const diagnosticSummary = [
   { label: "Entorno Live", value: "Backend responde con normalidad", status: "ok" },
   { label: "Última migración aplicada en Live", value: "20260501060502_publish_phase1_migration_from_pg_dump", status: "ok" },
   { label: "Primera migración pendiente", value: blockingMigration, status: "blocked" },
-  { label: "Último esquema en Test", value: "20260501073128", status: "pending" },
+  { label: "Error exacto", value: "Duplicados bloquean índice único en user_path_progress", status: "blocked" },
 ];
 
 const liveChecks = [
-  { label: "public.notebooks", value: "No existe en Live" },
-  { label: "public.notebook_sources", value: "No existe en Live" },
-  { label: "content.reading_type", value: "No existe en Live" },
-  { label: "content.mind_map_data", value: "No existe en Live" },
-  { label: "ai_chat_conversations.notebook_id", value: "No existe en Live" },
-  { label: "ai_chat_conversations.notebook_source_id", value: "No existe en Live" },
-  { label: "user_quiz_results", value: "Aún conserva la política pública anterior" },
-  { label: "institution_members", value: "Aún conserva la política pública anterior" },
+  { label: "user_path_progress_unique_content", value: "No existe en Live" },
+  { label: "user_path_progress_unique_quiz", value: "No existe en Live" },
+  { label: "user_path_progress_unique_game", value: "No existe en Live" },
+  { label: "user_path_progress_user_id_path_id_content_id_quiz_id_key", value: "Sigue existiendo el constraint legado" },
+  { label: "Duplicados content_id", value: "142 grupos duplicados / 649 filas sobrantes" },
+  { label: "Duplicados quiz_id", value: "26 grupos duplicados / 31 filas sobrantes" },
+  { label: "Duplicados game_id", value: "0 grupos duplicados" },
+  { label: "Fila más repetida", value: "124 registros para el mismo usuario + ruta + contenido" },
 ];
 
 const pendingMigrations = [
   {
     file: blockingMigration,
-    title: "Security hardening",
-    state: "Bloqueante probable",
-    detail: "Es la primera migración después del estado actual de Live. Cambia permisos de columnas sensibles y reemplaza políticas públicas.",
+    title: "Índices únicos de progreso de rutas",
+    state: "Bloqueante confirmado",
+    detail: "Live tiene datos duplicados en user_path_progress. Al crear el índice único por usuario + ruta + contenido, la publicación se detiene.",
   },
   {
-    file: "20260501071636_00a969e3-31a3-4078-9b61-11b220f0ac5d.sql",
-    title: "Restaurar permisos de funciones RLS",
+    file: "20260501071210_6a396e63-ad46-4b7b-990a-190310e9ebe2.sql",
+    title: "Security hardening",
     state: "Pendiente",
-    detail: "Solo puede ejecutarse después de que termine la migración de seguridad.",
+    detail: "No es el bloqueo actual: queda pendiente porque Live no supera primero la migración de índices de progreso.",
   },
   {
     file: "20260501073129_f16a78a3-48b3-4e0d-95c8-f7e0f5b90426.sql",
@@ -61,51 +62,35 @@ const pendingMigrations = [
   },
 ];
 
-const suspectedSql = `-- Archivo bloqueante probable: ${blockingMigration}
-REVOKE SELECT (numero_documento, phone, fecha_nacimiento) ON public.profiles FROM anon;
-REVOKE SELECT (numero_documento, phone, fecha_nacimiento) ON public.profiles FROM authenticated;
+const suspectedSql = `-- Archivo bloqueante confirmado: ${blockingMigration}
+-- Error esperado en Live:
+-- ERROR: could not create unique index "user_path_progress_unique_content"
+-- DETAIL: Key (user_id, path_id, content_id) is duplicated.
 
-CREATE OR REPLACE FUNCTION public.get_profile_private_fields(_user_id uuid)
-RETURNS TABLE(numero_documento text, phone text, fecha_nacimiento date, tipo_documento text)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT p.numero_documento, p.phone, p.fecha_nacimiento, p.tipo_documento
-  FROM public.profiles p
-  WHERE p.id = _user_id
-    AND (
-      auth.uid() = p.id
-      OR public.has_role(auth.uid(), 'superadmin'::app_role)
-      OR public.can_view_student_data(auth.uid(), p.id)
-    );
-$$;
+-- Evidencia directa en Live:
+-- content_id: 142 grupos duplicados / 649 filas sobrantes
+-- quiz_id: 26 grupos duplicados / 31 filas sobrantes
+-- game_id: 0 grupos duplicados
+-- grupo más grande: 124 registros para el mismo user_id + path_id + content_id
 
-DROP POLICY IF EXISTS "Quiz results are publicly viewable" ON public.user_quiz_results;
-CREATE POLICY "Institution staff can view student quiz results"
-ON public.user_quiz_results
-FOR SELECT
-TO authenticated
-USING (public.can_view_student_data(auth.uid(), user_id));
+CREATE UNIQUE INDEX IF NOT EXISTS user_path_progress_unique_content
+  ON public.user_path_progress (user_id, path_id, content_id)
+  WHERE content_id IS NOT NULL;
 
-DROP POLICY IF EXISTS "Institution members are publicly viewable" ON public.institution_members;
-CREATE POLICY "Members can view co-members of same institution"
-ON public.institution_members
-FOR SELECT
-TO authenticated
-USING (
-  public.is_institution_member(auth.uid(), institution_id)
-  OR public.is_institution_admin(auth.uid(), institution_id)
-  OR public.has_role(auth.uid(), 'superadmin'::app_role)
-  OR user_id = auth.uid()
-);`;
+CREATE UNIQUE INDEX IF NOT EXISTS user_path_progress_unique_quiz
+  ON public.user_path_progress (user_id, path_id, quiz_id)
+  WHERE quiz_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS user_path_progress_unique_game
+  ON public.user_path_progress (user_id, path_id, game_id)
+  WHERE game_id IS NOT NULL;`;
 
 const copyPayload = `Publishing failed diagnostic
 
 Live latest migration: 20260501060502_publish_phase1_migration_from_pg_dump
 Blocking migration: ${blockingMigration}
-Reason: Live has not applied the security hardening migration; notebook tables and columns are still missing.
+Blocking statement: ${blockingStatement}
+Reason: Live has duplicate user_path_progress rows, so the unique index cannot be created.
 
 Suspected SQL:
 ${suspectedSql}`;
@@ -168,7 +153,7 @@ export default function PublishingErrorDetails() {
                 <Badge variant="destructive">Live bloqueado</Badge>
               </div>
               <p className="max-w-3xl text-muted-foreground">
-                Diagnóstico generado desde el estado real de Live y Test. La publicación falla antes de aplicar el módulo Notebook.
+                Diagnóstico generado desde comprobaciones directas en Live. La publicación falla al intentar crear un índice único sobre progreso de rutas.
               </p>
             </div>
             <Button onClick={handleCopy} className="gap-2 self-start lg:self-center">
@@ -182,8 +167,11 @@ export default function PublishingErrorDetails() {
       <section className="container mx-auto space-y-6 px-4 py-8">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Migración exacta bloqueante probable</AlertTitle>
-          <AlertDescription className="break-words font-mono text-xs sm:text-sm">{blockingMigration}</AlertDescription>
+          <AlertTitle>Migración exacta bloqueante confirmada</AlertTitle>
+          <AlertDescription className="space-y-2 break-words text-xs sm:text-sm">
+            <p className="font-mono">{blockingMigration}</p>
+            <p className="font-mono">{blockingStatement}</p>
+          </AlertDescription>
         </Alert>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -231,7 +219,7 @@ export default function PublishingErrorDetails() {
               <FileCode2 className="h-5 w-5 text-primary" />
               Cola de migraciones pendiente en Live
             </CardTitle>
-            <CardDescription>Live se detiene en la primera migración de esta lista.</CardDescription>
+            <CardDescription>Live se detiene en la migración de índices antes de llegar a seguridad y Notebook.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -256,7 +244,7 @@ export default function PublishingErrorDetails() {
 
         <Accordion type="single" collapsible defaultValue="sql" className="rounded-lg border px-4">
           <AccordionItem value="sql" className="border-0">
-            <AccordionTrigger>SQL sospechoso dentro de la migración bloqueante</AccordionTrigger>
+            <AccordionTrigger>SQL exacto dentro de la migración bloqueante</AccordionTrigger>
             <AccordionContent>
               <pre className="max-h-[520px] overflow-auto rounded-md bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
                 <code>{suspectedSql}</code>
