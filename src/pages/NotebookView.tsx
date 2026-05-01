@@ -598,12 +598,12 @@ const NotebookView = () => {
                     key={opt.id}
                     onClick={() => handleStudio(opt)}
                     disabled={chat.isStreaming || studioSearching || noSources}
-                    className={`flex flex-col items-start gap-1 p-3 rounded-lg border bg-card hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${
-                      isActive ? "border-primary ring-1 ring-primary" : ""
+                    className={`flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
+                      isActive ? "ring-2 ring-offset-1 ring-current shadow-sm" : ""
                     }`}
                   >
-                    <Icon className="h-5 w-5 text-primary" />
-                    <span className="text-xs font-medium">{opt.label}</span>
+                    <Icon className="h-5 w-5" />
+                    <span className="text-[11px] font-semibold leading-tight text-foreground">{opt.label}</span>
                   </button>
                 );
               })}
@@ -619,9 +619,9 @@ const NotebookView = () => {
             {studioActive && (
               <div className="mt-4 pt-3 border-t">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-semibold flex items-center gap-1.5">
-                    <studioActive.icon className="h-3.5 w-3.5 text-primary" />
-                    {studioActive.label}s sugeridos
+                  <h3 className={`text-xs font-semibold flex items-center gap-1.5 ${studioActive.color.split(" ").find(c => c.startsWith("text-")) || "text-primary"}`}>
+                    <studioActive.icon className="h-3.5 w-3.5" />
+                    {studioActive.label} sugeridos
                   </h3>
                   <button
                     className="text-[10px] text-muted-foreground hover:text-foreground"
@@ -643,43 +643,48 @@ const NotebookView = () => {
                     Sin resultados
                   </p>
                 ) : (
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {studioResults.map((r) => (
                       <li
                         key={r.id}
-                        className="group relative flex gap-2 p-1.5 rounded-md border bg-card hover:bg-accent transition cursor-pointer"
+                        className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color}`}
                         onClick={() => openResult(r)}
                       >
-                        <div className="w-12 h-12 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                        <div className="aspect-video w-full overflow-hidden bg-muted/40 relative">
                           {r.cover_url ? (
                             <img
                               src={r.cover_url}
                               alt={r.title}
                               className="w-full h-full object-cover"
                               loading="lazy"
-                              width={48}
-                              height={48}
+                              width={260}
+                              height={146}
                             />
                           ) : (
-                            <studioActive.icon className="h-4 w-4 text-muted-foreground" />
+                            <div className="w-full h-full flex items-center justify-center">
+                              <studioActive.icon className="h-7 w-7 opacity-60" />
+                            </div>
                           )}
+                          <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-background/90 backdrop-blur uppercase tracking-wide">
+                            {studioActive.label}
+                          </span>
+                          <button
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveResult(r.id);
+                            }}
+                            aria-label="Quitar"
+                          >
+                            <X className="h-3 w-3 text-destructive" />
+                          </button>
                         </div>
-                        <div className="flex-1 min-w-0 pr-5">
-                          <p className="text-[11px] font-medium line-clamp-2 leading-tight">{r.title}</p>
+                        <div className="p-2">
+                          <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
                           {r.subject && (
-                            <p className="text-[10px] text-muted-foreground truncate">{r.subject}</p>
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
                           )}
                         </div>
-                        <button
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-0.5 rounded hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveResult(r.id);
-                          }}
-                          aria-label="Quitar"
-                        >
-                          <X className="h-3 w-3 text-destructive" />
-                        </button>
                       </li>
                     ))}
                   </ul>
