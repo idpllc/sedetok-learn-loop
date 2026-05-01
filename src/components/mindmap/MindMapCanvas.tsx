@@ -145,8 +145,11 @@ const buildLayout = (data: MindMapData, collapsedIds: Set<string>): Layout => {
 };
 
 // Truncate the tree so `maxDepth` means visible levels, counting the root as level 1.
-const truncateTree = (node: MindMapNode, depth: number, maxDepth: number): MindMapNode => {
-  if (depth + 1 >= maxDepth) return { ...node, children: [] };
+// Nodes whose children are truncated get a `_truncated` flag so the UI can hint at more content.
+const truncateTree = (node: MindMapNode, depth: number, maxDepth: number): MindMapNode & { _truncated?: boolean } => {
+  if (depth + 1 >= maxDepth) {
+    return { ...node, children: [], _truncated: node.children.length > 0 } as MindMapNode & { _truncated?: boolean };
+  }
   return {
     ...node,
     children: node.children.map((c) => truncateTree(c, depth + 1, maxDepth)),
