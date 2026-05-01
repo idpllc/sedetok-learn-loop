@@ -327,18 +327,17 @@ const NotebookView = () => {
     await chat.appendLocal(userMsg, assistantMsg);
 
     try {
-      const results = await sedefySearch.search(opt.searchType, 0, 3);
+      const results = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
       setStudioResults(results);
       setStudioHasMore(results.length === 3);
 
       if (results.length === 0) {
+        const article = opt.id === "path" || opt.id.startsWith("reading") ? "una" : "un";
         const noneMsg =
           opt.createRoute
-            ? `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${opt.id === "path" || opt.id === "reading" ? "una" : "un"} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
-            : `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
+            ? `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${article} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
+            : `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
         await chat.appendLocal("", noneMsg);
-        // Trim the empty user message we just inserted
-        // (keep simple: leave it; UI shows empty bubble — better: skip)
       }
     } finally {
       setStudioSearching(false);
@@ -349,7 +348,12 @@ const NotebookView = () => {
     if (!studioActive || studioSearching) return;
     setStudioSearching(true);
     try {
-      const next = await sedefySearch.search(studioActive.searchType, studioOffset + 3, 3);
+      const next = await sedefySearch.search(
+        studioActive.searchType,
+        studioOffset + 3,
+        3,
+        studioActive.readingSubtype
+      );
       setStudioResults((prev) => [...prev, ...next]);
       setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
