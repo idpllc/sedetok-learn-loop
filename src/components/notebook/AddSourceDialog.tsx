@@ -28,12 +28,12 @@ const guessType = (file: File): "pdf" | "docx" | "xlsx" | null => {
   return null;
 };
 
-export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "file" }: AddSourceDialogProps) => {
+export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text" }: AddSourceDialogProps) => {
   const { uploadFile, uploading } = useS3Upload();
   const { ingest } = useNotebookSources(notebookId);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [tab, setTab] = useState<string>(defaultTab);
+  const [tab, setTab] = useState<string>(defaultTab || "text");
 
   // When the dialog re-opens, honour the requested defaultTab
   useEffect(() => {
@@ -223,9 +223,9 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "file"
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid grid-cols-3 w-full" data-tour="source-tabs">
+            <TabsTrigger value="text" className="gap-1" data-tour="source-tab-text"><Type className="h-4 w-4" />Texto</TabsTrigger>
             <TabsTrigger value="file" className="gap-1"><Upload className="h-4 w-4" />Archivo</TabsTrigger>
             <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
-            <TabsTrigger value="text" className="gap-1" data-tour="source-tab-text"><Type className="h-4 w-4" />Texto</TabsTrigger>
           </TabsList>
 
           <TabsContent value="file" className="py-6">
