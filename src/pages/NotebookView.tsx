@@ -281,8 +281,24 @@ const NotebookView = () => {
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
-  // Cache of the first 3 results per studio option id (after a search has run)
-  const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>({});
+  // Cache of the first 3 results per studio option id (after a search has run).
+  // Persisted to localStorage per-notebook so progress is preserved between visits.
+  const cacheKey = id ? `notebook:studioCache:${id}` : null;
+  const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>(() => {
+    if (!cacheKey) return {};
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  // Mobile tabs: fuentes | chat | studio
+  const [mobileTab, setMobileTab] = useState<"fuentes" | "chat" | "studio">("chat");
+
+  // Persist cache whenever it changes
+  useEffect(() => {
+    if (!cacheKey) return;
+    try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
+  }, [cacheKey, studioCache]);
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
@@ -480,6 +496,28 @@ const NotebookView = () => {
           )}
         </header>
 
+        {/* Mobile tabs (Fuentes / Chat / Studio) */}
+        <div className="md:hidden flex border-b shrink-0 bg-background">
+          {([
+            { id: "fuentes", label: "Fuentes" },
+            { id: "chat", label: "Chat" },
+            { id: "studio", label: "Studio" },
+          ] as const).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setMobileTab(t.id)}
+              className={`flex-1 h-11 text-sm font-medium relative transition ${
+                mobileTab === t.id ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {t.label}
+              {mobileTab === t.id && (
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+
         {/* 3-column layout — right column grows when viewing a capsule (expandable) */}
         <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
@@ -491,7 +529,11 @@ const NotebookView = () => {
           }`}
         >
           {/* Sources */}
-          <aside className="border-r overflow-y-auto p-3 hidden md:block">
+          <aside
+            className={`border-r overflow-y-auto p-3 md:block ${
+              mobileTab === "fuentes" ? "block" : "hidden"
+            }`}
+          >
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Fuentes</h2>
               <Button size="sm" variant="ghost" onClick={() => setShowAdd(true)} className="gap-1 h-7">
@@ -542,7 +584,7 @@ const NotebookView = () => {
           </aside>
 
           {/* Chat */}
-          <section className="flex flex-col overflow-hidden">
+          <section className={`flex-col overflow-hidden md:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
               {chat.messages.length === 0 ? (
                 <div className="max-w-2xl mx-auto text-center py-12">
@@ -651,7 +693,7 @@ const NotebookView = () => {
           </section>
 
           {/* Studio / Capsule Viewer */}
-          <aside className="border-l overflow-hidden hidden md:flex md:flex-col">
+          <aside className={`border-l overflow-hidden md:flex md:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
             {viewing ? (
               // Capsule viewer (replaces the studio selector while open)
               <>
@@ -865,14 +907,16 @@ const NotebookView = () => {
           </aside>
         </div>
 
-        {/* Mobile: floating add sources button */}
-        <Button
-          className="md:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
-          size="icon"
-          onClick={() => setShowAdd(true)}
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
+        {/* Mobile: floating add sources button (only on Fuentes tab) */}
+        {mobileTab === "fuentes" && (
+          <Button
+            className="md:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
+            size="icon"
+            onClick={() => setShowAdd(true)}
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       <AddSourceDialog open={showAdd} onClose={() => setShowAdd(false)} notebookId={id!} />
