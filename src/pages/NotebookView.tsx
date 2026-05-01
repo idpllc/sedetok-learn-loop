@@ -484,9 +484,12 @@ const NotebookView = () => {
     if (!id || creatingType) return;
 
     setCreatingType(type);
-    await chat.appendLocal(
+    setMobileTab("chat");
+    // Insert a transient progress card as an assistant message (not persisted yet)
+    const progressMarker = `|||GENERATING:${JSON.stringify({ type })}|||`;
+    const progressIndex = await chat.appendProgressLocal(
       `Crear ${opt.label.toLowerCase()} con IA`,
-      `Estoy generando ${opt.label.toLowerCase()} con IA usando tus fuentes. Esto puede tardar unos segundos…`
+      progressMarker
     );
 
     try {
@@ -494,10 +497,11 @@ const NotebookView = () => {
         body: { notebookId: id, type, notebookSourceId: activeSourceId },
       });
       if (error) throw error;
-      if (!data?.route) throw new Error("Respuesta inválida");
+      if (!data?.route) throw new Error("Respuesta inválida del generador");
 
-      await chat.appendLocal(
-        "",
+      // Replace the progress card with the final success message (this gets persisted).
+      await chat.finalizeProgress(
+        progressIndex,
         `✅ Listo. He creado tu ${opt.label.toLowerCase()} y ya está disponible en el panel de Studio.`
       );
 
@@ -527,10 +531,13 @@ const NotebookView = () => {
         setHighlightedResultId((cur) => (cur === newResult.id ? null : cur));
       }, 4000);
     } catch (e: any) {
-      console.error(e);
-      await chat.appendLocal(
-        "",
-        `❌ No pude crear la cápsula con IA: ${e?.message || "error desconocido"}.`
+      console.error("create-capsule error", e);
+      const msg = e?.context?.body
+        ? (() => { try { return JSON.parse(e.context.body)?.error; } catch { return null; } })()
+        : null;
+      await chat.finalizeProgress(
+        progressIndex,
+        `❌ No pude crear la cápsula con IA: ${msg || e?.message || "error desconocido"}.`
       );
     } finally {
       setCreatingType(null);
