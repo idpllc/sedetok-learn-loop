@@ -448,16 +448,21 @@ const NotebookView = () => {
     // prompt asking the user if they want to continue — only once.
     const cached = studioCache[opt.id];
     if (cached && cached.length > 0) {
-      setStudioResults(cached);
-      setStudioHasMore(cached.length >= 3);
-      const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
-      const alreadyShown = chat.messages.some(
-        (m) => m.role === "assistant" && m.content === continuePrompt
-      );
-      if (!alreadyShown) {
-        chat.appendAssistantTransient(continuePrompt);
+      // Filter out anything the user previously dismissed.
+      const filtered = cached.filter((r) => !dismissedIds.has(r.id));
+      if (filtered.length > 0) {
+        setStudioResults(filtered);
+        setStudioHasMore(filtered.length >= 3);
+        const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
+        const alreadyShown = chat.messages.some(
+          (m) => m.role === "assistant" && m.content === continuePrompt
+        );
+        if (!alreadyShown) {
+          chat.appendAssistantTransient(continuePrompt);
+        }
+        return;
       }
-      return;
+      // Otherwise fall through to a fresh search (all cached items dismissed).
     }
 
     setStudioResults([]);
