@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      result = { contentId: quiz.id, type: "quiz", route: `/?quiz=${quiz.id}` };
+      result = { contentId: quiz.id, type: "quiz", route: `/?quiz=${quiz.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
     // ---------- GAME (word_order by default) ----------
