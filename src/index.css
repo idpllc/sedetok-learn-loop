@@ -235,3 +235,26 @@ All colors MUST be HSL.
     transition: margin-left 0.3s ease;
   }
 }
+
+/* Rich content (lectura) */
+.rich-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.75rem auto;
+  display: block;
+}
+.rich-content .katex-display {
+  margin: 0.75rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.rich-content [data-math="block"] {
+  display: block;
+  text-align: center;
+  margin: 0.75rem 0;
+}
+.rich-content a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
