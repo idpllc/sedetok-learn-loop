@@ -372,11 +372,16 @@ const NotebookView = () => {
     setStudioResults((prev) => prev.filter((r) => r.id !== rid));
   };
 
+  const resultUrl = (r: SedefyResult) => {
+    if (r.type === "quiz") return `/?quiz=${r.id}`;
+    if (r.type === "game") return `/?game=${r.id}`;
+    if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}`;
+    return `/sedetok?content=${r.id}`;
+  };
+
   const openResult = (r: SedefyResult) => {
-    if (r.type === "quiz") window.open(`/?quiz=${r.id}`, "_blank");
-    else if (r.type === "game") window.open(`/?game=${r.id}`, "_blank");
-    else if (r.type === "path" || r.type === "course") window.open(`/learning-paths/view/${r.id}`, "_blank");
-    else window.open(`/sedetok?content=${r.id}`, "_blank");
+    setViewing(r);
+    setViewerExpanded(false);
   };
 
   const handleCreateCapsule = async (type: string) => {
