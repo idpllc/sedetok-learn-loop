@@ -35,7 +35,7 @@ const liveChecks = [
   { label: "user_path_progress_unique_quiz", value: "No existe en Live" },
   { label: "user_path_progress_unique_game", value: "No existe en Live" },
   { label: "user_path_progress_user_id_path_id_content_id_quiz_id_key", value: "Sigue existiendo el constraint legado" },
-  { label: "Duplicados content_id", value: "142 grupos duplicados / 649 filas sobrantes" },
+  { label: "Duplicados content_id", value: "143 grupos duplicados / 651 filas sobrantes" },
   { label: "Duplicados quiz_id", value: "26 grupos duplicados / 31 filas sobrantes" },
   { label: "Duplicados game_id", value: "0 grupos duplicados" },
   { label: "Fila más repetida", value: "124 registros para el mismo usuario + ruta + contenido" },
@@ -68,7 +68,7 @@ const suspectedSql = `-- Archivo bloqueante confirmado: ${blockingMigration}
 -- DETAIL: Key (user_id, path_id, content_id) is duplicated.
 
 -- Evidencia directa en Live:
--- content_id: 142 grupos duplicados / 649 filas sobrantes
+-- content_id: 143 grupos duplicados / 651 filas sobrantes
 -- quiz_id: 26 grupos duplicados / 31 filas sobrantes
 -- game_id: 0 grupos duplicados
 -- grupo más grande: 124 registros para el mismo user_id + path_id + content_id
@@ -85,6 +85,43 @@ CREATE UNIQUE INDEX IF NOT EXISTS user_path_progress_unique_game
   ON public.user_path_progress (user_id, path_id, game_id)
   WHERE game_id IS NOT NULL;`;
 
+const repairSql = `-- Ejecutar en Live ANTES de publicar.
+-- Esto elimina duplicados por la misma llave que exige el índice bloqueante.
+
+DELETE FROM public.user_path_progress a
+USING public.user_path_progress b
+WHERE a.id <> b.id
+  AND a.user_id = b.user_id
+  AND a.path_id = b.path_id
+  AND a.content_id IS NOT NULL
+  AND a.content_id = b.content_id
+  AND (
+    COALESCE(a.completed, false),
+    COALESCE(a.completed_at, a.updated_at, a.created_at, 'epoch'::timestamptz),
+    a.id
+  ) < (
+    COALESCE(b.completed, false),
+    COALESCE(b.completed_at, b.updated_at, b.created_at, 'epoch'::timestamptz),
+    b.id
+  );
+
+DELETE FROM public.user_path_progress a
+USING public.user_path_progress b
+WHERE a.id <> b.id
+  AND a.user_id = b.user_id
+  AND a.path_id = b.path_id
+  AND a.quiz_id IS NOT NULL
+  AND a.quiz_id = b.quiz_id
+  AND (
+    COALESCE(a.completed, false),
+    COALESCE(a.completed_at, a.updated_at, a.created_at, 'epoch'::timestamptz),
+    a.id
+  ) < (
+    COALESCE(b.completed, false),
+    COALESCE(b.completed_at, b.updated_at, b.created_at, 'epoch'::timestamptz),
+    b.id
+  );`;
+
 const copyPayload = `Publishing failed diagnostic
 
 Live latest migration: 20260501060502_publish_phase1_migration_from_pg_dump
@@ -93,7 +130,10 @@ Blocking statement: ${blockingStatement}
 Reason: Live has duplicate user_path_progress rows, so the unique index cannot be created.
 
 Suspected SQL:
-${suspectedSql}`;
+${suspectedSql}
+
+Live repair SQL:
+${repairSql}`;
 
 export default function PublishingErrorDetails() {
   const navigate = useNavigate();
@@ -248,6 +288,21 @@ export default function PublishingErrorDetails() {
             <AccordionContent>
               <pre className="max-h-[520px] overflow-auto rounded-md bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
                 <code>{suspectedSql}</code>
+              </pre>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="repair" className="border-t">
+            <AccordionTrigger>SQL de reparación para Live</AccordionTrigger>
+            <AccordionContent>
+              <Alert className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Acción requerida en Live</AlertTitle>
+                <AlertDescription>
+                  Ejecutar este saneamiento en Live antes de publicar, porque una migración posterior no puede correr hasta superar el índice bloqueante.
+                </AlertDescription>
+              </Alert>
+              <pre className="max-h-[520px] overflow-auto rounded-md bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
+                <code>{repairSql}</code>
               </pre>
             </AccordionContent>
           </AccordionItem>
