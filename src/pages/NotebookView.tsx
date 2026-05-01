@@ -543,7 +543,7 @@ const NotebookView = () => {
                                 ) : (
                                   <Wand2 className="h-3.5 w-3.5" />
                                 )}
-                                {CTA_LABEL[studioCta.type] || "Crear cápsula"}
+                                {STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
                               </Button>
                             </div>
                           )}
