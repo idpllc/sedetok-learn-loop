@@ -275,14 +275,62 @@ const NotebookView = () => {
     chat.sendMessage(text);
   };
 
-  const handleStudio = (opt: StudioOption) => {
-    if (chat.isStreaming) return;
-    chat.sendMessage(opt.prompt, opt.id);
+  const handleStudio = async (opt: StudioOption) => {
+    if (chat.isStreaming || studioSearching) return;
+    setStudioActive(opt);
+    setStudioResults([]);
+    setStudioOffset(0);
+    setStudioHasMore(true);
+    setStudioSearching(true);
+
+    // Friendly chat message describing the action (no AI call)
+    const verbalType = opt.label.toLowerCase();
+    const userMsg = `Buscar ${verbalType} en SEDEFY`;
+    const assistantMsg = `Estoy buscando en SEDEFY ${opt.label.toLowerCase()}s que coincidan con tus fuentes…`;
+    await chat.appendLocal(userMsg, assistantMsg);
+
+    try {
+      const results = await sedefySearch.search(opt.searchType, 0, 3);
+      setStudioResults(results);
+      setStudioHasMore(results.length === 3);
+
+      if (results.length === 0) {
+        const noneMsg =
+          opt.createRoute
+            ? `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${opt.id === "path" || opt.id === "reading" ? "una" : "un"} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
+            : `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
+        await chat.appendLocal("", noneMsg);
+        // Trim the empty user message we just inserted
+        // (keep simple: leave it; UI shows empty bubble — better: skip)
+      }
+    } finally {
+      setStudioSearching(false);
+    }
   };
 
-  const handleCreateCapsule = (type: string) => {
-    const opt = STUDIO_BY_ID[type];
-    if (!opt) return;
+  const handleSearchMore = async () => {
+    if (!studioActive || studioSearching) return;
+    setStudioSearching(true);
+    try {
+      const next = await sedefySearch.search(studioActive.searchType, studioOffset + 3, 3);
+      setStudioResults((prev) => [...prev, ...next]);
+      setStudioOffset((o) => o + 3);
+      if (next.length < 3) setStudioHasMore(false);
+    } finally {
+      setStudioSearching(false);
+    }
+  };
+
+  const handleRemoveResult = (rid: string) => {
+    setStudioResults((prev) => prev.filter((r) => r.id !== rid));
+  };
+
+  const openResult = (r: SedefyResult) => {
+    if (r.type === "quiz") window.open(`/?quiz=${r.id}`, "_blank");
+    else if (r.type === "game") window.open(`/?game=${r.id}`, "_blank");
+    else if (r.type === "path" || r.type === "course") window.open(`/learning-paths/view/${r.id}`, "_blank");
+    else window.open(`/sedetok?content=${r.id}`, "_blank");
+  };
     if (!opt.createRoute) {
       // Video case: send to upload page
       navigate("/create?type=video");
