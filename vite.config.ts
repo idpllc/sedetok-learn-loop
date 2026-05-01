@@ -44,9 +44,26 @@ export default defineConfig(({ mode }) => ({
         categories: ['education', 'learning']
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // No precachear HTML para evitar versiones viejas en PWA instalada
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+        globIgnores: ['**/index.html', '**/sw.js', '**/service-worker.js'],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10 MB
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: null,
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/api/],
         runtimeCaching: [
+          {
+            // Navegaciones HTML siempre NetworkFirst con timeout corto
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-cache',
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
