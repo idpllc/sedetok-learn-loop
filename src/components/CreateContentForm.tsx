@@ -1472,42 +1472,10 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {/* Contenido según tipo */}
-      {!isQuizMode && !isPathMode && !isGameMode && (
+      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type !== 'lectura' && (
         <>
-          {formData.content_type === 'lectura' ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="readingType">Tipo de Lectura *</Label>
-                <Select
-                  value={formData.reading_type}
-                  onValueChange={(value) => setFormData({ ...formData, reading_type: value as any })}
-                >
-                  <SelectTrigger id="readingType">
-                    <SelectValue placeholder="Selecciona el tipo de lectura" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="libro">📚 Libro</SelectItem>
-                    <SelectItem value="resumen">📝 Resumen</SelectItem>
-                    <SelectItem value="ensayo">✍️ Ensayo</SelectItem>
-                    <SelectItem value="notas">🗒️ Notas</SelectItem>
-                    <SelectItem value="glosario">📖 Glosario</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="richText">Contenido de la Lectura</Label>
-                <RichContentEditor
-                  content={richText}
-                  onChange={setRichText}
-                  placeholder="Escribe aquí el contenido completo de la lectura. Puedes agregar imágenes, caracteres especiales y fórmulas matemáticas..."
-                  minHeight="320px"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Soporta texto enriquecido, imágenes, caracteres especiales y fórmulas matemáticas (LaTeX). Usa $...$ para fórmulas inline o $$...$$ para bloques.
-                </p>
-              </div>
-            </>
-          ) : (
+          {(
+
             <div className="space-y-2">
               <Label htmlFor="file">Contenido de la Cápsula</Label>
               <div
