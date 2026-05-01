@@ -25,8 +25,8 @@ export const MindMapModal = ({ isOpen, onClose, title, data, onReadComplete }: M
         <DialogHeader>
           <DialogTitle className="break-words">{title}</DialogTitle>
         </DialogHeader>
-        <div className="flex-1 overflow-auto">
-          <MindMapViewer data={data} />
+        <div className="flex-1 min-h-[70vh]">
+          <MindMapViewer data={data} height="100%" />
         </div>
       </DialogContent>
     </Dialog>

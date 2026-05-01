@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Plus, Trash2, ChevronDown, ChevronRight, Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +13,7 @@ import {
   removeNode,
   updateNode,
 } from "./types";
+import { MindMapCanvas } from "./MindMapCanvas";
 
 interface MindMapEditorProps {
   value?: MindMapData | null;
@@ -80,10 +80,10 @@ export const MindMapEditor = ({ value, onChange, topicHint }: MindMapEditorProps
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-xs text-muted-foreground">
-          Construye tu mapa mental agregando nodos hijos al tema central.
+          Arrastra para mover el tablero. Doble clic en un nodo para editar. Usa el botón <span className="font-semibold">+</span> a la derecha de cada nodo para agregar hijos.
         </p>
         <Button
           type="button"
@@ -123,123 +123,15 @@ export const MindMapEditor = ({ value, onChange, topicHint }: MindMapEditorProps
         </div>
       )}
 
-      <div className="border rounded-lg p-4 bg-card max-h-[600px] overflow-y-auto">
-        <NodeRow
-          node={data.root}
-          isRoot
-          depth={0}
+      <div className="border rounded-lg overflow-hidden bg-card" style={{ height: 600 }}>
+        <MindMapCanvas
+          data={data}
+          editable
+          onUpdateNode={handleUpdate}
           onAddChild={handleAddChild}
-          onRemove={handleRemove}
-          onUpdate={handleUpdate}
+          onRemoveNode={handleRemove}
         />
       </div>
-    </div>
-  );
-};
-
-interface NodeRowProps {
-  node: MindMapNode;
-  isRoot?: boolean;
-  depth: number;
-  onAddChild: (parentId: string) => void;
-  onRemove: (id: string) => void;
-  onUpdate: (id: string, patch: Partial<MindMapNode>) => void;
-}
-
-const NodeRow = ({ node, isRoot, depth, onAddChild, onRemove, onUpdate }: NodeRowProps) => {
-  const [expanded, setExpanded] = useState(true);
-  const [showDescription, setShowDescription] = useState(false);
-  const hasChildren = node.children.length > 0;
-
-  const colorClass = isRoot
-    ? "bg-primary/10 border-primary/40"
-    : depth === 1
-    ? "bg-accent/40 border-accent"
-    : "bg-muted/40 border-border";
-
-  return (
-    <div className="space-y-2">
-      <div
-        className={`flex items-start gap-2 rounded-md border p-2 ${colorClass}`}
-        style={{ marginLeft: depth > 0 ? `${Math.min(depth, 4) * 16}px` : 0 }}
-      >
-        <button
-          type="button"
-          onClick={() => setExpanded((e) => !e)}
-          className="mt-1 text-muted-foreground hover:text-foreground shrink-0"
-          aria-label={expanded ? "Colapsar" : "Expandir"}
-        >
-          {hasChildren ? (
-            expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-          ) : (
-            <span className="inline-block w-4 h-4" />
-          )}
-        </button>
-
-        <div className="flex-1 space-y-1 min-w-0">
-          <Input
-            value={node.title}
-            onChange={(e) => onUpdate(node.id, { title: e.target.value })}
-            placeholder={isRoot ? "Tema central" : "Título del nodo"}
-            className="h-8 text-sm font-medium"
-          />
-          {showDescription && (
-            <Textarea
-              value={node.description || ""}
-              onChange={(e) => onUpdate(node.id, { description: e.target.value })}
-              placeholder="Descripción opcional..."
-              className="min-h-[60px] text-xs"
-            />
-          )}
-          <button
-            type="button"
-            onClick={() => setShowDescription((s) => !s)}
-            className="text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            {showDescription ? "Ocultar descripción" : node.description ? "Ver descripción" : "+ Agregar descripción"}
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => onAddChild(node.id)}
-            title="Agregar nodo hijo"
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-          {!isRoot && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={() => onRemove(node.id)}
-              title="Eliminar nodo"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {expanded && hasChildren && (
-        <div className="border-l-2 border-dashed border-border ml-3 pl-2 space-y-2">
-          {node.children.map((child) => (
-            <NodeRow
-              key={child.id}
-              node={child}
-              depth={depth + 1}
-              onAddChild={onAddChild}
-              onRemove={onRemove}
-              onUpdate={onUpdate}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
