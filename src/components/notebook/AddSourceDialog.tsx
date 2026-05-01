@@ -103,8 +103,6 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     return !!node?.closest('[data-notebook-tutorial="true"]');
   };
 
-  const isTutorialOpen = () => !!document.querySelector('[data-notebook-tutorial="true"]');
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -249,7 +247,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     <Dialog
       open={open}
       onOpenChange={(v) => {
-        if (!v && !shouldIgnoreOpenChange(document.activeElement) && !isTutorialOpen()) handleClose();
+        if (!v && !shouldIgnoreOpenChange(document.activeElement)) handleClose();
       }}
     >
       <DialogContent
