@@ -281,8 +281,24 @@ const NotebookView = () => {
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
-  // Cache of the first 3 results per studio option id (after a search has run)
-  const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>({});
+  // Cache of the first 3 results per studio option id (after a search has run).
+  // Persisted to localStorage per-notebook so progress is preserved between visits.
+  const cacheKey = id ? `notebook:studioCache:${id}` : null;
+  const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>(() => {
+    if (!cacheKey) return {};
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  // Mobile tabs: fuentes | chat | studio
+  const [mobileTab, setMobileTab] = useState<"fuentes" | "chat" | "studio">("chat");
+
+  // Persist cache whenever it changes
+  useEffect(() => {
+    if (!cacheKey) return;
+    try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
+  }, [cacheKey, studioCache]);
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
