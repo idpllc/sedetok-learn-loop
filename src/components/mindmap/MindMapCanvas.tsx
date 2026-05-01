@@ -191,7 +191,7 @@ export const MindMapCanvas = ({
     return { root: truncateTree(data.root, 0, maxDepth) };
   }, [data, maxDepth]);
 
-  const layout = useMemo(() => buildLayout(data, collapsed), [data, collapsed]);
+  const layout = useMemo(() => buildLayout(effectiveData, collapsed), [effectiveData, collapsed]);
 
   // Auto fit-view on mount and when layout dimensions change significantly
   const didInitialFit = useRef(false);
