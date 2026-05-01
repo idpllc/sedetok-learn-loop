@@ -57,42 +57,41 @@ const extractKeywords = (sources: any[]): string[] => {
 
   const addTokens = (text: string, weight: number) => {
     if (!text) return;
-    for (const raw of text.toLowerCase().split(/[^a-záéíóúüñ0-9]+/i)) {
+    for (const raw of norm(text).split(/[^a-z0-9ñ]+/i)) {
       const t = raw.trim();
-      if (t.length < 4) continue;
+      if (t.length < 5) continue; // require longer tokens for precision
       if (STOPWORDS.has(t)) continue;
-      // skip pure numbers
       if (/^\d+$/.test(t)) continue;
       counts.set(t, (counts.get(t) || 0) + weight);
     }
   };
 
   for (const s of sources || []) {
-    addTokens(s.title || "", 4);
-    addTokens((s.extracted_text || "").slice(0, 600), 1);
+    addTokens(s.title || "", 5);
+    addTokens((s.extracted_text || "").slice(0, 1200), 1);
   }
 
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+    .slice(0, 5)
     .map(([k]) => k);
 };
 
 /** Scores how relevant a row is given the keywords (higher = better). */
 const scoreRow = (row: any, keywords: string[]): number => {
-  const hay = `${row.title || ""} ${row.description || ""} ${row.subject || ""}`.toLowerCase();
+  const title = norm(row.title || "");
+  const desc = norm(row.description || "");
   let score = 0;
   for (const k of keywords) {
     if (!k) continue;
-    if ((row.title || "").toLowerCase().includes(k)) score += 3;
-    else if (hay.includes(k)) score += 1;
+    if (title.includes(k)) score += 5;
+    else if (desc.includes(k)) score += 1;
   }
   return score;
 };
 
 const buildOr = (terms: string[]) =>
   terms
-    // Only match against title/description for precision (subject is too broad)
     .map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`)
     .join(",");
 
