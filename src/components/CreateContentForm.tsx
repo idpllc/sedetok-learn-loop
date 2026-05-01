@@ -1689,16 +1689,18 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Descripción</Label>
-        <Textarea
-          id="description"
-          placeholder={isQuizMode ? "Describe brevemente el contenido del quiz" : "Describe el contenido de tu cápsula..."}
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="min-h-[100px]"
-        />
-      </div>
+      {formData.content_type !== 'lectura' && (
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción</Label>
+          <Textarea
+            id="description"
+            placeholder={isQuizMode ? "Describe brevemente el contenido del quiz" : "Describe el contenido de tu cápsula..."}
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="min-h-[100px]"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
