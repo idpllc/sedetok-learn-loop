@@ -10,6 +10,8 @@ import { useXP } from "@/hooks/useXP";
 import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
 import { ReadingModal } from "./ReadingModal";
+import { MindMapModal } from "./mindmap/MindMapModal";
+import { MindMapViewer } from "./mindmap/MindMapViewer";
 import { QuizViewer } from "./QuizViewer";
 import { GameViewer } from "./GameViewer";
 import { useQuizAttempts } from "@/hooks/useQuizAttempts";
@@ -39,6 +41,7 @@ interface ContentCardProps {
   videoUrl?: string;
   documentUrl?: string;
   richText?: string;
+  mindMapData?: any;
   contentType?: string;
   likes: number;
   comments: number;
@@ -77,6 +80,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   videoUrl,
   documentUrl,
   richText,
+  mindMapData,
   contentType,
   likes: initialLikes,
   comments: initialComments,
@@ -193,6 +197,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
+  const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [gameModalOpen, setGameModalOpen] = useState(false);
@@ -522,6 +527,27 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                 >
                   <BookOpen className="w-5 h-5" />
                   Leer más
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : contentType === 'mapa_mental' && mindMapData?.root ? (
+          <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
+            <div className="w-full max-w-3xl bg-background/95 backdrop-blur-sm rounded-lg p-4 shadow-xl overflow-hidden max-h-[70vh] flex flex-col">
+              <div className="flex-1 overflow-auto pointer-events-auto">
+                <MindMapViewer data={mindMapData} />
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Button
+                  size="lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMindMapModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 shadow-lg pointer-events-auto"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Abrir mapa
                 </Button>
               </div>
             </div>
@@ -891,6 +917,17 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           onClose={() => setIsReadingModalOpen(false)}
           title={title}
           content={richText}
+          onReadComplete={onReadComplete}
+        />
+      )}
+
+      {/* Mind Map Modal */}
+      {mindMapData?.root && (
+        <MindMapModal
+          isOpen={isMindMapModalOpen}
+          onClose={() => setIsMindMapModalOpen(false)}
+          title={title}
+          data={mindMapData}
           onReadComplete={onReadComplete}
         />
       )}

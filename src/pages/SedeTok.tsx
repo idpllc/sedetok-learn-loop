@@ -344,6 +344,7 @@ const SedeTok = () => {
                 videoUrl={content.video_url || undefined}
                 documentUrl={content.document_url || undefined}
                 richText={content.rich_text || undefined}
+                mindMapData={(content as any).mind_map_data || undefined}
                 contentType={content.content_type}
                 likes={content.likes_count || 0}
                 comments={content.comments_count || 0}

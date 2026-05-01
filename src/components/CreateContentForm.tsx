@@ -34,6 +34,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { RichContentEditor } from "./RichContentEditor";
+import { MindMapEditor } from "./mindmap/MindMapEditor";
+import { MindMapData, createEmptyMindMap } from "./mindmap/types";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -160,6 +162,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [fileType, setFileType] = useState<'video' | 'document' | 'image' | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [richText, setRichText] = useState("");
+  const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
 
   useEffect(() => {
     if (editMode && contentData) {
@@ -181,6 +184,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
       setRichText((contentData as any).rich_text || "");
+      setMindMapData((contentData as any).mind_map_data || null);
       
       // Load quiz config if editing a quiz
       if (contentData.content_type === 'quiz') {
@@ -301,6 +305,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         quiz: "Crear Quiz",
         learning_path: "Crear Ruta de Aprendizaje",
         game: "Crear Juego",
+        mapa_mental: "Crear Mapa Mental",
       };
       onTitleChange(formData.content_type ? titles[formData.content_type as ContentType | 'learning_path'] : "Crear Contenido");
     }
@@ -726,6 +731,17 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       return;
     }
 
+    if (formData.content_type === 'mapa_mental') {
+      if (!mindMapData || !mindMapData.root?.title?.trim()) {
+        toastHook({
+          title: "Mapa mental incompleto",
+          description: "Define al menos el tema central del mapa.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
       let videoUrl: string | undefined;
       let documentUrl: string | undefined;
@@ -752,9 +768,11 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         thumbnailUrl = await uploadFile(uploadedThumbnail, "raw");
       }
 
+      const isMapaMental = formData.content_type === 'mapa_mental';
+      const isLectura = formData.content_type === 'lectura';
       const contentPayload = {
         title: formData.title,
-        description: formData.content_type === 'lectura' ? null : formData.description,
+        description: (isLectura || isMapaMental) ? null : formData.description,
         category: formData.category,
         subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
         grade_level: formData.grade_level,
@@ -764,8 +782,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         video_url: videoUrl || (editMode ? contentData?.video_url : undefined),
         document_url: documentUrl || (editMode ? contentData?.document_url : undefined),
         thumbnail_url: thumbnailUrl || (editMode ? contentData?.thumbnail_url : undefined),
-        rich_text: formData.content_type === 'lectura' ? richText : null,
-        reading_type: formData.content_type === 'lectura' ? formData.reading_type : null,
+        rich_text: isLectura ? richText : null,
+        reading_type: isLectura ? formData.reading_type : null,
+        mind_map_data: isMapaMental ? mindMapData : null,
       };
 
       if (editMode && contentData?.id && onUpdate) {
@@ -1370,6 +1389,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <SelectItem value="video">🎥 Video</SelectItem>
             <SelectItem value="document">📄 Recurso</SelectItem>
             <SelectItem value="lectura">📖 Lectura</SelectItem>
+            <SelectItem value="mapa_mental">🧠 Mapa Mental</SelectItem>
             <SelectItem value="quiz">📝 Quiz</SelectItem>
             <SelectItem value="game">🎮 Juego</SelectItem>
             <SelectItem value="learning_path">🗺️ Ruta de Aprendizaje</SelectItem>
@@ -1472,7 +1492,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {/* Contenido según tipo */}
-      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type !== 'lectura' && (
+      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
         <>
           {(
 
@@ -1703,7 +1723,21 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         </>
       )}
 
-      {formData.content_type !== 'lectura' && (
+      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type === 'mapa_mental' && (
+        <div className="space-y-2">
+          <Label>Mapa Mental *</Label>
+          <MindMapEditor
+            value={mindMapData}
+            onChange={setMindMapData}
+            topicHint={formData.title}
+          />
+          <p className="text-xs text-muted-foreground">
+            Edita el tema central, agrega ramas con el botón + y construye la estructura jerárquica. También puedes generar un borrador con IA.
+          </p>
+        </div>
+      )}
+
+      {formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
         <div className="space-y-2">
           <Label htmlFor="description">Descripción</Label>
           <Textarea
