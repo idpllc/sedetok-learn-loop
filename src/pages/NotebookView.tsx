@@ -486,10 +486,11 @@ const NotebookView = () => {
   };
 
   const resultUrl = (r: SedefyResult) => {
-    if (r.type === "quiz") return `/?quiz=${r.id}`;
-    if (r.type === "game") return `/?game=${r.id}`;
     if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}`;
-    return `/sedetok?content=${r.id}`;
+    const sameType = studioResults.filter((x) => x.type === r.type);
+    const playlist = encodeURIComponent(sameType.map((x) => `${x.id}:${x.type}`).join(","));
+    const param = r.type === "quiz" ? "quiz" : r.type === "game" ? "game" : "content";
+    return `/sedetok?${param}=${r.id}&playlist=${playlist}`;
   };
 
   const openResult = (r: SedefyResult) => {
