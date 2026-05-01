@@ -531,6 +531,27 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               </div>
             </div>
           </div>
+        ) : contentType === 'mapa_mental' && mindMapData?.root ? (
+          <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
+            <div className="w-full max-w-3xl bg-background/95 backdrop-blur-sm rounded-lg p-4 shadow-xl overflow-hidden max-h-[70vh] flex flex-col">
+              <div className="flex-1 overflow-auto pointer-events-auto">
+                <MindMapViewer data={mindMapData} />
+              </div>
+              <div className="mt-4 flex justify-center">
+                <Button
+                  size="lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMindMapModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 shadow-lg pointer-events-auto"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Abrir mapa
+                </Button>
+              </div>
+            </div>
+          </div>
         ) : contentType === 'quiz' ? (
           (() => {
             const scientist = getQuizScientistIcon(category);
@@ -896,6 +917,17 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           onClose={() => setIsReadingModalOpen(false)}
           title={title}
           content={richText}
+          onReadComplete={onReadComplete}
+        />
+      )}
+
+      {/* Mind Map Modal */}
+      {mindMapData?.root && (
+        <MindMapModal
+          isOpen={isMindMapModalOpen}
+          onClose={() => setIsMindMapModalOpen(false)}
+          title={title}
+          data={mindMapData}
           onReadComplete={onReadComplete}
         />
       )}
