@@ -94,7 +94,7 @@ export const useNotebookChat = (
             Authorization: `Bearer ${session.access_token}`,
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
           },
-          body: JSON.stringify({ message: text, conversationId, notebookId }),
+          body: JSON.stringify({ message: text, conversationId, notebookId, notebookSourceId: sourceId }),
         });
 
         if (!res.ok || !res.body) throw new Error("Stream failed");
