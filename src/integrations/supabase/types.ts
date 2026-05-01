@@ -411,6 +411,7 @@ export type Database = {
           id: string
           is_public: boolean | null
           likes_count: number | null
+          mind_map_data: Json | null
           reading_type: string | null
           rich_text: string | null
           saves_count: number | null
@@ -435,6 +436,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           likes_count?: number | null
+          mind_map_data?: Json | null
           reading_type?: string | null
           rich_text?: string | null
           saves_count?: number | null
@@ -459,6 +461,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           likes_count?: number | null
+          mind_map_data?: Json | null
           reading_type?: string | null
           rich_text?: string | null
           saves_count?: number | null
@@ -3792,7 +3795,13 @@ export type Database = {
         | "tecnologia"
         | "otros"
       cefr_level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"
-      content_type: "video" | "document" | "quiz" | "lectura" | "game"
+      content_type:
+        | "video"
+        | "document"
+        | "quiz"
+        | "lectura"
+        | "game"
+        | "mapa_mental"
       frecuencia_estudio: "Diaria" | "Semanal" | "Esporádica"
       genero: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir"
       grade_level:
@@ -4005,7 +4014,14 @@ export const Constants = {
         "otros",
       ],
       cefr_level: ["A1", "A2", "B1", "B2", "C1", "C2"],
-      content_type: ["video", "document", "quiz", "lectura", "game"],
+      content_type: [
+        "video",
+        "document",
+        "quiz",
+        "lectura",
+        "game",
+        "mapa_mental",
+      ],
       frecuencia_estudio: ["Diaria", "Semanal", "Esporádica"],
       genero: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
       grade_level: [
