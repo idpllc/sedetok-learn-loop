@@ -750,7 +750,16 @@ const NotebookView = () => {
                         </div>
                       );
                     }
-                    const { content, paths, contentItems, studioCta } = parseAssistantContent(m.content);
+                    const { content, paths, contentItems, studioCta, generating } = parseAssistantContent(m.content);
+                    if (generating) {
+                      return (
+                        <div key={i} className="flex justify-start">
+                          <div className="max-w-[95%] w-full rounded-2xl px-4 py-5 bg-muted">
+                            <CapsuleProgressCard capsuleType={generating.type} />
+                          </div>
+                        </div>
+                      );
+                    }
                     return (
                       <div key={i} className="flex justify-start">
                         <div className="max-w-[95%] w-full rounded-2xl px-4 py-3 bg-muted">
