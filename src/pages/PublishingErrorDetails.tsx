@@ -291,6 +291,21 @@ export default function PublishingErrorDetails() {
               </pre>
             </AccordionContent>
           </AccordionItem>
+          <AccordionItem value="repair" className="border-t">
+            <AccordionTrigger>SQL de reparación para Live</AccordionTrigger>
+            <AccordionContent>
+              <Alert className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Acción requerida en Live</AlertTitle>
+                <AlertDescription>
+                  Ejecutar este saneamiento en Live antes de publicar, porque una migración posterior no puede correr hasta superar el índice bloqueante.
+                </AlertDescription>
+              </Alert>
+              <pre className="max-h-[520px] overflow-auto rounded-md bg-muted p-4 text-xs leading-relaxed text-muted-foreground">
+                <code>{repairSql}</code>
+              </pre>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </section>
     </main>
