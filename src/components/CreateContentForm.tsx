@@ -176,6 +176,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         grade_level: contentData.grade_level,
         content_type: contentData.content_type,
         difficulty: (contentData as any).difficulty || "basico",
+        reading_type: (contentData as any).reading_type || "",
       } as any);
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
