@@ -754,7 +754,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
       const contentPayload = {
         title: formData.title,
-        description: formData.description,
+        description: formData.content_type === 'lectura' ? null : formData.description,
         category: formData.category,
         subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
         grade_level: formData.grade_level,
@@ -765,6 +765,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         document_url: documentUrl || (editMode ? contentData?.document_url : undefined),
         thumbnail_url: thumbnailUrl || (editMode ? contentData?.thumbnail_url : undefined),
         rich_text: formData.content_type === 'lectura' ? richText : null,
+        reading_type: formData.content_type === 'lectura' ? formData.reading_type : null,
       };
 
       if (editMode && contentData?.id && onUpdate) {
