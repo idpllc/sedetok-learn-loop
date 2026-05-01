@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId, attachments, notebookId } = await req.json();
+    const { message, conversationId, attachments, notebookId, notebookSourceId } = await req.json();
     
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
