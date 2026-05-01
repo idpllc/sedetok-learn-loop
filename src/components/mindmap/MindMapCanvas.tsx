@@ -329,34 +329,37 @@ export const MindMapCanvas = ({
     <div
       ref={containerRef}
       className={`relative w-full h-full overflow-hidden bg-muted/20 select-none ${className || ""}`}
-      onWheel={handleWheel}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
+      onWheel={preview ? undefined : handleWheel}
+      onMouseDown={preview ? undefined : onMouseDown}
+      onMouseMove={preview ? undefined : onMouseMove}
+      onMouseUp={preview ? undefined : onMouseUp}
+      onMouseLeave={preview ? undefined : onMouseUp}
+      onTouchStart={preview ? undefined : onTouchStart}
+      onTouchMove={preview ? undefined : onTouchMove}
+      onTouchEnd={preview ? undefined : onTouchEnd}
       style={{
-        cursor: dragState.current.active ? "grabbing" : "grab",
+        cursor: preview ? "default" : dragState.current.active ? "grabbing" : "grab",
         backgroundImage:
           "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
         backgroundSize: "24px 24px",
+        pointerEvents: preview ? "none" : undefined,
       }}
     >
       {/* Toolbar */}
-      <div className="absolute top-2 right-2 z-20 flex flex-col gap-1 bg-background/80 backdrop-blur rounded-md border p-1 shadow-sm">
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(2, z + 0.1))} title="Acercar">
-          <ZoomIn className="w-4 h-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} title="Alejar">
-          <ZoomOut className="w-4 h-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={fitView} title="Ajustar vista">
-          <Maximize2 className="w-4 h-4" />
-        </Button>
-        <div className="text-[10px] text-muted-foreground text-center">{Math.round(zoom * 100)}%</div>
-      </div>
+      {!preview && (
+        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1 bg-background/80 backdrop-blur rounded-md border p-1 shadow-sm">
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(2, z + 0.1))} title="Acercar">
+            <ZoomIn className="w-4 h-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} title="Alejar">
+            <ZoomOut className="w-4 h-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={fitView} title="Ajustar vista">
+            <Maximize2 className="w-4 h-4" />
+          </Button>
+          <div className="text-[10px] text-muted-foreground text-center">{Math.round(zoom * 100)}%</div>
+        </div>
+      )}
 
       {toolbar && <div className="absolute top-2 left-2 z-20">{toolbar}</div>}
 
