@@ -332,11 +332,13 @@ const SedeTok = () => {
     }
   };
 
+  const embed = searchParams.get("embed") === "1";
+
   if (isLoading) {
     return (
       <>
-        <Sidebar />
-        <div className="min-h-screen bg-background md:ml-64 flex items-center justify-center">
+        {!embed && <Sidebar />}
+        <div className={`min-h-screen bg-background flex items-center justify-center ${embed ? "" : "md:ml-64"}`}>
           <Skeleton className="w-full max-w-md h-[600px] rounded-xl" />
         </div>
       </>
@@ -345,10 +347,10 @@ const SedeTok = () => {
 
   return (
     <>
-      <Sidebar />
+      {!embed && <Sidebar />}
       <div
         ref={containerRef}
-        className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background md:ml-64 scrollbar-hide"
+        className={`h-screen overflow-y-scroll snap-y snap-mandatory bg-background scrollbar-hide ${embed ? "" : "md:ml-64"}`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {feed.map((content, index) => {
