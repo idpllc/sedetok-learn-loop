@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -12,6 +12,7 @@ import {
   Shield,
   XCircle,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { Button } from "@/components/ui/button";
@@ -134,6 +135,28 @@ ${suspectedSql}
 
 Live repair SQL:
 ${repairSql}`;
+
+type DuplicateStats = {
+  duplicate_groups: number;
+  redundant_rows: number;
+  largest_group: number;
+};
+
+type PreflightResult = {
+  checked_at: string;
+  has_duplicates: boolean;
+  can_publish_progress_indexes: boolean;
+  total_duplicate_groups: number;
+  total_redundant_rows: number;
+  largest_group: number;
+  invalid_rows: number;
+  message: string;
+  duplicates: {
+    content_id: DuplicateStats;
+    quiz_id: DuplicateStats;
+    game_id: DuplicateStats;
+  };
+};
 
 export default function PublishingErrorDetails() {
   const navigate = useNavigate();
