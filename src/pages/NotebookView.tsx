@@ -401,11 +401,19 @@ const NotebookView = () => {
     setStudioOffset(0);
 
     // If we already cached results for this option, restore them without
-    // running the search again or polluting the chat.
+    // running the search again or polluting the chat. Show a soft transient
+    // prompt asking the user if they want to continue — only once.
     const cached = studioCache[opt.id];
     if (cached && cached.length > 0) {
       setStudioResults(cached);
       setStudioHasMore(cached.length >= 3);
+      const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
+      const alreadyShown = chat.messages.some(
+        (m) => m.role === "assistant" && m.content === continuePrompt
+      );
+      if (!alreadyShown) {
+        chat.appendAssistantTransient(continuePrompt);
+      }
       return;
     }
 
@@ -413,11 +421,13 @@ const NotebookView = () => {
     setStudioHasMore(true);
     setStudioSearching(true);
 
-    // Friendly chat message describing the action (no AI call)
+    // Friendly chat message describing the action (no AI call). The
+    // "Estoy buscando…" notice is transient (not persisted) so it doesn't
+    // accumulate in the conversation history.
     const verbalType = opt.label.toLowerCase();
     const userMsg = `Buscar ${verbalType} en SEDEFY`;
-    const assistantMsg = `Estoy buscando en SEDEFY ${opt.label.toLowerCase()}s que coincidan con tus fuentes…`;
-    await chat.appendLocal(userMsg, assistantMsg);
+    const searchingMsg = `Estoy buscando en SEDEFY ${opt.label.toLowerCase()}s que coincidan con tus fuentes…`;
+    const progressIndex = await chat.appendProgressLocal(userMsg, searchingMsg);
 
     try {
       const results = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
@@ -432,7 +442,14 @@ const NotebookView = () => {
           opt.createRoute
             ? `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${article} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
             : `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
-        await chat.appendLocal("", noneMsg);
+        await chat.finalizeProgress(progressIndex, noneMsg);
+      } else {
+        // Replace the transient "Estoy buscando…" with a short success notice
+        // that IS persisted, so the user sees a clean trail of what happened.
+        await chat.finalizeProgress(
+          progressIndex,
+          `Encontré ${results.length} ${opt.label.toLowerCase()}${results.length === 1 ? "" : "s"} para tus fuentes. ¿Quieres continuar con el aprendizaje?`
+        );
       }
     } finally {
       setStudioSearching(false);
