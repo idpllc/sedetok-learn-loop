@@ -63,7 +63,7 @@ export const MindMapModal = ({ isOpen, onClose, title, data, onReadComplete }: M
 
       {/* Hint */}
       <div className="px-4 py-2 text-[11px] text-muted-foreground border-t border-border bg-background/95 text-center shrink-0">
-        Arrastra para mover · Ctrl + rueda para zoom · Botones de la esquina superior derecha para acercar, alejar y ajustar
+        Arrastra o usa la rueda para mover · Ctrl + rueda para zoom · Botones de la esquina superior derecha para acercar, alejar y ajustar
       </div>
     </div>
   );
