@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal } from "lucide-react";
+import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal, Brain } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { subjects } from "@/lib/subjects";
 import { getDisplayName } from "@/lib/displayName"; // display name helper
@@ -124,8 +124,23 @@ const Index = () => {
         return <ClipboardCheck className="w-5 h-5" />;
       case "game":
         return <span className="text-base">🎮</span>;
+      case "mapa_mental":
+        return <Brain className="w-5 h-5" />;
       case "learning_path":
         return <Map className="w-5 h-5" />;
+    }
+  };
+
+  const getContentLabel = (type: ContentType | "learning_path") => {
+    switch (type) {
+      case "video": return "Video";
+      case "lectura": return "Lectura";
+      case "document": return "Documento";
+      case "quiz": return "Quiz";
+      case "game": return "Juego";
+      case "mapa_mental": return "Mapa Mental";
+      case "learning_path": return "Ruta";
+      default: return type;
     }
   };
 
@@ -469,6 +484,8 @@ const Index = () => {
                             ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40'
                             : item.content_type === 'game' && !item.cover_url && !item.thumbnail_url
                             ? 'bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/20'
+                            : item.content_type === 'mapa_mental' && !item.cover_url && !item.thumbnail_url
+                            ? 'bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-cyan-950/40'
                             : 'bg-gradient-to-br from-primary/20 to-secondary/20'
                         }`}>
                           {(item.cover_url || item.thumbnail_url) ? (
@@ -499,6 +516,16 @@ const Index = () => {
                               <span className="text-5xl">🎮</span>
                               <span className="text-xs font-medium text-muted-foreground capitalize">{item.game_type?.replace('_', ' ') || 'Juego'}</span>
                             </div>
+                          ) : item.content_type === 'mapa_mental' && !item.cover_url && !item.thumbnail_url ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center">
+                              <Brain className="w-12 h-12 text-emerald-700 dark:text-emerald-300" strokeWidth={1.5} />
+                              <span className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 line-clamp-2">
+                                {item.mind_map_data?.root?.title || "Mapa Mental"}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-wider text-emerald-700/80 dark:text-emerald-300/80">
+                                Mapa Mental
+                              </span>
+                            </div>
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
@@ -521,8 +548,8 @@ const Index = () => {
                           <div className="absolute top-2 right-2">
                             <Badge variant="secondary" className="backdrop-blur-sm shadow-sm text-[10px] px-1.5 py-0.5">
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
-                              <span className="ml-1 capitalize">
-                                {isLearningPath ? "Ruta" : item.content_type}
+                              <span className="ml-1">
+                                {getContentLabel(isLearningPath ? "learning_path" : item.content_type)}
                               </span>
                             </Badge>
                           </div>
