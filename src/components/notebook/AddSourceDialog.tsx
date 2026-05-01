@@ -134,6 +134,15 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
     enabled: !!user && open && tab === "competence",
   });
 
+  const getAsignaturaName = (a: any) =>
+    a?.nombre_asignatura || a?.nombre || "Asignatura sin nombre";
+  const getPeriodoName = (p: any, i: number) =>
+    p?.periodo_nombre || p?.nombre || `Periodo ${p?.numero || i + 1}`;
+  const getCompetenciaName = (c: any) =>
+    c?.nombre_competencia || c?.nombre || c?.descripcion || "Competencia";
+  const getCompetenciaNota = (c: any) =>
+    c?.calificacion_competencia ?? c?.nota;
+
   const handleAddCompetence = async (planId: string, periodoIdx: number, asignaturaIdx: number, compIdx: number) => {
     const plan = studyPlans?.find((p: any) => p.id === planId);
     if (!plan) return;
@@ -141,23 +150,47 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
     const asignatura = periodo?.asignaturas?.[asignaturaIdx];
     const comp = asignatura?.competencias?.[compIdx];
     if (!comp) return;
+
+    const asignaturaNombre = getAsignaturaName(asignatura);
+    const periodoNombre = getPeriodoName(periodo, periodoIdx);
+    const competenciaNombre = getCompetenciaName(comp);
+    const nota = getCompetenciaNota(comp);
+
     const lines: string[] = [];
-    lines.push(`Competencia: ${comp.nombre || comp.descripcion || ""}`);
-    if (comp.descripcion) lines.push(`Descripción: ${comp.descripcion}`);
-    lines.push(`Asignatura: ${asignatura.nombre}`);
-    lines.push(`Periodo: ${periodo.nombre || periodo.numero}`);
+    lines.push(`Asignatura: ${asignaturaNombre}`);
+    lines.push(`Periodo: ${periodoNombre}`);
     lines.push(`Grado: ${plan.grade}  |  Año: ${plan.academic_year}`);
+    lines.push(`\nCompetencia: ${competenciaNombre}`);
+    if (comp.descripcion && comp.descripcion !== competenciaNombre) {
+      lines.push(`Descripción: ${comp.descripcion}`);
+    }
+    if (nota !== undefined && nota !== null) {
+      lines.push(`Calificación competencia: ${nota}`);
+    }
+
+    // Desempeños = evaluaciones del plan de estudios
+    const desempenos = Array.isArray(comp.evaluaciones) ? comp.evaluaciones : [];
+    if (desempenos.length) {
+      lines.push(`\nDesempeños:`);
+      for (const ev of desempenos) {
+        const desc = typeof ev === "string" ? ev : ev?.descripcion || ev?.nombre || "";
+        const evNota = typeof ev === "object" ? ev?.nota : undefined;
+        if (!desc) continue;
+        lines.push(`- ${desc}${evNota !== undefined && evNota !== null ? ` (nota: ${evNota})` : ""}`);
+      }
+    }
+
+    // Actividades opcionales (compatibilidad con planes antiguos)
     if (Array.isArray(comp.actividades) && comp.actividades.length) {
       lines.push("\nActividades:");
       for (const a of comp.actividades) {
         lines.push(`- ${typeof a === "string" ? a : a.nombre || a.titulo || JSON.stringify(a)}`);
       }
     }
-    if (comp.nota !== undefined) lines.push(`\nNota actual: ${comp.nota}`);
 
     await ingest.mutateAsync({
       sourceType: "competence",
-      title: `${asignatura.nombre} – ${comp.nombre || "Competencia"}`,
+      title: `${asignaturaNombre} – ${competenciaNombre}`,
       textContent: lines.join("\n"),
     });
     handleClose();
@@ -245,25 +278,29 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
                   <p className="font-semibold text-sm mb-2">{plan.grade} · {plan.academic_year}</p>
                   {(plan.periodos || []).map((per: any, pi: number) => (
                     <div key={pi} className="ml-2 mb-2">
-                      <p className="text-xs font-medium text-muted-foreground">{per.nombre || `Periodo ${per.numero || pi + 1}`}</p>
+                      <p className="text-xs font-medium text-muted-foreground">{getPeriodoName(per, pi)}</p>
                       {(per.asignaturas || []).map((asg: any, ai: number) => (
-                        <div key={ai} className="ml-3 mt-1">
-                          <p className="text-xs">{asg.nombre}</p>
-                          {(asg.competencias || []).map((comp: any, ci: number) => (
-                            <button
-                              key={ci}
-                              onClick={() => handleAddCompetence(plan.id, pi, ai, ci)}
-                              disabled={busy}
-                              className="block w-full text-left text-xs p-2 rounded hover:bg-accent ml-2 mt-1 border"
-                            >
-                              <span className="font-medium">{comp.nombre || "Competencia"}</span>
-                              {comp.nota !== undefined && (
-                                <span className={`ml-2 ${Number(comp.nota) < 3.5 ? "text-destructive" : "text-muted-foreground"}`}>
-                                  · Nota: {comp.nota}
-                                </span>
-                              )}
-                            </button>
-                          ))}
+                        <div key={ai} className="ml-3 mt-2">
+                          <p className="text-xs font-semibold">{getAsignaturaName(asg)}</p>
+                          {(asg.competencias || []).map((comp: any, ci: number) => {
+                            const compNombre = getCompetenciaName(comp);
+                            const nota = getCompetenciaNota(comp);
+                            return (
+                              <button
+                                key={ci}
+                                onClick={() => handleAddCompetence(plan.id, pi, ai, ci)}
+                                disabled={busy}
+                                className="block w-full text-left text-xs p-2 rounded hover:bg-accent ml-2 mt-1 border"
+                              >
+                                <span className="font-medium">{compNombre}</span>
+                                {nota !== undefined && nota !== null && (
+                                  <span className={`ml-2 ${Number(nota) < 3.5 ? "text-destructive" : "text-muted-foreground"}`}>
+                                    · Nota: {nota}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
@@ -303,6 +304,9 @@ const NotebookView = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
+  const [editSourceTitle, setEditSourceTitle] = useState("");
+  const [editSourceContent, setEditSourceContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Studio search state
@@ -775,17 +779,29 @@ const NotebookView = () => {
                             {s.status === "error" && <span className="text-destructive">Error</span>}
                           </p>
                         </div>
-                        <button
-                          className="opacity-0 group-hover:opacity-100 transition"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (activeSourceId === s.id) setActiveSourceId(null);
-                            sources.remove.mutate(s.id);
-                          }}
-                          aria-label="Eliminar fuente"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </button>
+                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingSourceId(s.id);
+                              setEditSourceTitle(s.title);
+                              setEditSourceContent(s.extracted_text || "");
+                            }}
+                            aria-label="Editar fuente"
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (activeSourceId === s.id) setActiveSourceId(null);
+                              sources.remove.mutate(s.id);
+                            }}
+                            aria-label="Eliminar fuente"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </button>
+                        </div>
                       </div>
                     </li>
                   );
@@ -1140,6 +1156,56 @@ const NotebookView = () => {
       </div>
 
       <AddSourceDialog open={showAdd} onClose={() => setShowAdd(false)} notebookId={id!} />
+
+      <Dialog open={!!editingSourceId} onOpenChange={(v) => { if (!v) setEditingSourceId(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar fuente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Título</label>
+              <Input
+                value={editSourceTitle}
+                onChange={(e) => setEditSourceTitle(e.target.value)}
+                placeholder="Título de la fuente"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Contenido</label>
+              <Textarea
+                rows={12}
+                value={editSourceContent}
+                onChange={(e) => setEditSourceContent(e.target.value)}
+                placeholder="Contenido de la fuente…"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Este texto es lo que SEDE AI usará como contexto al chatear sobre esta fuente.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingSourceId(null)} disabled={sources.update.isPending}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!editingSourceId) return;
+                await sources.update.mutateAsync({
+                  id: editingSourceId,
+                  title: editSourceTitle.trim() || "Sin título",
+                  extracted_text: editSourceContent,
+                });
+                setEditingSourceId(null);
+              }}
+              disabled={sources.update.isPending}
+            >
+              {sources.update.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Guardar cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
