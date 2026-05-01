@@ -384,6 +384,29 @@ const NotebookView = () => {
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
 
+  // Source-processed announcements: when a source becomes "ready" we show a
+  // user-style card in chat with a preview of the processed content. Clicking
+  // the card opens a modal with the full processed text. Announcements are
+  // tracked per-notebook in localStorage so they don't re-appear on every
+  // mount, but they are NOT persisted to the chat conversation (transient).
+  const announcedKey = id ? `notebook:announcedSources:v1:${id}` : null;
+  const [announcedIds, setAnnouncedIds] = useState<Set<string>>(() => {
+    if (!announcedKey) return new Set();
+    try {
+      const raw = localStorage.getItem(announcedKey);
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
+  });
+  type AnnouncedSource = {
+    id: string;
+    title: string;
+    preview: string;
+    fullText: string;
+    sourceType: string;
+  };
+  const [announcedSources, setAnnouncedSources] = useState<AnnouncedSource[]>([]);
+  const [viewingSource, setViewingSource] = useState<AnnouncedSource | null>(null);
+
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
     queryFn: async () => {
