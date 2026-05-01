@@ -81,9 +81,11 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
             .eq("is_public", true);
 
           if (type === "mindmap") {
-            q = q.or("content_type.eq.mindmap,category.ilike.%mapa%,title.ilike.%mapa mental%");
+            q = q.eq("content_type", "mapa_mental" as const);
+          } else if (type === "reading") {
+            q = q.eq("content_type", "lectura" as const);
           } else {
-            q = q.eq("content_type", type);
+            q = q.eq("content_type", "video" as const);
           }
           if (orFilter) q = q.or(orFilter);
 
