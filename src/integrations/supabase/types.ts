@@ -3820,6 +3820,15 @@ export type Database = {
         }[]
       }
       get_my_conversation_ids: { Args: never; Returns: string[] }
+      get_profile_private_fields: {
+        Args: { _user_id: string }
+        Returns: {
+          fecha_nacimiento: string
+          numero_documento: string
+          phone: string
+          tipo_documento: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
