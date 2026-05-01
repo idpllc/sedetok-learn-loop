@@ -124,8 +124,23 @@ const Index = () => {
         return <ClipboardCheck className="w-5 h-5" />;
       case "game":
         return <span className="text-base">🎮</span>;
+      case "mapa_mental":
+        return <Brain className="w-5 h-5" />;
       case "learning_path":
         return <Map className="w-5 h-5" />;
+    }
+  };
+
+  const getContentLabel = (type: ContentType | "learning_path") => {
+    switch (type) {
+      case "video": return "Video";
+      case "lectura": return "Lectura";
+      case "document": return "Documento";
+      case "quiz": return "Quiz";
+      case "game": return "Juego";
+      case "mapa_mental": return "Mapa Mental";
+      case "learning_path": return "Ruta";
+      default: return type;
     }
   };
 
