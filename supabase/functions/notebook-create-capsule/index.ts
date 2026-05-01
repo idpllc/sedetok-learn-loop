@@ -318,10 +318,11 @@ Deno.serve(async (req) => {
 
       const ai = await callAI(
         systemPrompt,
-        `${baseUserPrompt}Genera un quiz de selección múltiple con 8-10 preguntas basadas estrictamente en las fuentes.`,
+        `${baseUserPrompt}Genera un quiz de selección múltiple con 8-10 preguntas basadas estrictamente en las fuentes. Cada pregunta debe tener exactamente 4 opciones (con prefijo "A. ", "B. ", "C. ", "D. ") y exactamente UNA opción marcada como is_correct=true. Asigna 10 puntos por pregunta. Incluye feedback breve para correcto e incorrecto.`,
         "create_quiz",
         params,
-        apiKey
+        apiKey,
+        "google/gemini-2.5-pro"
       );
 
       const { data: quiz, error: e1 } = await supabase
