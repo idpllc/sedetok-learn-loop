@@ -15,7 +15,8 @@ import { MindMapViewer } from "./mindmap/MindMapViewer";
 import { QuizViewer } from "./QuizViewer";
 import { GameViewer } from "./GameViewer";
 import { useQuizAttempts } from "@/hooks/useQuizAttempts";
-import { BookOpen, Brain } from "lucide-react";
+import { BookOpen } from "lucide-react";
+import mindMapIcon from "@/assets/mind-map-icon.png";
 import { ContentInfoSheet } from "./ContentInfoSheet";
 import { forwardRef, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -536,8 +537,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
             <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
               <div className="w-full max-w-3xl bg-background/95 backdrop-blur-sm rounded-2xl p-5 shadow-2xl overflow-hidden max-h-[78vh] flex flex-col border border-border">
                 <div className="flex items-center gap-2 pb-3 border-b border-border mb-3">
-                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0">
-                    <Brain className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
+                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src={mindMapIcon} alt="Mapa Mental" loading="lazy" width={28} height={28} className="w-7 h-7 object-contain" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Mapa Mental</p>
