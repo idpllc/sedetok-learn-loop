@@ -25,7 +25,8 @@ export const PWAInstallPrompt = () => {
   useEffect(() => {
     const isBlockedRoute =
       location.pathname === "/create" ||
-      location.pathname === "/learning-paths/create";
+      location.pathname === "/learning-paths/create" ||
+      location.pathname.startsWith("/notebook");
 
     if (isBlockedRoute) {
       setShowPrompt(false);
