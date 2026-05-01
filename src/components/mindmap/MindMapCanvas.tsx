@@ -425,6 +425,7 @@ export const MindMapCanvas = ({
             onRemove={() => onRemoveNode?.(ln.id)}
             collapsed={ln.collapsed}
             hasChildren={ln.node.children.length > 0}
+            hasTruncatedChildren={(ln.node as MindMapNode & { _truncated?: boolean })._truncated === true}
             onToggleCollapse={() => toggleCollapse(ln.id)}
             hideControls={preview}
           />
