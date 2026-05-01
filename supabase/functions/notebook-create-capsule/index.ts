@@ -60,8 +60,16 @@ const callAI = async (
   }
   const data = await res.json();
   const tc = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (!tc?.function?.arguments) throw new Error("no-tool-call");
-  return JSON.parse(tc.function.arguments);
+  if (!tc?.function?.arguments) {
+    console.error("AI no devolvió tool_call. Respuesta completa:", JSON.stringify(data).slice(0, 2000));
+    throw new Error("La IA no devolvió un resultado válido. Intenta de nuevo.");
+  }
+  try {
+    return JSON.parse(tc.function.arguments);
+  } catch (e) {
+    console.error("AI devolvió JSON inválido:", tc.function.arguments?.slice(0, 1000));
+    throw new Error("La IA devolvió un formato inválido. Intenta de nuevo.");
+  }
 };
 
 const META_PARAMS = {
