@@ -349,7 +349,12 @@ export const NotebookTutorial = () => {
     const tryRight = rect.right + 12;
     const tryLeftSide = rect.left - popW - 12;
 
-    if (placement === "right" && tryRight + popW < vw - 16) {
+    const preferTopForTallTarget = rect.height > vh * 0.35;
+
+    if (preferTopForTallTarget && tryTop > 16) {
+      popTop = tryTop;
+      popLeft = Math.max(16, Math.min(vw - popW - 16, tryLeft));
+    } else if (placement === "right" && tryRight + popW < vw - 16) {
       popLeft = tryRight;
       popTop = Math.max(16, Math.min(vh - popH - 16, rect.top));
     } else if (placement === "left" && tryLeftSide > 16) {
