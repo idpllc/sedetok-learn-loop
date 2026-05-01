@@ -146,6 +146,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     content_type: "" as ContentType,
     difficulty: "basico" as "basico" | "intermedio" | "avanzado",
     document_url: "" as string | undefined,
+    reading_type: "" as "" | "libro" | "resumen" | "ensayo" | "notas" | "glosario",
   });
   
   const [tags, setTags] = useState<string[]>([]);
@@ -175,6 +176,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         grade_level: contentData.grade_level,
         content_type: contentData.content_type,
         difficulty: (contentData as any).difficulty || "basico",
+        reading_type: (contentData as any).reading_type || "",
       } as any);
       setTags(contentData.tags || []);
       setIsPublic((contentData as any).is_public ?? true);
@@ -714,7 +716,16 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       });
       return;
     }
-    
+
+    if (formData.content_type === 'lectura' && !formData.reading_type) {
+      toastHook({
+        title: "Falta el tipo de lectura",
+        description: "Selecciona el tipo de lectura (libro, resumen, ensayo, notas o glosario).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       let videoUrl: string | undefined;
       let documentUrl: string | undefined;
@@ -743,7 +754,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
       const contentPayload = {
         title: formData.title,
-        description: formData.description,
+        description: formData.content_type === 'lectura' ? null : formData.description,
         category: formData.category,
         subject: (formData as any).subject ? subjects.find(s => s.value === (formData as any).subject)?.label || (formData as any).subject : undefined,
         grade_level: formData.grade_level,
@@ -754,6 +765,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         document_url: documentUrl || (editMode ? contentData?.document_url : undefined),
         thumbnail_url: thumbnailUrl || (editMode ? contentData?.thumbnail_url : undefined),
         rich_text: formData.content_type === 'lectura' ? richText : null,
+        reading_type: formData.content_type === 'lectura' ? formData.reading_type : null,
       };
 
       if (editMode && contentData?.id && onUpdate) {
@@ -1463,18 +1475,38 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       {!isQuizMode && !isPathMode && !isGameMode && (
         <>
           {formData.content_type === 'lectura' ? (
-            <div className="space-y-2">
-              <Label htmlFor="richText">Contenido de la Lectura</Label>
-              <RichContentEditor
-                content={richText}
-                onChange={setRichText}
-                placeholder="Escribe aquí el contenido completo de la lectura. Puedes agregar imágenes, caracteres especiales y fórmulas matemáticas..."
-                minHeight="320px"
-              />
-              <p className="text-xs text-muted-foreground">
-                Soporta texto enriquecido, imágenes, caracteres especiales y fórmulas matemáticas (LaTeX). Usa $...$ para fórmulas inline o $$...$$ para bloques.
-              </p>
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="readingType">Tipo de Lectura *</Label>
+                <Select
+                  value={formData.reading_type}
+                  onValueChange={(value) => setFormData({ ...formData, reading_type: value as any })}
+                >
+                  <SelectTrigger id="readingType">
+                    <SelectValue placeholder="Selecciona el tipo de lectura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="libro">📚 Libro</SelectItem>
+                    <SelectItem value="resumen">📝 Resumen</SelectItem>
+                    <SelectItem value="ensayo">✍️ Ensayo</SelectItem>
+                    <SelectItem value="notas">🗒️ Notas</SelectItem>
+                    <SelectItem value="glosario">📖 Glosario</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="richText">Contenido de la Lectura</Label>
+                <RichContentEditor
+                  content={richText}
+                  onChange={setRichText}
+                  placeholder="Escribe aquí el contenido completo de la lectura. Puedes agregar imágenes, caracteres especiales y fórmulas matemáticas..."
+                  minHeight="320px"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Soporta texto enriquecido, imágenes, caracteres especiales y fórmulas matemáticas (LaTeX). Usa $...$ para fórmulas inline o $$...$$ para bloques.
+                </p>
+              </div>
+            </>
           ) : (
             <div className="space-y-2">
               <Label htmlFor="file">Contenido de la Cápsula</Label>
@@ -1667,16 +1699,18 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Descripción</Label>
-        <Textarea
-          id="description"
-          placeholder={isQuizMode ? "Describe brevemente el contenido del quiz" : "Describe el contenido de tu cápsula..."}
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="min-h-[100px]"
-        />
-      </div>
+      {formData.content_type !== 'lectura' && (
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción</Label>
+          <Textarea
+            id="description"
+            placeholder={isQuizMode ? "Describe brevemente el contenido del quiz" : "Describe el contenido de tu cápsula..."}
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="min-h-[100px]"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

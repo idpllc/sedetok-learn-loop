@@ -10,7 +10,7 @@ type GradeLevel = Database["public"]["Enums"]["grade_level"];
 
 interface CreateContentData {
   title: string;
-  description?: string;
+  description?: string | null;
   category: CategoryType;
   subject?: string;
   grade_level: GradeLevel;
@@ -20,6 +20,7 @@ interface CreateContentData {
   document_url?: string;
   thumbnail_url?: string;
   rich_text?: string | null;
+  reading_type?: string | null;
 }
 
 export const useCreateContent = () => {

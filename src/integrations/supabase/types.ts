@@ -411,6 +411,7 @@ export type Database = {
           id: string
           is_public: boolean | null
           likes_count: number | null
+          reading_type: string | null
           rich_text: string | null
           saves_count: number | null
           shares_count: number | null
@@ -434,6 +435,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           likes_count?: number | null
+          reading_type?: string | null
           rich_text?: string | null
           saves_count?: number | null
           shares_count?: number | null
@@ -457,6 +459,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           likes_count?: number | null
+          reading_type?: string | null
           rich_text?: string | null
           saves_count?: number | null
           shares_count?: number | null
