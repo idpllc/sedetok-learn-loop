@@ -47,35 +47,27 @@ const STEPS: Step[] = [
     shouldAutoAdvance: () => isDetailRoute(window.location.pathname),
   },
   {
-    selector: '[data-tour="source-tabs"]',
-    title: "2. Selecciona el tipo de fuente",
-    description:
-      "Por defecto comenzaremos con 'Texto'. Aquí podrás escribir directamente el tema o competencia que quieres aprender.",
-    routeMatcher: isDetailRoute,
-    placement: "bottom",
-    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
-  },
-  {
     selector: '[data-tour="source-text-title"]',
-    title: "3. Escribe el título",
+    title: "2. Escribe el título: la asignatura",
     description:
-      "Usa el nombre de la asignatura, por ejemplo: 'Matemáticas' o 'Biología'. Esto te ayudará a identificar la fuente.",
+      "En el campo Título escribe el nombre de la asignatura (por ejemplo: 'Matemáticas', 'Biología' o 'Lengua'). Así identificarás fácilmente esta fuente.",
     routeMatcher: isDetailRoute,
     placement: "bottom",
     allowInteraction: true,
+    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
   },
   {
     selector: '[data-tour="source-text-content"]',
-    title: "4. Escribe el contenido",
+    title: "3. Escribe el contenido: la competencia o temática",
     description:
-      "Aquí va el tema o competencia que quieres dominar (ej: 'Quiero aprender ecuaciones lineales y resolver problemas con ellas').",
+      "En Contenido escribe la competencia o temática que quieres aprender (ej: 'Resolver ecuaciones lineales' o 'Comprender la fotosíntesis'). SEDE AI usará esto como contexto.",
     routeMatcher: isDetailRoute,
     placement: "top",
     allowInteraction: true,
   },
   {
     selector: '[data-tour="source-text-submit"]',
-    title: "5. Añade tu fuente",
+    title: "4. Añade tu fuente",
     description:
       "Pulsa 'Añadir texto'. SEDE AI procesará tu fuente para usarla como contexto en todo el cuaderno.",
     routeMatcher: isDetailRoute,
@@ -89,7 +81,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="sources-panel"]',
-    title: "6. Tu fuente procesada",
+    title: "5. Tu fuente procesada",
     description:
       "¡Listo! Tu fuente aparecerá aquí en cuanto termine de procesarse. SEDE AI ya puede usarla para responderte.",
     routeMatcher: isDetailRoute,
@@ -97,7 +89,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="studio-panel"]',
-    title: "7. Studio: genera cápsulas",
+    title: "6. Studio: genera cápsulas",
     description:
       "Desde Studio puedes transformar tus fuentes en cápsulas de estudio: lecturas, mapas mentales, juegos y quizzes.",
     routeMatcher: isDetailRoute,
@@ -106,7 +98,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="studio-quiz"]',
-    title: "8. Crea un Quiz",
+    title: "7. Crea un Quiz",
     description:
       "Selecciona Quiz para que SEDE AI genere preguntas a partir de tu fuente y puedas autoevaluar lo aprendido.",
     routeMatcher: isDetailRoute,
@@ -115,7 +107,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="chat-panel"]',
-    title: "9. Conversa con SEDE AI",
+    title: "8. Conversa con SEDE AI",
     description:
       "Vuelve al chat cuando quieras pedirle resúmenes, explicaciones o ejercicios sobre tu fuente.",
     routeMatcher: isDetailRoute,
@@ -124,7 +116,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="chat-input"]',
-    title: "10. ¡Empieza a estudiar!",
+    title: "9. ¡Empieza a estudiar!",
     description:
       "Escribe aquí tu pregunta. Ya tienes todo lo necesario para estudiar con tu Notebook Sedefy.",
     routeMatcher: isDetailRoute,
