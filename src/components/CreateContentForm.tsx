@@ -1978,6 +1978,25 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           <ArrowRight className="w-4 h-4 mr-2" />
           Configurar Ruta de Aprendizaje
         </Button>
+      ) : formData.content_type === 'mapa_mental' ? (
+        <Button
+          type="button"
+          className="w-full"
+          onClick={() => {
+            if (!formData.title || !formData.category || !formData.grade_level) {
+              toast.error("Completa título, asignatura y nivel para continuar");
+              return;
+            }
+            if (!mindMapData) {
+              setMindMapData(createEmptyMindMap(formData.title || "Tema central"));
+            }
+            setMindMapStep(1);
+          }}
+          disabled={!formData.title || !formData.category || !formData.grade_level}
+        >
+          <ArrowRight className="w-4 h-4 mr-2" />
+          Continuar con el Mapa Mental
+        </Button>
       ) : (
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
