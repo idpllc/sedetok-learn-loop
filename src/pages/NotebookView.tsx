@@ -472,7 +472,7 @@ const NotebookView = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("notebook-create-capsule", {
-        body: { notebookId: id, type },
+        body: { notebookId: id, type, notebookSourceId: activeSourceId },
       });
       if (error) throw error;
       if (!data?.route) throw new Error("Respuesta inválida");
