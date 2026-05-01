@@ -424,6 +424,7 @@ const ViewCourse = () => {
               videoUrl={content.video_url}
               documentUrl={content.document_url}
               richText={content.rich_text}
+              mindMapData={(content as any).mind_map_data}
               contentType={isQuiz ? 'quiz' : content.content_type}
               likes={content.likes_count || 0}
               comments={content.comments_count || 0}

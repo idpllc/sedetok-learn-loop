@@ -497,6 +497,7 @@ const ViewLearningPath = () => {
               videoUrl={item.video_url}
               documentUrl={item.documento_url}
               richText={item.rich_text}
+              mindMapData={(item as any).mind_map_data}
               contentType={item.content_type}
               likes={item.likes_count}
               comments={item.comments_count}
