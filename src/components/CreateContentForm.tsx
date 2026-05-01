@@ -716,7 +716,16 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       });
       return;
     }
-    
+
+    if (formData.content_type === 'lectura' && !formData.reading_type) {
+      toastHook({
+        title: "Falta el tipo de lectura",
+        description: "Selecciona el tipo de lectura (libro, resumen, ensayo, notas o glosario).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       let videoUrl: string | undefined;
       let documentUrl: string | undefined;
