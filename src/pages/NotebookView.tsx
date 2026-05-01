@@ -299,8 +299,11 @@ const NotebookView = () => {
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
   // Cache of the first 3 results per studio option id (after a search has run).
-  // Persisted to localStorage per-notebook so progress is preserved between visits.
-  const cacheKey = id ? `notebook:studioCache:${id}` : null;
+  // Persisted to localStorage per-notebook AND per-active-source so each source
+  // keeps its own studio progress.
+  const cacheKey = id
+    ? `notebook:studioCache:${id}:${activeSourceId || "all"}`
+    : null;
   const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>(() => {
     if (!cacheKey) return {};
     try {
@@ -312,6 +315,24 @@ const NotebookView = () => {
   const [highlightedResultId, setHighlightedResultId] = useState<string | null>(null);
   // Mobile tabs: fuentes | chat | studio
   const [mobileTab, setMobileTab] = useState<"fuentes" | "chat" | "studio">("chat");
+
+  // When the active source changes, reload the cache for that scope and clear
+  // any in-flight studio selection / viewer so we don't show stale content.
+  useEffect(() => {
+    if (!cacheKey) return;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      setStudioCache(raw ? JSON.parse(raw) : {});
+    } catch { setStudioCache({}); }
+    setStudioActive(null);
+    setStudioResults([]);
+    setStudioOffset(0);
+    setStudioHasMore(true);
+    setViewing(null);
+    setViewerExpanded(false);
+    setHighlightedResultId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheKey]);
 
   // Persist cache whenever it changes
   useEffect(() => {
