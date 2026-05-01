@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
         const { error: eq } = await supabase.from("game_questions").insert(rows);
         if (eq) throw eq;
       }
-      result = { contentId: game.id, type: "game", route: `/?game=${game.id}` };
+      result = { contentId: game.id, type: "game", route: `/?game=${game.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
     // ---------- LEARNING PATH / COURSE ----------
