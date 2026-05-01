@@ -58,7 +58,7 @@ export const useNotebookChat = (notebookId: string | undefined) => {
   }, [user, notebookId]);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, studioType?: string) => {
       if (!user || !notebookId || !conversationId || !text.trim() || !session?.access_token) return;
       setMessages((prev) => [...prev, { role: "user", content: text }, { role: "assistant", content: "" }]);
       setIsStreaming(true);
@@ -122,6 +122,16 @@ export const useNotebookChat = (notebookId: string | undefined) => {
         }
 
         if (assistant) {
+          // Append Studio CTA marker so UI can render "Crear nueva cápsula" button
+          if (studioType) {
+            const cta = `\n\n|||STUDIO_CTA:${JSON.stringify({ type: studioType })}|||`;
+            assistant += cta;
+            setMessages((prev) => {
+              const arr = [...prev];
+              arr[arr.length - 1] = { role: "assistant", content: assistant };
+              return arr;
+            });
+          }
           await supabase.from("ai_chat_messages").insert({
             conversation_id: conversationId,
             role: "assistant",
