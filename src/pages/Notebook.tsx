@@ -110,6 +110,8 @@ const Notebook = () => {
           )}
         </div>
       </main>
+      <NotebookTutorial />
+      <NotebookTutorialHelpButton />
     </>
   );
 };
