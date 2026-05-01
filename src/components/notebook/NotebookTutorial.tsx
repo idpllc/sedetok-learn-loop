@@ -47,28 +47,20 @@ const STEPS: Step[] = [
     shouldAutoAdvance: () => isDetailRoute(window.location.pathname),
   },
   {
-    selector: '[data-tour="source-tabs"]',
-    title: "2. Selecciona el tipo de fuente",
-    description:
-      "Por defecto comenzaremos con 'Texto'. Aquí podrás escribir directamente el tema o competencia que quieres aprender.",
-    routeMatcher: isDetailRoute,
-    placement: "bottom",
-    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
-  },
-  {
     selector: '[data-tour="source-text-title"]',
-    title: "3. Escribe el título",
+    title: "2. Escribe el título: la asignatura",
     description:
-      "Usa el nombre de la asignatura, por ejemplo: 'Matemáticas' o 'Biología'. Esto te ayudará a identificar la fuente.",
+      "En el campo Título escribe el nombre de la asignatura (por ejemplo: 'Matemáticas', 'Biología' o 'Lengua'). Así identificarás fácilmente esta fuente.",
     routeMatcher: isDetailRoute,
     placement: "bottom",
     allowInteraction: true,
+    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
   },
   {
     selector: '[data-tour="source-text-content"]',
-    title: "4. Escribe el contenido",
+    title: "3. Escribe el contenido: la competencia o temática",
     description:
-      "Aquí va el tema o competencia que quieres dominar (ej: 'Quiero aprender ecuaciones lineales y resolver problemas con ellas').",
+      "En Contenido escribe la competencia o temática que quieres aprender (ej: 'Resolver ecuaciones lineales' o 'Comprender la fotosíntesis'). SEDE AI usará esto como contexto.",
     routeMatcher: isDetailRoute,
     placement: "top",
     allowInteraction: true,
