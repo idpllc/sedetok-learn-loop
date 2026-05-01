@@ -16,6 +16,7 @@ import {
   Maximize2, Minimize2, ChevronLeft, Check
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
+import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
