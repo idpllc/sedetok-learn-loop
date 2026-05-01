@@ -98,8 +98,40 @@ const Index = () => {
     { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
     { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
     { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
+    { id: "mapa_mental" as ContentType, label: "Mapas mentales", icon: "🧠" },
     { id: "document" as ContentType, label: "Documentos", icon: "📄" },
   ];
+
+  // Strip HTML tags + collapse whitespace for clean previews of rich content.
+  const stripHtml = (html?: string | null): string => {
+    if (!html) return "";
+    return html
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  // Friendly label for reading subtypes (resumen / glosario / notas / otro)
+  const readingSubtypeLabel = (rt?: string | null): string => {
+    switch ((rt || "").toLowerCase()) {
+      case "resumen": return "Resumen";
+      case "glosario": return "Glosario";
+      case "notas": return "Notas";
+      case "libro": return "Libro";
+      case "articulo":
+      case "artículo": return "Artículo";
+      default: return "";
+    }
+  };
+
 
   const gradeLevels = [
     { value: "all", label: "Todos" },
@@ -508,7 +540,7 @@ const Index = () => {
                           ) : item.content_type === 'lectura' && item.rich_text ? (
                             <div className="absolute inset-0 p-4 overflow-hidden">
                               <p className="text-xs leading-relaxed text-muted-foreground line-clamp-[8] whitespace-pre-wrap font-serif">
-                                {item.rich_text}
+                                {stripHtml(item.rich_text)}
                               </p>
                               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-amber-50 dark:from-amber-950/40 to-transparent" />
                             </div>
@@ -551,6 +583,9 @@ const Index = () => {
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
                               <span className="ml-1">
                                 {getContentLabel(isLearningPath ? "learning_path" : item.content_type)}
+                                {item.content_type === "lectura" && readingSubtypeLabel(item.reading_type) && (
+                                  <span className="opacity-80"> · {readingSubtypeLabel(item.reading_type)}</span>
+                                )}
                               </span>
                             </Badge>
                           </div>
@@ -558,7 +593,7 @@ const Index = () => {
                         <div className="px-3 py-2 space-y-1">
                           <h3 className="font-semibold text-sm line-clamp-1">{item.title}</h3>
                           {item.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1">{item.description}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-1">{stripHtml(item.description)}</p>
                           )}
                           <div className="flex items-center justify-end">
                             {!isLearningPath && (
