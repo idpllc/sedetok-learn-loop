@@ -779,8 +779,8 @@ const NotebookView = () => {
           ))}
         </div>
 
-        {/* 3-column layout — right column grows when viewing a capsule (expandable);
-            when expanded, the Fuentes column collapses so chat takes the freed width. */}
+        {/* 3-column layout — keep all desktop grid children mounted so the viewer
+            remains assigned to the 3rd column when expanded. */}
          <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
@@ -795,7 +795,7 @@ const NotebookView = () => {
             data-tour="sources-panel"
             className={`border-r overflow-y-auto p-3 lg:block ${
               mobileTab === "fuentes" ? "block" : "hidden"
-            } ${viewing && viewerExpanded ? "lg:hidden" : ""}`}
+            } ${viewing && viewerExpanded ? "lg:p-0 lg:border-r-0 lg:overflow-hidden lg:pointer-events-none" : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Fuentes</h2>
