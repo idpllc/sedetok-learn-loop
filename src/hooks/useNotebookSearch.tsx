@@ -8,45 +8,90 @@ export type SedefyResult = {
   subject?: string | null;
   cover_url?: string | null;
   type: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
+  /** Subtype for readings: resumen | glosario | notas | otro */
+  readingSubtype?: string | null;
+  /** Relevance score (higher = better match) */
+  score?: number;
 };
 
+export type ReadingSubtype = "resumen" | "glosario" | "notas" | "otro";
+
 /**
- * Extracts a small set of search keywords from the notebook sources' titles
- * and (truncated) extracted text. Avoids stop words and too-short tokens.
+ * Spanish + English stopwords for keyword extraction.
  */
 const STOPWORDS = new Set([
-  "the","and","for","with","una","uno","las","los","del","por","que","con",
+  // ES
   "para","pero","como","este","esta","estos","estas","sobre","entre","cuando",
-  "donde","más","sin","sus","sus","han","sido","ser","son","fue","era","eres",
-  "tus","mis","sus","les","nos","nuestro","nuestra","ellos","ellas","ese","esa",
+  "donde","más","menos","sin","sus","sus","han","sido","ser","son","fue","era","eres",
+  "tus","mis","les","nos","nuestro","nuestra","ellos","ellas","ese","esa","eso",
+  "del","las","los","una","unos","unas","con","por","que","qué","los","las",
+  "ante","bajo","cabe","contra","desde","durante","hacia","hasta","mediante","según",
+  "tras","versus","muy","tan","también","tambien","asi","así","aun","aún","ya",
+  "porque","aunque","mientras","cada","todo","toda","todos","todas","otro","otra",
+  "otros","otras","mismo","misma","cual","cuales","cuyo","cuya","aqui","aquí",
+  "alli","allí","entonces","luego","despues","después","antes","ahora","hoy",
+  "ayer","mañana","manana","siempre","nunca","jamas","jamás","quiza","quizá",
+  // EN
+  "the","and","for","with","that","this","from","have","has","had","not","but",
+  "what","when","where","which","while","there","their","they","them","then",
+  "into","upon","over","under","about","because","because","could","would","should",
+  "your","yours","ours","mine","each","also","very","just","such","more","less",
+  "some","most","both","other","others","same","than","then","only","being","been",
 ]);
 
-const extractKeywords = (sources: any[], extra?: string): string[] => {
-  const blob = [
-    ...(sources || []).map((s) => `${s.title || ""} ${(s.extracted_text || "").slice(0, 800)}`),
-    extra || "",
-  ].join(" ").toLowerCase();
+/**
+ * Extract relevance-ranked keywords from notebook sources.
+ * - Heavily weights TITLE tokens (x4)
+ * - Truncates extracted_text to first 600 chars per source (intro is most relevant)
+ * - Returns top 8 unique tokens by weighted count
+ */
+const extractKeywords = (sources: any[]): string[] => {
   const counts = new Map<string, number>();
-  for (const raw of blob.split(/[^a-záéíóúüñ0-9]+/i)) {
-    const t = raw.trim();
-    if (t.length < 4) continue;
-    if (STOPWORDS.has(t)) continue;
-    counts.set(t, (counts.get(t) || 0) + 1);
+
+  const addTokens = (text: string, weight: number) => {
+    if (!text) return;
+    for (const raw of text.toLowerCase().split(/[^a-záéíóúüñ0-9]+/i)) {
+      const t = raw.trim();
+      if (t.length < 4) continue;
+      if (STOPWORDS.has(t)) continue;
+      // skip pure numbers
+      if (/^\d+$/.test(t)) continue;
+      counts.set(t, (counts.get(t) || 0) + weight);
+    }
+  };
+
+  for (const s of sources || []) {
+    addTokens(s.title || "", 4);
+    addTokens((s.extracted_text || "").slice(0, 600), 1);
   }
+
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
+    .slice(0, 8)
     .map(([k]) => k);
+};
+
+/** Scores how relevant a row is given the keywords (higher = better). */
+const scoreRow = (row: any, keywords: string[]): number => {
+  const hay = `${row.title || ""} ${row.description || ""} ${row.subject || ""}`.toLowerCase();
+  let score = 0;
+  for (const k of keywords) {
+    if (!k) continue;
+    if ((row.title || "").toLowerCase().includes(k)) score += 3;
+    else if (hay.includes(k)) score += 1;
+  }
+  return score;
 };
 
 const buildOr = (terms: string[]) =>
   terms
-    .map((t) => `title.ilike.%${t}%,description.ilike.%${t}%,subject.ilike.%${t}%`)
+    // Only match against title/description for precision (subject is too broad)
+    .map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`)
     .join(",");
 
 /**
  * Direct (non-AI) Sedefy capsule search scoped to a notebook.
- * Returns a paginated list per type. Use offset to "load more".
+ * Fetches a wider window from the DB then re-ranks/filters locally for precision.
  */
 export const useNotebookSearch = (notebookId: string | undefined) => {
   const [loading, setLoading] = useState(false);
@@ -55,7 +100,8 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
     async (
       type: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course",
       offset: number = 0,
-      limit: number = 3
+      limit: number = 3,
+      readingSubtype?: ReadingSubtype | null
     ): Promise<SedefyResult[]> => {
       if (!notebookId) return [];
       setLoading(true);
@@ -69,34 +115,51 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
 
         const keywords = extractKeywords(sources || []);
         const orFilter = keywords.length > 0 ? buildOr(keywords) : null;
-        const range = { from: offset, to: offset + limit - 1 };
+
+        // Fetch a wider window than requested so we can rank locally.
+        // Window grows with offset to support "Buscar más" pagination after re-ranking.
+        const fetchLimit = Math.max(20, (offset + limit) * 4);
+
+        const rank = (rows: any[]) =>
+          rows
+            .map((r) => ({ row: r, score: scoreRow(r, keywords) }))
+            // require at least one keyword hit when keywords exist
+            .filter((x) => keywords.length === 0 || x.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(offset, offset + limit);
 
         // ---- content table (video / reading / mindmap) ----
         if (type === "video" || type === "reading" || type === "mindmap") {
-          // mindmap is stored either in content table with category=mindmap
-          // or via title fallback
           let q = supabase
             .from("content")
-            .select("id, title, description, thumbnail_url, content_type, subject")
+            .select("id, title, description, thumbnail_url, content_type, subject, reading_type")
             .eq("is_public", true);
 
           if (type === "mindmap") {
             q = q.eq("content_type", "mapa_mental" as const);
           } else if (type === "reading") {
             q = q.eq("content_type", "lectura" as const);
+            if (readingSubtype && readingSubtype !== "otro") {
+              q = q.eq("reading_type", readingSubtype);
+            } else if (readingSubtype === "otro") {
+              // Anything that is NOT one of the known subtypes (or null)
+              q = q.or("reading_type.is.null,and(reading_type.neq.resumen,reading_type.neq.glosario,reading_type.neq.notas)");
+            }
           } else {
             q = q.eq("content_type", "video" as const);
           }
           if (orFilter) q = q.or(orFilter);
 
-          const { data } = await q.range(range.from, range.to);
-          return (data || []).map((c: any) => ({
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: c, score }) => ({
             id: c.id,
             title: c.title,
             description: c.description,
             subject: c.subject,
             cover_url: c.thumbnail_url,
             type,
+            readingSubtype: c.reading_type,
+            score,
           }));
         }
 
@@ -107,14 +170,10 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
             .select("id, title, description, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.range(range.from, range.to);
-          return (data || []).map((r: any) => ({
-            id: r.id,
-            title: r.title,
-            description: r.description,
-            subject: r.subject,
-            cover_url: r.thumbnail_url,
-            type: "quiz",
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: r, score }) => ({
+            id: r.id, title: r.title, description: r.description, subject: r.subject,
+            cover_url: r.thumbnail_url, type: "quiz", score,
           }));
         }
 
@@ -125,14 +184,10 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
             .select("id, title, description, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.range(range.from, range.to);
-          return (data || []).map((r: any) => ({
-            id: r.id,
-            title: r.title,
-            description: r.description,
-            subject: r.subject,
-            cover_url: r.thumbnail_url,
-            type: "game",
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: r, score }) => ({
+            id: r.id, title: r.title, description: r.description, subject: r.subject,
+            cover_url: r.thumbnail_url, type: "game", score,
           }));
         }
 
@@ -143,14 +198,10 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
             .select("id, title, description, cover_url, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.range(range.from, range.to);
-          return (data || []).map((r: any) => ({
-            id: r.id,
-            title: r.title,
-            description: r.description,
-            subject: r.subject,
-            cover_url: r.cover_url || r.thumbnail_url,
-            type,
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: r, score }) => ({
+            id: r.id, title: r.title, description: r.description, subject: r.subject,
+            cover_url: r.cover_url || r.thumbnail_url, type, score,
           }));
         }
 

@@ -17,8 +17,8 @@ import {
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { useNotebookSearch, type SedefyResult } from "@/hooks/useNotebookSearch";
-import { X } from "lucide-react";
+import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
+import { X, FileSearch, NotebookPen, Library } from "lucide-react";
 
 const TYPE_ICONS: Record<string, any> = {
   pdf: FileText, docx: FileText, xlsx: FileText, text: Type, url: LinkIcon, video: Video, competence: GraduationCap,
@@ -28,11 +28,15 @@ type StudioOption = {
   id: string;
   label: string;
   icon: any;
+  /** Tailwind classes for the button color theme */
+  color: string;
+  /** Optional reading subtype to scope the search */
+  readingSubtype?: ReadingSubtype;
   /** Content type filter for SEDEFY library search */
   searchType: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
   /** Route to AI-powered creator. null => no AI creator (e.g., video). */
   createRoute: string | null;
-  /** Prompt sent to AI: forces it to FIRST search existing capsules, then offer to create. */
+  /** Prompt (legacy, unused after local search refactor) */
   prompt: string;
 };
 
@@ -41,57 +45,95 @@ const STUDIO_OPTIONS: StudioOption[] = [
     id: "video",
     label: "Video",
     icon: Video,
+    color: "from-rose-500/15 to-rose-500/5 border-rose-500/30 text-rose-600 hover:bg-rose-500/10 dark:text-rose-400",
     searchType: "video",
     createRoute: null,
-    prompt: "El usuario quiere un VIDEO sobre los temas de este cuaderno. Usa search_content con content_type='video' y términos extraídos de las fuentes para mostrarle videos existentes en SEDEFY. Tras presentar los resultados, escribe en el cuerpo: 'Los videos no se pueden generar con IA, pero puedes subir uno desde el botón Crear.' NO ofrezcas crear un video con IA.",
+    prompt: "",
   },
   {
-    id: "reading",
-    label: "Lectura",
-    icon: Book,
+    id: "reading-resumen",
+    label: "Resúmenes",
+    icon: FileSearch,
+    color: "from-amber-500/15 to-amber-500/5 border-amber-500/30 text-amber-700 hover:bg-amber-500/10 dark:text-amber-400",
     searchType: "reading",
+    readingSubtype: "resumen",
+    createRoute: "/create?type=reading&reading_type=resumen",
+    prompt: "",
+  },
+  {
+    id: "reading-glosario",
+    label: "Glosarios",
+    icon: Book,
+    color: "from-orange-500/15 to-orange-500/5 border-orange-500/30 text-orange-700 hover:bg-orange-500/10 dark:text-orange-400",
+    searchType: "reading",
+    readingSubtype: "glosario",
+    createRoute: "/create?type=reading&reading_type=glosario",
+    prompt: "",
+  },
+  {
+    id: "reading-notas",
+    label: "Notas",
+    icon: NotebookPen,
+    color: "from-yellow-500/15 to-yellow-500/5 border-yellow-500/30 text-yellow-700 hover:bg-yellow-500/10 dark:text-yellow-400",
+    searchType: "reading",
+    readingSubtype: "notas",
+    createRoute: "/create?type=reading&reading_type=notas",
+    prompt: "",
+  },
+  {
+    id: "reading-otro",
+    label: "Libros / Artículos",
+    icon: Library,
+    color: "from-stone-500/15 to-stone-500/5 border-stone-500/30 text-stone-700 hover:bg-stone-500/10 dark:text-stone-400",
+    searchType: "reading",
+    readingSubtype: "otro",
     createRoute: "/create?type=reading",
-    prompt: "El usuario quiere una LECTURA sobre los temas de este cuaderno. PRIMERO usa search_content con content_type='reading' y términos clave de las fuentes. Presenta brevemente los resultados encontrados. Termina tu respuesta con la pregunta exacta: '¿Quieres que te cree una nueva lectura con IA basada en tus fuentes?'",
+    prompt: "",
   },
   {
     id: "mindmap",
     label: "Mapa mental",
     icon: Brain,
+    color: "from-fuchsia-500/15 to-fuchsia-500/5 border-fuchsia-500/30 text-fuchsia-600 hover:bg-fuchsia-500/10 dark:text-fuchsia-400",
     searchType: "mindmap",
     createRoute: "/create?type=mindmap",
-    prompt: "El usuario quiere un MAPA MENTAL sobre los temas de este cuaderno. PRIMERO usa search_content con términos clave + 'mapa mental' para buscar mapas existentes en SEDEFY. Presenta brevemente los resultados. Termina con la pregunta exacta: '¿Quieres que te cree un nuevo mapa mental con IA basado en tus fuentes?'",
+    prompt: "",
   },
   {
     id: "quiz",
     label: "Quiz",
     icon: FileQuestion,
+    color: "from-sky-500/15 to-sky-500/5 border-sky-500/30 text-sky-600 hover:bg-sky-500/10 dark:text-sky-400",
     searchType: "quiz",
     createRoute: "/create?type=quiz",
-    prompt: "El usuario quiere un QUIZ sobre los temas de este cuaderno. PRIMERO usa search_content con content_type='quiz' y términos clave de las fuentes. Presenta brevemente los quizzes existentes encontrados. Termina con la pregunta exacta: '¿Quieres que te cree un nuevo quiz con IA basado en tus fuentes?'",
+    prompt: "",
   },
   {
     id: "game",
     label: "Juego",
     icon: Gamepad2,
+    color: "from-emerald-500/15 to-emerald-500/5 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400",
     searchType: "game",
     createRoute: "/create?type=game",
-    prompt: "El usuario quiere un JUEGO educativo sobre los temas de este cuaderno. PRIMERO usa search_content con content_type='game' y términos clave de las fuentes. Presenta brevemente los juegos existentes. Termina con la pregunta exacta: '¿Quieres que te cree un nuevo juego con IA basado en tus fuentes?'",
+    prompt: "",
   },
   {
     id: "path",
     label: "Ruta",
     icon: Map,
+    color: "from-violet-500/15 to-violet-500/5 border-violet-500/30 text-violet-600 hover:bg-violet-500/10 dark:text-violet-400",
     searchType: "path",
     createRoute: "/learning-paths/create",
-    prompt: "El usuario quiere una RUTA DE APRENDIZAJE sobre los temas de este cuaderno. PRIMERO usa search_learning_paths con términos clave de las fuentes. Presenta brevemente las rutas existentes. Termina con la pregunta exacta: '¿Quieres que te cree una nueva ruta de aprendizaje con IA basada en tus fuentes?'",
+    prompt: "",
   },
   {
     id: "course",
     label: "Curso",
     icon: BookOpen,
+    color: "from-indigo-500/15 to-indigo-500/5 border-indigo-500/30 text-indigo-600 hover:bg-indigo-500/10 dark:text-indigo-400",
     searchType: "course",
     createRoute: "/courses/create",
-    prompt: "El usuario quiere un CURSO completo sobre los temas de este cuaderno. PRIMERO usa search_learning_paths para mostrar rutas/cursos existentes relacionados. Presenta brevemente los resultados. Termina con la pregunta exacta: '¿Quieres que te cree un nuevo curso con IA basado en tus fuentes?'",
+    prompt: "",
   },
 ];
 
@@ -100,14 +142,9 @@ const STUDIO_BY_ID: Record<string, StudioOption> = STUDIO_OPTIONS.reduce(
   {}
 );
 
-const CTA_LABEL: Record<string, string> = {
-  reading: "✨ Crear lectura con IA",
-  mindmap: "✨ Crear mapa mental con IA",
-  quiz: "✨ Crear quiz con IA",
-  game: "✨ Crear juego con IA",
-  path: "✨ Crear ruta con IA",
-  course: "✨ Crear curso con IA",
-  video: "Subir un video",
+const ctaLabel = (opt: StudioOption) => {
+  if (opt.id === "video") return "Subir un video";
+  return `✨ Crear ${opt.label.toLowerCase()} con IA`;
 };
 
 // ----- Sub-components -----
@@ -290,18 +327,17 @@ const NotebookView = () => {
     await chat.appendLocal(userMsg, assistantMsg);
 
     try {
-      const results = await sedefySearch.search(opt.searchType, 0, 3);
+      const results = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
       setStudioResults(results);
       setStudioHasMore(results.length === 3);
 
       if (results.length === 0) {
+        const article = opt.id === "path" || opt.id.startsWith("reading") ? "una" : "un";
         const noneMsg =
           opt.createRoute
-            ? `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${opt.id === "path" || opt.id === "reading" ? "una" : "un"} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
-            : `No encontré ${opt.label.toLowerCase()}s en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
+            ? `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${article} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
+            : `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
         await chat.appendLocal("", noneMsg);
-        // Trim the empty user message we just inserted
-        // (keep simple: leave it; UI shows empty bubble — better: skip)
       }
     } finally {
       setStudioSearching(false);
@@ -312,7 +348,12 @@ const NotebookView = () => {
     if (!studioActive || studioSearching) return;
     setStudioSearching(true);
     try {
-      const next = await sedefySearch.search(studioActive.searchType, studioOffset + 3, 3);
+      const next = await sedefySearch.search(
+        studioActive.searchType,
+        studioOffset + 3,
+        3,
+        studioActive.readingSubtype
+      );
       setStudioResults((prev) => [...prev, ...next]);
       setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
@@ -502,7 +543,7 @@ const NotebookView = () => {
                                 ) : (
                                   <Wand2 className="h-3.5 w-3.5" />
                                 )}
-                                {CTA_LABEL[studioCta.type] || "Crear cápsula"}
+                                {STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
                               </Button>
                             </div>
                           )}
@@ -557,12 +598,12 @@ const NotebookView = () => {
                     key={opt.id}
                     onClick={() => handleStudio(opt)}
                     disabled={chat.isStreaming || studioSearching || noSources}
-                    className={`flex flex-col items-start gap-1 p-3 rounded-lg border bg-card hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${
-                      isActive ? "border-primary ring-1 ring-primary" : ""
+                    className={`flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
+                      isActive ? "ring-2 ring-offset-1 ring-current shadow-sm" : ""
                     }`}
                   >
-                    <Icon className="h-5 w-5 text-primary" />
-                    <span className="text-xs font-medium">{opt.label}</span>
+                    <Icon className="h-5 w-5" />
+                    <span className="text-[11px] font-semibold leading-tight text-foreground">{opt.label}</span>
                   </button>
                 );
               })}
@@ -578,9 +619,9 @@ const NotebookView = () => {
             {studioActive && (
               <div className="mt-4 pt-3 border-t">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xs font-semibold flex items-center gap-1.5">
-                    <studioActive.icon className="h-3.5 w-3.5 text-primary" />
-                    {studioActive.label}s sugeridos
+                  <h3 className={`text-xs font-semibold flex items-center gap-1.5 ${studioActive.color.split(" ").find(c => c.startsWith("text-")) || "text-primary"}`}>
+                    <studioActive.icon className="h-3.5 w-3.5" />
+                    {studioActive.label} sugeridos
                   </h3>
                   <button
                     className="text-[10px] text-muted-foreground hover:text-foreground"
@@ -602,43 +643,48 @@ const NotebookView = () => {
                     Sin resultados
                   </p>
                 ) : (
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-2">
                     {studioResults.map((r) => (
                       <li
                         key={r.id}
-                        className="group relative flex gap-2 p-1.5 rounded-md border bg-card hover:bg-accent transition cursor-pointer"
+                        className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color}`}
                         onClick={() => openResult(r)}
                       >
-                        <div className="w-12 h-12 rounded bg-muted shrink-0 overflow-hidden flex items-center justify-center">
+                        <div className="aspect-video w-full overflow-hidden bg-muted/40 relative">
                           {r.cover_url ? (
                             <img
                               src={r.cover_url}
                               alt={r.title}
                               className="w-full h-full object-cover"
                               loading="lazy"
-                              width={48}
-                              height={48}
+                              width={260}
+                              height={146}
                             />
                           ) : (
-                            <studioActive.icon className="h-4 w-4 text-muted-foreground" />
+                            <div className="w-full h-full flex items-center justify-center">
+                              <studioActive.icon className="h-7 w-7 opacity-60" />
+                            </div>
                           )}
+                          <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-background/90 backdrop-blur uppercase tracking-wide">
+                            {studioActive.label}
+                          </span>
+                          <button
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveResult(r.id);
+                            }}
+                            aria-label="Quitar"
+                          >
+                            <X className="h-3 w-3 text-destructive" />
+                          </button>
                         </div>
-                        <div className="flex-1 min-w-0 pr-5">
-                          <p className="text-[11px] font-medium line-clamp-2 leading-tight">{r.title}</p>
+                        <div className="p-2">
+                          <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
                           {r.subject && (
-                            <p className="text-[10px] text-muted-foreground truncate">{r.subject}</p>
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
                           )}
                         </div>
-                        <button
-                          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-0.5 rounded hover:bg-destructive/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveResult(r.id);
-                          }}
-                          aria-label="Quitar"
-                        >
-                          <X className="h-3 w-3 text-destructive" />
-                        </button>
                       </li>
                     ))}
                   </ul>
