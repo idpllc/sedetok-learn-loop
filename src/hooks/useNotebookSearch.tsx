@@ -126,11 +126,13 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
         // Window grows with offset to support "Buscar más" pagination after re-ranking.
         const fetchLimit = Math.max(20, (offset + limit) * 4);
 
+        // Require a strong match: a title hit (>=5) OR at least 2 keyword hits in description.
+        // This prevents off-topic results when only weak/incidental tokens overlap.
+        const MIN_SCORE = 5;
         const rank = (rows: any[]) =>
           rows
             .map((r) => ({ row: r, score: scoreRow(r, keywords) }))
-            // require at least one keyword hit when keywords exist
-            .filter((x) => keywords.length === 0 || x.score > 0)
+            .filter((x) => keywords.length === 0 ? false : x.score >= MIN_SCORE)
             .sort((a, b) => b.score - a.score)
             .slice(offset, offset + limit);
 
