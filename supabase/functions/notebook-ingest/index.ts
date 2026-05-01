@@ -116,10 +116,10 @@ serve(async (req) => {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
 
-    // Verify notebook ownership
+    // Verify notebook ownership and capture current title for auto-naming
     const { data: nb } = await supabase
       .from('notebooks')
-      .select('id, user_id')
+      .select('id, user_id, title')
       .eq('id', notebookId)
       .maybeSingle();
     if (!nb) {
