@@ -779,8 +779,8 @@ const NotebookView = () => {
           ))}
         </div>
 
-        {/* 3-column layout — right column grows when viewing a capsule (expandable);
-            when expanded, the Fuentes column collapses so chat takes the freed width. */}
+        {/* 3-column layout. Expanded capsules use a fixed desktop viewer so the
+            iframe does not depend on grid auto-placement or zero-width columns. */}
          <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
@@ -795,7 +795,7 @@ const NotebookView = () => {
             data-tour="sources-panel"
             className={`border-r overflow-y-auto p-3 lg:block ${
               mobileTab === "fuentes" ? "block" : "hidden"
-            } ${viewing && viewerExpanded ? "lg:hidden" : ""}`}
+            } ${viewing && viewerExpanded ? "lg:p-0 lg:border-r-0 lg:overflow-hidden lg:pointer-events-none" : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Fuentes</h2>
@@ -1044,7 +1044,12 @@ const NotebookView = () => {
           </section>
 
           {/* Studio / Capsule Viewer */}
-          <aside data-tour="studio-panel" className={`border-l overflow-hidden lg:flex lg:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
+          <aside
+            data-tour="studio-panel"
+            className={`border-l overflow-hidden min-w-0 lg:flex lg:flex-col ${
+              mobileTab === "studio" ? "flex flex-col" : "hidden"
+            } ${viewing && viewerExpanded ? "lg:fixed lg:inset-0 lg:z-[80] lg:border-l-0 lg:bg-background" : ""}`}
+          >
             {viewing ? (
               // Capsule viewer (replaces the studio selector while open)
               <>
