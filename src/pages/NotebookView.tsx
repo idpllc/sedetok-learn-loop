@@ -779,8 +779,8 @@ const NotebookView = () => {
           ))}
         </div>
 
-        {/* 3-column layout — keep all desktop grid children mounted so the viewer
-            remains assigned to the 3rd column when expanded. */}
+        {/* 3-column layout. Expanded capsules use a fixed desktop viewer so the
+            iframe does not depend on grid auto-placement or zero-width columns. */}
          <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
@@ -1044,7 +1044,12 @@ const NotebookView = () => {
           </section>
 
           {/* Studio / Capsule Viewer */}
-          <aside data-tour="studio-panel" className={`border-l overflow-hidden lg:flex lg:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
+          <aside
+            data-tour="studio-panel"
+            className={`border-l overflow-hidden min-w-0 lg:flex lg:flex-col ${
+              mobileTab === "studio" ? "flex flex-col" : "hidden"
+            } ${viewing && viewerExpanded ? "lg:fixed lg:inset-0 lg:z-[80] lg:border-l-0 lg:bg-background" : ""}`}
+          >
             {viewing ? (
               // Capsule viewer (replaces the studio selector while open)
               <>
