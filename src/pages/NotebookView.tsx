@@ -542,11 +542,11 @@ const NotebookView = () => {
   };
 
   const resultUrl = (r: SedefyResult) => {
-    if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}`;
+    if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}?embed=1`;
     const sameType = studioResults.filter((x) => x.type === r.type);
     const playlist = encodeURIComponent(sameType.map((x) => `${x.id}:${x.type}`).join(","));
     const param = r.type === "quiz" ? "quiz" : r.type === "game" ? "game" : "content";
-    return `/sedetok?${param}=${r.id}&playlist=${playlist}`;
+    return `/sedetok?${param}=${r.id}&playlist=${playlist}&embed=1`;
   };
 
   const openResult = (r: SedefyResult) => {
