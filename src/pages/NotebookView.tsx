@@ -282,6 +282,10 @@ const NotebookView = () => {
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
 
+  // Capsule viewer state (replaces the studio selector when active)
+  const [viewing, setViewing] = useState<SedefyResult | null>(null);
+  const [viewerExpanded, setViewerExpanded] = useState(false);
+
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
     queryFn: async () => {
