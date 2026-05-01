@@ -449,6 +449,28 @@ const NotebookView = () => {
     }
   }, [id, sources.list.isLoading, sources.list.data]);
 
+  // Tutorial control: open the source dialog on a chosen tab from outside
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.tab) setAddSourceTab(detail.tab);
+      setShowAdd(true);
+      autoOpenedRef.current = true;
+    };
+    window.addEventListener("notebook:open-add-source", handler);
+    return () => window.removeEventListener("notebook:open-add-source", handler);
+  }, []);
+
+  // Tutorial control: switch the mobile tab from outside
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.tab) setMobileTab(detail.tab);
+    };
+    window.addEventListener("notebook:set-mobile-tab", handler);
+    return () => window.removeEventListener("notebook:set-mobile-tab", handler);
+  }, []);
+
   // Detect sources that just finished processing and announce them in chat.
   useEffect(() => {
     const list = sources.list.data || [];
