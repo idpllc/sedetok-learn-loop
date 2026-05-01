@@ -1723,6 +1723,20 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         </>
       )}
 
+      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type === 'mapa_mental' && (
+        <div className="space-y-2">
+          <Label>Mapa Mental *</Label>
+          <MindMapEditor
+            value={mindMapData}
+            onChange={setMindMapData}
+            topicHint={formData.title}
+          />
+          <p className="text-xs text-muted-foreground">
+            Edita el tema central, agrega ramas con el botón + y construye la estructura jerárquica. También puedes generar un borrador con IA.
+          </p>
+        </div>
+      )}
+
       {formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
         <div className="space-y-2">
           <Label htmlFor="description">Descripción</Label>
