@@ -101,7 +101,8 @@ const GlobalChrome = () => {
   const isAuthRoute = ["/auth", "/auto-login", "/reset-password", "/chat/login", "/chat/login-test"].some(
     (p) => location.pathname.startsWith(p)
   );
-  if (embed || isAuthRoute) return null;
+  const isDiagnosticRoute = location.pathname === "/admin/publishing-error";
+  if (embed || isAuthRoute || isDiagnosticRoute) return null;
   return (
     <Suspense fallback={null}>
       <FloatingTutorChat />
