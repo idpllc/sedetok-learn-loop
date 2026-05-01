@@ -30,14 +30,14 @@ const diagnosticSummary = [
 ];
 
 const liveChecks = [
-  { label: "public.notebooks", value: "No existe en Live", blocked: true },
-  { label: "public.notebook_sources", value: "No existe en Live", blocked: true },
-  { label: "content.reading_type", value: "No existe en Live", blocked: true },
-  { label: "content.mind_map_data", value: "No existe en Live", blocked: true },
-  { label: "ai_chat_conversations.notebook_id", value: "No existe en Live", blocked: true },
-  { label: "ai_chat_conversations.notebook_source_id", value: "No existe en Live", blocked: true },
-  { label: "user_quiz_results", value: "Aún conserva la política pública anterior", blocked: true },
-  { label: "institution_members", value: "Aún conserva la política pública anterior", blocked: true },
+  { label: "public.notebooks", value: "No existe en Live" },
+  { label: "public.notebook_sources", value: "No existe en Live" },
+  { label: "content.reading_type", value: "No existe en Live" },
+  { label: "content.mind_map_data", value: "No existe en Live" },
+  { label: "ai_chat_conversations.notebook_id", value: "No existe en Live" },
+  { label: "ai_chat_conversations.notebook_source_id", value: "No existe en Live" },
+  { label: "user_quiz_results", value: "Aún conserva la política pública anterior" },
+  { label: "institution_members", value: "Aún conserva la política pública anterior" },
 ];
 
 const pendingMigrations = [
