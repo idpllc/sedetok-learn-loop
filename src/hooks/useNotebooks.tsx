@@ -156,5 +156,23 @@ export const useNotebookSources = (notebookId: string | undefined) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["notebook_sources", notebookId] }),
   });
 
-  return { list, ingest, remove };
+  const update = useMutation({
+    mutationFn: async ({ id, title, extracted_text }: { id: string; title?: string; extracted_text?: string }) => {
+      const patch: Record<string, any> = {};
+      if (title !== undefined) patch.title = title;
+      if (extracted_text !== undefined) patch.extracted_text = extracted_text;
+      if (Object.keys(patch).length === 0) return;
+      const { error } = await supabase.from("notebook_sources").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notebook_sources", notebookId] });
+      toast({ title: "Fuente actualizada" });
+    },
+    onError: (e: any) => {
+      toast({ title: "Error", description: String(e?.message || e), variant: "destructive" });
+    },
+  });
+
+  return { list, ingest, remove, update };
 };
