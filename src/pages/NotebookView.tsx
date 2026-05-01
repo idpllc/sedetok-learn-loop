@@ -497,7 +497,7 @@ const NotebookView = () => {
         </header>
 
         {/* Mobile tabs (Fuentes / Chat / Studio) */}
-        <div className="md:hidden flex border-b shrink-0 bg-background">
+        <div className="lg:hidden flex border-b shrink-0 bg-background">
           {([
             { id: "fuentes", label: "Fuentes" },
             { id: "chat", label: "Chat" },
