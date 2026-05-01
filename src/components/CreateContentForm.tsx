@@ -1826,16 +1826,16 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {!isQuizMode && !isPathMode && !isGameMode && formData.content_type === 'mapa_mental' && (
-        <div className="space-y-2">
-          <Label>Mapa Mental *</Label>
-          <MindMapEditor
-            value={mindMapData}
-            onChange={setMindMapData}
-            topicHint={formData.title}
-          />
-          <p className="text-xs text-muted-foreground">
-            Edita el tema central, agrega ramas con el botón + y construye la estructura jerárquica. También puedes generar un borrador con IA.
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm">
+            En el siguiente paso construirás tu mapa mental en un tablero de pantalla completa.
+            Allí podrás generar un borrador con IA, editar nodos visualmente y guardar el borrador.
           </p>
+          {mindMapData?.root?.title && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Tema central actual: <span className="font-medium">{mindMapData.root.title}</span>
+            </p>
+          )}
         </div>
       )}
 
