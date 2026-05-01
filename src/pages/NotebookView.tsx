@@ -781,11 +781,11 @@ const NotebookView = () => {
 
         {/* 3-column layout — right column grows when viewing a capsule (expandable);
             when expanded, the Fuentes column collapses so chat takes the freed width. */}
-        <div
+         <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
               ? viewerExpanded
-                ? "lg:grid-cols-[0px_1fr_70%]"
+                ? "lg:grid-cols-[0px_0px_1fr]"
                 : "lg:grid-cols-[280px_1fr_30%]"
               : "lg:grid-cols-[280px_1fr_320px]"
           }`}
@@ -898,7 +898,7 @@ const NotebookView = () => {
           </aside>
 
           {/* Chat */}
-          <section data-tour="chat-panel" className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
+          <section data-tour="chat-panel" className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"} ${viewing && viewerExpanded ? "lg:hidden" : ""}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
               {chat.messages.length === 0 && announcedSources.length === 0 ? (
                 <div className="max-w-2xl mx-auto text-center py-12">
