@@ -545,7 +545,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                     <h3 className="text-base font-bold truncate">{title || mindMapData.root.title}</h3>
                   </div>
                 </div>
-                <div className="flex-1 overflow-hidden pointer-events-auto rounded-lg border border-border bg-muted/20 min-h-[200px]">
+                <div className="overflow-hidden pointer-events-auto rounded-lg border border-border bg-muted/20 h-[45vh] min-h-[280px]">
                   <MindMapViewer data={mindMapData} height="100%" />
                 </div>
                 <div className="mt-4 flex justify-center">
