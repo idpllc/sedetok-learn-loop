@@ -542,11 +542,11 @@ const NotebookView = () => {
   };
 
   const resultUrl = (r: SedefyResult) => {
-    if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}`;
+    if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}?embed=1`;
     const sameType = studioResults.filter((x) => x.type === r.type);
     const playlist = encodeURIComponent(sameType.map((x) => `${x.id}:${x.type}`).join(","));
     const param = r.type === "quiz" ? "quiz" : r.type === "game" ? "game" : "content";
-    return `/sedetok?${param}=${r.id}&playlist=${playlist}`;
+    return `/sedetok?${param}=${r.id}&playlist=${playlist}&embed=1`;
   };
 
   const openResult = (r: SedefyResult) => {
@@ -689,12 +689,13 @@ const NotebookView = () => {
           ))}
         </div>
 
-        {/* 3-column layout — right column grows when viewing a capsule (expandable) */}
+        {/* 3-column layout — right column grows when viewing a capsule (expandable);
+            when expanded, the Fuentes column collapses so chat takes the freed width. */}
         <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
               ? viewerExpanded
-                ? "lg:grid-cols-[280px_1fr_70%]"
+                ? "lg:grid-cols-[0px_1fr_70%]"
                 : "lg:grid-cols-[280px_1fr_30%]"
               : "lg:grid-cols-[280px_1fr_320px]"
           }`}
@@ -703,7 +704,7 @@ const NotebookView = () => {
           <aside
             className={`border-r overflow-y-auto p-3 lg:block ${
               mobileTab === "fuentes" ? "block" : "hidden"
-            }`}
+            } ${viewing && viewerExpanded ? "lg:hidden" : ""}`}
           >
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm">Fuentes</h2>
@@ -761,11 +762,16 @@ const NotebookView = () => {
                         <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isActive ? "text-primary" : "text-primary/70"}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm truncate" title={s.title}>{s.title}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground line-clamp-2">
                             {s.status === "processing" && (
                               <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Procesando</span>
                             )}
-                            {s.status === "ready" && <span>{s.source_type.toUpperCase()}</span>}
+                            {s.status === "ready" && (
+                              <span title={s.extracted_text || ""}>
+                                {(s.extracted_text || "").trim().slice(0, 120) || s.source_type.toUpperCase()}
+                                {(s.extracted_text || "").length > 120 ? "…" : ""}
+                              </span>
+                            )}
                             {s.status === "error" && <span className="text-destructive">Error</span>}
                           </p>
                         </div>
