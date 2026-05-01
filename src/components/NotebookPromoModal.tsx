@@ -26,6 +26,14 @@ export const NotebookPromoModal = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Mark as "seen" only when the user actually visits /notebook.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (location.pathname === "/notebook" || location.pathname.startsWith("/notebook/")) {
+      try { localStorage.setItem(STORAGE_KEY, "true"); } catch {}
+    }
+  }, [location.pathname]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(location.search);
@@ -37,13 +45,14 @@ export const NotebookPromoModal = () => {
     return () => clearTimeout(timer);
   }, [location.pathname, location.search]);
 
+  // Closing the modal does NOT persist — it should reappear on future sessions
+  // until the student actually visits Notebook.
   const handleClose = () => {
     setOpen(false);
-    localStorage.setItem(STORAGE_KEY, "true");
   };
 
   const handleVisit = () => {
-    localStorage.setItem(STORAGE_KEY, "true");
+    try { localStorage.setItem(STORAGE_KEY, "true"); } catch {}
     setOpen(false);
     navigate("/notebook");
   };
