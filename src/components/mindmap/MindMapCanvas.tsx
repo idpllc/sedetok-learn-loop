@@ -450,6 +450,7 @@ interface NodeBoxProps {
   onRemove: () => void;
   collapsed: boolean;
   hasChildren: boolean;
+  hasTruncatedChildren?: boolean;
   onToggleCollapse: () => void;
   hideControls?: boolean;
 }
@@ -468,6 +469,7 @@ const NodeBox = ({
   onRemove,
   collapsed,
   hasChildren,
+  hasTruncatedChildren = false,
   onToggleCollapse,
   hideControls = false,
 }: NodeBoxProps) => {
@@ -476,6 +478,9 @@ const NodeBox = ({
     : laid.depth === 1
     ? "bg-accent/40 border-accent-foreground/30 text-foreground"
     : "bg-card border-border text-foreground";
+
+  const showInteractiveToggle = hasChildren && !hideControls;
+  const showTruncatedHint = !hasChildren && hasTruncatedChildren;
 
   return (
     <div
@@ -488,7 +493,7 @@ const NodeBox = ({
         minHeight: laid.height,
       }}
     >
-      {hasChildren && !hideControls && (
+      {showInteractiveToggle && (
         <button
           type="button"
           onClick={(e) => {
@@ -503,6 +508,14 @@ const NodeBox = ({
             {collapsed ? "<" : ">"}
           </span>
         </button>
+      )}
+      {showTruncatedHint && (
+        <div
+          className="absolute top-1/2 -translate-y-1/2 -right-3 z-10 w-6 h-6 rounded-full bg-background border-2 border-primary/40 text-primary flex items-center justify-center shadow-sm pointer-events-none"
+          aria-hidden="true"
+        >
+          <span className="text-xs font-bold leading-none">{">"}</span>
+        </div>
       )}
       <div className="flex items-start gap-1 p-2">
 
