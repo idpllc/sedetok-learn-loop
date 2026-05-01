@@ -66,6 +66,7 @@ const LanguageTutor = lazy(() => import("./pages/LanguageTutor"));
 const StudyPlan = lazy(() => import("./pages/StudyPlan"));
 const Notebook = lazy(() => import("./pages/Notebook"));
 const NotebookView = lazy(() => import("./pages/NotebookView"));
+const PublishingErrorDetails = lazy(() => import("./pages/PublishingErrorDetails"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
 // (iframes used by the notebook capsule preview) to minimise boot time.
@@ -100,7 +101,8 @@ const GlobalChrome = () => {
   const isAuthRoute = ["/auth", "/auto-login", "/reset-password", "/chat/login", "/chat/login-test"].some(
     (p) => location.pathname.startsWith(p)
   );
-  if (embed || isAuthRoute) return null;
+  const isDiagnosticRoute = location.pathname === "/admin/publishing-error";
+  if (embed || isAuthRoute || isDiagnosticRoute) return null;
   return (
     <Suspense fallback={null}>
       <FloatingTutorChat />
@@ -150,6 +152,7 @@ const App = () => (
             <Route path="/courses/create" element={<CreateCourse />} />
             <Route path="/courses/:id" element={<ViewCourse />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/publishing-error" element={<PublishingErrorDetails />} />
             <Route path="/register-institution" element={<RegisterInstitution />} />
             <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
             <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
