@@ -309,7 +309,7 @@ const NotebookView = () => {
   // Persisted to localStorage per-notebook AND per-active-source so each source
   // keeps its own studio progress.
   const cacheKey = id
-    ? `notebook:studioCache:${id}:${activeSourceId || "all"}`
+    ? `notebook:studioCache:v2:${id}:${activeSourceId || "all"}`
     : null;
   const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>(() => {
     if (!cacheKey) return {};
