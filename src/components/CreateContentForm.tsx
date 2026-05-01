@@ -1360,6 +1360,57 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     );
   }
 
+  // Mind Map full-screen builder (step 1)
+  if (formData.content_type === 'mapa_mental' && mindMapStep === 1) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setMindMapStep(0)}
+            disabled={isSavingMindMapDraft || isLoading}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver
+          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleMindMapSave("borrador")}
+              disabled={isSavingMindMapDraft || isLoading}
+            >
+              {isSavingMindMapDraft ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Guardar borrador
+            </Button>
+            <Button
+              type="button"
+              onClick={() => handleMindMapSave("publicado")}
+              disabled={isSavingMindMapDraft || isLoading}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              {editMode ? "Guardar cambios" : "Publicar"}
+            </Button>
+          </div>
+        </div>
+
+        <div className="border rounded-lg overflow-hidden bg-card" style={{ height: "calc(100vh - 200px)", minHeight: 480 }}>
+          <MindMapEditor
+            value={mindMapData}
+            onChange={setMindMapData}
+            topicHint={formData.title}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // Normal form or quiz step 1 (basic data)
   return (
     <>
