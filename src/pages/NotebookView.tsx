@@ -318,12 +318,24 @@ const NotebookView = () => {
   const cacheKey = id
     ? `notebook:studioCache:v2:${id}:${activeSourceId || "all"}`
     : null;
+  // Per-notebook+source set of result IDs the user explicitly dismissed.
+  // Dismissed items are filtered out of cached results AND of new searches.
+  const dismissedKey = id
+    ? `notebook:studioDismissed:v1:${id}:${activeSourceId || "all"}`
+    : null;
   const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>(() => {
     if (!cacheKey) return {};
     try {
       const raw = localStorage.getItem(cacheKey);
       return raw ? JSON.parse(raw) : {};
     } catch { return {}; }
+  });
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+    if (!dismissedKey) return new Set();
+    try {
+      const raw = localStorage.getItem(dismissedKey);
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
   });
   // Highlight the freshly-created capsule for a few seconds
   const [highlightedResultId, setHighlightedResultId] = useState<string | null>(null);
