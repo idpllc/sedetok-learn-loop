@@ -58,7 +58,7 @@ export const useNotebookChat = (notebookId: string | undefined) => {
   }, [user, notebookId]);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, studioType?: string) => {
       if (!user || !notebookId || !conversationId || !text.trim() || !session?.access_token) return;
       setMessages((prev) => [...prev, { role: "user", content: text }, { role: "assistant", content: "" }]);
       setIsStreaming(true);
