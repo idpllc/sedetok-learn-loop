@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ interface AddSourceDialogProps {
   open: boolean;
   onClose: () => void;
   notebookId: string;
+  defaultTab?: "file" | "text" | "competence" | "url" | "video";
 }
 
 const guessType = (file: File): "pdf" | "docx" | "xlsx" | null => {
@@ -27,12 +28,27 @@ const guessType = (file: File): "pdf" | "docx" | "xlsx" | null => {
   return null;
 };
 
-export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogProps) => {
+export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "file" }: AddSourceDialogProps) => {
   const { uploadFile, uploading } = useS3Upload();
   const { ingest } = useNotebookSources(notebookId);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [tab, setTab] = useState("file");
+  const [tab, setTab] = useState<string>(defaultTab);
+
+  // When the dialog re-opens, honour the requested defaultTab
+  useEffect(() => {
+    if (open) setTab(defaultTab);
+  }, [open, defaultTab]);
+
+  // Allow external code (e.g. tutorial) to change the active tab while open
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.tab) setTab(detail.tab);
+    };
+    window.addEventListener("notebook:set-source-tab", handler);
+    return () => window.removeEventListener("notebook:set-source-tab", handler);
+  }, []);
 
   // Text source
   const [textTitle, setTextTitle] = useState("");
@@ -206,10 +222,10 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-3 w-full" data-tour="source-tabs">
             <TabsTrigger value="file" className="gap-1"><Upload className="h-4 w-4" />Archivo</TabsTrigger>
             <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
-            <TabsTrigger value="text" className="gap-1"><Type className="h-4 w-4" />Texto</TabsTrigger>
+            <TabsTrigger value="text" className="gap-1" data-tour="source-tab-text"><Type className="h-4 w-4" />Texto</TabsTrigger>
           </TabsList>
 
           <TabsContent value="file" className="py-6">
@@ -226,16 +242,18 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
             )}
           </TabsContent>
 
-          <TabsContent value="text" className="py-6 space-y-3">
+          <TabsContent value="text" className="py-6 space-y-3" data-tour="source-text-form">
             <div>
               <Label>Título</Label>
-              <Input value={textTitle} onChange={(e) => setTextTitle(e.target.value)} placeholder="Notas de clase" />
+              <Input data-tour="source-text-title" value={textTitle} onChange={(e) => setTextTitle(e.target.value)} placeholder="Ej: Matemáticas — Ecuaciones lineales" />
+              <p className="text-[11px] text-muted-foreground mt-1">Tip: usa el nombre de la asignatura.</p>
             </div>
             <div>
               <Label>Contenido</Label>
-              <Textarea rows={8} value={textContent} onChange={(e) => setTextContent(e.target.value)} placeholder="Pega tu texto aquí…" />
+              <Textarea data-tour="source-text-content" rows={8} value={textContent} onChange={(e) => setTextContent(e.target.value)} placeholder="Escribe el tema o competencia que quieres aprender…" />
+              <p className="text-[11px] text-muted-foreground mt-1">Tip: describe el tema o la competencia que quieres dominar.</p>
             </div>
-            <Button onClick={handleAddText} disabled={busy || !textContent.trim()}>
+            <Button data-tour="source-text-submit" onClick={handleAddText} disabled={busy || !textContent.trim()}>
               {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Añadir texto
             </Button>
           </TabsContent>
