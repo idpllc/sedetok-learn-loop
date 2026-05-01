@@ -497,7 +497,7 @@ const NotebookView = () => {
         </header>
 
         {/* Mobile tabs (Fuentes / Chat / Studio) */}
-        <div className="md:hidden flex border-b shrink-0 bg-background">
+        <div className="lg:hidden flex border-b shrink-0 bg-background">
           {([
             { id: "fuentes", label: "Fuentes" },
             { id: "chat", label: "Chat" },
@@ -523,14 +523,14 @@ const NotebookView = () => {
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
               ? viewerExpanded
-                ? "md:grid-cols-[280px_1fr_70%]"
-                : "md:grid-cols-[280px_1fr_30%]"
-              : "md:grid-cols-[280px_1fr_320px]"
+                ? "lg:grid-cols-[280px_1fr_70%]"
+                : "lg:grid-cols-[280px_1fr_30%]"
+              : "lg:grid-cols-[280px_1fr_320px]"
           }`}
         >
           {/* Sources */}
           <aside
-            className={`border-r overflow-y-auto p-3 md:block ${
+            className={`border-r overflow-y-auto p-3 lg:block ${
               mobileTab === "fuentes" ? "block" : "hidden"
             }`}
           >
@@ -584,7 +584,7 @@ const NotebookView = () => {
           </aside>
 
           {/* Chat */}
-          <section className={`flex-col overflow-hidden md:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
+          <section className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
               {chat.messages.length === 0 ? (
                 <div className="max-w-2xl mx-auto text-center py-12">
@@ -693,7 +693,7 @@ const NotebookView = () => {
           </section>
 
           {/* Studio / Capsule Viewer */}
-          <aside className={`border-l overflow-hidden md:flex md:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
+          <aside className={`border-l overflow-hidden lg:flex lg:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
             {viewing ? (
               // Capsule viewer (replaces the studio selector while open)
               <>
@@ -910,7 +910,7 @@ const NotebookView = () => {
         {/* Mobile: floating add sources button (only on Fuentes tab) */}
         {mobileTab === "fuentes" && (
           <Button
-            className="md:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
+            className="lg:hidden fixed bottom-20 right-4 rounded-full shadow-lg"
             size="icon"
             onClick={() => setShowAdd(true)}
           >
