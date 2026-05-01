@@ -441,10 +441,34 @@ const NotebookView = () => {
 
       await chat.appendLocal(
         "",
-        `✅ Listo. He creado tu ${opt.label.toLowerCase()} y la he publicado. Abriendo…`
+        `✅ Listo. He creado tu ${opt.label.toLowerCase()} y ya está disponible en el panel de Studio.`
       );
-      // Open the new capsule in a new tab so the notebook stays open
-      window.open(data.route, "_blank");
+
+      // Build a SedefyResult from the response and prepend it to the studio list + cache.
+      const newResult: SedefyResult = {
+        id: data.contentId || crypto.randomUUID(),
+        title: data.title || `Nueva ${opt.label.toLowerCase()}`,
+        subject: data.subject ?? null,
+        cover_url: data.cover_url ?? null,
+        type: (data.type as SedefyResult["type"]) || opt.searchType,
+        readingSubtype: data.readingSubtype ?? opt.readingSubtype ?? null,
+      };
+
+      // Make sure the studio panel shows this option, then prepend the new item.
+      setStudioActive(opt);
+      setMobileTab("studio");
+      setStudioResults((prev) => {
+        const filtered = prev.filter((r) => r.id !== newResult.id);
+        return [newResult, ...filtered];
+      });
+      setStudioCache((prev) => {
+        const existing = (prev[opt.id] || []).filter((r) => r.id !== newResult.id);
+        return { ...prev, [opt.id]: [newResult, ...existing].slice(0, 6) };
+      });
+      setHighlightedResultId(newResult.id);
+      setTimeout(() => {
+        setHighlightedResultId((cur) => (cur === newResult.id ? null : cur));
+      }, 4000);
     } catch (e: any) {
       console.error(e);
       await chat.appendLocal(
