@@ -546,7 +546,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                   </div>
                 </div>
                 <div className="overflow-hidden pointer-events-auto rounded-lg border border-border bg-muted/20 h-[45vh] min-h-[280px]">
-                  <MindMapViewer data={mindMapData} height="100%" />
+                  <MindMapViewer data={mindMapData} height="100%" preview maxDepth={2} />
                 </div>
                 <div className="mt-4 flex justify-center">
                   <Button

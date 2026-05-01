@@ -144,6 +144,15 @@ const buildLayout = (data: MindMapData, collapsedIds: Set<string>): Layout => {
   return { nodes, edges, bounds: { minX, minY, maxX, maxY } };
 };
 
+// Truncate the tree so that nodes beyond `maxDepth` are not rendered
+const truncateTree = (node: MindMapNode, depth: number, maxDepth: number): MindMapNode => {
+  if (depth >= maxDepth) return { ...node, children: [] };
+  return {
+    ...node,
+    children: node.children.map((c) => truncateTree(c, depth + 1, maxDepth)),
+  };
+};
+
 // ===== Canvas Component =====
 interface MindMapCanvasProps {
   data: MindMapData;
@@ -153,6 +162,8 @@ interface MindMapCanvasProps {
   onRemoveNode?: (id: string) => void;
   toolbar?: ReactNode;
   className?: string;
+  preview?: boolean;
+  maxDepth?: number;
 }
 
 export const MindMapCanvas = ({
@@ -163,6 +174,8 @@ export const MindMapCanvas = ({
   onRemoveNode,
   toolbar,
   className,
+  preview = false,
+  maxDepth,
 }: MindMapCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -173,7 +186,12 @@ export const MindMapCanvas = ({
     startX: 0, startY: 0, panX: 0, panY: 0, active: false,
   });
 
-  const layout = useMemo(() => buildLayout(data, collapsed), [data, collapsed]);
+  const effectiveData = useMemo(() => {
+    if (maxDepth === undefined) return data;
+    return { root: truncateTree(data.root, 0, maxDepth) };
+  }, [data, maxDepth]);
+
+  const layout = useMemo(() => buildLayout(effectiveData, collapsed), [effectiveData, collapsed]);
 
   // Auto fit-view on mount and when layout dimensions change significantly
   const didInitialFit = useRef(false);
@@ -311,34 +329,37 @@ export const MindMapCanvas = ({
     <div
       ref={containerRef}
       className={`relative w-full h-full overflow-hidden bg-muted/20 select-none ${className || ""}`}
-      onWheel={handleWheel}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
+      onWheel={preview ? undefined : handleWheel}
+      onMouseDown={preview ? undefined : onMouseDown}
+      onMouseMove={preview ? undefined : onMouseMove}
+      onMouseUp={preview ? undefined : onMouseUp}
+      onMouseLeave={preview ? undefined : onMouseUp}
+      onTouchStart={preview ? undefined : onTouchStart}
+      onTouchMove={preview ? undefined : onTouchMove}
+      onTouchEnd={preview ? undefined : onTouchEnd}
       style={{
-        cursor: dragState.current.active ? "grabbing" : "grab",
+        cursor: preview ? "default" : dragState.current.active ? "grabbing" : "grab",
         backgroundImage:
           "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
         backgroundSize: "24px 24px",
+        pointerEvents: preview ? "none" : undefined,
       }}
     >
       {/* Toolbar */}
-      <div className="absolute top-2 right-2 z-20 flex flex-col gap-1 bg-background/80 backdrop-blur rounded-md border p-1 shadow-sm">
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(2, z + 0.1))} title="Acercar">
-          <ZoomIn className="w-4 h-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} title="Alejar">
-          <ZoomOut className="w-4 h-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={fitView} title="Ajustar vista">
-          <Maximize2 className="w-4 h-4" />
-        </Button>
-        <div className="text-[10px] text-muted-foreground text-center">{Math.round(zoom * 100)}%</div>
-      </div>
+      {!preview && (
+        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1 bg-background/80 backdrop-blur rounded-md border p-1 shadow-sm">
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(2, z + 0.1))} title="Acercar">
+            <ZoomIn className="w-4 h-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} title="Alejar">
+            <ZoomOut className="w-4 h-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={fitView} title="Ajustar vista">
+            <Maximize2 className="w-4 h-4" />
+          </Button>
+          <div className="text-[10px] text-muted-foreground text-center">{Math.round(zoom * 100)}%</div>
+        </div>
+      )}
 
       {toolbar && <div className="absolute top-2 left-2 z-20">{toolbar}</div>}
 
@@ -402,6 +423,7 @@ export const MindMapCanvas = ({
             collapsed={ln.collapsed}
             hasChildren={ln.node.children.length > 0}
             onToggleCollapse={() => toggleCollapse(ln.id)}
+            hideControls={preview}
           />
         ))}
       </div>
@@ -425,6 +447,7 @@ interface NodeBoxProps {
   collapsed: boolean;
   hasChildren: boolean;
   onToggleCollapse: () => void;
+  hideControls?: boolean;
 }
 
 const NodeBox = ({
@@ -442,6 +465,7 @@ const NodeBox = ({
   collapsed,
   hasChildren,
   onToggleCollapse,
+  hideControls = false,
 }: NodeBoxProps) => {
   const colorClass = isRoot
     ? "bg-primary/15 border-primary text-foreground"
@@ -460,7 +484,7 @@ const NodeBox = ({
         minHeight: laid.height,
       }}
     >
-      {hasChildren && (
+      {hasChildren && !hideControls && (
         <button
           type="button"
           onClick={(e) => {
