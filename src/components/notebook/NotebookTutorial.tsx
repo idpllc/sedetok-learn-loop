@@ -1,89 +1,144 @@
-import { useEffect, useLayoutEffect, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeft, X, Sparkles, HelpCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 
-const STORAGE_KEY = "notebook_tutorial_completed_v1";
+const STORAGE_KEY = "notebook_tutorial_completed_v2";
 const TRIGGER_KEY = "notebook_tutorial_open";
 
+type StepAction = {
+  // Fired when user clicks "Siguiente" — useful to open dialogs / switch tabs.
+  event?: string;
+  payload?: Record<string, unknown>;
+};
+
 type Step = {
-  selector: string; // CSS selector, must match a data-tour attribute
+  selector: string;
   title: string;
   description: string;
-  // Routes where the step can render. Match by startsWith.
-  routePrefix: "/notebook" | "/notebook/";
-  exactList?: boolean; // true => only on /notebook (list page); false/undefined => /notebook/:id
-  placement?: "top" | "bottom" | "left" | "right" | "auto";
+  routeMatcher: (pathname: string) => boolean;
+  placement?: "top" | "bottom" | "left" | "right";
+  // If true, the highlighted element receives clicks (overlay is click-through there).
+  allowInteraction?: boolean;
+  // Hide the "Siguiente" button — the user must interact with the highlighted element.
+  hideNext?: boolean;
+  // Run when the user (or auto-advance) leaves this step going forward.
+  onAdvance?: StepAction;
+  // Run when the step becomes active (e.g., open the AddSource dialog with a tab).
+  onEnter?: StepAction;
+  // Optional auto-advance condition (polled). If returns true, move to next step.
+  shouldAutoAdvance?: () => boolean;
 };
+
+const isDetailRoute = (p: string) => /^\/notebook\/[^/]+/.test(p);
+const isListRoute = (p: string) => p === "/notebook" || p === "/notebook/";
 
 const STEPS: Step[] = [
   {
     selector: '[data-tour="create-notebook"]',
     title: "1. Crea tu primer cuaderno",
     description:
-      "Pulsa aquí para crear un cuaderno. Cada cuaderno agrupa fuentes (PDF, texto, competencias del plan) y un chat con SEDE AI.",
-    routePrefix: "/notebook",
-    exactList: true,
+      "Pulsa el botón resaltado para crear un cuaderno. Cada cuaderno agrupa fuentes (texto, archivos, competencias) y un chat con SEDE AI.",
+    routeMatcher: isListRoute,
     placement: "bottom",
+    allowInteraction: true,
+    hideNext: true, // user must click the button
+    shouldAutoAdvance: () => isDetailRoute(window.location.pathname),
+  },
+  {
+    selector: '[data-tour="source-tabs"]',
+    title: "2. Selecciona el tipo de fuente",
+    description:
+      "Por defecto comenzaremos con 'Texto'. Aquí podrás escribir directamente el tema o competencia que quieres aprender.",
+    routeMatcher: isDetailRoute,
+    placement: "bottom",
+    onEnter: { event: "notebook:open-add-source", payload: { tab: "text" } },
+  },
+  {
+    selector: '[data-tour="source-text-title"]',
+    title: "3. Escribe el título",
+    description:
+      "Usa el nombre de la asignatura, por ejemplo: 'Matemáticas' o 'Biología'. Esto te ayudará a identificar la fuente.",
+    routeMatcher: isDetailRoute,
+    placement: "bottom",
+    allowInteraction: true,
+  },
+  {
+    selector: '[data-tour="source-text-content"]',
+    title: "4. Escribe el contenido",
+    description:
+      "Aquí va el tema o competencia que quieres dominar (ej: 'Quiero aprender ecuaciones lineales y resolver problemas con ellas').",
+    routeMatcher: isDetailRoute,
+    placement: "top",
+    allowInteraction: true,
+  },
+  {
+    selector: '[data-tour="source-text-submit"]',
+    title: "5. Añade tu fuente",
+    description:
+      "Pulsa 'Añadir texto'. SEDE AI procesará tu fuente para usarla como contexto en todo el cuaderno.",
+    routeMatcher: isDetailRoute,
+    placement: "top",
+    allowInteraction: true,
+    hideNext: true,
+    shouldAutoAdvance: () => {
+      // Advance when the AddSource dialog closes (no longer in DOM).
+      return !document.querySelector('[data-tour="source-text-submit"]');
+    },
   },
   {
     selector: '[data-tour="sources-panel"]',
-    title: "2. Tus fuentes",
+    title: "6. Tu fuente procesada",
     description:
-      "Aquí verás todas las fuentes del cuaderno. SEDE AI sólo responde con base en lo que tengas cargado en este panel.",
-    routePrefix: "/notebook/",
+      "¡Listo! Tu fuente aparecerá aquí en cuanto termine de procesarse. SEDE AI ya puede usarla para responderte.",
+    routeMatcher: isDetailRoute,
     placement: "right",
-  },
-  {
-    selector: '[data-tour="add-source"]',
-    title: "3. Añade una fuente",
-    description:
-      "Sube un archivo (PDF, imagen, texto), pega un texto o vincula una competencia del plan de estudios. La fuente se procesa automáticamente.",
-    routePrefix: "/notebook/",
-    placement: "right",
-  },
-  {
-    selector: '[data-tour="chat-panel"]',
-    title: "4. Conversa con SEDE AI",
-    description:
-      "Haz preguntas, pide resúmenes o explicaciones. La IA usará tus fuentes como contexto para responderte.",
-    routePrefix: "/notebook/",
-    placement: "top",
   },
   {
     selector: '[data-tour="studio-panel"]',
-    title: "5. Genera cápsulas con Studio",
+    title: "7. Studio: genera cápsulas",
     description:
-      "Desde Studio puedes crear, con un clic, cápsulas a partir de tus fuentes: lecturas, mapas mentales, juegos y más.",
-    routePrefix: "/notebook/",
+      "Desde Studio puedes transformar tus fuentes en cápsulas de estudio: lecturas, mapas mentales, juegos y quizzes.",
+    routeMatcher: isDetailRoute,
     placement: "left",
+    onEnter: { event: "notebook:set-mobile-tab", payload: { tab: "studio" } },
   },
   {
     selector: '[data-tour="studio-quiz"]',
-    title: "6. Crea un Quiz",
+    title: "8. Crea un Quiz",
     description:
-      "Pulsa Quiz para que SEDE AI genere preguntas a partir de tus fuentes y puedas autoevaluar lo aprendido.",
-    routePrefix: "/notebook/",
+      "Selecciona Quiz para que SEDE AI genere preguntas a partir de tu fuente y puedas autoevaluar lo aprendido.",
+    routeMatcher: isDetailRoute,
     placement: "left",
+    allowInteraction: true,
+  },
+  {
+    selector: '[data-tour="chat-panel"]',
+    title: "9. Conversa con SEDE AI",
+    description:
+      "Vuelve al chat cuando quieras pedirle resúmenes, explicaciones o ejercicios sobre tu fuente.",
+    routeMatcher: isDetailRoute,
+    placement: "top",
+    onEnter: { event: "notebook:set-mobile-tab", payload: { tab: "chat" } },
   },
   {
     selector: '[data-tour="chat-input"]',
-    title: "7. ¡Empieza a estudiar!",
+    title: "10. ¡Empieza a estudiar!",
     description:
-      "Escribe aquí para pedirle a la IA explicaciones, resúmenes o ejercicios. Ya estás listo para estudiar con tu Notebook.",
-    routePrefix: "/notebook/",
+      "Escribe aquí tu pregunta. Ya tienes todo lo necesario para estudiar con tu Notebook Sedefy.",
+    routeMatcher: isDetailRoute,
     placement: "top",
+    allowInteraction: true,
   },
 ];
 
 const PADDING = 8;
 
-function getStepRoute(step: Step, pathname: string): boolean {
-  if (step.exactList) return pathname === "/notebook" || pathname === "/notebook/";
-  // Detail route: /notebook/<id>
-  return /^\/notebook\/[^/]+/.test(pathname);
-}
+const dispatchAction = (action?: StepAction) => {
+  if (!action?.event) return;
+  window.dispatchEvent(new CustomEvent(action.event, { detail: action.payload }));
+};
 
 export const NotebookTutorial = () => {
   const location = useLocation();
@@ -91,23 +146,24 @@ export const NotebookTutorial = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [, force] = useState(0);
+  const enteredRef = useRef<number>(-1);
 
-  // Auto-start on first visit to /notebook (list)
+  // Auto-start once when entering /notebook
   useEffect(() => {
-    if (location.pathname !== "/notebook") return;
+    if (!isListRoute(location.pathname)) return;
     try {
       const completed = localStorage.getItem(STORAGE_KEY) === "true";
       if (!completed) {
         const t = setTimeout(() => {
-          setActive(true);
           setStepIndex(0);
+          setActive(true);
         }, 800);
         return () => clearTimeout(t);
       }
     } catch {}
   }, [location.pathname]);
 
-  // Allow other components (e.g. help button) to open the tutorial
+  // Manual relaunch
   useEffect(() => {
     const handler = () => {
       setStepIndex(0);
@@ -117,17 +173,33 @@ export const NotebookTutorial = () => {
     return () => window.removeEventListener(TRIGGER_KEY, handler);
   }, []);
 
-  // Auto-advance from step 1 (create) when user lands on /notebook/:id
-  useEffect(() => {
-    if (!active) return;
-    const isDetail = /^\/notebook\/[^/]+/.test(location.pathname);
-    if (isDetail && stepIndex === 0) {
-      setStepIndex(1);
-    }
-  }, [location.pathname, active, stepIndex]);
-
   const step = STEPS[stepIndex];
-  const stepMatchesRoute = step ? getStepRoute(step, location.pathname) : false;
+  const stepMatchesRoute = step ? step.routeMatcher(location.pathname) : false;
+
+  // Run onEnter when step becomes active (and route matches)
+  useEffect(() => {
+    if (!active || !step || !stepMatchesRoute) return;
+    if (enteredRef.current === stepIndex) return;
+    enteredRef.current = stepIndex;
+    if (step.onEnter) {
+      // Slight delay so previous UI settles
+      const t = setTimeout(() => dispatchAction(step.onEnter), 60);
+      return () => clearTimeout(t);
+    }
+  }, [active, step, stepIndex, stepMatchesRoute]);
+
+  // Auto-advance polling
+  useEffect(() => {
+    if (!active || !step?.shouldAutoAdvance) return;
+    const id = window.setInterval(() => {
+      try {
+        if (step.shouldAutoAdvance && step.shouldAutoAdvance()) {
+          setStepIndex((i) => Math.min(STEPS.length - 1, i + 1));
+        }
+      } catch {}
+    }, 350);
+    return () => window.clearInterval(id);
+  }, [active, step]);
 
   const measure = useCallback(() => {
     if (!active || !step || !stepMatchesRoute) {
@@ -139,7 +211,6 @@ export const NotebookTutorial = () => {
       setRect(null);
       return;
     }
-    el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
     const r = el.getBoundingClientRect();
     setRect(r);
   }, [active, step, stepMatchesRoute]);
@@ -148,13 +219,12 @@ export const NotebookTutorial = () => {
     measure();
   }, [measure, stepIndex, location.pathname]);
 
-  // Re-measure on resize/scroll & poll briefly in case element mounts late
   useEffect(() => {
     if (!active) return;
     const onChange = () => force((n) => n + 1);
     window.addEventListener("resize", onChange);
     window.addEventListener("scroll", onChange, true);
-    const interval = window.setInterval(() => measure(), 400);
+    const interval = window.setInterval(() => measure(), 300);
     return () => {
       window.removeEventListener("resize", onChange);
       window.removeEventListener("scroll", onChange, true);
@@ -172,6 +242,7 @@ export const NotebookTutorial = () => {
   };
 
   const handleNext = () => {
+    if (step.onAdvance) dispatchAction(step.onAdvance);
     if (stepIndex >= STEPS.length - 1) {
       finish();
     } else {
@@ -180,7 +251,7 @@ export const NotebookTutorial = () => {
   };
   const handlePrev = () => setStepIndex((i) => Math.max(0, i - 1));
 
-  // If step belongs to a different route, render only a soft prompt overlay
+  // If step's route doesn't match, show a soft prompt
   if (!stepMatchesRoute) {
     return createPortal(
       <div className="fixed inset-0 z-[95] pointer-events-none">
@@ -188,11 +259,9 @@ export const NotebookTutorial = () => {
           <div className="flex items-start gap-2">
             <Sparkles className="h-4 w-4 text-pink mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-semibold mb-1">Tutorial de Notebook</p>
+              <p className="text-sm font-semibold mb-1">Tutorial en pausa</p>
               <p className="text-xs text-muted-foreground mb-3">
-                {step.exactList
-                  ? "Vuelve a la lista de cuadernos para continuar."
-                  : "Abre un cuaderno para continuar el tutorial."}
+                Vuelve a la sección de Notebook para continuar el tutorial paso a paso.
               </p>
               <div className="flex gap-2">
                 <Button size="sm" variant="ghost" onClick={finish}>Cerrar</Button>
@@ -205,16 +274,16 @@ export const NotebookTutorial = () => {
     );
   }
 
-  // Compute popover position
+  // Position popover
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const popW = Math.min(360, vw - 32);
-  const popH = 200;
+  const popH = 220;
   let popTop = 0;
   let popLeft = 0;
 
   if (rect) {
-    const placement = step.placement || "auto";
+    const placement = step.placement || "bottom";
     const tryBottom = rect.bottom + 12;
     const tryTop = rect.top - popH - 12;
     const tryLeft = rect.left + rect.width / 2 - popW / 2;
@@ -231,7 +300,6 @@ export const NotebookTutorial = () => {
       popTop = tryTop;
       popLeft = Math.max(16, Math.min(vw - popW - 16, tryLeft));
     } else {
-      // bottom default
       popTop = Math.min(vh - popH - 16, tryBottom);
       popLeft = Math.max(16, Math.min(vw - popW - 16, tryLeft));
     }
@@ -240,7 +308,6 @@ export const NotebookTutorial = () => {
     popLeft = vw / 2 - popW / 2;
   }
 
-  // Build SVG mask to dim everything except the highlighted rect
   const highlight = rect
     ? {
         x: Math.max(0, rect.left - PADDING),
@@ -250,51 +317,53 @@ export const NotebookTutorial = () => {
       }
     : null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[95]">
-      {/* Dimmed overlay with a cut-out for the target */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-        <defs>
-          <mask id="notebook-tutorial-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            {highlight && (
-              <rect
-                x={highlight.x}
-                y={highlight.y}
-                width={highlight.w}
-                height={highlight.h}
-                rx={10}
-                ry={10}
-                fill="black"
-              />
-            )}
-          </mask>
-        </defs>
-        <rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          fill="hsl(0 0% 0% / 0.65)"
-          mask="url(#notebook-tutorial-mask)"
-        />
-        {highlight && (
-          <rect
-            x={highlight.x}
-            y={highlight.y}
-            width={highlight.w}
-            height={highlight.h}
-            rx={10}
-            ry={10}
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            className="animate-pulse"
-          />
-        )}
-      </svg>
+  // The 4 dimming rectangles around the highlight (so the highlight area
+  // remains fully click-through and pixel-precise).
+  const dimRects = highlight
+    ? [
+        { x: 0, y: 0, w: vw, h: highlight.y }, // top
+        { x: 0, y: highlight.y + highlight.h, w: vw, h: Math.max(0, vh - (highlight.y + highlight.h)) }, // bottom
+        { x: 0, y: highlight.y, w: highlight.x, h: highlight.h }, // left
+        {
+          x: highlight.x + highlight.w,
+          y: highlight.y,
+          w: Math.max(0, vw - (highlight.x + highlight.w)),
+          h: highlight.h,
+        }, // right
+      ]
+    : [{ x: 0, y: 0, w: vw, h: vh }];
 
-      {/* Popover card */}
+  const allowInteraction = !!step.allowInteraction;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[95] pointer-events-none">
+      {/* Dimming layers — these block clicks. The highlight gap does NOT, so
+          the user can click the real element. */}
+      {dimRects.map((d, i) => (
+        <div
+          key={i}
+          className="absolute bg-black/65"
+          style={{ left: d.x, top: d.y, width: d.w, height: d.h, pointerEvents: allowInteraction ? "auto" : "auto" }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      ))}
+
+      {/* Highlight outline (purely visual, click-through) */}
+      {highlight && (
+        <div
+          className="absolute rounded-[10px] ring-2 ring-primary animate-pulse"
+          style={{
+            left: highlight.x,
+            top: highlight.y,
+            width: highlight.w,
+            height: highlight.h,
+            pointerEvents: "none",
+            boxShadow: "0 0 0 9999px transparent",
+          }}
+        />
+      )}
+
+      {/* Popover */}
       <div
         className="absolute rounded-xl bg-background border shadow-2xl p-4 pointer-events-auto"
         style={{ top: popTop, left: popLeft, width: popW }}
@@ -328,12 +397,19 @@ export const NotebookTutorial = () => {
                 <ArrowLeft className="h-3.5 w-3.5" /> Atrás
               </Button>
             )}
-            <Button size="sm" onClick={handleNext} variant="pink" className="gap-1">
-              {stepIndex === STEPS.length - 1 ? "Finalizar" : "Siguiente"}
-              {stepIndex !== STEPS.length - 1 && <ArrowRight className="h-3.5 w-3.5" />}
-            </Button>
+            {!step.hideNext && (
+              <Button size="sm" onClick={handleNext} variant="pink" className="gap-1">
+                {stepIndex === STEPS.length - 1 ? "Finalizar" : "Siguiente"}
+                {stepIndex !== STEPS.length - 1 && <ArrowRight className="h-3.5 w-3.5" />}
+              </Button>
+            )}
           </div>
         </div>
+        {step.hideNext && (
+          <p className="text-[11px] text-pink font-medium mt-2 text-right">
+            Realiza la acción para continuar →
+          </p>
+        )}
       </div>
     </div>,
     document.body,
