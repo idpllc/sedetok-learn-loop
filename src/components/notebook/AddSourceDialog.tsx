@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ interface AddSourceDialogProps {
   open: boolean;
   onClose: () => void;
   notebookId: string;
+  defaultTab?: "file" | "text" | "competence" | "url" | "video";
 }
 
 const guessType = (file: File): "pdf" | "docx" | "xlsx" | null => {
@@ -27,12 +28,27 @@ const guessType = (file: File): "pdf" | "docx" | "xlsx" | null => {
   return null;
 };
 
-export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogProps) => {
+export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "file" }: AddSourceDialogProps) => {
   const { uploadFile, uploading } = useS3Upload();
   const { ingest } = useNotebookSources(notebookId);
   const { user } = useAuth();
   const { toast } = useToast();
-  const [tab, setTab] = useState("file");
+  const [tab, setTab] = useState<string>(defaultTab);
+
+  // When the dialog re-opens, honour the requested defaultTab
+  useEffect(() => {
+    if (open) setTab(defaultTab);
+  }, [open, defaultTab]);
+
+  // Allow external code (e.g. tutorial) to change the active tab while open
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.tab) setTab(detail.tab);
+    };
+    window.addEventListener("notebook:set-source-tab", handler);
+    return () => window.removeEventListener("notebook:set-source-tab", handler);
+  }, []);
 
   // Text source
   const [textTitle, setTextTitle] = useState("");
