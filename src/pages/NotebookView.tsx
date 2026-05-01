@@ -567,13 +567,18 @@ const NotebookView = () => {
                                 size="sm"
                                 onClick={() => handleCreateCapsule(studioCta.type)}
                                 className="gap-1.5"
+                                disabled={creatingType === studioCta.type}
                               >
-                                {studioCta.type === "video" ? (
+                                {creatingType === studioCta.type ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : studioCta.type === "video" ? (
                                   <ExternalLink className="h-3.5 w-3.5" />
                                 ) : (
                                   <Wand2 className="h-3.5 w-3.5" />
                                 )}
-                                {STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
+                                {creatingType === studioCta.type
+                                  ? "Generando…"
+                                  : STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
                               </Button>
                             </div>
                           )}
