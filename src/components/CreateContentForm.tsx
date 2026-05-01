@@ -163,6 +163,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [dragActive, setDragActive] = useState(false);
   const [richText, setRichText] = useState("");
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
+  const [mindMapStep, setMindMapStep] = useState<0 | 1>(0); // 0 = basic info, 1 = full-screen builder
+  const [isSavingMindMapDraft, setIsSavingMindMapDraft] = useState(false);
 
   useEffect(() => {
     if (editMode && contentData) {
