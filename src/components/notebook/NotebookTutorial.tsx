@@ -93,7 +93,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="sources-panel"]',
-    title: "5. Tu fuente procesada",
+    title: "6. Tu fuente procesada",
     description:
       "¡Listo! Tu fuente aparecerá aquí en cuanto termine de procesarse. SEDE AI ya puede usarla para responderte.",
     routeMatcher: isDetailRoute,
@@ -101,7 +101,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="studio-panel"]',
-    title: "6. Studio: tu fábrica de cápsulas",
+    title: "7. Studio: tu fábrica de cápsulas",
     description:
       "Desde Studio puedes transformar tus fuentes en cápsulas de estudio: lecturas, mapas mentales, juegos y quizzes.",
     routeMatcher: isDetailRoute,
@@ -110,7 +110,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="studio-mindmap"]',
-    title: "7. Selecciona Mapa mental",
+    title: "8. Selecciona Mapa mental",
     description:
       "Empecemos por un Mapa mental: visualiza el tema de tu fuente como un esquema con conceptos conectados. Pulsa el botón resaltado para seleccionarlo.",
     routeMatcher: isDetailRoute,
@@ -125,7 +125,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="studio-panel"]',
-    title: "8. Cápsulas existentes en Sedefy",
+    title: "9. Cápsulas existentes en Sedefy",
     description:
       "Sedefy busca automáticamente mapas mentales ya creados por la comunidad sobre tu tema. Puedes pulsar 'Buscar más' para ver más resultados o usar uno directamente.",
     routeMatcher: isDetailRoute,
@@ -134,7 +134,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="studio-generate-ai"]',
-    title: "9. O genera tu propio mapa mental con IA",
+    title: "10. O genera tu propio mapa mental con IA",
     description:
       "Si prefieres uno hecho a tu medida, pulsa 'Generar mapa mental con IA'. SEDE AI creará un mapa mental personalizado a partir de tu fuente.",
     routeMatcher: isDetailRoute,
@@ -143,7 +143,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="chat-panel"]',
-    title: "10. Conversa con SEDE AI",
+    title: "11. Conversa con SEDE AI",
     description:
       "Vuelve al chat cuando quieras pedirle resúmenes, explicaciones o ejercicios sobre tu fuente. La IA responde usando tus fuentes como contexto.",
     routeMatcher: isDetailRoute,
@@ -152,7 +152,7 @@ const STEPS: Step[] = [
   },
   {
     selector: '[data-tour="chat-input"]',
-    title: "11. ¡Empieza a estudiar!",
+    title: "12. ¡Empieza a estudiar!",
     description:
       "Escribe aquí tu pregunta. Ya tienes todo lo necesario para estudiar con tu Notebook Sedefy.",
     routeMatcher: isDetailRoute,
