@@ -781,11 +781,11 @@ const NotebookView = () => {
 
         {/* 3-column layout — right column grows when viewing a capsule (expandable);
             when expanded, the Fuentes column collapses so chat takes the freed width. */}
-        <div
+         <div
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
               ? viewerExpanded
-                ? "lg:grid-cols-[0px_1fr_70%]"
+                ? "lg:grid-cols-[0px_0px_1fr]"
                 : "lg:grid-cols-[280px_1fr_30%]"
               : "lg:grid-cols-[280px_1fr_320px]"
           }`}
