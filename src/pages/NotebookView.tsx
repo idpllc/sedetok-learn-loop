@@ -693,7 +693,7 @@ const NotebookView = () => {
           </section>
 
           {/* Studio / Capsule Viewer */}
-          <aside className={`border-l overflow-hidden md:flex md:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
+          <aside className={`border-l overflow-hidden lg:flex lg:flex-col ${mobileTab === "studio" ? "flex flex-col" : "hidden"}`}>
             {viewing ? (
               // Capsule viewer (replaces the studio selector while open)
               <>
