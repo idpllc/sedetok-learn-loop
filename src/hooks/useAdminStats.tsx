@@ -41,6 +41,11 @@ export const useAdminStats = () => {
         .from("chat_conversations")
         .select("*", { count: "exact", head: true });
 
+      // Get notebooks count
+      const { count: notebooksCount } = await (supabase as any)
+        .from("notebooks")
+        .select("*", { count: "exact", head: true });
+
       // Get total user-to-user chat messages count (excluding deleted)
       const { count: chatMessagesCount } = await supabase
         .from("chat_messages")
@@ -98,6 +103,7 @@ export const useAdminStats = () => {
         completedQuizzesCount: completedQuizzesCount || 0,
         chatGroupsCount: chatGroupsCount || 0,
         chatMessagesCount: chatMessagesCount || 0,
+        notebooksCount: notebooksCount || 0,
         aiMessagesTotal,
         sedeAiMessagesCount,
         alexMessagesCount,
