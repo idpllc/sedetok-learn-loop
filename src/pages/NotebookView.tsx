@@ -152,10 +152,17 @@ const ctaLabel = (opt: StudioOption) => {
 // ----- Sub-components -----
 
 const ContentPreviewCards = ({ content }: { content: any[] }) => {
+  // Build a playlist of items of the same type so SedeTok navigation only
+  // moves through the search results (no random related content).
+  const buildPlaylist = (currentItem: any) => {
+    const sameType = content.filter((c) => c.type === currentItem.type);
+    return sameType.map((c) => `${c.id}:${c.type}`).join(",");
+  };
   const route = (item: any) => {
-    if (item.type === "quiz") return `/?quiz=${item.id}`;
-    if (item.type === "game") return `/?game=${item.id}`;
-    return `/sedetok?content=${item.id}`;
+    const playlist = encodeURIComponent(buildPlaylist(item));
+    const param = item.type === "quiz" ? "quiz" : item.type === "game" ? "game" : "content";
+    if (item.type === "path" || item.type === "course") return `/learning-paths/view/${item.id}`;
+    return `/sedetok?${param}=${item.id}&playlist=${playlist}`;
   };
   const typeLabel: Record<string, string> = {
     video: "📹 Video", quiz: "📝 Quiz", game: "🎮 Juego", reading: "📖 Lectura", mindmap: "🧠 Mapa", path: "🗺️ Ruta",
