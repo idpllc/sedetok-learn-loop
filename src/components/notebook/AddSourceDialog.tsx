@@ -33,6 +33,15 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   const { ingest } = useNotebookSources(notebookId);
   const { user } = useAuth();
   const { toast } = useToast();
+  const textDraftKey = `notebook:add-source-text-draft:v1:${notebookId}`;
+  const readTextDraft = () => {
+    try {
+      const raw = sessionStorage.getItem(textDraftKey);
+      return raw ? JSON.parse(raw) as { title?: string; content?: string } : {};
+    } catch {
+      return {};
+    }
+  };
   const [tab, setTab] = useState<string>(defaultTab || "text");
 
   // When the dialog re-opens, honour the requested defaultTab
@@ -51,8 +60,20 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   }, []);
 
   // Text source
-  const [textTitle, setTextTitle] = useState("");
-  const [textContent, setTextContent] = useState("");
+  const [textTitle, setTextTitle] = useState(() => readTextDraft().title || "");
+  const [textContent, setTextContent] = useState(() => readTextDraft().content || "");
+
+  useEffect(() => {
+    try {
+      if (textTitle || textContent) {
+        sessionStorage.setItem(textDraftKey, JSON.stringify({ title: textTitle, content: textContent }));
+      } else {
+        sessionStorage.removeItem(textDraftKey);
+      }
+    } catch {
+      // Draft persistence is best-effort only.
+    }
+  }, [textContent, textDraftKey, textTitle]);
 
   // URL source
   const [url, setUrl] = useState("");
@@ -67,13 +88,22 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     setUrl("");
     setVideoUrl("");
     setVideoTitle("");
+    try { sessionStorage.removeItem(textDraftKey); } catch {
+      // Draft persistence is best-effort only.
+    }
   };
 
   const handleClose = () => {
     if (uploading || ingest.isPending) return;
-    reset();
     onClose();
   };
+
+  const shouldIgnoreOpenChange = (eventTarget: EventTarget | null) => {
+    const node = eventTarget instanceof Element ? eventTarget : null;
+    return !!node?.closest('[data-notebook-tutorial="true"]');
+  };
+
+  const isTutorialOpen = () => !!document.querySelector('[data-notebook-tutorial="true"]');
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,6 +142,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
       title: textTitle.trim() || "Texto pegado",
       textContent,
     });
+    reset();
     handleClose();
   };
 
@@ -215,8 +246,21 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   const busy = uploading || ingest.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
-      <DialogContent className="max-w-2xl">
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v && !shouldIgnoreOpenChange(document.activeElement) && !isTutorialOpen()) handleClose();
+      }}
+    >
+      <DialogContent
+        className="max-w-2xl"
+        onPointerDownOutside={(event) => {
+          if (shouldIgnoreOpenChange(event.target)) event.preventDefault();
+        }}
+        onInteractOutside={(event) => {
+          if (shouldIgnoreOpenChange(event.target)) event.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Añadir fuente al cuaderno</DialogTitle>
         </DialogHeader>
@@ -328,7 +372,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
         </Tabs>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={handleClose} disabled={busy}>Cerrar</Button>
+          <Button variant="ghost" onClick={() => handleClose()} disabled={busy}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
