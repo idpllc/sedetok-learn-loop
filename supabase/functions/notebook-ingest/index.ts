@@ -188,6 +188,35 @@ serve(async (req) => {
         })
         .eq('id', src.id);
 
+      // Auto-rename the notebook on first source if it still has the default title.
+      try {
+        const currentTitle = String((nb as any).title || '').trim();
+        const isDefaultTitle =
+          !currentTitle ||
+          currentTitle.toLowerCase() === 'cuaderno sin título' ||
+          currentTitle.toLowerCase() === 'cuaderno sin titulo';
+        if (isDefaultTitle) {
+          // Build a clean excerpt: first meaningful line, fall back to first ~80 chars.
+          const cleaned = String(extracted || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (cleaned.length > 0) {
+            const firstSentence = cleaned.split(/(?<=[.!?])\s+/)[0] || cleaned;
+            let excerpt = firstSentence.length > 80
+              ? firstSentence.slice(0, 80).trim() + '…'
+              : firstSentence;
+            // Capitalize first letter
+            excerpt = excerpt.charAt(0).toUpperCase() + excerpt.slice(1);
+            await supabase
+              .from('notebooks')
+              .update({ title: excerpt })
+              .eq('id', notebookId);
+          }
+        }
+      } catch (renameErr) {
+        console.error('Auto-rename notebook failed:', renameErr);
+      }
+
       return new Response(JSON.stringify({ id: src.id, status: 'ready', length: extracted.length }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
