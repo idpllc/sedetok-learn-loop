@@ -449,13 +449,18 @@ const NotebookView = () => {
     }
   }, [id, sources.list.isLoading, sources.list.data]);
 
-  // Tutorial control: open the source dialog on a chosen tab from outside
+  // Tutorial control: open the source dialog on a chosen tab from outside.
+  // IMPORTANT: if the dialog is already open, do NOT touch state — that would
+  // re-render the form and clear what the user has typed.
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
-      if (detail.tab) setAddSourceTab(detail.tab);
-      setShowAdd(true);
-      autoOpenedRef.current = true;
+      setShowAdd((prevOpen) => {
+        if (prevOpen) return prevOpen; // already open, leave inputs intact
+        if (detail.tab) setAddSourceTab(detail.tab);
+        autoOpenedRef.current = true;
+        return true;
+      });
     };
     window.addEventListener("notebook:open-add-source", handler);
     return () => window.removeEventListener("notebook:open-add-source", handler);
