@@ -75,40 +75,7 @@ async function extractXlsx(fileUrl: string): Promise<string> {
   return out.slice(0, MAX_TEXT);
 }
 
-async function extractCompetenceContext(supabaseAdmin: any, competenceId: string): Promise<{ title: string; text: string }> {
-  // Pull competence + activities/topics from study plan
-  const { data: comp } = await supabaseAdmin
-    .from('study_plan_competences')
-    .select('*')
-    .eq('id', competenceId)
-    .maybeSingle();
-
-  if (!comp) {
-    // Fallback by row id from any related study plan tables
-    return { title: 'Competencia', text: 'No se encontró información de la competencia.' };
-  }
-
-  const { data: activities } = await supabaseAdmin
-    .from('study_plan_activities')
-    .select('*')
-    .eq('competence_id', competenceId);
-
-  const lines: string[] = [];
-  lines.push(`Competencia: ${comp.name || comp.title || comp.competence || ''}`);
-  if (comp.description) lines.push(`Descripción: ${comp.description}`);
-  if (comp.subject) lines.push(`Asignatura: ${comp.subject}`);
-  if (comp.grade_level) lines.push(`Grado: ${comp.grade_level}`);
-  if (activities && activities.length > 0) {
-    lines.push('\nActividades relacionadas:');
-    for (const a of activities) {
-      lines.push(`- ${a.name || a.title || ''}: ${a.description || ''}`);
-    }
-  }
-  return {
-    title: comp.name || comp.title || 'Competencia',
-    text: lines.join('\n').slice(0, MAX_TEXT),
-  };
-}
+// Competence text is built on the client from study plan JSON and sent as textContent.
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -207,9 +174,7 @@ serve(async (req) => {
           .replace(/\s+/g, ' ')
           .slice(0, MAX_TEXT);
       } else if (sourceType === 'competence') {
-        const r = await extractCompetenceContext(supabaseAdmin, competenceId);
-        extracted = r.text;
-        if (!title) finalTitle = r.title;
+        extracted = String(textContent || '').slice(0, MAX_TEXT);
       } else {
         throw new Error('Tipo de fuente no soportado');
       }
