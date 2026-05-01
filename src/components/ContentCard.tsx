@@ -23,6 +23,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { CreateUnifiedEvaluationEvent } from "./CreateUnifiedEvaluationEvent";
 import { supabase } from "@/integrations/supabase/client";
 import { PrintableQuiz } from "./quiz/PrintableQuiz";
+import { renderRichContent } from "@/lib/renderRichContent";
 
 interface ContentCardProps {
   id: string;
@@ -506,11 +507,10 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
         ) : contentType === 'lectura' && richText ? (
           <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
             <div className="w-full max-w-2xl bg-background/95 backdrop-blur-sm rounded-lg p-6 shadow-xl overflow-hidden">
-              <div className="prose prose-sm max-w-none line-clamp-[20] text-foreground">
-                <div className="whitespace-pre-wrap leading-relaxed">
-                  {richText}
-                </div>
-              </div>
+              <div
+                className="prose prose-sm max-w-none line-clamp-[20] text-foreground rich-content"
+                dangerouslySetInnerHTML={{ __html: renderRichContent(richText) }}
+              />
               <div className="mt-6 flex justify-center">
                 <Button
                   size="lg"

@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
+import { RichContentEditor } from "./RichContentEditor";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -1464,14 +1465,15 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           {formData.content_type === 'lectura' ? (
             <div className="space-y-2">
               <Label htmlFor="richText">Contenido de la Lectura</Label>
-              <Textarea
-                id="richText"
-                value={richText}
-                onChange={(e) => setRichText(e.target.value)}
-                placeholder="Escribe aquí el contenido completo de la lectura..."
-                className="min-h-[300px] resize-y"
-                required
+              <RichContentEditor
+                content={richText}
+                onChange={setRichText}
+                placeholder="Escribe aquí el contenido completo de la lectura. Puedes agregar imágenes, caracteres especiales y fórmulas matemáticas..."
+                minHeight="320px"
               />
+              <p className="text-xs text-muted-foreground">
+                Soporta texto enriquecido, imágenes, caracteres especiales y fórmulas matemáticas (LaTeX). Usa $...$ para fórmulas inline o $$...$$ para bloques.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
