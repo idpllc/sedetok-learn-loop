@@ -3829,6 +3829,7 @@ export type Database = {
           tipo_documento: string
         }[]
       }
+      get_user_path_progress_duplicate_preflight: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
