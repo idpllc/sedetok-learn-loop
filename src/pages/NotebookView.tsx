@@ -303,7 +303,7 @@ const NotebookView = () => {
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
-  const [addSourceTab, setAddSourceTab] = useState<"file" | "text" | "competence">("file");
+  const [addSourceTab, setAddSourceTab] = useState<"file" | "text" | "competence">("text");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
@@ -1103,7 +1103,7 @@ const NotebookView = () => {
                     return (
                       <button
                         key={opt.id}
-                        data-tour={opt.id === "quiz" ? "studio-quiz" : undefined}
+                        data-tour={`studio-${opt.id}`}
                         onClick={() => handleStudio(opt)}
                         disabled={chat.isStreaming || studioSearching || noSources}
                         className={`relative flex flex-col items-start gap-1.5 p-3 rounded-lg border bg-gradient-to-br disabled:opacity-50 disabled:cursor-not-allowed transition text-left ${opt.color} ${
@@ -1215,6 +1215,7 @@ const NotebookView = () => {
                           className="w-full h-7 text-[11px]"
                           onClick={handleSearchMore}
                           disabled={studioSearching}
+                          data-tour="studio-search-more"
                         >
                           {studioSearching ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -1228,6 +1229,7 @@ const NotebookView = () => {
                         className="w-full h-7 text-[11px] gap-1"
                         onClick={() => handleCreateCapsule(studioActive.id)}
                         disabled={creatingType === studioActive.id}
+                        data-tour="studio-generate-ai"
                       >
                         {creatingType === studioActive.id ? (
                           <>
