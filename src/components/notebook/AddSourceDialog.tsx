@@ -175,10 +175,10 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="file" className="gap-1"><Upload className="h-4 w-4" />Archivo</TabsTrigger>
+            <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
             <TabsTrigger value="text" className="gap-1"><Type className="h-4 w-4" />Texto</TabsTrigger>
             <TabsTrigger value="url" className="gap-1"><LinkIcon className="h-4 w-4" />Web</TabsTrigger>
             <TabsTrigger value="video" className="gap-1"><Video className="h-4 w-4" />Video</TabsTrigger>
-            <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
           </TabsList>
 
           <TabsContent value="file" className="py-6">
@@ -230,9 +230,15 @@ export const AddSourceDialog = ({ open, onClose, notebookId }: AddSourceDialogPr
 
           <TabsContent value="competence" className="py-4 max-h-96 overflow-auto space-y-3">
             {!studyPlans?.length ? (
-              <p className="text-sm text-muted-foreground text-center py-6">
-                No tienes plan de estudios registrado todavía.
-              </p>
+              <div className="text-center py-8 space-y-3">
+                <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  Aún no tienes un plan de estudios. Créalo primero para usar tus competencias como fuente.
+                </p>
+                <Button asChild size="sm">
+                  <a href="/study-plan">Crear mi plan de estudios</a>
+                </Button>
+              </div>
             ) : (
               studyPlans.map((plan: any) => (
                 <div key={plan.id} className="border rounded-lg p-3">
