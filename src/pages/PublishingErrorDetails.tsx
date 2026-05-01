@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
@@ -12,6 +12,7 @@ import {
   Shield,
   XCircle,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperAdmin } from "@/hooks/useSuperAdmin";
 import { Button } from "@/components/ui/button";
@@ -135,10 +136,34 @@ ${suspectedSql}
 Live repair SQL:
 ${repairSql}`;
 
+type DuplicateStats = {
+  duplicate_groups: number;
+  redundant_rows: number;
+  largest_group: number;
+};
+
+type PreflightResult = {
+  checked_at: string;
+  has_duplicates: boolean;
+  can_publish_progress_indexes: boolean;
+  total_duplicate_groups: number;
+  total_redundant_rows: number;
+  largest_group: number;
+  invalid_rows: number;
+  message: string;
+  duplicates: {
+    content_id: DuplicateStats;
+    quiz_id: DuplicateStats;
+    game_id: DuplicateStats;
+  };
+};
+
 export default function PublishingErrorDetails() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSuperAdmin, loading } = useSuperAdmin();
+  const [preflight, setPreflight] = useState<PreflightResult | null>(null);
+  const [preflightLoading, setPreflightLoading] = useState(false);
 
   const generatedAt = useMemo(
     () =>
@@ -152,6 +177,30 @@ export default function PublishingErrorDetails() {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(copyPayload);
     toast({ title: "Detalle copiado", description: "El diagnóstico de publicación quedó en el portapapeles." });
+  };
+
+  const runPreflight = async () => {
+    setPreflightLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("publishing-preflight", {
+        body: { table: "user_path_progress" },
+      });
+
+      if (error) throw error;
+      if (!data?.result) throw new Error("La verificación no devolvió resultados.");
+
+      setPreflight(data.result as PreflightResult);
+      toast({
+        title: data.result.has_duplicates ? "Preflight bloqueado" : "Preflight correcto",
+        description: data.result.message,
+        variant: data.result.has_duplicates ? "destructive" : "default",
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo ejecutar la verificación previa.";
+      toast({ title: "Error en preflight", description: message, variant: "destructive" });
+    } finally {
+      setPreflightLoading(false);
+    }
   };
 
   if (loading) {
@@ -196,10 +245,16 @@ export default function PublishingErrorDetails() {
                 Diagnóstico generado desde comprobaciones directas en Live. La publicación falla al intentar crear un índice único sobre progreso de rutas.
               </p>
             </div>
-            <Button onClick={handleCopy} className="gap-2 self-start lg:self-center">
-              <Copy className="h-4 w-4" />
-              Copiar detalle
-            </Button>
+            <div className="flex flex-wrap gap-2 self-start lg:self-center">
+              <Button onClick={runPreflight} disabled={preflightLoading} className="gap-2">
+                {preflightLoading ? <Clock3 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+                Verificar duplicados Live
+              </Button>
+              <Button onClick={handleCopy} variant="outline" className="gap-2">
+                <Copy className="h-4 w-4" />
+                Copiar detalle
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -213,6 +268,29 @@ export default function PublishingErrorDetails() {
             <p className="font-mono">{blockingStatement}</p>
           </AlertDescription>
         </Alert>
+
+        {preflight && (
+          <Alert variant={preflight.has_duplicates || !preflight.can_publish_progress_indexes ? "destructive" : "default"}>
+            {preflight.can_publish_progress_indexes ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+            <AlertTitle>{preflight.can_publish_progress_indexes ? "Verificación previa OK" : "Publicación bloqueada por duplicados"}</AlertTitle>
+            <AlertDescription className="space-y-3">
+              <p>{preflight.message}</p>
+              <div className="grid gap-2 text-xs sm:grid-cols-3">
+                {Object.entries(preflight.duplicates).map(([key, stats]) => (
+                  <div key={key} className="rounded-md border bg-background/70 p-3">
+                    <p className="font-mono font-semibold">{key}</p>
+                    <p>{stats.duplicate_groups} grupos duplicados</p>
+                    <p>{stats.redundant_rows} filas sobrantes</p>
+                    <p>Grupo mayor: {stats.largest_group}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Revisado: {new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(preflight.checked_at))}
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {diagnosticSummary.map((item) => (
