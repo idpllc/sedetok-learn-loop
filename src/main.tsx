@@ -16,22 +16,26 @@ import { registerSW } from 'virtual:pwa-register';
 
 // Register Service Worker for PWA
 if (import.meta.env.PROD) {
-  registerSW({
+  const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {
-      if (confirm('Nueva versión disponible. ¿Actualizar ahora?')) {
-        window.location.reload();
-      }
+      // Auto-actualizar para que los usuarios siempre vean la última versión
+      console.log('[PWA] Nueva versión detectada, actualizando...');
+      updateSW(true);
     },
     onOfflineReady() {
       console.log('App lista para funcionar offline');
     },
-    onRegisteredSW(swScriptUrl) {
+    onRegisteredSW(swScriptUrl, registration) {
       console.log('Service Worker registrado:', swScriptUrl);
+      // Buscar actualizaciones cada 60s mientras la app está abierta
+      if (registration) {
+        setInterval(() => registration.update().catch(() => {}), 60 * 1000);
+      }
     },
     onRegisterError(error) {
       console.error('Error al registrar Service Worker:', error);
-    }
+    },
   });
 }
 
