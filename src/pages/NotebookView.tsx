@@ -508,12 +508,13 @@ const NotebookView = () => {
     if (!studioActive || studioSearching) return;
     setStudioSearching(true);
     try {
-      const next = await sedefySearch.search(
+      const rawNext = await sedefySearch.search(
         studioActive.searchType,
         studioOffset + 3,
         3,
         studioActive.readingSubtype
       );
+      const next = rawNext.filter((r) => !dismissedIds.has(r.id));
       setStudioResults((prev) => [...prev, ...next]);
       setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
@@ -523,7 +524,21 @@ const NotebookView = () => {
   };
 
   const handleRemoveResult = (rid: string) => {
+    // Remove from current view AND remember the dismissal so future searches
+    // and cached restores skip this item permanently for this notebook+source.
     setStudioResults((prev) => prev.filter((r) => r.id !== rid));
+    setDismissedIds((prev) => {
+      const next = new Set(prev);
+      next.add(rid);
+      return next;
+    });
+    setStudioCache((prev) => {
+      const next: Record<string, SedefyResult[]> = {};
+      for (const [k, list] of Object.entries(prev)) {
+        next[k] = (list || []).filter((r) => r.id !== rid);
+      }
+      return next;
+    });
   };
 
   const resultUrl = (r: SedefyResult) => {
