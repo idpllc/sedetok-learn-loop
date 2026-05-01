@@ -89,8 +89,6 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     try { sessionStorage.removeItem(textDraftKey); } catch {}
   };
 
-  const isTutorialActive = () => !!document.querySelector('[data-notebook-tutorial="true"]');
-
   const handleClose = ({ resetDraft = true }: { resetDraft?: boolean } = {}) => {
     if (uploading || ingest.isPending) return;
     if (resetDraft) reset();
@@ -368,7 +366,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
         </Tabs>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={handleClose} disabled={busy}>Cerrar</Button>
+          <Button variant="ghost" onClick={() => handleClose()} disabled={busy}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
