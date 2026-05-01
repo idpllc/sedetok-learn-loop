@@ -842,7 +842,7 @@ const NotebookView = () => {
                         {studioResults.map((r) => (
                           <li
                             key={r.id}
-                            className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color}`}
+                            className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color} ${highlightedResultId === r.id ? "ring-2 ring-primary ring-offset-2 animate-pulse shadow-lg" : ""}`}
                             onClick={() => openResult(r)}
                           >
                             <div className="aspect-video w-full overflow-hidden bg-muted/40 relative">
