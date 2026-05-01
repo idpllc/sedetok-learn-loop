@@ -225,7 +225,7 @@ export const useNotebookSearch = (
         setLoading(false);
       }
     },
-    [notebookId]
+    [notebookId, sourceId]
   );
 
   return { search, loading };
