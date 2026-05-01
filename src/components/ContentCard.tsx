@@ -10,6 +10,8 @@ import { useXP } from "@/hooks/useXP";
 import { ShareSheet } from "./ShareSheet";
 import { AuthModal } from "./AuthModal";
 import { ReadingModal } from "./ReadingModal";
+import { MindMapModal } from "./mindmap/MindMapModal";
+import { MindMapViewer } from "./mindmap/MindMapViewer";
 import { QuizViewer } from "./QuizViewer";
 import { GameViewer } from "./GameViewer";
 import { useQuizAttempts } from "@/hooks/useQuizAttempts";
@@ -39,6 +41,7 @@ interface ContentCardProps {
   videoUrl?: string;
   documentUrl?: string;
   richText?: string;
+  mindMapData?: any;
   contentType?: string;
   likes: number;
   comments: number;
@@ -77,6 +80,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   videoUrl,
   documentUrl,
   richText,
+  mindMapData,
   contentType,
   likes: initialLikes,
   comments: initialComments,
@@ -193,6 +197,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<'like' | 'save' | null>(null);
   const [isReadingModalOpen, setIsReadingModalOpen] = useState(false);
+  const [isMindMapModalOpen, setIsMindMapModalOpen] = useState(false);
   const [infoSheetOpen, setInfoSheetOpen] = useState(false);
   const [quizModalOpen, setQuizModalOpen] = useState(false);
   const [gameModalOpen, setGameModalOpen] = useState(false);
