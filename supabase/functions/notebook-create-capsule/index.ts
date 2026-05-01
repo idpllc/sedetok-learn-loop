@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { notebookId, type } = await req.json();
+    const { notebookId, type, notebookSourceId } = await req.json();
     if (!notebookId || !type) return ERR("Faltan parámetros", 400);
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -106,11 +106,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!notebook || notebook.user_id !== user.id) return ERR("Notebook no encontrado", 404);
 
-    const { data: sources } = await supabase
+    let srcQuery = supabase
       .from("notebook_sources")
       .select("title, extracted_text, source_type")
       .eq("notebook_id", notebookId)
       .eq("status", "ready");
+    if (notebookSourceId) srcQuery = srcQuery.eq("id", notebookSourceId);
+    const { data: sources } = await srcQuery;
 
     if (!sources || sources.length === 0) return ERR("Añade al menos una fuente", 400);
 

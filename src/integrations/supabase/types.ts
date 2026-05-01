@@ -129,6 +129,7 @@ export type Database = {
           created_at: string
           id: string
           notebook_id: string | null
+          notebook_source_id: string | null
           title: string | null
           updated_at: string
           user_id: string
@@ -137,6 +138,7 @@ export type Database = {
           created_at?: string
           id?: string
           notebook_id?: string | null
+          notebook_source_id?: string | null
           title?: string | null
           updated_at?: string
           user_id: string
@@ -145,6 +147,7 @@ export type Database = {
           created_at?: string
           id?: string
           notebook_id?: string | null
+          notebook_source_id?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string
@@ -155,6 +158,13 @@ export type Database = {
             columns: ["notebook_id"]
             isOneToOne: false
             referencedRelation: "notebooks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_chat_conversations_notebook_source_id_fkey"
+            columns: ["notebook_source_id"]
+            isOneToOne: false
+            referencedRelation: "notebook_sources"
             referencedColumns: ["id"]
           },
         ]

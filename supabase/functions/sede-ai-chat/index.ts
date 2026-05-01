@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationId, attachments, notebookId } = await req.json();
+    const { message, conversationId, attachments, notebookId, notebookSourceId } = await req.json();
     
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -187,12 +187,14 @@ serve(async (req) => {
         .select('title, description')
         .eq('id', notebookId)
         .maybeSingle();
-      const { data: sources } = await supabase
+      let srcQ = supabase
         .from('notebook_sources')
         .select('title, source_type, extracted_text')
         .eq('notebook_id', notebookId)
         .eq('status', 'ready')
         .order('created_at', { ascending: true });
+      if (notebookSourceId) srcQ = srcQ.eq('id', notebookSourceId);
+      const { data: sources } = await srcQ;
       if (nb && sources && sources.length > 0) {
         // Cap each source to ~6000 chars to stay within token limits
         const sourcesText = sources.map((s: any, i: number) => {

@@ -265,8 +265,25 @@ const NotebookView = () => {
   const { user, loading } = useAuth();
   const { rename } = useNotebooks();
   const sources = useNotebookSources(id);
-  const chat = useNotebookChat(id);
-  const sedefySearch = useNotebookSearch(id);
+
+  // Active source: when set, chat + studio are scoped to that single source.
+  // null = "todas las fuentes" (default behaviour). Persisted per-notebook.
+  const activeSourceKey = id ? `notebook:activeSource:${id}` : null;
+  const [activeSourceId, setActiveSourceIdState] = useState<string | null>(() => {
+    if (!activeSourceKey) return null;
+    try { return localStorage.getItem(activeSourceKey) || null; } catch { return null; }
+  });
+  const setActiveSourceId = (sid: string | null) => {
+    setActiveSourceIdState(sid);
+    if (!activeSourceKey) return;
+    try {
+      if (sid) localStorage.setItem(activeSourceKey, sid);
+      else localStorage.removeItem(activeSourceKey);
+    } catch {}
+  };
+
+  const chat = useNotebookChat(id, activeSourceId);
+  const sedefySearch = useNotebookSearch(id, activeSourceId);
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -282,8 +299,11 @@ const NotebookView = () => {
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
   // Cache of the first 3 results per studio option id (after a search has run).
-  // Persisted to localStorage per-notebook so progress is preserved between visits.
-  const cacheKey = id ? `notebook:studioCache:${id}` : null;
+  // Persisted to localStorage per-notebook AND per-active-source so each source
+  // keeps its own studio progress.
+  const cacheKey = id
+    ? `notebook:studioCache:${id}:${activeSourceId || "all"}`
+    : null;
   const [studioCache, setStudioCache] = useState<Record<string, SedefyResult[]>>(() => {
     if (!cacheKey) return {};
     try {
@@ -295,6 +315,24 @@ const NotebookView = () => {
   const [highlightedResultId, setHighlightedResultId] = useState<string | null>(null);
   // Mobile tabs: fuentes | chat | studio
   const [mobileTab, setMobileTab] = useState<"fuentes" | "chat" | "studio">("chat");
+
+  // When the active source changes, reload the cache for that scope and clear
+  // any in-flight studio selection / viewer so we don't show stale content.
+  useEffect(() => {
+    if (!cacheKey) return;
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      setStudioCache(raw ? JSON.parse(raw) : {});
+    } catch { setStudioCache({}); }
+    setStudioActive(null);
+    setStudioResults([]);
+    setStudioOffset(0);
+    setStudioHasMore(true);
+    setViewing(null);
+    setViewerExpanded(false);
+    setHighlightedResultId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheKey]);
 
   // Persist cache whenever it changes
   useEffect(() => {
@@ -319,6 +357,18 @@ const NotebookView = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages.length, chat.isStreaming]);
+
+  // If the active source no longer exists in the loaded list (e.g., deleted),
+  // fall back to "all sources".
+  useEffect(() => {
+    if (!activeSourceId) return;
+    const list = sources.list.data;
+    if (!list || list.length === 0) return;
+    if (!list.some((s) => s.id === activeSourceId)) {
+      setActiveSourceId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sources.list.data, activeSourceId]);
 
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -434,7 +484,7 @@ const NotebookView = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("notebook-create-capsule", {
-        body: { notebookId: id, type },
+        body: { notebookId: id, type, notebookSourceId: activeSourceId },
       });
       if (error) throw error;
       if (!data?.route) throw new Error("Respuesta inválida");
@@ -579,12 +629,41 @@ const NotebookView = () => {
               </div>
             ) : (
               <ul className="space-y-1.5">
+                <li>
+                  <button
+                    onClick={() => setActiveSourceId(null)}
+                    className={`w-full text-left flex items-center gap-2 p-2 rounded-md transition ${
+                      activeSourceId === null
+                        ? "bg-primary/10 ring-1 ring-primary/40"
+                        : "hover:bg-accent"
+                    }`}
+                  >
+                    <Sparkles className={`h-4 w-4 shrink-0 ${activeSourceId === null ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-sm font-medium">Todas las fuentes</span>
+                  </button>
+                </li>
                 {sources.list.data?.map((s) => {
                   const Icon = TYPE_ICONS[s.source_type] || FileText;
+                  const isActive = activeSourceId === s.id;
                   return (
                     <li key={s.id} className="group">
-                      <div className="flex items-start gap-2 p-2 rounded-md hover:bg-accent transition">
-                        <Icon className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => s.status === "ready" && setActiveSourceId(s.id)}
+                        onKeyDown={(e) => {
+                          if ((e.key === "Enter" || e.key === " ") && s.status === "ready") {
+                            e.preventDefault();
+                            setActiveSourceId(s.id);
+                          }
+                        }}
+                        className={`flex items-start gap-2 p-2 rounded-md transition cursor-pointer ${
+                          isActive
+                            ? "bg-primary/10 ring-1 ring-primary/40"
+                            : "hover:bg-accent"
+                        } ${s.status !== "ready" ? "cursor-not-allowed opacity-70" : ""}`}
+                      >
+                        <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isActive ? "text-primary" : "text-primary/70"}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm truncate" title={s.title}>{s.title}</p>
                           <p className="text-xs text-muted-foreground">
@@ -597,7 +676,12 @@ const NotebookView = () => {
                         </div>
                         <button
                           className="opacity-0 group-hover:opacity-100 transition"
-                          onClick={() => sources.remove.mutate(s.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeSourceId === s.id) setActiveSourceId(null);
+                            sources.remove.mutate(s.id);
+                          }}
+                          aria-label="Eliminar fuente"
                         >
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </button>

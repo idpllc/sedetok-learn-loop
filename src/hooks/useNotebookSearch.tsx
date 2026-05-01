@@ -99,7 +99,10 @@ const buildOr = (terms: string[]) =>
  * Direct (non-AI) Sedefy capsule search scoped to a notebook.
  * Fetches a wider window from the DB then re-ranks/filters locally for precision.
  */
-export const useNotebookSearch = (notebookId: string | undefined) => {
+export const useNotebookSearch = (
+  notebookId: string | undefined,
+  sourceId: string | null = null
+) => {
   const [loading, setLoading] = useState(false);
 
   const search = useCallback(
@@ -112,12 +115,16 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
       if (!notebookId) return [];
       setLoading(true);
       try {
-        // Fetch sources for keyword extraction
-        const { data: sources } = await supabase
+        // Fetch sources for keyword extraction. If a specific source is
+        // selected, restrict keyword extraction to that source so each
+        // source has its own scoped Studio results.
+        let srcQuery = supabase
           .from("notebook_sources")
           .select("title, extracted_text")
           .eq("notebook_id", notebookId)
           .eq("status", "ready");
+        if (sourceId) srcQuery = srcQuery.eq("id", sourceId);
+        const { data: sources } = await srcQuery;
 
         const keywords = extractKeywords(sources || []);
         const orFilter = keywords.length > 0 ? buildOr(keywords) : null;
@@ -218,7 +225,7 @@ export const useNotebookSearch = (notebookId: string | undefined) => {
         setLoading(false);
       }
     },
-    [notebookId]
+    [notebookId, sourceId]
   );
 
   return { search, loading };

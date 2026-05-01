@@ -10,32 +10,47 @@ export type ChatMessage = { role: "user" | "assistant"; content: string };
  * conversation that is auto-created on first message. Reuses sede-ai-chat
  * edge function with notebookId to inject source context.
  */
-export const useNotebookChat = (notebookId: string | undefined) => {
+export const useNotebookChat = (
+  notebookId: string | undefined,
+  sourceId: string | null = null
+) => {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // Load or create the notebook conversation
+  // Load or create the notebook conversation, scoped per source (or null = "all sources")
   useEffect(() => {
     if (!user || !notebookId) return;
     let cancelled = false;
+    // Reset state immediately when source changes so the UI doesn't show
+    // stale messages from a different source while we load.
+    setConversationId(null);
+    setMessages([]);
     (async () => {
-      const { data: existing } = await supabase
+      let query = supabase
         .from("ai_chat_conversations")
         .select("id")
         .eq("user_id", user.id)
         .eq("notebook_id", notebookId)
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
+      query = sourceId
+        ? query.eq("notebook_source_id", sourceId)
+        : query.is("notebook_source_id", null);
+      const { data: existing } = await query.maybeSingle();
 
       let convId = existing?.id || null;
       if (!convId) {
         const { data: created } = await supabase
           .from("ai_chat_conversations")
-          .insert({ user_id: user.id, notebook_id: notebookId, title: "Conversación" })
+          .insert({
+            user_id: user.id,
+            notebook_id: notebookId,
+            notebook_source_id: sourceId,
+            title: "Conversación",
+          })
           .select("id")
           .single();
         convId = created?.id || null;
@@ -55,7 +70,7 @@ export const useNotebookChat = (notebookId: string | undefined) => {
     return () => {
       cancelled = true;
     };
-  }, [user, notebookId]);
+  }, [user, notebookId, sourceId]);
 
   const sendMessage = useCallback(
     async (text: string, studioType?: string) => {
@@ -79,7 +94,7 @@ export const useNotebookChat = (notebookId: string | undefined) => {
             Authorization: `Bearer ${session.access_token}`,
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
           },
-          body: JSON.stringify({ message: text, conversationId, notebookId }),
+          body: JSON.stringify({ message: text, conversationId, notebookId, notebookSourceId: sourceId }),
         });
 
         if (!res.ok || !res.body) throw new Error("Stream failed");
@@ -146,7 +161,7 @@ export const useNotebookChat = (notebookId: string | undefined) => {
         setIsStreaming(false);
       }
     },
-    [user, session, conversationId, notebookId, toast]
+    [user, session, conversationId, notebookId, sourceId, toast]
   );
 
   /**
