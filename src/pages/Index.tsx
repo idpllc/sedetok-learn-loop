@@ -126,7 +126,7 @@ const Index = () => {
       case "game":
         return <span className="text-base">🎮</span>;
       case "mapa_mental":
-        return <Brain className="w-5 h-5" />;
+        return <img src={mindMapIcon} alt="Mapa Mental" loading="lazy" width={20} height={20} className="w-5 h-5 object-contain" />;
       case "learning_path":
         return <Map className="w-5 h-5" />;
     }
@@ -519,7 +519,7 @@ const Index = () => {
                             </div>
                           ) : item.content_type === 'mapa_mental' && !item.cover_url && !item.thumbnail_url ? (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center">
-                              <Brain className="w-12 h-12 text-emerald-700 dark:text-emerald-300" strokeWidth={1.5} />
+                              <img src={mindMapIcon} alt="Mapa Mental" loading="lazy" width={64} height={64} className="w-16 h-16 object-contain" />
                               <span className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 line-clamp-2">
                                 {item.mind_map_data?.root?.title || "Mapa Mental"}
                               </span>
