@@ -234,5 +234,15 @@ export const useNotebookChat = (
     [conversationId]
   );
 
-  return { messages, sendMessage, isStreaming, conversationId, appendLocal, appendProgressLocal, finalizeProgress };
+  /**
+   * Append an assistant-only message that lives ONLY in local state (not persisted).
+   * Used for soft prompts like "¿Quieres continuar con el aprendizaje?" so they
+   * don't accumulate in the conversation history when the user navigates away
+   * and comes back.
+   */
+  const appendAssistantTransient = useCallback((content: string) => {
+    setMessages((prev) => [...prev, { role: "assistant", content }]);
+  }, []);
+
+  return { messages, sendMessage, isStreaming, conversationId, appendLocal, appendProgressLocal, finalizeProgress, appendAssistantTransient };
 };
