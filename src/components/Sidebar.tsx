@@ -1,4 +1,4 @@
-import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2, MoreHorizontal, BookOpen, Gamepad2, MessageCircle, Play, Radio, ChevronRight, Star, Trophy, PanelLeft, Languages, GraduationCap } from "lucide-react";
+import { Home, Search, Map, Award, User, Plus, LogIn, LogOut, Menu, X, Building2, MoreHorizontal, BookOpen, Gamepad2, MessageCircle, Play, Radio, ChevronRight, Star, Trophy, PanelLeft, Languages, GraduationCap, NotebookPen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useCallback, useMemo, useEffect } from "react";
@@ -79,6 +79,7 @@ export const Sidebar = () => {
     { id: "live-games", icon: Radio, label: "Juegos en Vivo", path: "/live-games" },
     { id: "language-tutor", icon: Languages, label: "English Tutor", path: "/language-tutor" },
     { id: "study-plan", icon: GraduationCap, label: "Plan de Estudios", path: "/study-plan" },
+    { id: "notebook", icon: NotebookPen, label: "Notebook", path: "/notebook" },
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ], []);
@@ -102,6 +103,7 @@ export const Sidebar = () => {
       "/sede-ai": "Sede AI",
       "/language-tutor": "English Tutor",
       "/study-plan": "Plan de Estudios",
+      "/notebook": "Notebook",
       "/buy-educoins": "Educoins",
       "/about": "Acerca de",
       "/terms": "Términos",
