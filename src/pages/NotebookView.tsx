@@ -228,12 +228,20 @@ const NotebookView = () => {
   const { rename } = useNotebooks();
   const sources = useNotebookSources(id);
   const chat = useNotebookChat(id);
+  const sedefySearch = useNotebookSearch(id);
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Studio search state
+  const [studioActive, setStudioActive] = useState<StudioOption | null>(null);
+  const [studioResults, setStudioResults] = useState<SedefyResult[]>([]);
+  const [studioOffset, setStudioOffset] = useState(0);
+  const [studioSearching, setStudioSearching] = useState(false);
+  const [studioHasMore, setStudioHasMore] = useState(true);
 
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
