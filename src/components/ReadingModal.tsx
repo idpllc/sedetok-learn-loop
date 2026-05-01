@@ -207,9 +207,10 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
         
         <ScrollArea className="flex-1 px-6 py-4" onScrollCapture={handleScroll}>
           <div ref={scrollRef} className="prose prose-sm md:prose-base max-w-none">
-            <div className="whitespace-pre-wrap leading-relaxed text-foreground">
-              {content}
-            </div>
+            <div
+              className="leading-relaxed text-foreground rich-content"
+              dangerouslySetInnerHTML={{ __html: renderRichContent(content) }}
+            />
           </div>
         </ScrollArea>
       </DialogContent>
