@@ -478,10 +478,10 @@ const NotebookView = () => {
     const progressIndex = await chat.appendProgressLocal(userMsg, searchingMsg);
 
     try {
-      const results = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
+      const rawResults = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
+      const results = rawResults.filter((r) => !dismissedIds.has(r.id));
       setStudioResults(results);
       setStudioHasMore(results.length === 3);
-      // Cache the first 3 results so the button shows a "ready" state.
       setStudioCache((prev) => ({ ...prev, [opt.id]: results.slice(0, 3) }));
 
       if (results.length === 0) {
