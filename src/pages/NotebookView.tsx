@@ -523,14 +523,14 @@ const NotebookView = () => {
           className={`flex-1 grid grid-cols-1 overflow-hidden ${
             viewing
               ? viewerExpanded
-                ? "md:grid-cols-[280px_1fr_70%]"
-                : "md:grid-cols-[280px_1fr_30%]"
-              : "md:grid-cols-[280px_1fr_320px]"
+                ? "lg:grid-cols-[280px_1fr_70%]"
+                : "lg:grid-cols-[280px_1fr_30%]"
+              : "lg:grid-cols-[280px_1fr_320px]"
           }`}
         >
           {/* Sources */}
           <aside
-            className={`border-r overflow-y-auto p-3 md:block ${
+            className={`border-r overflow-y-auto p-3 lg:block ${
               mobileTab === "fuentes" ? "block" : "hidden"
             }`}
           >
