@@ -358,6 +358,18 @@ const NotebookView = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages.length, chat.isStreaming]);
 
+  // If the active source no longer exists in the loaded list (e.g., deleted),
+  // fall back to "all sources".
+  useEffect(() => {
+    if (!activeSourceId) return;
+    const list = sources.list.data;
+    if (!list || list.length === 0) return;
+    if (!list.some((s) => s.id === activeSourceId)) {
+      setActiveSourceId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sources.list.data, activeSourceId]);
+
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
