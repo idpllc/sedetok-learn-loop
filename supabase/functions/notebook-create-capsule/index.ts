@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
 
     const baseUserPrompt = `Contexto del cuaderno "${notebook.title}":\n\n${context}\n\n---\n`;
 
-    let result: { contentId?: string; route: string; type: string };
+    let result: { contentId?: string; route: string; type: string; title?: string; subject?: string | null; cover_url?: string | null; readingSubtype?: string };
 
     // ---------- READING ----------
     if (type.startsWith("reading")) {
