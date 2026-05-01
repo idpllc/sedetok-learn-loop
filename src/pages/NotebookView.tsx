@@ -617,12 +617,41 @@ const NotebookView = () => {
               </div>
             ) : (
               <ul className="space-y-1.5">
+                <li>
+                  <button
+                    onClick={() => setActiveSourceId(null)}
+                    className={`w-full text-left flex items-center gap-2 p-2 rounded-md transition ${
+                      activeSourceId === null
+                        ? "bg-primary/10 ring-1 ring-primary/40"
+                        : "hover:bg-accent"
+                    }`}
+                  >
+                    <Sparkles className={`h-4 w-4 shrink-0 ${activeSourceId === null ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-sm font-medium">Todas las fuentes</span>
+                  </button>
+                </li>
                 {sources.list.data?.map((s) => {
                   const Icon = TYPE_ICONS[s.source_type] || FileText;
+                  const isActive = activeSourceId === s.id;
                   return (
                     <li key={s.id} className="group">
-                      <div className="flex items-start gap-2 p-2 rounded-md hover:bg-accent transition">
-                        <Icon className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => s.status === "ready" && setActiveSourceId(s.id)}
+                        onKeyDown={(e) => {
+                          if ((e.key === "Enter" || e.key === " ") && s.status === "ready") {
+                            e.preventDefault();
+                            setActiveSourceId(s.id);
+                          }
+                        }}
+                        className={`flex items-start gap-2 p-2 rounded-md transition cursor-pointer ${
+                          isActive
+                            ? "bg-primary/10 ring-1 ring-primary/40"
+                            : "hover:bg-accent"
+                        } ${s.status !== "ready" ? "cursor-not-allowed opacity-70" : ""}`}
+                      >
+                        <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${isActive ? "text-primary" : "text-primary/70"}`} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm truncate" title={s.title}>{s.title}</p>
                           <p className="text-xs text-muted-foreground">
@@ -635,7 +664,12 @@ const NotebookView = () => {
                         </div>
                         <button
                           className="opacity-0 group-hover:opacity-100 transition"
-                          onClick={() => sources.remove.mutate(s.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeSourceId === s.id) setActiveSourceId(null);
+                            sources.remove.mutate(s.id);
+                          }}
+                          aria-label="Eliminar fuente"
                         >
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </button>
