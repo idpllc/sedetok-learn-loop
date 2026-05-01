@@ -82,7 +82,7 @@ export const MindMapEditor = ({ value, onChange, topicHint, height = 600, fillPa
   };
 
   return (
-    <div className="space-y-3">
+    <div className={fillParent ? "flex flex-col h-full space-y-3" : "space-y-3"}>
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-xs text-muted-foreground">
           Arrastra para mover el tablero. Doble clic en un nodo para editar. Usa el botón <span className="font-semibold">+</span> a la derecha de cada nodo para agregar hijos.
@@ -125,7 +125,10 @@ export const MindMapEditor = ({ value, onChange, topicHint, height = 600, fillPa
         </div>
       )}
 
-      <div className="border rounded-lg overflow-hidden bg-card" style={{ height: 600 }}>
+      <div
+        className={`border rounded-lg overflow-hidden bg-card ${fillParent ? "flex-1 min-h-0" : ""}`}
+        style={fillParent ? undefined : { height }}
+      >
         <MindMapCanvas
           data={data}
           editable
