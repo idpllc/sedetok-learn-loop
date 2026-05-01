@@ -384,6 +384,29 @@ const NotebookView = () => {
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
 
+  // Source-processed announcements: when a source becomes "ready" we show a
+  // user-style card in chat with a preview of the processed content. Clicking
+  // the card opens a modal with the full processed text. Announcements are
+  // tracked per-notebook in localStorage so they don't re-appear on every
+  // mount, but they are NOT persisted to the chat conversation (transient).
+  const announcedKey = id ? `notebook:announcedSources:v1:${id}` : null;
+  const [announcedIds, setAnnouncedIds] = useState<Set<string>>(() => {
+    if (!announcedKey) return new Set();
+    try {
+      const raw = localStorage.getItem(announcedKey);
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
+  });
+  type AnnouncedSource = {
+    id: string;
+    title: string;
+    preview: string;
+    fullText: string;
+    sourceType: string;
+  };
+  const [announcedSources, setAnnouncedSources] = useState<AnnouncedSource[]>([]);
+  const [viewingSource, setViewingSource] = useState<AnnouncedSource | null>(null);
+
   const { data: notebook } = useQuery({
     queryKey: ["notebook", id],
     queryFn: async () => {
@@ -423,6 +446,40 @@ const NotebookView = () => {
       setShowAdd(true);
     }
   }, [id, sources.list.isLoading, sources.list.data]);
+
+  // Detect sources that just finished processing and announce them in chat.
+  useEffect(() => {
+    const list = sources.list.data || [];
+    const ready = list.filter((s) => s.status === "ready");
+    const newOnes = ready.filter((s) => !announcedIds.has(s.id));
+    if (newOnes.length === 0) return;
+
+    setAnnouncedSources((prev) => {
+      const existing = new Set(prev.map((p) => p.id));
+      const additions: AnnouncedSource[] = newOnes
+        .filter((s) => !existing.has(s.id))
+        .map((s) => {
+          const full = (s.extracted_text || "").trim();
+          const preview = full.length > 220 ? full.slice(0, 220) + "…" : full;
+          return {
+            id: s.id,
+            title: s.title,
+            preview: preview || "(sin contenido extraído)",
+            fullText: full || "(sin contenido extraído)",
+            sourceType: s.source_type,
+          };
+        });
+      return [...prev, ...additions];
+    });
+    setAnnouncedIds((prev) => {
+      const next = new Set(prev);
+      newOnes.forEach((s) => next.add(s.id));
+      try {
+        if (announcedKey) localStorage.setItem(announcedKey, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  }, [sources.list.data, announcedIds, announcedKey]);
 
   if (loading) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -813,7 +870,7 @@ const NotebookView = () => {
           {/* Chat */}
           <section className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
-              {chat.messages.length === 0 ? (
+              {chat.messages.length === 0 && announcedSources.length === 0 ? (
                 <div className="max-w-2xl mx-auto text-center py-12">
                   <Sparkles className="h-12 w-12 mx-auto text-primary mb-4" />
                   <h2 className="text-2xl font-bold mb-2">{notebook?.title || "Cuaderno"}</h2>
@@ -843,6 +900,34 @@ const NotebookView = () => {
                 </div>
               ) : (
                 <div className="max-w-3xl mx-auto space-y-4">
+                  {/* Announced sources: shown as user-style cards above the conversation */}
+                  {announcedSources.map((src) => {
+                    const Icon = TYPE_ICONS[src.sourceType] || FileText;
+                    return (
+                      <div key={`announced-${src.id}`} className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setViewingSource(src)}
+                          className="max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground text-left hover:opacity-95 transition shadow-sm"
+                          title="Ver contenido procesado"
+                        >
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
+                              Fuente procesada
+                            </span>
+                          </div>
+                          <p className="font-semibold text-sm mb-1 line-clamp-1">{src.title}</p>
+                          <p className="text-xs opacity-90 whitespace-pre-wrap line-clamp-4">
+                            {src.preview}
+                          </p>
+                          <p className="text-[10px] opacity-75 mt-2 underline">
+                            Toca para ver el contenido completo
+                          </p>
+                        </button>
+                      </div>
+                    );
+                  })}
                   {chat.messages.map((m, i) => {
                     if (m.role === "user") {
                       return (
@@ -1203,6 +1288,44 @@ const NotebookView = () => {
               {sources.update.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Guardar cambios
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: full processed content of a source */}
+      <Dialog open={!!viewingSource} onOpenChange={(v) => { if (!v) setViewingSource(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              {viewingSource?.title || "Contenido procesado"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Este es el contenido que SEDE AI usará como contexto para esta fuente.
+            </p>
+            <div className="max-h-[60vh] overflow-y-auto rounded-md border bg-muted/30 p-3">
+              <pre className="text-sm whitespace-pre-wrap font-sans leading-relaxed">
+                {viewingSource?.fullText || ""}
+              </pre>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setViewingSource(null)}>Cerrar</Button>
+            {viewingSource && (
+              <Button
+                onClick={() => {
+                  setEditingSourceId(viewingSource.id);
+                  setEditSourceTitle(viewingSource.title);
+                  setEditSourceContent(viewingSource.fullText);
+                  setViewingSource(null);
+                }}
+                className="gap-2"
+              >
+                <Pencil className="h-4 w-4" /> Editar fuente
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
