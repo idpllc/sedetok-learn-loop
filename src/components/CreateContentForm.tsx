@@ -1400,11 +1400,12 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           </div>
         </div>
 
-        <div className="border rounded-lg overflow-hidden bg-card" style={{ height: "calc(100vh - 200px)", minHeight: 480 }}>
+        <div style={{ height: "calc(100vh - 200px)", minHeight: 480 }}>
           <MindMapEditor
             value={mindMapData}
             onChange={setMindMapData}
             topicHint={formData.title}
+            fillParent
           />
         </div>
       </div>
