@@ -8,7 +8,7 @@ interface MindMapViewerProps {
 
 export const MindMapViewer = ({ data, height = "100%" }: MindMapViewerProps) => {
   return (
-    <div className="w-full" style={{ height }}>
+    <div className="w-full h-full" style={{ height }}>
       <MindMapCanvas data={data} />
     </div>
   );
