@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (error) throw error;
-      result = { contentId: row.id, type: "reading", route: `/sedetok?content=${row.id}` };
+      result = { contentId: row.id, type: "reading", route: `/sedetok?content=${row.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null, readingSubtype: subtype };
     }
 
     // ---------- MIND MAP ----------
