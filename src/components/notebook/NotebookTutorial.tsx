@@ -220,10 +220,14 @@ export const NotebookTutorial = () => {
   // Manual relaunch
   useEffect(() => {
     const handler = () => {
+      const nextIndex = firstStepForRoute(window.location.pathname);
       enteredRef.current = -1;
       try { sessionStorage.removeItem(STATE_KEY); } catch {}
-      setStepIndex(firstStepForRoute(window.location.pathname));
-      setActive(true);
+      setActive(false);
+      window.setTimeout(() => {
+        setStepIndex(nextIndex);
+        setActive(true);
+      }, 0);
     };
     window.addEventListener(TRIGGER_KEY, handler);
     return () => window.removeEventListener(TRIGGER_KEY, handler);
