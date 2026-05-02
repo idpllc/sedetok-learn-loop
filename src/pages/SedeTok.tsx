@@ -440,6 +440,8 @@ const SedeTok = () => {
                 subject={content.subject || undefined}
                 thumbnail={content.thumbnail_url || undefined}
                 videoUrl={content.video_url || undefined}
+                videoPreload={embed ? "metadata" : index === 0 ? "metadata" : "none"}
+                videoAutoPlayWhenInView={!embed}
                 documentUrl={content.document_url || undefined}
                 richText={content.rich_text || undefined}
                 mindMapData={(content as any).mind_map_data || undefined}
