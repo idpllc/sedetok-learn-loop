@@ -690,6 +690,13 @@ const NotebookView = () => {
     return `/sedetok?${param}=${r.id}&playlist=${playlist}&embed=1`;
   };
 
+  const resultNeighbor = (r: SedefyResult, direction: "previous" | "next") => {
+    const sameType = studioResults.filter((x) => x.type === r.type);
+    const idx = sameType.findIndex((x) => x.id === r.id);
+    const nextIdx = direction === "next" ? idx + 1 : idx - 1;
+    return nextIdx >= 0 && nextIdx < sameType.length ? sameType[nextIdx] : null;
+  };
+
   const openResult = (r: SedefyResult) => {
     setViewing(r);
     setViewerExpanded(false);
