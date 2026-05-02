@@ -358,7 +358,11 @@ useImperativeHandle(ref, () => ({
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
+    <div
+      ref={containerRef}
+      className={`relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black ${containerClassName || ""}`}
+      data-content-id={contentId}
+    >
       <video
         ref={videoRef}
         src={deliveryUrl}
