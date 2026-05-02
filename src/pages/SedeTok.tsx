@@ -41,14 +41,9 @@ async function fetchSingleItem(
   type: "content" | "quiz" | "game"
 ): Promise<FeedItem | null> {
   const table = type === "quiz" ? "quizzes" : type === "game" ? "games" : "content";
-  const selectByType = type === "content"
-    ? `id,title,description,creator_id,category,subject,grade_level,content_type,thumbnail_url,video_url,document_url,rich_text,mind_map_data,likes_count,comments_count,shares_count,saves_count,views_count,tags,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`
-    : type === "quiz"
-      ? `id,title,description,creator_id,category,subject,grade_level,thumbnail_url,likes_count,comments_count,shares_count,saves_count,tags,difficulty,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`
-      : `id,title,description,creator_id,category,subject,grade_level,thumbnail_url,likes_count,comments_count,shares_count,saves_count,tags,game_type,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`;
   const { data, error } = await (supabase
     .from(table) as any)
-    .select(selectByType)
+    .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
     .eq("id", id)
     .single();
 
@@ -183,7 +178,6 @@ const SedeTok = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const loadedInitial = useRef(false);
   const currentInitId = useRef<string | null>(null);
-  const playlistItemCache = useRef<Map<string, FeedItem>>(new Map());
 
   // Get current content from URL
   const contentId = searchParams.get("content");
@@ -215,7 +209,6 @@ const SedeTok = () => {
   })();
   const playlistKey = playlist ? playlist.map((p) => `${p.id}:${p.type}`).join(",") : null;
   const isPlaylistMode = !!(playlist && playlist.length > 0);
-  const embed = searchParams.get("embed") === "1";
 
   // Initial load: fetch playlist items strictly, OR target + related, OR general feed.
   useEffect(() => {
@@ -228,30 +221,19 @@ const SedeTok = () => {
       setIsLoading(true);
       try {
         if (isPlaylistMode) {
-          // Strict mode: load the REQUESTED item first (the one the user clicked,
-          // identified by currentId), show it, then fetch the rest in the
-          // background — preserving playlist order but starting at currentId.
-          const requestedIndex = currentId
-            ? playlist!.findIndex((p) => p.id === currentId)
-            : 0;
-          const startIndex = requestedIndex >= 0 ? requestedIndex : 0;
-          const first = playlist![startIndex];
-          const firstCacheKey = `${first.id}:${first.type}`;
-          const firstItem = playlistItemCache.current.get(firstCacheKey) || await fetchSingleItem(first.id, first.type);
-          if (firstItem) playlistItemCache.current.set(firstCacheKey, firstItem);
+          // Strict mode: load the FIRST item ASAP, show it, then fetch the
+          // rest in the background. This makes the iframe usable instantly.
+          const first = playlist![0];
+          const firstItem = await fetchSingleItem(first.id, first.type);
           setFeed(firstItem ? [firstItem] : []);
           setIsLoading(false);
-          if (playlist!.length > 1 && !embed) {
-            // Background-fetch remaining items in playlist order, skipping the
-            // one we already loaded. Don't block the UI; notebook embeds cache
-            // the metadata but do not render extra video players.
+          if (playlist!.length > 1) {
+            // Background-fetch remaining items, don't block the UI.
             (async () => {
-              const remaining = playlist!.filter((_, i) => i !== startIndex);
               const rest = await Promise.all(
-                remaining.map((p) => fetchSingleItem(p.id, p.type))
+                playlist!.slice(1).map((p) => fetchSingleItem(p.id, p.type))
               );
               const restItems = rest.filter(Boolean) as FeedItem[];
-              restItems.forEach((item) => playlistItemCache.current.set(`${item.id}:${item.content_type === "quiz" ? "quiz" : item.content_type === "game" ? "game" : "content"}`, item));
               if (restItems.length > 0) {
                 setFeed((prev) => {
                   const seen = new Set(prev.map((f) => f.id));
@@ -293,7 +275,7 @@ const SedeTok = () => {
     };
 
     load();
-  }, [currentId, currentType, playlistKey, embed]);
+  }, [currentId, currentType, playlistKey]);
 
   // Load more related content when scrolling near bottom (disabled in playlist mode).
   const loadMore = useCallback(async () => {
@@ -366,20 +348,6 @@ const SedeTok = () => {
 
   // Navigation between items
   const handleNavigation = (direction: "next" | "previous") => {
-    if (isPlaylistMode && playlist && playlist.length > 0) {
-      const idx = playlist.findIndex((c) => c.id === currentId);
-      const newIndex = direction === "next" ? idx + 1 : idx - 1;
-      if (newIndex >= 0 && newIndex < playlist.length) {
-        const newContent = playlist[newIndex];
-        const param = newContent.type === "quiz" ? "quiz" : newContent.type === "game" ? "game" : "content";
-        const next: Record<string, string> = { [param]: newContent.id };
-        if (playlistParam) next.playlist = playlistParam;
-        if (embed) next.embed = "1";
-        setSearchParams(next, { replace: true });
-      }
-      return;
-    }
-
     const idx = feed.findIndex((c) => c.id === currentId);
     const newIndex = direction === "next" ? idx + 1 : idx - 1;
     if (newIndex >= 0 && newIndex < feed.length) {
@@ -388,10 +356,11 @@ const SedeTok = () => {
       const param = ct === "quiz" ? "quiz" : ct === "game" ? "game" : "content";
       const next: Record<string, string> = { [param]: newContent.id };
       if (playlistParam) next.playlist = playlistParam;
-      if (embed) next.embed = "1";
       setSearchParams(next, { replace: true });
     }
   };
+
+  const embed = searchParams.get("embed") === "1";
 
   if (isLoading) {
     return (
@@ -416,11 +385,6 @@ const SedeTok = () => {
           const profile = content.profiles as any;
           const isQuiz = content.content_type === "quiz";
           const isGame = content.content_type === "game";
-          const playlistIndex = isPlaylistMode && playlist
-            ? playlist.findIndex((item) => item.id === content.id)
-            : index;
-          const hasPrevItem = isPlaylistMode ? playlistIndex > 0 : index > 0;
-          const hasNextItem = isPlaylistMode && playlist ? playlistIndex >= 0 && playlistIndex < playlist.length - 1 : index < feed.length - 1;
 
           return (
             <div
@@ -440,8 +404,6 @@ const SedeTok = () => {
                 subject={content.subject || undefined}
                 thumbnail={content.thumbnail_url || undefined}
                 videoUrl={content.video_url || undefined}
-                videoPreload={embed ? "metadata" : index === 0 ? "metadata" : "none"}
-                videoAutoPlayWhenInView={!embed}
                 documentUrl={content.document_url || undefined}
                 richText={content.rich_text || undefined}
                 mindMapData={(content as any).mind_map_data || undefined}
@@ -453,10 +415,10 @@ const SedeTok = () => {
                 isLiked={false}
                 isSaved={false}
                 creatorAvatar={profile?.avatar_url}
-                onPrevious={hasPrevItem ? () => handleNavigation("previous") : undefined}
-                onNext={hasNextItem ? () => handleNavigation("next") : undefined}
-                hasPrevious={hasPrevItem}
-                hasNext={hasNextItem}
+                onPrevious={index > 0 ? () => handleNavigation("previous") : undefined}
+                onNext={index < feed.length - 1 ? () => handleNavigation("next") : undefined}
+                hasPrevious={index > 0}
+                hasNext={index < feed.length - 1}
                 videoRef={(ref) => {
                   if (ref) {
                     videoRefs.current.set(content.id, ref);

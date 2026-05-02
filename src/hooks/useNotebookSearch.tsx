@@ -7,7 +7,6 @@ export type SedefyResult = {
   description?: string | null;
   subject?: string | null;
   cover_url?: string | null;
-  video_url?: string | null;
   type: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
   /** Subtype for readings: resumen | glosario | notas | otro */
   readingSubtype?: string | null;
@@ -16,10 +15,6 @@ export type SedefyResult = {
 };
 
 export type ReadingSubtype = "resumen" | "glosario" | "notas" | "otro";
-
-type SearchSource = { id?: string; title?: string | null; extracted_text?: string | null; status?: string | null };
-
-const notebookResultCache = new Map<string, SedefyResult[]>();
 
 /**
  * Spanish + English stopwords for keyword extraction.
@@ -161,8 +156,7 @@ const buildOr = (terms: string[]) =>
  */
 export const useNotebookSearch = (
   notebookId: string | undefined,
-  sourceId: string | null = null,
-  sourceRows?: SearchSource[]
+  sourceId: string | null = null
 ) => {
   const [loading, setLoading] = useState(false);
 
@@ -176,22 +170,16 @@ export const useNotebookSearch = (
       if (!notebookId) return [];
       setLoading(true);
       try {
-        // Reuse the already-loaded notebook source rows whenever possible.
-        // This avoids a second heavy notebook_sources query for every capsule type.
-        let sources = sourceRows
-          ?.filter((s) => s.status === "ready")
-          .filter((s) => !sourceId || s.id === sourceId);
-
-        if (!sources) {
-          let srcQuery = supabase
-            .from("notebook_sources")
-            .select("id, title, extracted_text, status")
-            .eq("notebook_id", notebookId)
-            .eq("status", "ready");
-          if (sourceId) srcQuery = srcQuery.eq("id", sourceId);
-          const { data } = await srcQuery;
-          sources = data || [];
-        }
+        // Fetch sources for keyword extraction. If a specific source is
+        // selected, restrict keyword extraction to that source so each
+        // source has its own scoped Studio results.
+        let srcQuery = supabase
+          .from("notebook_sources")
+          .select("title, extracted_text")
+          .eq("notebook_id", notebookId)
+          .eq("status", "ready");
+        if (sourceId) srcQuery = srcQuery.eq("id", sourceId);
+        const { data: sources } = await srcQuery;
 
         const { titleKeywords, supportKeywords } = extractKeywords(sources || []);
 
@@ -201,17 +189,12 @@ export const useNotebookSearch = (
           return [];
         }
 
-        const keywordKey = titleKeywords.join("|");
-        const cacheKey = [notebookId, sourceId || "all", type, readingSubtype || "", offset, limit, keywordKey].join("::");
-        const cached = notebookResultCache.get(cacheKey);
-        if (cached) return cached;
-
         // The DB pre-filter only uses TITLE keywords, so we never even fetch
         // rows that lack at least one strong topical match.
         const orFilter = buildOr(titleKeywords);
 
         // Fetch a wider window than requested so we can rank locally.
-        const fetchLimit = Math.max(12, (offset + limit) * 3);
+        const fetchLimit = Math.max(20, (offset + limit) * 4);
 
         // Require a strong total score so a single weak match is not enough.
         const MIN_SCORE = 10;
@@ -226,7 +209,7 @@ export const useNotebookSearch = (
         if (type === "video" || type === "reading" || type === "mindmap") {
           let q = supabase
             .from("content")
-            .select("id, title, description, thumbnail_url, video_url, content_type, subject, reading_type")
+            .select("id, title, description, thumbnail_url, content_type, subject, reading_type")
             .eq("is_public", true);
 
           if (type === "mindmap") {
@@ -244,20 +227,17 @@ export const useNotebookSearch = (
           }
           if (orFilter) q = q.or(orFilter);
 
-          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
-          const results = rank(data || []).map(({ row: c, score }) => ({
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: c, score }) => ({
             id: c.id,
             title: c.title,
             description: c.description,
             subject: c.subject,
             cover_url: c.thumbnail_url,
-            video_url: c.video_url,
             type,
             readingSubtype: c.reading_type,
             score,
           }));
-          notebookResultCache.set(cacheKey, results);
-          return results;
         }
 
         // ---- quizzes ----
@@ -267,13 +247,11 @@ export const useNotebookSearch = (
             .select("id, title, description, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
-          const results: SedefyResult[] = rank(data || []).map(({ row: r, score }) => ({
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: r, score }) => ({
             id: r.id, title: r.title, description: r.description, subject: r.subject,
             cover_url: r.thumbnail_url, type: "quiz", score,
           }));
-          notebookResultCache.set(cacheKey, results);
-          return results;
         }
 
         // ---- games ----
@@ -283,13 +261,11 @@ export const useNotebookSearch = (
             .select("id, title, description, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
-          const results: SedefyResult[] = rank(data || []).map(({ row: r, score }) => ({
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: r, score }) => ({
             id: r.id, title: r.title, description: r.description, subject: r.subject,
             cover_url: r.thumbnail_url, type: "game", score,
           }));
-          notebookResultCache.set(cacheKey, results);
-          return results;
         }
 
         // ---- learning paths / courses ----
@@ -299,13 +275,11 @@ export const useNotebookSearch = (
             .select("id, title, description, cover_url, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
-          const results: SedefyResult[] = rank(data || []).map(({ row: r, score }) => ({
+          const { data } = await q.limit(fetchLimit);
+          return rank(data || []).map(({ row: r, score }) => ({
             id: r.id, title: r.title, description: r.description, subject: r.subject,
             cover_url: r.cover_url || r.thumbnail_url, type, score,
           }));
-          notebookResultCache.set(cacheKey, results);
-          return results;
         }
 
         return [];
@@ -313,7 +287,7 @@ export const useNotebookSearch = (
         setLoading(false);
       }
     },
-    [notebookId, sourceId, sourceRows]
+    [notebookId, sourceId]
   );
 
   return { search, loading };

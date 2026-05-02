@@ -19,7 +19,6 @@ import {
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
 import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
-import { VideoPlayer } from "@/components/VideoPlayer";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
@@ -300,7 +299,7 @@ const NotebookView = () => {
   };
 
   const chat = useNotebookChat(id, activeSourceId);
-  const sedefySearch = useNotebookSearch(id, activeSourceId, sources.list.data);
+  const sedefySearch = useNotebookSearch(id, activeSourceId);
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -316,19 +315,14 @@ const NotebookView = () => {
   const [studioActive, setStudioActive] = useState<StudioOption | null>(null);
   const [studioResults, setStudioResults] = useState<SedefyResult[]>([]);
   const [studioOffset, setStudioOffset] = useState(0);
-  const pendingSearchRef = useRef<Record<string, boolean>>({});
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
   // Cache of the first 3 results per studio option id (after a search has run).
   // Persisted to localStorage per-notebook AND per-active-source so each source
   // keeps its own studio progress.
-  const sourceSignature = (sources.list.data || [])
-    .filter((s) => s.status === "ready" && (!activeSourceId || s.id === activeSourceId))
-    .map((s) => `${s.id}:${s.title}:${(s.extracted_text || "").length}:${(s.extracted_text || "").slice(0, 80)}`)
-    .join("|");
   const cacheKey = id
-    ? `notebook:studioCache:v3:${id}:${activeSourceId || "all"}:${sourceSignature}`
+    ? `notebook:studioCache:v2:${id}:${activeSourceId || "all"}`
     : null;
   // Per-notebook+source set of result IDs the user explicitly dismissed.
   // Dismissed items are filtered out of cached results AND of new searches.
@@ -357,12 +351,6 @@ const NotebookView = () => {
   const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
   // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
   const [studioHighlight, setStudioHighlight] = useState(false);
-  const studioCacheRef = useRef<Record<string, SedefyResult[]>>(studioCache);
-
-  // Capsule viewer state (replaces the studio selector when active)
-  const [viewing, setViewing] = useState<SedefyResult | null>(null);
-  const [viewerExpanded, setViewerExpanded] = useState(false);
-  const [iframeLoadedMap, setIframeLoadedMap] = useState<Record<string, boolean>>({});
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
@@ -382,20 +370,15 @@ const NotebookView = () => {
     setStudioHasMore(true);
     setViewing(null);
     setViewerExpanded(false);
-    setIframeLoadedMap({});
     setHighlightedResultId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheKey]);
 
   // Persist cache whenever it changes
   useEffect(() => {
-    studioCacheRef.current = studioCache;
     if (!cacheKey) return;
     try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
   }, [cacheKey, studioCache]);
-
-  const readyCount = (sources.list.data || []).filter(s => s.status === "ready").length;
-  const noSources = readyCount === 0;
 
   // Persist dismissed IDs whenever they change
   useEffect(() => {
@@ -403,7 +386,11 @@ const NotebookView = () => {
     try { localStorage.setItem(dismissedKey, JSON.stringify([...dismissedIds])); } catch {}
   }, [dismissedKey, dismissedIds]);
 
-  const iframeLoaded = viewing ? viewing.type === "video" || !!iframeLoadedMap[viewing.id] : true;
+  // Capsule viewer state (replaces the studio selector when active)
+  const [viewing, setViewing] = useState<SedefyResult | null>(null);
+  const [viewerExpanded, setViewerExpanded] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  useEffect(() => { setIframeLoaded(false); }, [viewing?.id]);
 
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
@@ -537,6 +524,9 @@ const NotebookView = () => {
     return null;
   }
 
+  const readyCount = (sources.list.data || []).filter(s => s.status === "ready").length;
+  const noSources = readyCount === 0;
+
   const handleSend = () => {
     if (!input.trim() || chat.isStreaming) return;
     const text = input;
@@ -558,26 +548,7 @@ const NotebookView = () => {
       const filtered = cached.filter((r) => !dismissedIds.has(r.id));
       if (filtered.length > 0) {
         setStudioResults(filtered);
-        setStudioOffset(filtered.length);
         setStudioHasMore(filtered.length >= 3);
-        const searchKey = [opt.id, activeSourceId || "all", cacheKey || ""].join("::");
-        if (!pendingSearchRef.current[searchKey] && filtered.length < 6) {
-          pendingSearchRef.current[searchKey] = true;
-          void sedefySearch.search(opt.searchType, filtered.length, 3, opt.readingSubtype).then((rawNext) => {
-            const next = rawNext.filter((r) => !dismissedIds.has(r.id));
-            if (next.length === 0) return;
-            setStudioResults((prev) => {
-              const seen = new Set(prev.map((r) => r.id));
-              const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
-              setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
-              setStudioOffset(merged.length);
-              return merged;
-            });
-            setStudioHasMore(next.length === 3);
-          }).finally(() => {
-            pendingSearchRef.current[searchKey] = false;
-          });
-        }
         const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
         const alreadyShown = chat.messages.some(
           (m) => m.role === "assistant" && m.content === continuePrompt
@@ -600,34 +571,14 @@ const NotebookView = () => {
     const verbalType = opt.label.toLowerCase();
     const userMsg = `Buscar ${verbalType} en SEDEFY`;
     const searchingMsg = `Estoy buscando en SEDEFY ${opt.label.toLowerCase()}s que coincidan con tus fuentes…`;
-    const progressPromise = chat.appendProgressLocal(userMsg, searchingMsg);
+    const progressIndex = await chat.appendProgressLocal(userMsg, searchingMsg);
 
     try {
-      const initialLimit = opt.id === "video" ? 1 : 3;
-      const rawResults = await sedefySearch.search(opt.searchType, 0, initialLimit, opt.readingSubtype);
+      const rawResults = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
       const results = rawResults.filter((r) => !dismissedIds.has(r.id));
       setStudioResults(results);
-      setStudioOffset(results.length);
-      setStudioHasMore(results.length === initialLimit);
-      setStudioCache((prev) => ({ ...prev, [opt.id]: results }));
-
-      if (opt.id === "video" && results.length > 0) {
-        const searchKey = [opt.id, activeSourceId || "all", cacheKey || ""].join("::");
-        pendingSearchRef.current[searchKey] = true;
-        void sedefySearch.search(opt.searchType, results.length, 5, opt.readingSubtype).then((rawNext) => {
-          const next = rawNext.filter((r) => !dismissedIds.has(r.id));
-          setStudioResults((prev) => {
-            const seen = new Set(prev.map((r) => r.id));
-            const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
-            setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
-            setStudioOffset(merged.length);
-            return merged;
-          });
-          setStudioHasMore(next.length === 5);
-        }).finally(() => {
-          pendingSearchRef.current[searchKey] = false;
-        });
-      }
+      setStudioHasMore(results.length === 3);
+      setStudioCache((prev) => ({ ...prev, [opt.id]: results.slice(0, 3) }));
 
       if (results.length === 0) {
         const article = opt.id === "path" || opt.id.startsWith("reading") ? "una" : "un";
@@ -635,14 +586,14 @@ const NotebookView = () => {
           opt.createRoute
             ? `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${article} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
             : `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
-        void progressPromise.then((progressIndex) => chat.finalizeProgress(progressIndex, noneMsg));
+        await chat.finalizeProgress(progressIndex, noneMsg);
       } else {
         // Replace the transient "Estoy buscando…" with a short success notice
         // that IS persisted, so the user sees a clean trail of what happened.
-        void progressPromise.then((progressIndex) => chat.finalizeProgress(
+        await chat.finalizeProgress(
           progressIndex,
           `Encontré ${results.length} ${opt.label.toLowerCase()}${results.length === 1 ? "" : "s"} para tus fuentes. ¿Quieres continuar con el aprendizaje?`
-        ));
+        );
       }
     } finally {
       setStudioSearching(false);
@@ -655,18 +606,13 @@ const NotebookView = () => {
     try {
       const rawNext = await sedefySearch.search(
         studioActive.searchType,
-        studioOffset,
+        studioOffset + 3,
         3,
         studioActive.readingSubtype
       );
       const next = rawNext.filter((r) => !dismissedIds.has(r.id));
-      setStudioResults((prev) => {
-        const seen = new Set(prev.map((r) => r.id));
-        const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
-        setStudioCache((cache) => studioActive ? { ...cache, [studioActive.id]: merged } : cache);
-        setStudioOffset(merged.length);
-        return merged;
-      });
+      setStudioResults((prev) => [...prev, ...next]);
+      setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
     } finally {
       setStudioSearching(false);
@@ -698,15 +644,6 @@ const NotebookView = () => {
     const param = r.type === "quiz" ? "quiz" : r.type === "game" ? "game" : "content";
     return `/sedetok?${param}=${r.id}&playlist=${playlist}&embed=1`;
   };
-
-  const resultNeighbor = (r: SedefyResult, direction: "previous" | "next") => {
-    const sameType = studioResults.filter((x) => x.type === r.type);
-    const idx = sameType.findIndex((x) => x.id === r.id);
-    const nextIdx = direction === "next" ? idx + 1 : idx - 1;
-    return nextIdx >= 0 && nextIdx < sameType.length ? sameType[nextIdx] : null;
-  };
-
-  const resultPlaylist = (r: SedefyResult) => studioResults.filter((x) => x.type === r.type);
 
   const openResult = (r: SedefyResult) => {
     setViewing(r);
@@ -825,57 +762,53 @@ const NotebookView = () => {
       </Helmet>
 
       <div className="flex flex-col h-screen bg-background">
-        {/* Header — hidden when capsule viewer is expanded so the iframe can use the full screen */}
-        {!(viewing && viewerExpanded) && (
-          <header className="flex items-center gap-2 px-3 sm:px-4 h-14 border-b shrink-0">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")} className="shrink-0">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            {editingTitle ? (
-              <Input
-                autoFocus
-                value={titleDraft}
-                onChange={(e) => setTitleDraft(e.target.value)}
-                onBlur={handleSaveTitle}
-                onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-                className="max-w-md font-semibold text-sm sm:text-base"
-              />
-            ) : (
-              <button
-                className="flex items-center gap-2 font-semibold hover:text-primary transition min-w-0 flex-1"
-                onClick={() => { setTitleDraft(notebook?.title || ""); setEditingTitle(true); }}
-              >
-                <span className="text-base sm:text-lg shrink-0">{notebook?.cover_emoji || "📓"}</span>
-                <span className="text-sm sm:text-lg truncate">{notebook?.title || "Cuaderno"}</span>
-                <Pencil className="h-3.5 w-3.5 opacity-50 shrink-0" />
-              </button>
-            )}
-          </header>
-        )}
+        {/* Header */}
+        <header className="flex items-center gap-2 px-3 sm:px-4 h-14 border-b shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")} className="shrink-0">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          {editingTitle ? (
+            <Input
+              autoFocus
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={handleSaveTitle}
+              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+              className="max-w-md font-semibold text-sm sm:text-base"
+            />
+          ) : (
+            <button
+              className="flex items-center gap-2 font-semibold hover:text-primary transition min-w-0 flex-1"
+              onClick={() => { setTitleDraft(notebook?.title || ""); setEditingTitle(true); }}
+            >
+              <span className="text-base sm:text-lg shrink-0">{notebook?.cover_emoji || "📓"}</span>
+              <span className="text-sm sm:text-lg truncate">{notebook?.title || "Cuaderno"}</span>
+              <Pencil className="h-3.5 w-3.5 opacity-50 shrink-0" />
+            </button>
+          )}
+        </header>
 
-        {/* Mobile tabs (Fuentes / Chat / Studio) — hidden when capsule viewer is expanded */}
-        {!(viewing && viewerExpanded) && (
-          <div className="lg:hidden flex border-b shrink-0 bg-background">
-            {([
-              { id: "fuentes", label: "Fuentes" },
-              { id: "chat", label: "Chat" },
-              { id: "studio", label: "Studio" },
-            ] as const).map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setMobileTab(t.id)}
-                className={`flex-1 h-11 text-sm font-medium relative transition ${
-                  mobileTab === t.id ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {t.label}
-                {mobileTab === t.id && (
-                  <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Mobile tabs (Fuentes / Chat / Studio) */}
+        <div className="lg:hidden flex border-b shrink-0 bg-background">
+          {([
+            { id: "fuentes", label: "Fuentes" },
+            { id: "chat", label: "Chat" },
+            { id: "studio", label: "Studio" },
+          ] as const).map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setMobileTab(t.id)}
+              className={`flex-1 h-11 text-sm font-medium relative transition ${
+                mobileTab === t.id ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {t.label}
+              {mobileTab === t.id && (
+                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
 
         {/* 3-column layout. Expanded capsules use a fixed desktop viewer so the
             iframe does not depend on grid auto-placement or zero-width columns. */}
@@ -1121,34 +1054,6 @@ const NotebookView = () => {
                       </div>
                     );
                   })}
-                  {/* Quick-start options: shown after sources are announced but before the user has chatted */}
-                  {chat.messages.length === 0 && !noSources && announcedSources.length > 0 && (() => {
-                    const topic = announcedSources[0]?.title?.trim() || "el tema";
-                    const quickPrompts = [
-                      `Resume "${topic}" en 5 puntos clave`,
-                      `¿Cuáles son los conceptos principales de ${topic}?`,
-                      `Genérame preguntas de práctica sobre ${topic}`,
-                      `Explícame ${topic} como si tuviera 10 años`,
-                    ];
-                    return (
-                      <div className="pt-2">
-                        <p className="text-xs text-muted-foreground mb-2 text-center">
-                          Empieza rápido con {topic}:
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {quickPrompts.map((q) => (
-                            <Card
-                              key={q}
-                              className="p-3 text-sm text-left cursor-pointer hover:bg-accent transition"
-                              onClick={() => chat.sendMessage(q)}
-                            >
-                              {q}
-                            </Card>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
                   <div ref={messagesEndRef} />
                 </div>
               )}
@@ -1232,18 +1137,14 @@ const NotebookView = () => {
                       <p className="text-xs text-muted-foreground">Cargando cápsula…</p>
                     </div>
                   )}
-                  {/* Render the SedeTok iframe — the iframe already provides the vertical
-                      swipe carousel limited to the search results via the playlist param. */}
-                  {viewing && (
-                    <iframe
-                      key={viewing.id}
-                      src={resultUrl(viewing)}
-                      title={viewing.title}
-                      className="absolute inset-0 w-full h-full border-0"
-                      allow="autoplay; fullscreen; clipboard-write"
-                      onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
-                    />
-                  )}
+                  <iframe
+                    key={viewing.id}
+                    src={resultUrl(viewing)}
+                    title={viewing.title}
+                    className="w-full h-full border-0"
+                    allow="autoplay; fullscreen; clipboard-write"
+                    onLoad={() => setIframeLoaded(true)}
+                  />
                 </div>
               </>
             ) : (
