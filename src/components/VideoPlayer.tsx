@@ -4,6 +4,8 @@ import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown, Maximize, Minimi
 interface VideoPlayerProps {
   videoUrl: string;
   thumbnail?: string;
+  preload?: "none" | "metadata" | "auto";
+  autoPlayWhenInView?: boolean;
   onPrevious?: () => void;
   onNext?: () => void;
   hasPrevious?: boolean;
@@ -22,9 +24,17 @@ export interface VideoPlayerRef {
   isPlaying: boolean;
 }
 
+const optimizeCloudinaryVideoUrl = (url: string) => {
+  if (!url.includes("res.cloudinary.com") || !url.includes("/video/upload/")) return url;
+  if (/\/video\/upload\/[^/]*(f_auto|q_auto|vc_auto)/.test(url)) return url;
+  return url.replace("/video/upload/", "/video/upload/f_auto,q_auto:eco,vc_auto/");
+};
+
 export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   videoUrl, 
   thumbnail,
+  preload = "auto",
+  autoPlayWhenInView = true,
   onPrevious,
   onNext,
   hasPrevious = true,
@@ -34,6 +44,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   onPlayStateChange,
   onVideoWatched
 }, ref) => {
+  const deliveryUrl = optimizeCloudinaryVideoUrl(videoUrl);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -52,7 +63,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(true);
+  const [isBuffering, setIsBuffering] = useState(false);
 
 useImperativeHandle(ref, () => ({
     pause: () => {
@@ -65,8 +76,10 @@ useImperativeHandle(ref, () => ({
     play: () => {
       const video = videoRef.current;
       if (video) {
+        setIsBuffering(true);
         video.play().catch(() => {
           // Ignore autoplay errors
+          setIsBuffering(false);
         });
         setIsPlaying(true);
       }
@@ -121,14 +134,16 @@ useImperativeHandle(ref, () => ({
     const video = videoRef.current;
     if (!video) return;
 
-    if (isInView) {
+    if (isInView && autoPlayWhenInView) {
       // Only auto-play if user hasn't manually paused
       if (!manualPauseRef.current) {
+        setIsBuffering(true);
         video.play().then(() => {
           setIsPlaying(true);
           onPlayStateChange?.(true);
         }).catch(() => {
           setIsPlaying(false);
+          setIsBuffering(false);
         });
       }
     } else {
@@ -138,7 +153,7 @@ useImperativeHandle(ref, () => ({
       // Reset manual pause when video goes out of view
       manualPauseRef.current = false;
     }
-  }, [isInView, onPlayStateChange]);
+  }, [isInView, autoPlayWhenInView, onPlayStateChange]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -216,7 +231,7 @@ useImperativeHandle(ref, () => ({
       video.removeEventListener('playing', handlePlaying);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [videoUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
+  }, [deliveryUrl, onVideoComplete, onVideoWatched, volume, isMuted]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -324,10 +339,10 @@ useImperativeHandle(ref, () => ({
     <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
       <video
         ref={videoRef}
-        src={videoUrl}
+        src={deliveryUrl}
         poster={thumbnail}
         data-content-id={contentId}
-        preload="auto"
+        preload={preload}
         className={`${
           isVertical 
             ? 'w-auto h-full max-w-full object-contain' 
