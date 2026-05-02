@@ -9,6 +9,33 @@ import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { getDisplayName } from "@/lib/displayName";
 
+/**
+ * When SedeTok runs inside a Notebook iframe (embed=1), notify the parent
+ * window that a capsule was effectively "studied" so the notebook can mark
+ * progress. Reasons map to the user's rules:
+ *   - video        → user finished watching
+ *   - reading      → user scrolled to the end
+ *   - resource     → user downloaded the document
+ *   - mindmap      → user opened the mind map
+ */
+const notifyCapsuleStudied = (
+  capsuleId: string,
+  capsuleType: "video" | "reading" | "mindmap" | "resource",
+  reason: string
+) => {
+  try {
+    if (typeof window === "undefined") return;
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        { type: "notebook:capsule-studied", capsuleId, capsuleType, reason },
+        "*"
+      );
+    }
+  } catch {
+    /* no-op */
+  }
+};
+
 interface FeedItem {
   id: string;
   title: string;
