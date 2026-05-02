@@ -16,6 +16,10 @@ export type SedefyResult = {
 
 export type ReadingSubtype = "resumen" | "glosario" | "notas" | "otro";
 
+type SearchSource = { id?: string; title?: string | null; extracted_text?: string | null; status?: string | null };
+
+const notebookResultCache = new Map<string, SedefyResult[]>();
+
 /**
  * Spanish + English stopwords for keyword extraction.
  */
@@ -156,7 +160,8 @@ const buildOr = (terms: string[]) =>
  */
 export const useNotebookSearch = (
   notebookId: string | undefined,
-  sourceId: string | null = null
+  sourceId: string | null = null,
+  sourceRows?: SearchSource[]
 ) => {
   const [loading, setLoading] = useState(false);
 
@@ -170,16 +175,22 @@ export const useNotebookSearch = (
       if (!notebookId) return [];
       setLoading(true);
       try {
-        // Fetch sources for keyword extraction. If a specific source is
-        // selected, restrict keyword extraction to that source so each
-        // source has its own scoped Studio results.
-        let srcQuery = supabase
-          .from("notebook_sources")
-          .select("title, extracted_text")
-          .eq("notebook_id", notebookId)
-          .eq("status", "ready");
-        if (sourceId) srcQuery = srcQuery.eq("id", sourceId);
-        const { data: sources } = await srcQuery;
+        // Reuse the already-loaded notebook source rows whenever possible.
+        // This avoids a second heavy notebook_sources query for every capsule type.
+        let sources = sourceRows
+          ?.filter((s) => s.status === "ready")
+          .filter((s) => !sourceId || s.id === sourceId);
+
+        if (!sources) {
+          let srcQuery = supabase
+            .from("notebook_sources")
+            .select("id, title, extracted_text, status")
+            .eq("notebook_id", notebookId)
+            .eq("status", "ready");
+          if (sourceId) srcQuery = srcQuery.eq("id", sourceId);
+          const { data } = await srcQuery;
+          sources = data || [];
+        }
 
         const { titleKeywords, supportKeywords } = extractKeywords(sources || []);
 
@@ -189,12 +200,17 @@ export const useNotebookSearch = (
           return [];
         }
 
+        const keywordKey = titleKeywords.join("|");
+        const cacheKey = [notebookId, sourceId || "all", type, readingSubtype || "", offset, limit, keywordKey].join("::");
+        const cached = notebookResultCache.get(cacheKey);
+        if (cached) return cached;
+
         // The DB pre-filter only uses TITLE keywords, so we never even fetch
         // rows that lack at least one strong topical match.
         const orFilter = buildOr(titleKeywords);
 
         // Fetch a wider window than requested so we can rank locally.
-        const fetchLimit = Math.max(20, (offset + limit) * 4);
+        const fetchLimit = Math.max(12, (offset + limit) * 3);
 
         // Require a strong total score so a single weak match is not enough.
         const MIN_SCORE = 10;
@@ -227,8 +243,8 @@ export const useNotebookSearch = (
           }
           if (orFilter) q = q.or(orFilter);
 
-          const { data } = await q.limit(fetchLimit);
-          return rank(data || []).map(({ row: c, score }) => ({
+          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
+          const results = rank(data || []).map(({ row: c, score }) => ({
             id: c.id,
             title: c.title,
             description: c.description,
@@ -238,6 +254,8 @@ export const useNotebookSearch = (
             readingSubtype: c.reading_type,
             score,
           }));
+          notebookResultCache.set(cacheKey, results);
+          return results;
         }
 
         // ---- quizzes ----
@@ -247,11 +265,13 @@ export const useNotebookSearch = (
             .select("id, title, description, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.limit(fetchLimit);
-          return rank(data || []).map(({ row: r, score }) => ({
+          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
+          const results = rank(data || []).map(({ row: r, score }) => ({
             id: r.id, title: r.title, description: r.description, subject: r.subject,
             cover_url: r.thumbnail_url, type: "quiz", score,
           }));
+          notebookResultCache.set(cacheKey, results);
+          return results;
         }
 
         // ---- games ----
