@@ -1797,6 +1797,44 @@ export type Database = {
           },
         ]
       }
+      notebook_capsule_progress: {
+        Row: {
+          capsule_id: string
+          capsule_type: string
+          id: string
+          notebook_id: string
+          reason: string | null
+          studied_at: string
+          user_id: string
+        }
+        Insert: {
+          capsule_id: string
+          capsule_type: string
+          id?: string
+          notebook_id: string
+          reason?: string | null
+          studied_at?: string
+          user_id: string
+        }
+        Update: {
+          capsule_id?: string
+          capsule_type?: string
+          id?: string
+          notebook_id?: string
+          reason?: string | null
+          studied_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notebook_capsule_progress_notebook_id_fkey"
+            columns: ["notebook_id"]
+            isOneToOne: false
+            referencedRelation: "notebooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notebook_sources: {
         Row: {
           created_at: string
