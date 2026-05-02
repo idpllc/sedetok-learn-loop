@@ -392,6 +392,55 @@ const NotebookView = () => {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   useEffect(() => { setIframeLoaded(false); }, [viewing?.id]);
 
+  // Set of capsule ids that have been studied in this notebook.
+  const studiedQuery = useQuery({
+    queryKey: ["notebook_capsule_progress", id],
+    queryFn: async (): Promise<Set<string>> => {
+      if (!id || !user) return new Set();
+      const { data, error } = await supabase
+        .from("notebook_capsule_progress")
+        .select("capsule_id")
+        .eq("notebook_id", id);
+      if (error) return new Set();
+      return new Set((data || []).map((r: any) => r.capsule_id));
+    },
+    enabled: !!id && !!user,
+  });
+  const studiedIds = studiedQuery.data || new Set<string>();
+
+  // Listen for "studied" events posted by the embedded SedeTok iframe and
+  // upsert progress for the currently-viewed capsule.
+  useEffect(() => {
+    if (!id || !user) return;
+    const handler = async (e: MessageEvent) => {
+      const msg: any = e?.data;
+      if (!msg || msg.type !== "notebook:capsule-studied") return;
+      const capsuleId: string | undefined = msg.capsuleId;
+      if (!capsuleId) return;
+      // Only persist if this capsule is currently open in this notebook,
+      // so we don't accept events from unrelated sources.
+      if (!viewing || viewing.id !== capsuleId) return;
+      try {
+        await supabase.from("notebook_capsule_progress").upsert(
+          {
+            notebook_id: id,
+            user_id: user.id,
+            capsule_id: capsuleId,
+            capsule_type: msg.capsuleType || viewing.type,
+            reason: msg.reason || null,
+            studied_at: new Date().toISOString(),
+          },
+          { onConflict: "notebook_id,capsule_id" }
+        );
+        studiedQuery.refetch();
+      } catch {
+        /* no-op */
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [id, user, viewing, studiedQuery]);
+
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
   // the card opens a modal with the full processed text. Announcements are
@@ -1220,10 +1269,12 @@ const NotebookView = () => {
                       </p>
                     ) : (
                       <ul className="space-y-2">
-                        {studioResults.map((r) => (
+                        {studioResults.map((r) => {
+                          const isStudied = studiedIds.has(r.id);
+                          return (
                           <li
                             key={r.id}
-                            className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color} ${highlightedResultId === r.id ? "ring-2 ring-primary ring-offset-2 animate-pulse shadow-lg" : ""}`}
+                            className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color} ${highlightedResultId === r.id ? "ring-2 ring-primary ring-offset-2 animate-pulse shadow-lg" : ""} ${isStudied ? "ring-1 ring-emerald-500/60" : ""}`}
                             onClick={() => openResult(r)}
                           >
                             <div className="flex items-center gap-2 p-1.5">
@@ -1242,12 +1293,23 @@ const NotebookView = () => {
                                     <studioActive.icon className="h-5 w-5 opacity-60" />
                                   </div>
                                 )}
+                                {isStudied && (
+                                  <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                                    <div className="bg-emerald-500 rounded-full p-0.5 shadow">
+                                      <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
-                                {r.subject && (
+                                {isStudied ? (
+                                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                                    <Check className="h-2.5 w-2.5" strokeWidth={3} /> Estudiada
+                                  </p>
+                                ) : r.subject ? (
                                   <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
-                                )}
+                                ) : null}
                               </div>
                               <button
                                 className="opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20 shrink-0"
@@ -1261,7 +1323,8 @@ const NotebookView = () => {
                               </button>
                             </div>
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     )}
 

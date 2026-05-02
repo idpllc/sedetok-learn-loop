@@ -947,6 +947,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           title={title}
           data={mindMapData}
           onReadComplete={onReadComplete}
+          contentId={id}
         />
       )}
 
