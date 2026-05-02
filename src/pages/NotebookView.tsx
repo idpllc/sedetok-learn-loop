@@ -558,7 +558,7 @@ const NotebookView = () => {
       const filtered = cached.filter((r) => !dismissedIds.has(r.id));
       if (filtered.length > 0) {
         setStudioResults(filtered);
-        setStudioOffset(Math.max(0, filtered.length - 3));
+        setStudioOffset(filtered.length);
         setStudioHasMore(filtered.length >= 3);
         const searchKey = [opt.id, activeSourceId || "all", cacheKey || ""].join("::");
         if (!pendingSearchRef.current[searchKey] && filtered.length < 6) {
@@ -570,6 +570,7 @@ const NotebookView = () => {
               const seen = new Set(prev.map((r) => r.id));
               const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
               setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
+              setStudioOffset(merged.length);
               return merged;
             });
             setStudioHasMore(next.length === 3);
@@ -619,6 +620,7 @@ const NotebookView = () => {
             const seen = new Set(prev.map((r) => r.id));
             const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
             setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
+            setStudioOffset(merged.length);
             return merged;
           });
           setStudioHasMore(next.length === 5);
@@ -653,7 +655,7 @@ const NotebookView = () => {
     try {
       const rawNext = await sedefySearch.search(
         studioActive.searchType,
-        studioOffset + 3,
+        studioOffset,
         3,
         studioActive.readingSubtype
       );
@@ -662,9 +664,9 @@ const NotebookView = () => {
         const seen = new Set(prev.map((r) => r.id));
         const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
         setStudioCache((cache) => studioActive ? { ...cache, [studioActive.id]: merged } : cache);
+        setStudioOffset(merged.length);
         return merged;
       });
-      setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
     } finally {
       setStudioSearching(false);
