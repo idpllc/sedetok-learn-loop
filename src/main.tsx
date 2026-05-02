@@ -32,17 +32,34 @@ const clearBrowserCaches = () => {
     .catch(() => {});
 };
 
-// Keep installability/push support, but remove all SW caching so new routes are never hidden by stale shells.
+// If a stale Service Worker is controlling this page, it can intercept dynamic
+// imports and break the app. Detect that case, fully clean up, and reload once.
+const RELOAD_FLAG = "__sw_cleanup_reload__";
+
 if ("serviceWorker" in navigator) {
   if (isPreviewHost || isInIframe) {
+    const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.getRegistrations()
-      .then((registrations) => registrations.forEach((registration) => registration.unregister()))
-      .finally(clearBrowserCaches)
+      .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
+      .then(() => clearBrowserCaches())
+      .then(() => {
+        if (hadController && !sessionStorage.getItem(RELOAD_FLAG)) {
+          sessionStorage.setItem(RELOAD_FLAG, "1");
+          window.location.reload();
+        }
+      })
       .catch(() => {});
   } else {
+    const hadController = !!navigator.serviceWorker.controller;
     clearBrowserCaches();
     navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
       .then((registration) => registration.update().catch(() => {}))
+      .then(() => {
+        if (hadController && !sessionStorage.getItem(RELOAD_FLAG)) {
+          sessionStorage.setItem(RELOAD_FLAG, "1");
+          window.location.reload();
+        }
+      })
       .catch(() => {});
   }
 }
