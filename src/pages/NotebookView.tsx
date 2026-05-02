@@ -1232,56 +1232,10 @@ const NotebookView = () => {
                       <p className="text-xs text-muted-foreground">Cargando cápsula…</p>
                     </div>
                   )}
-                  {/* Only render the active capsule iframe. Mounting hidden iframes caused
-                      cached videos/audio to keep playing in the background. */}
+                  {/* Always render the SedeTok iframe so the capsule keeps its like/comment/share controls.
+                      For videos we overlay a carousel with the video results from this search. */}
                   {viewing && (
-                    viewing.type === "video" && viewing.video_url ? (
-                      <div className="absolute inset-0 bg-background">
-                        <VideoPlayer
-                          key={viewing.id}
-                          videoUrl={viewing.video_url}
-                          thumbnail={viewing.cover_url || undefined}
-                          contentId={viewing.id}
-                          containerClassName="h-full"
-                          preload="metadata"
-                          autoPlayWhenInView={false}
-                          onPrevious={resultNeighbor(viewing, "previous") ? () => setViewing(resultNeighbor(viewing, "previous")) : undefined}
-                          onNext={resultNeighbor(viewing, "next") ? () => setViewing(resultNeighbor(viewing, "next")) : undefined}
-                          hasPrevious={!!resultNeighbor(viewing, "previous")}
-                          hasNext={!!resultNeighbor(viewing, "next")}
-                        />
-                        {resultPlaylist(viewing).length > 1 && (
-                          <div className="absolute left-0 right-0 bottom-12 z-30 px-3">
-                            <Carousel opts={{ align: "start", loop: false }} className="w-full">
-                              <CarouselContent className="-ml-2">
-                                {resultPlaylist(viewing).map((item) => (
-                                  <CarouselItem key={item.id} className="pl-2 basis-[148px]">
-                                    <button
-                                      type="button"
-                                      onClick={() => setViewing(item)}
-                                      className={`w-full overflow-hidden rounded-md border bg-background/90 text-left shadow-sm backdrop-blur transition ${item.id === viewing.id ? "ring-2 ring-primary" : "hover:bg-background"}`}
-                                    >
-                                      <div className="aspect-video bg-muted overflow-hidden">
-                                        {item.cover_url ? (
-                                          <img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" width={148} height={83} />
-                                        ) : (
-                                          <div className="h-full w-full flex items-center justify-center">
-                                            <Video className="h-5 w-5 text-muted-foreground" />
-                                          </div>
-                                        )}
-                                      </div>
-                                      <p className="px-2 py-1 text-[10px] font-semibold line-clamp-2 text-foreground">{item.title}</p>
-                                    </button>
-                                  </CarouselItem>
-                                ))}
-                              </CarouselContent>
-                              <CarouselPrevious className="hidden sm:flex left-1" />
-                              <CarouselNext className="hidden sm:flex right-1" />
-                            </Carousel>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
+                    <>
                       <iframe
                         key={viewing.id}
                         src={resultUrl(viewing)}
@@ -1290,7 +1244,37 @@ const NotebookView = () => {
                         allow="autoplay; fullscreen; clipboard-write"
                         onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
                       />
-                    )
+                      {viewing.type === "video" && resultPlaylist(viewing).length > 1 && (
+                        <div className="absolute left-0 right-0 bottom-3 z-30 px-3 pointer-events-none">
+                          <Carousel opts={{ align: "start", loop: false }} className="w-full pointer-events-auto">
+                            <CarouselContent className="-ml-2">
+                              {resultPlaylist(viewing).map((item) => (
+                                <CarouselItem key={item.id} className="pl-2 basis-[140px]">
+                                  <button
+                                    type="button"
+                                    onClick={() => setViewing(item)}
+                                    className={`w-full overflow-hidden rounded-md border bg-background/85 text-left shadow-md backdrop-blur transition ${item.id === viewing.id ? "ring-2 ring-primary" : "hover:bg-background"}`}
+                                  >
+                                    <div className="aspect-video bg-muted overflow-hidden">
+                                      {item.cover_url ? (
+                                        <img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" width={140} height={79} />
+                                      ) : (
+                                        <div className="h-full w-full flex items-center justify-center">
+                                          <Video className="h-5 w-5 text-muted-foreground" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <p className="px-2 py-1 text-[10px] font-semibold line-clamp-2 text-foreground">{item.title}</p>
+                                  </button>
+                                </CarouselItem>
+                              ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="hidden sm:flex left-1" />
+                            <CarouselNext className="hidden sm:flex right-1" />
+                          </Carousel>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </>
