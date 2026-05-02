@@ -1418,8 +1418,14 @@ const NotebookView = () => {
       </Dialog>
 
       <NotebookTutorial />
-      <NotebookTutorialHelpButton />
+      <NotebookTutorialHelpButton
+        hidden={
+          (sources.list.data?.length || 0) > 0 &&
+          chat.messages.some((m) => m.role === "assistant")
+        }
+      />
     </>
+
   );
 };
 
