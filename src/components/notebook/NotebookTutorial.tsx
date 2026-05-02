@@ -379,16 +379,29 @@ export const NotebookTutorial = () => {
   const vh = window.innerHeight;
   const isMobile = vw < 640;
   const popW = isMobile ? vw - 16 : Math.min(360, vw - 32);
-  const popH = 220;
+  const popH = isMobile ? 180 : 220;
   let popTop = 0;
   let popLeft = 0;
 
   if (isMobile) {
-    // On mobile we anchor the popover to the top or bottom of the screen so it
-    // never overlaps the highlighted target.
+    // On mobile, anchor the popover just above OR just below the highlighted
+    // element so it never covers important form fields. Fall back to top/bottom
+    // edges of the viewport only when there is no room near the target.
     popLeft = 8;
-    if (rect && rect.top > vh / 2) {
-      popTop = 8;
+    if (rect) {
+      const spaceAbove = rect.top - 12;
+      const spaceBelow = vh - rect.bottom - 12;
+      if (spaceAbove >= popH + 8) {
+        // Place directly above the highlighted element
+        popTop = Math.max(8, rect.top - popH - 12);
+      } else if (spaceBelow >= popH + 8) {
+        // Place directly below the highlighted element
+        popTop = Math.min(vh - popH - 8, rect.bottom + 12);
+      } else if (rect.top > vh / 2) {
+        popTop = 8;
+      } else {
+        popTop = Math.max(8, vh - popH - 8);
+      }
     } else {
       popTop = Math.max(8, vh - popH - 8);
     }
