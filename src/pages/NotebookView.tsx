@@ -849,11 +849,11 @@ const NotebookView = () => {
                       <div
                         role="button"
                         tabIndex={0}
-                        onClick={() => s.status === "ready" && setActiveSourceId(s.id)}
+                        onClick={() => s.status === "ready" && setActiveSourceId(isActive ? null : s.id)}
                         onKeyDown={(e) => {
                           if ((e.key === "Enter" || e.key === " ") && s.status === "ready") {
                             e.preventDefault();
-                            setActiveSourceId(s.id);
+                            setActiveSourceId(isActive ? null : s.id);
                           }
                         }}
                         className={`flex items-start gap-2 p-2 rounded-md transition cursor-pointer ${
