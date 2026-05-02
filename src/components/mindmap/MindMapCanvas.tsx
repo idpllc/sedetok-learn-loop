@@ -281,26 +281,6 @@ export const MindMapCanvas = ({
     });
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    // Wheel always zooms (touchpad pinch reports as wheel+ctrl too).
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    const delta = -e.deltaY * (e.ctrlKey || e.metaKey ? 0.01 : 0.0015);
-    setZoom((z) => {
-      const nz = Math.min(2.5, Math.max(0.2, z + delta * z));
-      // Zoom around cursor position
-      setPan((p) => ({
-        x: cx - ((cx - p.x) * nz) / z,
-        y: cy - ((cy - p.y) * nz) / z,
-      }));
-      return nz;
-    });
-  };
-
   const onMouseDown = (e: React.MouseEvent) => {
     // Only start panning when clicking the empty canvas area
     const target = e.target as HTMLElement;
