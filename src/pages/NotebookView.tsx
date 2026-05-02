@@ -299,7 +299,7 @@ const NotebookView = () => {
   };
 
   const chat = useNotebookChat(id, activeSourceId);
-  const sedefySearch = useNotebookSearch(id, activeSourceId);
+  const sedefySearch = useNotebookSearch(id, activeSourceId, sources.list.data);
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -321,8 +321,12 @@ const NotebookView = () => {
   // Cache of the first 3 results per studio option id (after a search has run).
   // Persisted to localStorage per-notebook AND per-active-source so each source
   // keeps its own studio progress.
+  const sourceSignature = (sources.list.data || [])
+    .filter((s) => s.status === "ready" && (!activeSourceId || s.id === activeSourceId))
+    .map((s) => `${s.id}:${s.title}:${(s.extracted_text || "").length}:${(s.extracted_text || "").slice(0, 80)}`)
+    .join("|");
   const cacheKey = id
-    ? `notebook:studioCache:v2:${id}:${activeSourceId || "all"}`
+    ? `notebook:studioCache:v3:${id}:${activeSourceId || "all"}:${sourceSignature}`
     : null;
   // Per-notebook+source set of result IDs the user explicitly dismissed.
   // Dismissed items are filtered out of cached results AND of new searches.
@@ -351,6 +355,8 @@ const NotebookView = () => {
   const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
   // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
   const [studioHighlight, setStudioHighlight] = useState(false);
+  const studioCacheRef = useRef<Record<string, SedefyResult[]>>(studioCache);
+  const prefetchingStudioRef = useRef<Set<string>>(new Set());
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
@@ -388,9 +394,32 @@ const NotebookView = () => {
 
   // Persist cache whenever it changes
   useEffect(() => {
+    studioCacheRef.current = studioCache;
     if (!cacheKey) return;
     try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
   }, [cacheKey, studioCache]);
+
+  const readyCount = (sources.list.data || []).filter(s => s.status === "ready").length;
+  const noSources = readyCount === 0;
+
+  useEffect(() => {
+    if (noSources || !id) return;
+    const timer = window.setTimeout(() => {
+      STUDIO_OPTIONS.forEach((opt) => {
+        if (studioCacheRef.current[opt.id]?.length || prefetchingStudioRef.current.has(opt.id)) return;
+        prefetchingStudioRef.current.add(opt.id);
+        sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype)
+          .then((results) => {
+            const visible = results.filter((r) => !dismissedIds.has(r.id));
+            if (visible.length > 0) {
+              setStudioCache((prev) => (prev[opt.id]?.length ? prev : { ...prev, [opt.id]: visible.slice(0, 3) }));
+            }
+          })
+          .finally(() => prefetchingStudioRef.current.delete(opt.id));
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [noSources, id, activeSourceId, dismissedIds, sedefySearch.search]);
 
   // Persist dismissed IDs whenever they change
   useEffect(() => {
@@ -536,9 +565,6 @@ const NotebookView = () => {
     return null;
   }
 
-  const readyCount = (sources.list.data || []).filter(s => s.status === "ready").length;
-  const noSources = readyCount === 0;
-
   const handleSend = () => {
     if (!input.trim() || chat.isStreaming) return;
     const text = input;
@@ -560,6 +586,7 @@ const NotebookView = () => {
       const filtered = cached.filter((r) => !dismissedIds.has(r.id));
       if (filtered.length > 0) {
         setStudioResults(filtered);
+        setStudioOffset(Math.max(0, filtered.length - 3));
         setStudioHasMore(filtered.length >= 3);
         const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
         const alreadyShown = chat.messages.some(
@@ -623,7 +650,12 @@ const NotebookView = () => {
         studioActive.readingSubtype
       );
       const next = rawNext.filter((r) => !dismissedIds.has(r.id));
-      setStudioResults((prev) => [...prev, ...next]);
+      setStudioResults((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
+        setStudioCache((cache) => studioActive ? { ...cache, [studioActive.id]: merged } : cache);
+        return merged;
+      });
       setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
     } finally {
