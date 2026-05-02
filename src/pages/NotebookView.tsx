@@ -1233,8 +1233,10 @@ const NotebookView = () => {
                           contentId={viewing.id}
                           preload="metadata"
                           autoPlayWhenInView={false}
-                          hasPrevious={false}
-                          hasNext={false}
+                          onPrevious={resultNeighbor(viewing, "previous") ? () => setViewing(resultNeighbor(viewing, "previous")) : undefined}
+                          onNext={resultNeighbor(viewing, "next") ? () => setViewing(resultNeighbor(viewing, "next")) : undefined}
+                          hasPrevious={!!resultNeighbor(viewing, "previous")}
+                          hasNext={!!resultNeighbor(viewing, "next")}
                         />
                       </div>
                     ) : (
