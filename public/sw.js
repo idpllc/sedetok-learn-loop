@@ -20,7 +20,6 @@ self.addEventListener('activate', (e) =>
           }
         })
       );
-      await self.registration.unregister();
     })()
   )
 );
