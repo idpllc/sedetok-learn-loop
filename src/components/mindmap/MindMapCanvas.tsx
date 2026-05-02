@@ -241,6 +241,37 @@ export const MindMapCanvas = ({
     return () => ro.disconnect();
   }, [layout]);
 
+  // Native non-passive wheel + touchmove listeners so preventDefault works.
+  useEffect(() => {
+    if (preview) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const z = zoomRef.current;
+      const p = panRef.current;
+      const delta = -e.deltaY * (e.ctrlKey || e.metaKey ? 0.01 : 0.0015);
+      const nz = Math.min(2.5, Math.max(0.2, z + delta * z));
+      setZoom(nz);
+      setPan({
+        x: cx - ((cx - p.x) * nz) / z,
+        y: cy - ((cy - p.y) * nz) / z,
+      });
+    };
+    const onTouchMoveNative = (e: TouchEvent) => {
+      if (e.touches.length === 2) e.preventDefault();
+    };
+    el.addEventListener("wheel", onWheelNative, { passive: false });
+    el.addEventListener("touchmove", onTouchMoveNative, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheelNative as any);
+      el.removeEventListener("touchmove", onTouchMoveNative as any);
+    };
+  }, [preview]);
+
   const toggleCollapse = (id: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
