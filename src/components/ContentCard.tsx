@@ -40,6 +40,8 @@ interface ContentCardProps {
   subject?: string;
   thumbnail?: string;
   videoUrl?: string;
+  videoPreload?: "none" | "metadata" | "auto";
+  videoAutoPlayWhenInView?: boolean;
   documentUrl?: string;
   richText?: string;
   mindMapData?: any;
@@ -79,6 +81,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   subject,
   thumbnail,
   videoUrl,
+  videoPreload = "auto",
+  videoAutoPlayWhenInView = true,
   documentUrl,
   richText,
   mindMapData,
@@ -347,6 +351,8 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
               if (videoRef) videoRef(ref);
             }}
             videoUrl={videoUrl}
+            preload={videoPreload}
+            autoPlayWhenInView={videoAutoPlayWhenInView}
             thumbnail={thumbnail}
             onPrevious={onPrevious}
             onNext={onNext}
