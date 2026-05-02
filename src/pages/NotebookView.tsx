@@ -582,6 +582,7 @@ const NotebookView = () => {
       const filtered = cached.filter((r) => !dismissedIds.has(r.id));
       if (filtered.length > 0) {
         setStudioResults(filtered);
+        setStudioOffset(Math.max(0, filtered.length - 3));
         setStudioHasMore(filtered.length >= 3);
         const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
         const alreadyShown = chat.messages.some(
@@ -645,7 +646,12 @@ const NotebookView = () => {
         studioActive.readingSubtype
       );
       const next = rawNext.filter((r) => !dismissedIds.has(r.id));
-      setStudioResults((prev) => [...prev, ...next]);
+      setStudioResults((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
+        setStudioCache((cache) => studioActive ? { ...cache, [studioActive.id]: merged } : cache);
+        return merged;
+      });
       setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
     } finally {
