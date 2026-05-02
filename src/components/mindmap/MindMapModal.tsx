@@ -3,6 +3,7 @@ import { MindMapData } from "./types";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MindMapModalProps {
   isOpen: boolean;
@@ -10,15 +11,46 @@ interface MindMapModalProps {
   title: string;
   data: MindMapData;
   onReadComplete?: () => void;
+  /** Content id of this mind map capsule, used to post the auto-comment. */
+  contentId?: string;
 }
 
-export const MindMapModal = ({ isOpen, onClose, title, data, onReadComplete }: MindMapModalProps) => {
+export const MindMapModal = ({ isOpen, onClose, title, data, onReadComplete, contentId }: MindMapModalProps) => {
   useEffect(() => {
     if (isOpen && onReadComplete) {
       const t = setTimeout(() => onReadComplete(), 3000);
       return () => clearTimeout(t);
     }
   }, [isOpen, onReadComplete]);
+
+  // Auto-post a "mind map opened" comment exactly once per user per capsule.
+  useEffect(() => {
+    if (!isOpen || !contentId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data: existing } = await supabase
+          .from("comments")
+          .select("id")
+          .eq("content_id", contentId)
+          .eq("user_id", user.id)
+          .like("comment_text", "%🧠 Mapa abierto%")
+          .limit(1)
+          .maybeSingle();
+        if (existing || cancelled) return;
+        await supabase.from("comments").insert({
+          content_id: contentId,
+          user_id: user.id,
+          comment_text: "🧠 Mapa abierto",
+        });
+      } catch {
+        /* no-op */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, contentId]);
 
   // Lock body scroll while open
   useEffect(() => {
