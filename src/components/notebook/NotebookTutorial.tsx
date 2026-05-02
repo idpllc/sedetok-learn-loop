@@ -546,7 +546,8 @@ export const NotebookTutorial = () => {
 };
 
 /** Floating help button to relaunch the tutorial. */
-export const NotebookTutorialHelpButton = () => {
+export const NotebookTutorialHelpButton = ({ hidden = false }: { hidden?: boolean }) => {
+  if (hidden) return null;
   return (
     <button
       type="button"
