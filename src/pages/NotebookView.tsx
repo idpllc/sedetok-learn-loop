@@ -1154,7 +1154,7 @@ const NotebookView = () => {
                   <Sparkles className="h-4 w-4 text-primary" /> Studio
                 </h2>
                 <p className="text-xs text-muted-foreground mb-3">Genera cápsulas Sedefy a partir de tus fuentes.</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className={`grid grid-cols-2 gap-2 rounded-lg transition-all ${studioHighlight ? "ring-4 ring-pink ring-offset-2 ring-offset-background animate-pulse p-1" : ""}`}>
                   {STUDIO_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
                     const isActive = studioActive?.id === opt.id;
