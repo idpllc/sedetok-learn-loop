@@ -26,8 +26,14 @@ export interface VideoPlayerRef {
 
 const optimizeCloudinaryVideoUrl = (url: string) => {
   if (!url.includes("res.cloudinary.com") || !url.includes("/video/upload/")) return url;
-  if (/\/video\/upload\/[^/]*(f_auto|q_auto|vc_auto)/.test(url)) return url;
-  return url.replace("/video/upload/", "/video/upload/f_auto,q_auto:eco,vc_auto/");
+  if (/\/video\/upload\/[^/]*(f_auto|q_auto)/.test(url)) return url;
+  return url.replace("/video/upload/", "/video/upload/f_auto,q_auto:eco/");
+};
+
+const optimizeCloudinaryPosterUrl = (url?: string) => {
+  if (!url || !url.includes("res.cloudinary.com") || !url.includes("/image/upload/")) return url;
+  if (/\/image\/upload\/[^/]*(f_auto|q_auto)/.test(url)) return url;
+  return url.replace("/image/upload/", "/image/upload/f_auto,q_auto:eco,w_720/");
 };
 
 export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
@@ -45,6 +51,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   onVideoWatched
 }, ref) => {
   const deliveryUrl = optimizeCloudinaryVideoUrl(videoUrl);
+  const posterUrl = optimizeCloudinaryPosterUrl(thumbnail);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -340,7 +347,7 @@ useImperativeHandle(ref, () => ({
       <video
         ref={videoRef}
         src={deliveryUrl}
-        poster={thumbnail}
+        poster={posterUrl}
         data-content-id={contentId}
         preload={preload}
         className={`${
