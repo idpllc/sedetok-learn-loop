@@ -221,17 +221,24 @@ const SedeTok = () => {
       setIsLoading(true);
       try {
         if (isPlaylistMode) {
-          // Strict mode: load the FIRST item ASAP, show it, then fetch the
-          // rest in the background. This makes the iframe usable instantly.
-          const first = playlist![0];
+          // Strict mode: load the REQUESTED item first (the one the user clicked,
+          // identified by currentId), show it, then fetch the rest in the
+          // background — preserving playlist order but starting at currentId.
+          const requestedIndex = currentId
+            ? playlist!.findIndex((p) => p.id === currentId)
+            : 0;
+          const startIndex = requestedIndex >= 0 ? requestedIndex : 0;
+          const first = playlist![startIndex];
           const firstItem = await fetchSingleItem(first.id, first.type);
           setFeed(firstItem ? [firstItem] : []);
           setIsLoading(false);
           if (playlist!.length > 1) {
-            // Background-fetch remaining items, don't block the UI.
+            // Background-fetch remaining items in playlist order, skipping the
+            // one we already loaded. Don't block the UI.
             (async () => {
+              const remaining = playlist!.filter((_, i) => i !== startIndex);
               const rest = await Promise.all(
-                playlist!.slice(1).map((p) => fetchSingleItem(p.id, p.type))
+                remaining.map((p) => fetchSingleItem(p.id, p.type))
               );
               const restItems = rest.filter(Boolean) as FeedItem[];
               if (restItems.length > 0) {
