@@ -600,7 +600,7 @@ const NotebookView = () => {
     const verbalType = opt.label.toLowerCase();
     const userMsg = `Buscar ${verbalType} en SEDEFY`;
     const searchingMsg = `Estoy buscando en SEDEFY ${opt.label.toLowerCase()}s que coincidan con tus fuentes…`;
-    const progressIndex = await chat.appendProgressLocal(userMsg, searchingMsg);
+    const progressPromise = chat.appendProgressLocal(userMsg, searchingMsg);
 
     try {
       const initialLimit = opt.id === "video" ? 1 : 3;
@@ -635,14 +635,14 @@ const NotebookView = () => {
           opt.createRoute
             ? `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${article} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
             : `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
-        await chat.finalizeProgress(progressIndex, noneMsg);
+        void progressPromise.then((progressIndex) => chat.finalizeProgress(progressIndex, noneMsg));
       } else {
         // Replace the transient "Estoy buscando…" with a short success notice
         // that IS persisted, so the user sees a clean trail of what happened.
-        await chat.finalizeProgress(
+        void progressPromise.then((progressIndex) => chat.finalizeProgress(
           progressIndex,
           `Encontré ${results.length} ${opt.label.toLowerCase()}${results.length === 1 ? "" : "s"} para tus fuentes. ¿Quieres continuar con el aprendizaje?`
-        );
+        ));
       }
     } finally {
       setStudioSearching(false);
