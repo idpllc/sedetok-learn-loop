@@ -560,6 +560,23 @@ const NotebookView = () => {
         setStudioResults(filtered);
         setStudioOffset(Math.max(0, filtered.length - 3));
         setStudioHasMore(filtered.length >= 3);
+        const searchKey = [opt.id, activeSourceId || "all", cacheKey || ""].join("::");
+        if (!pendingSearchRef.current[searchKey] && filtered.length < 6) {
+          pendingSearchRef.current[searchKey] = true;
+          void sedefySearch.search(opt.searchType, filtered.length, 3, opt.readingSubtype).then((rawNext) => {
+            const next = rawNext.filter((r) => !dismissedIds.has(r.id));
+            if (next.length === 0) return;
+            setStudioResults((prev) => {
+              const seen = new Set(prev.map((r) => r.id));
+              const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
+              setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
+              return merged;
+            });
+            setStudioHasMore(next.length === 3);
+          }).finally(() => {
+            pendingSearchRef.current[searchKey] = false;
+          });
+        }
         const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
         const alreadyShown = chat.messages.some(
           (m) => m.role === "assistant" && m.content === continuePrompt
@@ -585,11 +602,30 @@ const NotebookView = () => {
     const progressIndex = await chat.appendProgressLocal(userMsg, searchingMsg);
 
     try {
-      const rawResults = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
+      const initialLimit = opt.id === "video" ? 1 : 3;
+      const rawResults = await sedefySearch.search(opt.searchType, 0, initialLimit, opt.readingSubtype);
       const results = rawResults.filter((r) => !dismissedIds.has(r.id));
       setStudioResults(results);
-      setStudioHasMore(results.length === 3);
-      setStudioCache((prev) => ({ ...prev, [opt.id]: results.slice(0, 3) }));
+      setStudioOffset(results.length);
+      setStudioHasMore(results.length === initialLimit);
+      setStudioCache((prev) => ({ ...prev, [opt.id]: results }));
+
+      if (opt.id === "video" && results.length > 0) {
+        const searchKey = [opt.id, activeSourceId || "all", cacheKey || ""].join("::");
+        pendingSearchRef.current[searchKey] = true;
+        void sedefySearch.search(opt.searchType, results.length, 5, opt.readingSubtype).then((rawNext) => {
+          const next = rawNext.filter((r) => !dismissedIds.has(r.id));
+          setStudioResults((prev) => {
+            const seen = new Set(prev.map((r) => r.id));
+            const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
+            setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
+            return merged;
+          });
+          setStudioHasMore(next.length === 5);
+        }).finally(() => {
+          pendingSearchRef.current[searchKey] = false;
+        });
+      }
 
       if (results.length === 0) {
         const article = opt.id === "path" || opt.id.startsWith("reading") ? "una" : "un";
