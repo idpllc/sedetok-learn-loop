@@ -262,7 +262,8 @@ export const MindMapCanvas = ({
       });
     };
     const onTouchMoveNative = (e: TouchEvent) => {
-      if (e.touches.length === 2) e.preventDefault();
+      // Prevent browser default (scroll/zoom) so we can pan and pinch the canvas
+      e.preventDefault();
     };
     el.addEventListener("wheel", onWheelNative, { passive: false });
     el.addEventListener("touchmove", onTouchMoveNative, { passive: false });
@@ -327,7 +328,9 @@ export const MindMapCanvas = ({
     }
     if (e.touches.length !== 1) return;
     const target = e.target as HTMLElement;
-    if (target.closest("[data-mindmap-node]") || target.closest("button") || target.closest("input") || target.closest("textarea")) return;
+    // On touch, only block panning when interacting with actual controls.
+    // Panning from nodes is allowed so users can navigate horizontally/vertically anywhere.
+    if (target.closest("button") || target.closest("input") || target.closest("textarea")) return;
     const t = e.touches[0];
     dragState.current = {
       startX: t.clientX,
@@ -401,6 +404,7 @@ export const MindMapCanvas = ({
           "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
         backgroundSize: "24px 24px",
         pointerEvents: preview ? "none" : undefined,
+        touchAction: preview ? undefined : "none",
       }}
     >
       {/* Toolbar */}
