@@ -385,6 +385,8 @@ const NotebookView = () => {
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  useEffect(() => { setIframeLoaded(false); }, [viewing?.id]);
 
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
@@ -1099,13 +1101,20 @@ const NotebookView = () => {
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-                <div className="flex-1 overflow-hidden bg-background">
+                <div className="flex-1 overflow-hidden bg-background relative">
+                  {!iframeLoaded && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/95 z-10 pointer-events-none">
+                      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                      <p className="text-xs text-muted-foreground">Cargando cápsula…</p>
+                    </div>
+                  )}
                   <iframe
                     key={viewing.id}
                     src={resultUrl(viewing)}
                     title={viewing.title}
                     className="w-full h-full border-0"
                     allow="autoplay; fullscreen; clipboard-write"
+                    onLoad={() => setIframeLoaded(true)}
                   />
                 </div>
               </>
