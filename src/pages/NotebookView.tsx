@@ -370,6 +370,8 @@ const NotebookView = () => {
     setStudioHasMore(true);
     setViewing(null);
     setViewerExpanded(false);
+    setOpenedViewings({});
+    setIframeLoadedMap({});
     setHighlightedResultId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheKey]);
@@ -389,8 +391,17 @@ const NotebookView = () => {
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-  useEffect(() => { setIframeLoaded(false); }, [viewing?.id]);
+  // Cache of capsules that have been opened in this session. Each opened
+  // capsule keeps its iframe mounted (hidden via CSS) so reopening it later
+  // is instant and preserves its internal state (scroll position, quiz
+  // progress, video time, etc.). Keyed by capsule id.
+  const [openedViewings, setOpenedViewings] = useState<Record<string, SedefyResult>>({});
+  const [iframeLoadedMap, setIframeLoadedMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!viewing) return;
+    setOpenedViewings((prev) => (prev[viewing.id] ? prev : { ...prev, [viewing.id]: viewing }));
+  }, [viewing]);
+  const iframeLoaded = viewing ? !!iframeLoadedMap[viewing.id] : true;
 
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
@@ -762,53 +773,57 @@ const NotebookView = () => {
       </Helmet>
 
       <div className="flex flex-col h-screen bg-background">
-        {/* Header */}
-        <header className="flex items-center gap-2 px-3 sm:px-4 h-14 border-b shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")} className="shrink-0">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          {editingTitle ? (
-            <Input
-              autoFocus
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onBlur={handleSaveTitle}
-              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-              className="max-w-md font-semibold text-sm sm:text-base"
-            />
-          ) : (
-            <button
-              className="flex items-center gap-2 font-semibold hover:text-primary transition min-w-0 flex-1"
-              onClick={() => { setTitleDraft(notebook?.title || ""); setEditingTitle(true); }}
-            >
-              <span className="text-base sm:text-lg shrink-0">{notebook?.cover_emoji || "📓"}</span>
-              <span className="text-sm sm:text-lg truncate">{notebook?.title || "Cuaderno"}</span>
-              <Pencil className="h-3.5 w-3.5 opacity-50 shrink-0" />
-            </button>
-          )}
-        </header>
+        {/* Header — hidden when capsule viewer is expanded so the iframe can use the full screen */}
+        {!(viewing && viewerExpanded) && (
+          <header className="flex items-center gap-2 px-3 sm:px-4 h-14 border-b shrink-0">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")} className="shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            {editingTitle ? (
+              <Input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={handleSaveTitle}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                className="max-w-md font-semibold text-sm sm:text-base"
+              />
+            ) : (
+              <button
+                className="flex items-center gap-2 font-semibold hover:text-primary transition min-w-0 flex-1"
+                onClick={() => { setTitleDraft(notebook?.title || ""); setEditingTitle(true); }}
+              >
+                <span className="text-base sm:text-lg shrink-0">{notebook?.cover_emoji || "📓"}</span>
+                <span className="text-sm sm:text-lg truncate">{notebook?.title || "Cuaderno"}</span>
+                <Pencil className="h-3.5 w-3.5 opacity-50 shrink-0" />
+              </button>
+            )}
+          </header>
+        )}
 
-        {/* Mobile tabs (Fuentes / Chat / Studio) */}
-        <div className="lg:hidden flex border-b shrink-0 bg-background">
-          {([
-            { id: "fuentes", label: "Fuentes" },
-            { id: "chat", label: "Chat" },
-            { id: "studio", label: "Studio" },
-          ] as const).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setMobileTab(t.id)}
-              className={`flex-1 h-11 text-sm font-medium relative transition ${
-                mobileTab === t.id ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              {t.label}
-              {mobileTab === t.id && (
-                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
-              )}
-            </button>
-          ))}
-        </div>
+        {/* Mobile tabs (Fuentes / Chat / Studio) — hidden when capsule viewer is expanded */}
+        {!(viewing && viewerExpanded) && (
+          <div className="lg:hidden flex border-b shrink-0 bg-background">
+            {([
+              { id: "fuentes", label: "Fuentes" },
+              { id: "chat", label: "Chat" },
+              { id: "studio", label: "Studio" },
+            ] as const).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setMobileTab(t.id)}
+                className={`flex-1 h-11 text-sm font-medium relative transition ${
+                  mobileTab === t.id ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {t.label}
+                {mobileTab === t.id && (
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* 3-column layout. Expanded capsules use a fixed desktop viewer so the
             iframe does not depend on grid auto-placement or zero-width columns. */}
@@ -1137,14 +1152,21 @@ const NotebookView = () => {
                       <p className="text-xs text-muted-foreground">Cargando cápsula…</p>
                     </div>
                   )}
-                  <iframe
-                    key={viewing.id}
-                    src={resultUrl(viewing)}
-                    title={viewing.title}
-                    className="w-full h-full border-0"
-                    allow="autoplay; fullscreen; clipboard-write"
-                    onLoad={() => setIframeLoaded(true)}
-                  />
+                  {/* Keep all previously-opened capsules mounted (hidden) so reopening
+                      one is instant and preserves its internal state. */}
+                  {Object.values(openedViewings).map((v) => {
+                    const isActive = viewing?.id === v.id;
+                    return (
+                      <iframe
+                        key={v.id}
+                        src={resultUrl(v)}
+                        title={v.title}
+                        className={`absolute inset-0 w-full h-full border-0 ${isActive ? "" : "invisible pointer-events-none"}`}
+                        allow="autoplay; fullscreen; clipboard-write"
+                        onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [v.id]: true }))}
+                      />
+                    );
+                  })}
                 </div>
               </>
             ) : (
