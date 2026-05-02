@@ -773,31 +773,33 @@ const NotebookView = () => {
       </Helmet>
 
       <div className="flex flex-col h-screen bg-background">
-        {/* Header */}
-        <header className="flex items-center gap-2 px-3 sm:px-4 h-14 border-b shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")} className="shrink-0">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          {editingTitle ? (
-            <Input
-              autoFocus
-              value={titleDraft}
-              onChange={(e) => setTitleDraft(e.target.value)}
-              onBlur={handleSaveTitle}
-              onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-              className="max-w-md font-semibold text-sm sm:text-base"
-            />
-          ) : (
-            <button
-              className="flex items-center gap-2 font-semibold hover:text-primary transition min-w-0 flex-1"
-              onClick={() => { setTitleDraft(notebook?.title || ""); setEditingTitle(true); }}
-            >
-              <span className="text-base sm:text-lg shrink-0">{notebook?.cover_emoji || "📓"}</span>
-              <span className="text-sm sm:text-lg truncate">{notebook?.title || "Cuaderno"}</span>
-              <Pencil className="h-3.5 w-3.5 opacity-50 shrink-0" />
-            </button>
-          )}
-        </header>
+        {/* Header — hidden when capsule viewer is expanded so the iframe can use the full screen */}
+        {!(viewing && viewerExpanded) && (
+          <header className="flex items-center gap-2 px-3 sm:px-4 h-14 border-b shrink-0">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")} className="shrink-0">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            {editingTitle ? (
+              <Input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={handleSaveTitle}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                className="max-w-md font-semibold text-sm sm:text-base"
+              />
+            ) : (
+              <button
+                className="flex items-center gap-2 font-semibold hover:text-primary transition min-w-0 flex-1"
+                onClick={() => { setTitleDraft(notebook?.title || ""); setEditingTitle(true); }}
+              >
+                <span className="text-base sm:text-lg shrink-0">{notebook?.cover_emoji || "📓"}</span>
+                <span className="text-sm sm:text-lg truncate">{notebook?.title || "Cuaderno"}</span>
+                <Pencil className="h-3.5 w-3.5 opacity-50 shrink-0" />
+              </button>
+            )}
+          </header>
+        )}
 
         {/* Mobile tabs (Fuentes / Chat / Studio) */}
         <div className="lg:hidden flex border-b shrink-0 bg-background">
