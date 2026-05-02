@@ -360,7 +360,7 @@ useImperativeHandle(ref, () => ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black ${containerClassName || ""}`}
+      className={`relative w-full ${containerClassName || "h-[calc(100vh-80px)]"} flex items-center justify-center bg-black`}
       data-content-id={contentId}
     >
       <video
