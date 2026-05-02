@@ -81,7 +81,7 @@ const STEPS: Step[] = [
     selector: '[data-tour="source-text-submit"]',
     title: "5. Añade tu fuente",
     description:
-      "Pulsa 'Añadir texto'. SEDE AI procesará tu fuente para usarla como contexto en todo el cuaderno.",
+      "Pulsa 'Añadir fuente'. SEDE AI procesará tu fuente para usarla como contexto en todo el cuaderno.",
     routeMatcher: isDetailRoute,
     placement: "top",
     allowInteraction: true,
