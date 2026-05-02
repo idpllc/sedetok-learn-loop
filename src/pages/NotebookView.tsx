@@ -415,7 +415,7 @@ const NotebookView = () => {
       });
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [noSources, id, activeSourceId, dismissedIds, sedefySearch]);
+  }, [noSources, id, activeSourceId, dismissedIds, sedefySearch.search]);
 
   // Persist dismissed IDs whenever they change
   useEffect(() => {
