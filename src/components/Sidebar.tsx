@@ -72,14 +72,14 @@ export const Sidebar = () => {
   const menuItems = useMemo(() => [
     { id: "home", icon: Home, label: "Inicio", path: "/" },
     { id: "sedetok", icon: Play, label: "Sede tok", path: "/sedetok" },
-    { id: "chat", icon: MessageCircle, label: "Chat", path: "/chat" },
+    { id: "notebook", icon: NotebookPen, label: "Notebook", path: "/notebook", badge: "Nuevo" },
     { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
     { id: "courses", icon: BookOpen, label: "Cursos", path: "/courses" },
     { id: "trivia", icon: Gamepad2, label: "Trivia Game", path: "/trivia-game" },
     { id: "live-games", icon: Radio, label: "Juegos en Vivo", path: "/live-games" },
     { id: "language-tutor", icon: Languages, label: "English Tutor", path: "/language-tutor" },
     { id: "study-plan", icon: GraduationCap, label: "Plan de Estudios", path: "/study-plan" },
-    { id: "notebook", icon: NotebookPen, label: "Notebook", path: "/notebook" },
+    { id: "chat", icon: MessageCircle, label: "Chat", path: "/chat" },
     { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
     { id: "profile", icon: User, label: "Perfil", path: "/profile" },
   ], []);
