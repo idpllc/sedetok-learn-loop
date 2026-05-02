@@ -266,7 +266,7 @@ export const useNotebookSearch = (
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
           const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
-          const results = rank(data || []).map(({ row: r, score }) => ({
+          const results: SedefyResult[] = rank(data || []).map(({ row: r, score }) => ({
             id: r.id, title: r.title, description: r.description, subject: r.subject,
             cover_url: r.thumbnail_url, type: "quiz", score,
           }));
@@ -281,11 +281,13 @@ export const useNotebookSearch = (
             .select("id, title, description, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.limit(fetchLimit);
-          return rank(data || []).map(({ row: r, score }) => ({
+          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
+          const results: SedefyResult[] = rank(data || []).map(({ row: r, score }) => ({
             id: r.id, title: r.title, description: r.description, subject: r.subject,
             cover_url: r.thumbnail_url, type: "game", score,
           }));
+          notebookResultCache.set(cacheKey, results);
+          return results;
         }
 
         // ---- learning paths / courses ----
@@ -295,11 +297,13 @@ export const useNotebookSearch = (
             .select("id, title, description, cover_url, thumbnail_url, subject")
             .eq("is_public", true);
           if (orFilter) q = q.or(orFilter);
-          const { data } = await q.limit(fetchLimit);
-          return rank(data || []).map(({ row: r, score }) => ({
+          const { data } = await q.order("created_at", { ascending: false }).limit(fetchLimit);
+          const results: SedefyResult[] = rank(data || []).map(({ row: r, score }) => ({
             id: r.id, title: r.title, description: r.description, subject: r.subject,
             cover_url: r.cover_url || r.thumbnail_url, type, score,
           }));
+          notebookResultCache.set(cacheKey, results);
+          return results;
         }
 
         return [];
@@ -307,7 +311,7 @@ export const useNotebookSearch = (
         setLoading(false);
       }
     },
-    [notebookId, sourceId]
+    [notebookId, sourceId, sourceRows]
   );
 
   return { search, loading };
