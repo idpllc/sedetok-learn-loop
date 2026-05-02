@@ -385,6 +385,8 @@ const NotebookView = () => {
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  useEffect(() => { setIframeLoaded(false); }, [viewing?.id]);
 
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
