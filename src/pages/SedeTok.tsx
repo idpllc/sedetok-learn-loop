@@ -209,6 +209,7 @@ const SedeTok = () => {
   })();
   const playlistKey = playlist ? playlist.map((p) => `${p.id}:${p.type}`).join(",") : null;
   const isPlaylistMode = !!(playlist && playlist.length > 0);
+  const embed = searchParams.get("embed") === "1";
 
   // Initial load: fetch playlist items strictly, OR target + related, OR general feed.
   useEffect(() => {
@@ -233,6 +234,9 @@ const SedeTok = () => {
           setFeed(firstItem ? [firstItem] : []);
           setIsLoading(false);
           if (playlist!.length > 1) {
+            // In notebook embeds, only the requested capsule should render/load.
+            // Full SedeTok can still fetch the rest in the background for navigation.
+            if (embed) return;
             // Background-fetch remaining items in playlist order, skipping the
             // one we already loaded. Don't block the UI.
             (async () => {
@@ -282,7 +286,7 @@ const SedeTok = () => {
     };
 
     load();
-  }, [currentId, currentType, playlistKey]);
+  }, [currentId, currentType, playlistKey, embed]);
 
   // Load more related content when scrolling near bottom (disabled in playlist mode).
   const loadMore = useCallback(async () => {
@@ -366,8 +370,6 @@ const SedeTok = () => {
       setSearchParams(next, { replace: true });
     }
   };
-
-  const embed = searchParams.get("embed") === "1";
 
   if (isLoading) {
     return (
