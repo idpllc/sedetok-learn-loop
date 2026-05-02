@@ -44,7 +44,7 @@ async function fetchSingleItem(
   const selectByType = type === "content"
     ? `id,title,description,creator_id,category,subject,grade_level,content_type,thumbnail_url,video_url,document_url,rich_text,mind_map_data,likes_count,comments_count,shares_count,saves_count,views_count,tags,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`
     : type === "quiz"
-      ? `id,title,description,creator_id,category,subject,grade_level,thumbnail_url,likes_count,comments_count,shares_count,saves_count,tags,questions_count,difficulty,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`
+      ? `id,title,description,creator_id,category,subject,grade_level,thumbnail_url,likes_count,comments_count,shares_count,saves_count,tags,difficulty,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`
       : `id,title,description,creator_id,category,subject,grade_level,thumbnail_url,likes_count,comments_count,shares_count,saves_count,tags,game_type,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`;
   const { data, error } = await (supabase
     .from(table) as any)
