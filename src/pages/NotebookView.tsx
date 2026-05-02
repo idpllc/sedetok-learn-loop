@@ -855,11 +855,11 @@ const NotebookView = () => {
                       <div
                         role="button"
                         tabIndex={0}
-                        onClick={() => s.status === "ready" && setActiveSourceId(isActive ? null : s.id)}
+                        onClick={() => s.status === "ready" && setExpandedSourceId(expandedSourceId === s.id ? null : s.id)}
                         onKeyDown={(e) => {
                           if ((e.key === "Enter" || e.key === " ") && s.status === "ready") {
                             e.preventDefault();
-                            setActiveSourceId(isActive ? null : s.id);
+                            setExpandedSourceId(expandedSourceId === s.id ? null : s.id);
                           }
                         }}
                         className={`flex items-start gap-2 p-2 rounded-md transition cursor-pointer ${
@@ -884,30 +884,55 @@ const NotebookView = () => {
                             {s.status === "error" && <span className="text-destructive">Error</span>}
                           </p>
                         </div>
-                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition">
-                          <button
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeSourceId === s.id) setActiveSourceId(null);
+                            sources.remove.mutate(s.id);
+                          }}
+                          aria-label="Eliminar fuente"
+                          className="opacity-0 group-hover:opacity-100 transition shrink-0"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </button>
+                      </div>
+                      {expandedSourceId === s.id && s.status === "ready" && (
+                        <div className="flex gap-2 mt-1.5 mb-2 px-2 animate-fade-in">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 h-8 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
                               setEditingSourceId(s.id);
                               setEditSourceTitle(s.title);
                               setEditSourceContent(s.extracted_text || "");
                             }}
-                            aria-label="Editar fuente"
                           >
-                            <Pencil className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
-                          </button>
-                          <button
+                            <Pencil className="h-3.5 w-3.5 mr-1" /> Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="pink"
+                            className="flex-1 h-8 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (activeSourceId === s.id) setActiveSourceId(null);
-                              sources.remove.mutate(s.id);
+                              setActiveSourceId(s.id);
+                              setExpandedSourceId(null);
+                              // Mobile: jump to studio tab
+                              if (window.innerWidth < 1024) {
+                                setMobileTab("studio");
+                              } else {
+                                // Desktop: pulse the capsule-type buttons for ~1s
+                                setStudioHighlight(true);
+                                setTimeout(() => setStudioHighlight(false), 1100);
+                              }
                             }}
-                            aria-label="Eliminar fuente"
                           >
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </button>
+                            <Sparkles className="h-3.5 w-3.5 mr-1" /> Estudiar
+                          </Button>
                         </div>
-                      </div>
+                      )}
                     </li>
                   );
                 })}
