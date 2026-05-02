@@ -478,14 +478,18 @@ const NotebookView = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages.length, chat.isStreaming]);
 
-  // If the active source no longer exists in the loaded list (e.g., deleted),
-  // fall back to "all sources".
+  // Default-select the first available source so the user always sees which
+  // source is being studied. If the active source was deleted, fall back to
+  // the first remaining one (instead of "all sources").
   useEffect(() => {
-    if (!activeSourceId) return;
     const list = sources.list.data;
     if (!list || list.length === 0) return;
+    if (!activeSourceId) {
+      setActiveSourceId(list[0].id);
+      return;
+    }
     if (!list.some((s) => s.id === activeSourceId)) {
-      setActiveSourceId(null);
+      setActiveSourceId(list[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sources.list.data, activeSourceId]);
