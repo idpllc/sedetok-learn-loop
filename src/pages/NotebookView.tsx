@@ -1152,21 +1152,18 @@ const NotebookView = () => {
                       <p className="text-xs text-muted-foreground">Cargando cápsula…</p>
                     </div>
                   )}
-                  {/* Keep all previously-opened capsules mounted (hidden) so reopening
-                      one is instant and preserves its internal state. */}
-                  {Object.values(openedViewings).map((v) => {
-                    const isActive = viewing?.id === v.id;
-                    return (
-                      <iframe
-                        key={v.id}
-                        src={resultUrl(v)}
-                        title={v.title}
-                        className={`absolute inset-0 w-full h-full border-0 ${isActive ? "" : "invisible pointer-events-none"}`}
-                        allow="autoplay; fullscreen; clipboard-write"
-                        onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [v.id]: true }))}
-                      />
-                    );
-                  })}
+                  {/* Only render the active capsule iframe. Mounting hidden iframes caused
+                      cached videos/audio to keep playing in the background. */}
+                  {viewing && (
+                    <iframe
+                      key={viewing.id}
+                      src={resultUrl(viewing)}
+                      title={viewing.title}
+                      className="absolute inset-0 w-full h-full border-0"
+                      allow="autoplay; fullscreen; clipboard-write"
+                      onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
+                    />
+                  )}
                 </div>
               </>
             ) : (
