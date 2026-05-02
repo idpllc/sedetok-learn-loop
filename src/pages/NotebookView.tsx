@@ -801,27 +801,29 @@ const NotebookView = () => {
           </header>
         )}
 
-        {/* Mobile tabs (Fuentes / Chat / Studio) */}
-        <div className="lg:hidden flex border-b shrink-0 bg-background">
-          {([
-            { id: "fuentes", label: "Fuentes" },
-            { id: "chat", label: "Chat" },
-            { id: "studio", label: "Studio" },
-          ] as const).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setMobileTab(t.id)}
-              className={`flex-1 h-11 text-sm font-medium relative transition ${
-                mobileTab === t.id ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              {t.label}
-              {mobileTab === t.id && (
-                <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
-              )}
-            </button>
-          ))}
-        </div>
+        {/* Mobile tabs (Fuentes / Chat / Studio) — hidden when capsule viewer is expanded */}
+        {!(viewing && viewerExpanded) && (
+          <div className="lg:hidden flex border-b shrink-0 bg-background">
+            {([
+              { id: "fuentes", label: "Fuentes" },
+              { id: "chat", label: "Chat" },
+              { id: "studio", label: "Studio" },
+            ] as const).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setMobileTab(t.id)}
+                className={`flex-1 h-11 text-sm font-medium relative transition ${
+                  mobileTab === t.id ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {t.label}
+                {mobileTab === t.id && (
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-0.5 w-10 bg-primary rounded-full" />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* 3-column layout. Expanded capsules use a fixed desktop viewer so the
             iframe does not depend on grid auto-placement or zero-width columns. */}
