@@ -389,8 +389,17 @@ const NotebookView = () => {
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-  useEffect(() => { setIframeLoaded(false); }, [viewing?.id]);
+  // Cache of capsules that have been opened in this session. Each opened
+  // capsule keeps its iframe mounted (hidden via CSS) so reopening it later
+  // is instant and preserves its internal state (scroll position, quiz
+  // progress, video time, etc.). Keyed by capsule id.
+  const [openedViewings, setOpenedViewings] = useState<Record<string, SedefyResult>>({});
+  const [iframeLoadedMap, setIframeLoadedMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!viewing) return;
+    setOpenedViewings((prev) => (prev[viewing.id] ? prev : { ...prev, [viewing.id]: viewing }));
+  }, [viewing]);
+  const iframeLoaded = viewing ? !!iframeLoadedMap[viewing.id] : true;
 
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
