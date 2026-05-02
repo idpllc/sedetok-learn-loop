@@ -175,7 +175,39 @@ export const NotebookTutorial = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [, force] = useState(0);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const enteredRef = useRef<number>(-1);
+
+  // On mobile, hide the tutorial while a text field is focused (the on-screen
+  // keyboard pushes layout around and overlaps the popover).
+  useEffect(() => {
+    const isTextField = (el: EventTarget | null) => {
+      const node = el as HTMLElement | null;
+      if (!node) return false;
+      const tag = node.tagName;
+      return (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        (node as HTMLElement).isContentEditable === true
+      );
+    };
+    const onFocusIn = (e: FocusEvent) => {
+      if (window.innerWidth < 768 && isTextField(e.target)) setKeyboardOpen(true);
+    };
+    const onFocusOut = () => {
+      // Defer so a focus jump between two inputs doesn't briefly show the popover.
+      setTimeout(() => {
+        const ae = document.activeElement;
+        if (!isTextField(ae) || window.innerWidth >= 768) setKeyboardOpen(false);
+      }, 50);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
 
   const firstStepForRoute = useCallback((pathname: string) => {
     const index = STEPS.findIndex((s) => s.routeMatcher(pathname));
@@ -299,6 +331,7 @@ export const NotebookTutorial = () => {
   }, [active, measure]);
 
   if (!active || !step) return null;
+  if (keyboardOpen) return null;
 
   const finish = () => {
     try {
