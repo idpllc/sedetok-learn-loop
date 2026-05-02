@@ -221,7 +221,16 @@ export const Sidebar = () => {
               title={isMinified ? item.label : undefined}
             >
               <Icon className="w-6 h-6" />
-              {!isMinified && <span className="text-base">{item.label}</span>}
+              {!isMinified && (
+                <span className="text-base flex items-center gap-2">
+                  {item.label}
+                  {(item as any).badge && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#F6339A] text-white">
+                      {(item as any).badge}
+                    </span>
+                  )}
+                </span>
+              )}
             </button>
           );
         })}
