@@ -19,6 +19,7 @@ import {
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
 import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
