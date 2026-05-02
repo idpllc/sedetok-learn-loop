@@ -395,6 +395,9 @@ const NotebookView = () => {
     try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
   }, [cacheKey, studioCache]);
 
+  const readyCount = (sources.list.data || []).filter(s => s.status === "ready").length;
+  const noSources = readyCount === 0;
+
   useEffect(() => {
     if (noSources || !id) return;
     const timer = window.setTimeout(() => {
@@ -557,9 +560,6 @@ const NotebookView = () => {
     navigate(`/auth?redirect=/notebook/${id}`, { replace: true });
     return null;
   }
-
-  const readyCount = (sources.list.data || []).filter(s => s.status === "ready").length;
-  const noSources = readyCount === 0;
 
   const handleSend = () => {
     if (!input.trim() || chat.isStreaming) return;
