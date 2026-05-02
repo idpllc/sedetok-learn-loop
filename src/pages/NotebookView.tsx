@@ -299,7 +299,7 @@ const NotebookView = () => {
   };
 
   const chat = useNotebookChat(id, activeSourceId);
-  const sedefySearch = useNotebookSearch(id, activeSourceId);
+  const sedefySearch = useNotebookSearch(id, activeSourceId, sources.list.data);
 
   const [input, setInput] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -351,6 +351,8 @@ const NotebookView = () => {
   const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
   // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
   const [studioHighlight, setStudioHighlight] = useState(false);
+  const studioCacheRef = useRef<Record<string, SedefyResult[]>>(studioCache);
+  const prefetchingStudioRef = useRef<Set<string>>(new Set());
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
@@ -388,9 +390,29 @@ const NotebookView = () => {
 
   // Persist cache whenever it changes
   useEffect(() => {
+    studioCacheRef.current = studioCache;
     if (!cacheKey) return;
     try { localStorage.setItem(cacheKey, JSON.stringify(studioCache)); } catch {}
   }, [cacheKey, studioCache]);
+
+  useEffect(() => {
+    if (noSources || !id) return;
+    const timer = window.setTimeout(() => {
+      STUDIO_OPTIONS.forEach((opt) => {
+        if (studioCacheRef.current[opt.id]?.length || prefetchingStudioRef.current.has(opt.id)) return;
+        prefetchingStudioRef.current.add(opt.id);
+        sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype)
+          .then((results) => {
+            const visible = results.filter((r) => !dismissedIds.has(r.id));
+            if (visible.length > 0) {
+              setStudioCache((prev) => (prev[opt.id]?.length ? prev : { ...prev, [opt.id]: visible.slice(0, 3) }));
+            }
+          })
+          .finally(() => prefetchingStudioRef.current.delete(opt.id));
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [noSources, id, activeSourceId, dismissedIds, sedefySearch]);
 
   // Persist dismissed IDs whenever they change
   useEffect(() => {
