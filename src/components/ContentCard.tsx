@@ -766,8 +766,14 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
           </div>
         )}
 
-        {/* Content info - hidden when video is playing */}
-        <div className={`absolute bottom-16 md:bottom-6 lg:bottom-8 left-0 right-0 px-4 md:px-6 pb-4 z-10 transition-opacity duration-300 ${videoUrl && isPlaying && isFullscreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        {/* Content info - hidden when video is playing.
+            When the video is paused, lift the metadata above the expanded progress bar (~36px). */}
+        <div className={`absolute left-0 right-0 px-4 md:px-6 pb-2 z-10 transition-all duration-300 ${
+          videoUrl && !isPlaying
+            ? 'bottom-[52px] md:bottom-[44px] lg:bottom-[44px]'
+            : 'bottom-14 md:bottom-2 lg:bottom-3'
+        } ${videoUrl && isPlaying && isFullscreen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        
           <div className="space-y-2">
             <div>
               <button 
