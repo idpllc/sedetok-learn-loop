@@ -316,6 +316,7 @@ const NotebookView = () => {
   const [studioActive, setStudioActive] = useState<StudioOption | null>(null);
   const [studioResults, setStudioResults] = useState<SedefyResult[]>([]);
   const [studioOffset, setStudioOffset] = useState(0);
+  const pendingSearchRef = useRef<Record<string, boolean>>({});
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
@@ -361,11 +362,6 @@ const NotebookView = () => {
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
-  // Cache of capsules that have been opened in this session. Each opened
-  // capsule keeps its iframe mounted (hidden via CSS) so reopening it later
-  // is instant and preserves its internal state (scroll position, quiz
-  // progress, video time, etc.). Keyed by capsule id.
-  const [openedViewings, setOpenedViewings] = useState<Record<string, SedefyResult>>({});
   const [iframeLoadedMap, setIframeLoadedMap] = useState<Record<string, boolean>>({});
 
   // When the active source changes, reload the cache for that scope and clear
@@ -386,7 +382,6 @@ const NotebookView = () => {
     setStudioHasMore(true);
     setViewing(null);
     setViewerExpanded(false);
-    setOpenedViewings({});
     setIframeLoadedMap({});
     setHighlightedResultId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -408,10 +403,6 @@ const NotebookView = () => {
     try { localStorage.setItem(dismissedKey, JSON.stringify([...dismissedIds])); } catch {}
   }, [dismissedKey, dismissedIds]);
 
-  useEffect(() => {
-    if (!viewing) return;
-    setOpenedViewings((prev) => (prev[viewing.id] ? prev : { ...prev, [viewing.id]: viewing }));
-  }, [viewing]);
   const iframeLoaded = viewing ? viewing.type === "video" || !!iframeLoadedMap[viewing.id] : true;
 
   // Source-processed announcements: when a source becomes "ready" we show a
