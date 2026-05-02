@@ -331,6 +331,7 @@ export const NotebookTutorial = () => {
   }, [active, measure]);
 
   if (!active || !step) return null;
+  if (keyboardOpen) return null;
 
   const finish = () => {
     try {
