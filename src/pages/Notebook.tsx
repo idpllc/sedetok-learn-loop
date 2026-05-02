@@ -111,8 +111,9 @@ const Notebook = () => {
         </div>
       </main>
       <NotebookTutorial />
-      <NotebookTutorialHelpButton />
+      <NotebookTutorialHelpButton hidden={(list.data?.length || 0) > 0} />
     </>
+
   );
 };
 
