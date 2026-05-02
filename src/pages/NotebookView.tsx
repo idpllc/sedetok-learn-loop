@@ -1070,6 +1070,34 @@ const NotebookView = () => {
                       </div>
                     );
                   })}
+                  {/* Quick-start options: shown after sources are announced but before the user has chatted */}
+                  {chat.messages.length === 0 && !noSources && announcedSources.length > 0 && (() => {
+                    const topic = announcedSources[0]?.title?.trim() || "el tema";
+                    const quickPrompts = [
+                      `Resume "${topic}" en 5 puntos clave`,
+                      `¿Cuáles son los conceptos principales de ${topic}?`,
+                      `Genérame preguntas de práctica sobre ${topic}`,
+                      `Explícame ${topic} como si tuviera 10 años`,
+                    ];
+                    return (
+                      <div className="pt-2">
+                        <p className="text-xs text-muted-foreground mb-2 text-center">
+                          Empieza rápido con {topic}:
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {quickPrompts.map((q) => (
+                            <Card
+                              key={q}
+                              className="p-3 text-sm text-left cursor-pointer hover:bg-accent transition"
+                              onClick={() => chat.sendMessage(q)}
+                            >
+                              {q}
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div ref={messagesEndRef} />
                 </div>
               )}
