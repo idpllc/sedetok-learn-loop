@@ -344,12 +344,22 @@ export const NotebookTutorial = () => {
   // Position popover
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const popW = Math.min(360, vw - 32);
+  const isMobile = vw < 640;
+  const popW = isMobile ? vw - 16 : Math.min(360, vw - 32);
   const popH = 220;
   let popTop = 0;
   let popLeft = 0;
 
-  if (rect) {
+  if (isMobile) {
+    // On mobile we anchor the popover to the top or bottom of the screen so it
+    // never overlaps the highlighted target.
+    popLeft = 8;
+    if (rect && rect.top > vh / 2) {
+      popTop = 8;
+    } else {
+      popTop = Math.max(8, vh - popH - 8);
+    }
+  } else if (rect) {
     const placement = step.placement || "bottom";
     const tryBottom = rect.bottom + 12;
     const tryTop = rect.top - popH - 12;
