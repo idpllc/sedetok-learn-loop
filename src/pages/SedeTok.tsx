@@ -231,7 +231,9 @@ const SedeTok = () => {
             : 0;
           const startIndex = requestedIndex >= 0 ? requestedIndex : 0;
           const first = playlist![startIndex];
-          const firstItem = await fetchSingleItem(first.id, first.type);
+          const firstCacheKey = `${first.id}:${first.type}`;
+          const firstItem = playlistItemCache.current.get(firstCacheKey) || await fetchSingleItem(first.id, first.type);
+          if (firstItem) playlistItemCache.current.set(firstCacheKey, firstItem);
           setFeed(firstItem ? [firstItem] : []);
           setIsLoading(false);
           if (playlist!.length > 1) {
@@ -244,7 +246,7 @@ const SedeTok = () => {
                 remaining.map((p) => fetchSingleItem(p.id, p.type))
               );
               const restItems = rest.filter(Boolean) as FeedItem[];
-              restItems.forEach((item) => playlistItemCache.current.set(item.id, item));
+              restItems.forEach((item) => playlistItemCache.current.set(`${item.id}:${item.content_type === "quiz" ? "quiz" : item.content_type === "game" ? "game" : "content"}`, item));
               if (embed) return;
               if (restItems.length > 0) {
                 setFeed((prev) => {
