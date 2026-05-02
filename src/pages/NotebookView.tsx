@@ -316,6 +316,7 @@ const NotebookView = () => {
   const [studioActive, setStudioActive] = useState<StudioOption | null>(null);
   const [studioResults, setStudioResults] = useState<SedefyResult[]>([]);
   const [studioOffset, setStudioOffset] = useState(0);
+  const pendingSearchRef = useRef<Record<string, boolean>>({});
   const [studioSearching, setStudioSearching] = useState(false);
   const [studioHasMore, setStudioHasMore] = useState(true);
   const [creatingType, setCreatingType] = useState<string | null>(null);
@@ -361,11 +362,6 @@ const NotebookView = () => {
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
   const [viewerExpanded, setViewerExpanded] = useState(false);
-  // Cache of capsules that have been opened in this session. Each opened
-  // capsule keeps its iframe mounted (hidden via CSS) so reopening it later
-  // is instant and preserves its internal state (scroll position, quiz
-  // progress, video time, etc.). Keyed by capsule id.
-  const [openedViewings, setOpenedViewings] = useState<Record<string, SedefyResult>>({});
   const [iframeLoadedMap, setIframeLoadedMap] = useState<Record<string, boolean>>({});
 
   // When the active source changes, reload the cache for that scope and clear
@@ -386,7 +382,6 @@ const NotebookView = () => {
     setStudioHasMore(true);
     setViewing(null);
     setViewerExpanded(false);
-    setOpenedViewings({});
     setIframeLoadedMap({});
     setHighlightedResultId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -408,10 +403,6 @@ const NotebookView = () => {
     try { localStorage.setItem(dismissedKey, JSON.stringify([...dismissedIds])); } catch {}
   }, [dismissedKey, dismissedIds]);
 
-  useEffect(() => {
-    if (!viewing) return;
-    setOpenedViewings((prev) => (prev[viewing.id] ? prev : { ...prev, [viewing.id]: viewing }));
-  }, [viewing]);
   const iframeLoaded = viewing ? viewing.type === "video" || !!iframeLoadedMap[viewing.id] : true;
 
   // Source-processed announcements: when a source becomes "ready" we show a
@@ -567,8 +558,26 @@ const NotebookView = () => {
       const filtered = cached.filter((r) => !dismissedIds.has(r.id));
       if (filtered.length > 0) {
         setStudioResults(filtered);
-        setStudioOffset(Math.max(0, filtered.length - 3));
+        setStudioOffset(filtered.length);
         setStudioHasMore(filtered.length >= 3);
+        const searchKey = [opt.id, activeSourceId || "all", cacheKey || ""].join("::");
+        if (!pendingSearchRef.current[searchKey] && filtered.length < 6) {
+          pendingSearchRef.current[searchKey] = true;
+          void sedefySearch.search(opt.searchType, filtered.length, 3, opt.readingSubtype).then((rawNext) => {
+            const next = rawNext.filter((r) => !dismissedIds.has(r.id));
+            if (next.length === 0) return;
+            setStudioResults((prev) => {
+              const seen = new Set(prev.map((r) => r.id));
+              const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
+              setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
+              setStudioOffset(merged.length);
+              return merged;
+            });
+            setStudioHasMore(next.length === 3);
+          }).finally(() => {
+            pendingSearchRef.current[searchKey] = false;
+          });
+        }
         const continuePrompt = `Aquí tienes los ${opt.label.toLowerCase()}s que ya encontré para tus fuentes. ¿Quieres continuar con el aprendizaje?`;
         const alreadyShown = chat.messages.some(
           (m) => m.role === "assistant" && m.content === continuePrompt
@@ -591,14 +600,34 @@ const NotebookView = () => {
     const verbalType = opt.label.toLowerCase();
     const userMsg = `Buscar ${verbalType} en SEDEFY`;
     const searchingMsg = `Estoy buscando en SEDEFY ${opt.label.toLowerCase()}s que coincidan con tus fuentes…`;
-    const progressIndex = await chat.appendProgressLocal(userMsg, searchingMsg);
+    const progressPromise = chat.appendProgressLocal(userMsg, searchingMsg);
 
     try {
-      const rawResults = await sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype);
+      const initialLimit = opt.id === "video" ? 1 : 3;
+      const rawResults = await sedefySearch.search(opt.searchType, 0, initialLimit, opt.readingSubtype);
       const results = rawResults.filter((r) => !dismissedIds.has(r.id));
       setStudioResults(results);
-      setStudioHasMore(results.length === 3);
-      setStudioCache((prev) => ({ ...prev, [opt.id]: results.slice(0, 3) }));
+      setStudioOffset(results.length);
+      setStudioHasMore(results.length === initialLimit);
+      setStudioCache((prev) => ({ ...prev, [opt.id]: results }));
+
+      if (opt.id === "video" && results.length > 0) {
+        const searchKey = [opt.id, activeSourceId || "all", cacheKey || ""].join("::");
+        pendingSearchRef.current[searchKey] = true;
+        void sedefySearch.search(opt.searchType, results.length, 5, opt.readingSubtype).then((rawNext) => {
+          const next = rawNext.filter((r) => !dismissedIds.has(r.id));
+          setStudioResults((prev) => {
+            const seen = new Set(prev.map((r) => r.id));
+            const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
+            setStudioCache((cache) => ({ ...cache, [opt.id]: merged }));
+            setStudioOffset(merged.length);
+            return merged;
+          });
+          setStudioHasMore(next.length === 5);
+        }).finally(() => {
+          pendingSearchRef.current[searchKey] = false;
+        });
+      }
 
       if (results.length === 0) {
         const article = opt.id === "path" || opt.id.startsWith("reading") ? "una" : "un";
@@ -606,14 +635,14 @@ const NotebookView = () => {
           opt.createRoute
             ? `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. ¿Quieres que te genere ${article} ${opt.label.toLowerCase()} con IA basado en tus fuentes? |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`
             : `No encontré ${opt.label.toLowerCase()} en SEDEFY que coincidan con tus fuentes. Los videos no se generan con IA — puedes subir uno desde el botón Crear. |||STUDIO_CTA:${JSON.stringify({ type: opt.id })}|||`;
-        await chat.finalizeProgress(progressIndex, noneMsg);
+        void progressPromise.then((progressIndex) => chat.finalizeProgress(progressIndex, noneMsg));
       } else {
         // Replace the transient "Estoy buscando…" with a short success notice
         // that IS persisted, so the user sees a clean trail of what happened.
-        await chat.finalizeProgress(
+        void progressPromise.then((progressIndex) => chat.finalizeProgress(
           progressIndex,
           `Encontré ${results.length} ${opt.label.toLowerCase()}${results.length === 1 ? "" : "s"} para tus fuentes. ¿Quieres continuar con el aprendizaje?`
-        );
+        ));
       }
     } finally {
       setStudioSearching(false);
@@ -626,7 +655,7 @@ const NotebookView = () => {
     try {
       const rawNext = await sedefySearch.search(
         studioActive.searchType,
-        studioOffset + 3,
+        studioOffset,
         3,
         studioActive.readingSubtype
       );
@@ -635,9 +664,9 @@ const NotebookView = () => {
         const seen = new Set(prev.map((r) => r.id));
         const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
         setStudioCache((cache) => studioActive ? { ...cache, [studioActive.id]: merged } : cache);
+        setStudioOffset(merged.length);
         return merged;
       });
-      setStudioOffset((o) => o + 3);
       if (next.length < 3) setStudioHasMore(false);
     } finally {
       setStudioSearching(false);
@@ -676,6 +705,8 @@ const NotebookView = () => {
     const nextIdx = direction === "next" ? idx + 1 : idx - 1;
     return nextIdx >= 0 && nextIdx < sameType.length ? sameType[nextIdx] : null;
   };
+
+  const resultPlaylist = (r: SedefyResult) => studioResults.filter((x) => x.type === r.type);
 
   const openResult = (r: SedefyResult) => {
     setViewing(r);
@@ -1211,6 +1242,7 @@ const NotebookView = () => {
                           videoUrl={viewing.video_url}
                           thumbnail={viewing.cover_url || undefined}
                           contentId={viewing.id}
+                          containerClassName="h-full"
                           preload="metadata"
                           autoPlayWhenInView={false}
                           onPrevious={resultNeighbor(viewing, "previous") ? () => setViewing(resultNeighbor(viewing, "previous")) : undefined}
@@ -1218,6 +1250,36 @@ const NotebookView = () => {
                           hasPrevious={!!resultNeighbor(viewing, "previous")}
                           hasNext={!!resultNeighbor(viewing, "next")}
                         />
+                        {resultPlaylist(viewing).length > 1 && (
+                          <div className="absolute left-0 right-0 bottom-12 z-30 px-3">
+                            <Carousel opts={{ align: "start", loop: false }} className="w-full">
+                              <CarouselContent className="-ml-2">
+                                {resultPlaylist(viewing).map((item) => (
+                                  <CarouselItem key={item.id} className="pl-2 basis-[148px]">
+                                    <button
+                                      type="button"
+                                      onClick={() => setViewing(item)}
+                                      className={`w-full overflow-hidden rounded-md border bg-background/90 text-left shadow-sm backdrop-blur transition ${item.id === viewing.id ? "ring-2 ring-primary" : "hover:bg-background"}`}
+                                    >
+                                      <div className="aspect-video bg-muted overflow-hidden">
+                                        {item.cover_url ? (
+                                          <img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" width={148} height={83} />
+                                        ) : (
+                                          <div className="h-full w-full flex items-center justify-center">
+                                            <Video className="h-5 w-5 text-muted-foreground" />
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="px-2 py-1 text-[10px] font-semibold line-clamp-2 text-foreground">{item.title}</p>
+                                    </button>
+                                  </CarouselItem>
+                                ))}
+                              </CarouselContent>
+                              <CarouselPrevious className="hidden sm:flex left-1" />
+                              <CarouselNext className="hidden sm:flex right-1" />
+                            </Carousel>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <iframe

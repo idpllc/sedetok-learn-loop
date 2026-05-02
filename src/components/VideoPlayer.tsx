@@ -5,6 +5,7 @@ interface VideoPlayerProps {
   videoUrl: string;
   thumbnail?: string;
   preload?: "none" | "metadata" | "auto";
+  containerClassName?: string;
   autoPlayWhenInView?: boolean;
   onPrevious?: () => void;
   onNext?: () => void;
@@ -26,8 +27,21 @@ export interface VideoPlayerRef {
 
 const optimizeCloudinaryVideoUrl = (url: string) => {
   if (!url.includes("res.cloudinary.com") || !url.includes("/video/upload/")) return url;
-  if (/\/video\/upload\/[^/]*(f_auto|q_auto)/.test(url)) return url;
-  return url.replace("/video/upload/", "/video/upload/f_auto,q_auto:eco/");
+  const [prefix, rest] = url.split("/video/upload/");
+  if (!rest || rest.startsWith("v")) return url;
+
+  const slashIndex = rest.indexOf("/");
+  if (slashIndex === -1) return url;
+  const transform = rest.slice(0, slashIndex);
+  const remainingPath = rest.slice(slashIndex + 1);
+  if (!/(^|,)(f_auto|q_auto(?::[^,]+)?|vc_auto)(,|$)/.test(transform)) return url;
+
+  const safeTransform = transform
+    .split(",")
+    .filter((part) => part && !/^f_auto$/.test(part) && !/^q_auto(?::.+)?$/.test(part) && !/^vc_auto$/.test(part))
+    .join(",");
+
+  return `${prefix}/video/upload/${safeTransform ? `${safeTransform}/` : ""}${remainingPath}`;
 };
 
 const optimizeCloudinaryPosterUrl = (url?: string) => {
@@ -40,6 +54,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   videoUrl, 
   thumbnail,
   preload = "auto",
+  containerClassName,
   autoPlayWhenInView = true,
   onPrevious,
   onNext,
@@ -343,7 +358,11 @@ useImperativeHandle(ref, () => ({
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black" data-content-id={contentId}>
+    <div
+      ref={containerRef}
+      className={`relative w-full ${containerClassName || "h-[calc(100vh-80px)]"} flex items-center justify-center bg-black`}
+      data-content-id={contentId}
+    >
       <video
         ref={videoRef}
         src={deliveryUrl}
