@@ -178,6 +178,7 @@ const SedeTok = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const loadedInitial = useRef(false);
   const currentInitId = useRef<string | null>(null);
+  const playlistItemCache = useRef<Map<string, FeedItem>>(new Map());
 
   // Get current content from URL
   const contentId = searchParams.get("content");
@@ -234,17 +235,17 @@ const SedeTok = () => {
           setFeed(firstItem ? [firstItem] : []);
           setIsLoading(false);
           if (playlist!.length > 1) {
-            // In notebook embeds, only the requested capsule should render/load.
-            // Full SedeTok can still fetch the rest in the background for navigation.
-            if (embed) return;
             // Background-fetch remaining items in playlist order, skipping the
-            // one we already loaded. Don't block the UI.
+            // one we already loaded. Don't block the UI; notebook embeds cache
+            // the metadata but do not render extra video players.
             (async () => {
               const remaining = playlist!.filter((_, i) => i !== startIndex);
               const rest = await Promise.all(
                 remaining.map((p) => fetchSingleItem(p.id, p.type))
               );
               const restItems = rest.filter(Boolean) as FeedItem[];
+              restItems.forEach((item) => playlistItemCache.current.set(item.id, item));
+              if (embed) return;
               if (restItems.length > 0) {
                 setFeed((prev) => {
                   const seen = new Set(prev.map((f) => f.id));
