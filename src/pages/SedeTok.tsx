@@ -41,9 +41,14 @@ async function fetchSingleItem(
   type: "content" | "quiz" | "game"
 ): Promise<FeedItem | null> {
   const table = type === "quiz" ? "quizzes" : type === "game" ? "games" : "content";
+  const selectByType = type === "content"
+    ? `id,title,description,creator_id,category,subject,grade_level,content_type,thumbnail_url,video_url,document_url,rich_text,mind_map_data,likes_count,comments_count,shares_count,saves_count,views_count,tags,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`
+    : type === "quiz"
+      ? `id,title,description,creator_id,category,subject,grade_level,thumbnail_url,likes_count,comments_count,shares_count,saves_count,tags,questions_count,difficulty,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`
+      : `id,title,description,creator_id,category,subject,grade_level,thumbnail_url,likes_count,comments_count,shares_count,saves_count,tags,game_type,profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`;
   const { data, error } = await (supabase
     .from(table) as any)
-    .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
+    .select(selectByType)
     .eq("id", id)
     .single();
 
@@ -236,7 +241,7 @@ const SedeTok = () => {
           if (firstItem) playlistItemCache.current.set(firstCacheKey, firstItem);
           setFeed(firstItem ? [firstItem] : []);
           setIsLoading(false);
-          if (playlist!.length > 1) {
+          if (playlist!.length > 1 && !embed) {
             // Background-fetch remaining items in playlist order, skipping the
             // one we already loaded. Don't block the UI; notebook embeds cache
             // the metadata but do not render extra video players.
@@ -247,7 +252,6 @@ const SedeTok = () => {
               );
               const restItems = rest.filter(Boolean) as FeedItem[];
               restItems.forEach((item) => playlistItemCache.current.set(`${item.id}:${item.content_type === "quiz" ? "quiz" : item.content_type === "game" ? "game" : "content"}`, item));
-              if (embed) return;
               if (restItems.length > 0) {
                 setFeed((prev) => {
                   const seen = new Set(prev.map((f) => f.id));
