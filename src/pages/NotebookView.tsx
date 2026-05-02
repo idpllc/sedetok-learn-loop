@@ -1269,10 +1269,12 @@ const NotebookView = () => {
                       </p>
                     ) : (
                       <ul className="space-y-2">
-                        {studioResults.map((r) => (
+                        {studioResults.map((r) => {
+                          const isStudied = studiedIds.has(r.id);
+                          return (
                           <li
                             key={r.id}
-                            className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color} ${highlightedResultId === r.id ? "ring-2 ring-primary ring-offset-2 animate-pulse shadow-lg" : ""}`}
+                            className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color} ${highlightedResultId === r.id ? "ring-2 ring-primary ring-offset-2 animate-pulse shadow-lg" : ""} ${isStudied ? "ring-1 ring-emerald-500/60" : ""}`}
                             onClick={() => openResult(r)}
                           >
                             <div className="flex items-center gap-2 p-1.5">
@@ -1291,12 +1293,23 @@ const NotebookView = () => {
                                     <studioActive.icon className="h-5 w-5 opacity-60" />
                                   </div>
                                 )}
+                                {isStudied && (
+                                  <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                                    <div className="bg-emerald-500 rounded-full p-0.5 shadow">
+                                      <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
-                                {r.subject && (
+                                {isStudied ? (
+                                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                                    <Check className="h-2.5 w-2.5" strokeWidth={3} /> Estudiada
+                                  </p>
+                                ) : r.subject ? (
                                   <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
-                                )}
+                                ) : null}
                               </div>
                               <button
                                 className="opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20 shrink-0"
@@ -1310,7 +1323,8 @@ const NotebookView = () => {
                               </button>
                             </div>
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     )}
 
