@@ -1232,49 +1232,17 @@ const NotebookView = () => {
                       <p className="text-xs text-muted-foreground">Cargando cápsula…</p>
                     </div>
                   )}
-                  {/* Always render the SedeTok iframe so the capsule keeps its like/comment/share controls.
-                      For videos we overlay a carousel with the video results from this search. */}
+                  {/* Render the SedeTok iframe — the iframe already provides the vertical
+                      swipe carousel limited to the search results via the playlist param. */}
                   {viewing && (
-                    <>
-                      <iframe
-                        key={viewing.id}
-                        src={resultUrl(viewing)}
-                        title={viewing.title}
-                        className="absolute inset-0 w-full h-full border-0"
-                        allow="autoplay; fullscreen; clipboard-write"
-                        onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
-                      />
-                      {viewing.type === "video" && resultPlaylist(viewing).length > 1 && (
-                        <div className="absolute left-0 right-0 bottom-3 z-30 px-3 pointer-events-none">
-                          <Carousel opts={{ align: "start", loop: false }} className="w-full pointer-events-auto">
-                            <CarouselContent className="-ml-2">
-                              {resultPlaylist(viewing).map((item) => (
-                                <CarouselItem key={item.id} className="pl-2 basis-[140px]">
-                                  <button
-                                    type="button"
-                                    onClick={() => setViewing(item)}
-                                    className={`w-full overflow-hidden rounded-md border bg-background/85 text-left shadow-md backdrop-blur transition ${item.id === viewing.id ? "ring-2 ring-primary" : "hover:bg-background"}`}
-                                  >
-                                    <div className="aspect-video bg-muted overflow-hidden">
-                                      {item.cover_url ? (
-                                        <img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" width={140} height={79} />
-                                      ) : (
-                                        <div className="h-full w-full flex items-center justify-center">
-                                          <Video className="h-5 w-5 text-muted-foreground" />
-                                        </div>
-                                      )}
-                                    </div>
-                                    <p className="px-2 py-1 text-[10px] font-semibold line-clamp-2 text-foreground">{item.title}</p>
-                                  </button>
-                                </CarouselItem>
-                              ))}
-                            </CarouselContent>
-                            <CarouselPrevious className="hidden sm:flex left-1" />
-                            <CarouselNext className="hidden sm:flex right-1" />
-                          </Carousel>
-                        </div>
-                      )}
-                    </>
+                    <iframe
+                      key={viewing.id}
+                      src={resultUrl(viewing)}
+                      title={viewing.title}
+                      className="absolute inset-0 w-full h-full border-0"
+                      allow="autoplay; fullscreen; clipboard-write"
+                      onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
+                    />
                   )}
                 </div>
               </>
