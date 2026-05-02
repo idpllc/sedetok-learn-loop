@@ -1217,14 +1217,29 @@ const NotebookView = () => {
                   {/* Only render the active capsule iframe. Mounting hidden iframes caused
                       cached videos/audio to keep playing in the background. */}
                   {viewing && (
-                    <iframe
-                      key={viewing.id}
-                      src={resultUrl(viewing)}
-                      title={viewing.title}
-                      className="absolute inset-0 w-full h-full border-0"
-                      allow="autoplay; fullscreen; clipboard-write"
-                      onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
-                    />
+                    viewing.type === "video" && viewing.video_url ? (
+                      <div className="absolute inset-0 bg-background">
+                        <VideoPlayer
+                          key={viewing.id}
+                          videoUrl={viewing.video_url}
+                          thumbnail={viewing.cover_url || undefined}
+                          contentId={viewing.id}
+                          preload="metadata"
+                          autoPlayWhenInView={false}
+                          hasPrevious={false}
+                          hasNext={false}
+                        />
+                      </div>
+                    ) : (
+                      <iframe
+                        key={viewing.id}
+                        src={resultUrl(viewing)}
+                        title={viewing.title}
+                        className="absolute inset-0 w-full h-full border-0"
+                        allow="autoplay; fullscreen; clipboard-write"
+                        onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
+                      />
+                    )
                   )}
                 </div>
               </>
