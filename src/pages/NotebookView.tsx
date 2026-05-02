@@ -321,8 +321,12 @@ const NotebookView = () => {
   // Cache of the first 3 results per studio option id (after a search has run).
   // Persisted to localStorage per-notebook AND per-active-source so each source
   // keeps its own studio progress.
+  const sourceSignature = (sources.list.data || [])
+    .filter((s) => s.status === "ready" && (!activeSourceId || s.id === activeSourceId))
+    .map((s) => `${s.id}:${s.title}:${(s.extracted_text || "").length}:${(s.extracted_text || "").slice(0, 80)}`)
+    .join("|");
   const cacheKey = id
-    ? `notebook:studioCache:v2:${id}:${activeSourceId || "all"}`
+    ? `notebook:studioCache:v3:${id}:${activeSourceId || "all"}:${sourceSignature}`
     : null;
   // Per-notebook+source set of result IDs the user explicitly dismissed.
   // Dismissed items are filtered out of cached results AND of new searches.
