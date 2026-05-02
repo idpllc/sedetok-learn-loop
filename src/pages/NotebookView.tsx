@@ -370,6 +370,8 @@ const NotebookView = () => {
     setStudioHasMore(true);
     setViewing(null);
     setViewerExpanded(false);
+    setOpenedViewings({});
+    setIframeLoadedMap({});
     setHighlightedResultId(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheKey]);
