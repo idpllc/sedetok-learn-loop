@@ -456,6 +456,26 @@ const SedeTok = () => {
                 questionsCount={isQuiz ? content.questions_count : undefined}
                 difficulty={isQuiz ? content.difficulty : undefined}
                 gameType={isGame ? content.game_type : undefined}
+                onVideoWatched={
+                  content.video_url
+                    ? () => notifyCapsuleStudied(content.id, "video", "video-ended")
+                    : undefined
+                }
+                onReadComplete={() => {
+                  // ContentCard fires onReadComplete from both the Reading modal
+                  // (95% scroll) and the MindMap modal (after opening).
+                  const isMindMap = !!(content as any).mind_map_data?.root;
+                  notifyCapsuleStudied(
+                    content.id,
+                    isMindMap ? "mindmap" : "reading",
+                    isMindMap ? "mindmap-opened" : "reading-scrolled"
+                  );
+                }}
+                onDocumentDownload={
+                  content.document_url
+                    ? () => notifyCapsuleStudied(content.id, "resource", "document-downloaded")
+                    : undefined
+                }
               />
             </div>
           );
