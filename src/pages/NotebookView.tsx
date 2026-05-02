@@ -841,19 +841,6 @@ const NotebookView = () => {
               </div>
             ) : (
               <ul className="space-y-1.5">
-                <li>
-                  <button
-                    onClick={() => setActiveSourceId(null)}
-                    className={`w-full text-left flex items-center gap-2 p-2 rounded-md transition ${
-                      activeSourceId === null
-                        ? "bg-primary/10 ring-1 ring-primary/40"
-                        : "hover:bg-accent"
-                    }`}
-                  >
-                    <Sparkles className={`h-4 w-4 shrink-0 ${activeSourceId === null ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="text-sm font-medium">Todas las fuentes</span>
-                  </button>
-                </li>
                 {sources.list.data?.map((s) => {
                   const Icon = TYPE_ICONS[s.source_type] || FileText;
                   const isActive = activeSourceId === s.id;
