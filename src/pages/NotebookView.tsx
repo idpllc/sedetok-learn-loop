@@ -1197,26 +1197,31 @@ const NotebookView = () => {
                             className={`group relative rounded-lg border overflow-hidden bg-card hover:shadow-md transition cursor-pointer bg-gradient-to-br ${studioActive.color} ${highlightedResultId === r.id ? "ring-2 ring-primary ring-offset-2 animate-pulse shadow-lg" : ""}`}
                             onClick={() => openResult(r)}
                           >
-                            <div className="aspect-video w-full overflow-hidden bg-muted/40 relative">
-                              {r.cover_url ? (
-                                <img
-                                  src={r.cover_url}
-                                  alt={r.title}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                  width={260}
-                                  height={146}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <studioActive.icon className="h-7 w-7 opacity-60" />
-                                </div>
-                              )}
-                              <span className="absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-background/90 backdrop-blur uppercase tracking-wide">
-                                {studioActive.label}
-                              </span>
+                            <div className="flex items-center gap-2 p-1.5">
+                              <div className="relative h-12 w-16 shrink-0 rounded-md overflow-hidden bg-muted/40">
+                                {r.cover_url ? (
+                                  <img
+                                    src={r.cover_url}
+                                    alt={r.title}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    width={64}
+                                    height={48}
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <studioActive.icon className="h-5 w-5 opacity-60" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
+                                {r.subject && (
+                                  <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
+                                )}
+                              </div>
                               <button
-                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20"
+                                className="opacity-0 group-hover:opacity-100 transition p-1 rounded-full bg-background/90 hover:bg-destructive/20 shrink-0"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleRemoveResult(r.id);
@@ -1225,12 +1230,6 @@ const NotebookView = () => {
                               >
                                 <X className="h-3 w-3 text-destructive" />
                               </button>
-                            </div>
-                            <div className="p-2">
-                              <p className="text-[11px] font-semibold line-clamp-2 leading-tight text-foreground">{r.title}</p>
-                              {r.subject && (
-                                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.subject}</p>
-                              )}
                             </div>
                           </li>
                         ))}
