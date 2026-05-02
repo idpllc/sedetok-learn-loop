@@ -2,7 +2,6 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { registerSW } from 'virtual:pwa-register';
 
 // Initialize Microsoft Clarity (script tag injection to avoid React duplication)
 (function(c: any, l: Document, a: string, r: string, i: string) {
@@ -14,29 +13,38 @@ import { registerSW } from 'virtual:pwa-register';
   y.parentNode?.insertBefore(t, y);
 })(window, document, "clarity", "script", "wdsodbxujo");
 
-// Register Service Worker for PWA
-if (import.meta.env.PROD) {
-  const updateSW = registerSW({
-    immediate: true,
-    onNeedRefresh() {
-      // Auto-actualizar para que los usuarios siempre vean la última versión
-      console.log('[PWA] Nueva versión detectada, actualizando...');
-      updateSW(true);
-    },
-    onOfflineReady() {
-      console.log('App lista para funcionar offline');
-    },
-    onRegisteredSW(swScriptUrl, registration) {
-      console.log('Service Worker registrado:', swScriptUrl);
-      // Buscar actualizaciones cada 60s mientras la app está abierta
-      if (registration) {
-        setInterval(() => registration.update().catch(() => {}), 60 * 1000);
-      }
-    },
-    onRegisterError(error) {
-      console.error('Error al registrar Service Worker:', error);
-    },
-  });
+const isInIframe = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+const isPreviewHost =
+  window.location.hostname.includes("id-preview--") ||
+  window.location.hostname.includes("lovableproject.com");
+
+const clearBrowserCaches = () => {
+  if (!("caches" in window)) return;
+  caches.keys()
+    .then((names) => Promise.all(names.map((name) => caches.delete(name))))
+    .catch(() => {});
+};
+
+// Keep installability/push support, but remove all SW caching so new routes are never hidden by stale shells.
+if ("serviceWorker" in navigator) {
+  if (isPreviewHost || isInIframe) {
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) => registrations.forEach((registration) => registration.unregister()))
+      .finally(clearBrowserCaches)
+      .catch(() => {});
+  } else {
+    clearBrowserCaches();
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => registration.update().catch(() => {}))
+      .catch(() => {});
+  }
 }
 
 const root = createRoot(document.getElementById("root")!);

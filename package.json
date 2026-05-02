@@ -86,8 +86,6 @@
     "three": "^0.160.1",
     "three-stdlib": "^2.36.1",
     "vaul": "^0.9.9",
-    "vite-plugin-pwa": "^1.1.0",
-    "workbox-window": "^7.4.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
