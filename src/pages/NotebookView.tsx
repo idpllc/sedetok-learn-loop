@@ -1152,14 +1152,21 @@ const NotebookView = () => {
                       <p className="text-xs text-muted-foreground">Cargando cápsula…</p>
                     </div>
                   )}
-                  <iframe
-                    key={viewing.id}
-                    src={resultUrl(viewing)}
-                    title={viewing.title}
-                    className="w-full h-full border-0"
-                    allow="autoplay; fullscreen; clipboard-write"
-                    onLoad={() => setIframeLoaded(true)}
-                  />
+                  {/* Keep all previously-opened capsules mounted (hidden) so reopening
+                      one is instant and preserves its internal state. */}
+                  {Object.values(openedViewings).map((v) => {
+                    const isActive = viewing?.id === v.id;
+                    return (
+                      <iframe
+                        key={v.id}
+                        src={resultUrl(v)}
+                        title={v.title}
+                        className={`absolute inset-0 w-full h-full border-0 ${isActive ? "" : "invisible pointer-events-none"}`}
+                        allow="autoplay; fullscreen; clipboard-write"
+                        onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [v.id]: true }))}
+                      />
+                    );
+                  })}
                 </div>
               </>
             ) : (
