@@ -188,6 +188,10 @@ export const MindMapCanvas = ({
   const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number; active: boolean }>({
     startX: 0, startY: 0, panX: 0, panY: 0, active: false,
   });
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  useEffect(() => { panRef.current = pan; }, [pan]);
 
   const effectiveData = useMemo(() => {
     if (maxDepth === undefined) return data;
