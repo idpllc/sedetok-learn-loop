@@ -432,7 +432,7 @@ const NotebookView = () => {
     if (!viewing) return;
     setOpenedViewings((prev) => (prev[viewing.id] ? prev : { ...prev, [viewing.id]: viewing }));
   }, [viewing]);
-  const iframeLoaded = viewing ? !!iframeLoadedMap[viewing.id] : true;
+  const iframeLoaded = viewing ? viewing.type === "video" || !!iframeLoadedMap[viewing.id] : true;
 
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
