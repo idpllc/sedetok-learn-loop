@@ -33,11 +33,24 @@ export const PWAInstallPrompt = () => {
       return;
     }
 
-    // Check if already installed
-    const isInstalled = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+    // Check if already installed (standalone, iOS standalone, or Android related app)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://');
 
-    if (isInstalled) return;
+    if (isStandalone) return;
+
+    // Android Chrome: check getInstalledRelatedApps
+    if ('getInstalledRelatedApps' in navigator) {
+      (navigator as any).getInstalledRelatedApps().then((apps: any[]) => {
+        if (apps && apps.length > 0) {
+          localStorage.setItem('pwa-install-dismissed', 'true');
+          setShowPrompt(false);
+        }
+      }).catch(() => {});
+    }
 
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();
