@@ -7,6 +7,7 @@ export type SedefyResult = {
   description?: string | null;
   subject?: string | null;
   cover_url?: string | null;
+  video_url?: string | null;
   type: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
   /** Subtype for readings: resumen | glosario | notas | otro */
   readingSubtype?: string | null;
@@ -225,7 +226,7 @@ export const useNotebookSearch = (
         if (type === "video" || type === "reading" || type === "mindmap") {
           let q = supabase
             .from("content")
-            .select("id, title, description, thumbnail_url, content_type, subject, reading_type")
+            .select("id, title, description, thumbnail_url, video_url, content_type, subject, reading_type")
             .eq("is_public", true);
 
           if (type === "mindmap") {
@@ -250,6 +251,7 @@ export const useNotebookSearch = (
             description: c.description,
             subject: c.subject,
             cover_url: c.thumbnail_url,
+            video_url: c.video_url,
             type,
             readingSubtype: c.reading_type,
             score,
