@@ -352,6 +352,16 @@ const NotebookView = () => {
   // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
   const [studioHighlight, setStudioHighlight] = useState(false);
 
+  // Capsule viewer state (replaces the studio selector when active)
+  const [viewing, setViewing] = useState<SedefyResult | null>(null);
+  const [viewerExpanded, setViewerExpanded] = useState(false);
+  // Cache of capsules that have been opened in this session. Each opened
+  // capsule keeps its iframe mounted (hidden via CSS) so reopening it later
+  // is instant and preserves its internal state (scroll position, quiz
+  // progress, video time, etc.). Keyed by capsule id.
+  const [openedViewings, setOpenedViewings] = useState<Record<string, SedefyResult>>({});
+  const [iframeLoadedMap, setIframeLoadedMap] = useState<Record<string, boolean>>({});
+
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
   useEffect(() => {
@@ -388,15 +398,6 @@ const NotebookView = () => {
     try { localStorage.setItem(dismissedKey, JSON.stringify([...dismissedIds])); } catch {}
   }, [dismissedKey, dismissedIds]);
 
-  // Capsule viewer state (replaces the studio selector when active)
-  const [viewing, setViewing] = useState<SedefyResult | null>(null);
-  const [viewerExpanded, setViewerExpanded] = useState(false);
-  // Cache of capsules that have been opened in this session. Each opened
-  // capsule keeps its iframe mounted (hidden via CSS) so reopening it later
-  // is instant and preserves its internal state (scroll position, quiz
-  // progress, video time, etc.). Keyed by capsule id.
-  const [openedViewings, setOpenedViewings] = useState<Record<string, SedefyResult>>({});
-  const [iframeLoadedMap, setIframeLoadedMap] = useState<Record<string, boolean>>({});
   useEffect(() => {
     if (!viewing) return;
     setOpenedViewings((prev) => (prev[viewing.id] ? prev : { ...prev, [viewing.id]: viewing }));
