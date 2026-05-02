@@ -328,7 +328,9 @@ export const MindMapCanvas = ({
     }
     if (e.touches.length !== 1) return;
     const target = e.target as HTMLElement;
-    if (target.closest("[data-mindmap-node]") || target.closest("button") || target.closest("input") || target.closest("textarea")) return;
+    // On touch, only block panning when interacting with actual controls.
+    // Panning from nodes is allowed so users can navigate horizontally/vertically anywhere.
+    if (target.closest("button") || target.closest("input") || target.closest("textarea")) return;
     const t = e.touches[0];
     dragState.current = {
       startX: t.clientX,
