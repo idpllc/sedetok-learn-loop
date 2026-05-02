@@ -1242,6 +1242,7 @@ const NotebookView = () => {
                           videoUrl={viewing.video_url}
                           thumbnail={viewing.cover_url || undefined}
                           contentId={viewing.id}
+                          containerClassName="h-full"
                           preload="metadata"
                           autoPlayWhenInView={false}
                           onPrevious={resultNeighbor(viewing, "previous") ? () => setViewing(resultNeighbor(viewing, "previous")) : undefined}
@@ -1249,6 +1250,36 @@ const NotebookView = () => {
                           hasPrevious={!!resultNeighbor(viewing, "previous")}
                           hasNext={!!resultNeighbor(viewing, "next")}
                         />
+                        {resultPlaylist(viewing).length > 1 && (
+                          <div className="absolute left-0 right-0 bottom-12 z-30 px-3">
+                            <Carousel opts={{ align: "start", loop: false }} className="w-full">
+                              <CarouselContent className="-ml-2">
+                                {resultPlaylist(viewing).map((item) => (
+                                  <CarouselItem key={item.id} className="pl-2 basis-[148px]">
+                                    <button
+                                      type="button"
+                                      onClick={() => setViewing(item)}
+                                      className={`w-full overflow-hidden rounded-md border bg-background/90 text-left shadow-sm backdrop-blur transition ${item.id === viewing.id ? "ring-2 ring-primary" : "hover:bg-background"}`}
+                                    >
+                                      <div className="aspect-video bg-muted overflow-hidden">
+                                        {item.cover_url ? (
+                                          <img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" width={148} height={83} />
+                                        ) : (
+                                          <div className="h-full w-full flex items-center justify-center">
+                                            <Video className="h-5 w-5 text-muted-foreground" />
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="px-2 py-1 text-[10px] font-semibold line-clamp-2 text-foreground">{item.title}</p>
+                                    </button>
+                                  </CarouselItem>
+                                ))}
+                              </CarouselContent>
+                              <CarouselPrevious className="hidden sm:flex left-1" />
+                              <CarouselNext className="hidden sm:flex right-1" />
+                            </Carousel>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <iframe
