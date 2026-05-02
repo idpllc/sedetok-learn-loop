@@ -46,17 +46,17 @@ const Notebook = () => {
       <Sidebar />
       <main className="ml-0 md:ml-[var(--sidebar-width,16rem)] data-[sidebar-collapsed=true]:md:ml-[var(--sidebar-collapsed-width,4rem)] transition-all">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <header className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <BookOpen className="h-7 w-7 text-primary" />
-                Notebook
+          <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-3xl font-bold flex items-center gap-2">
+                <BookOpen className="h-5 w-5 sm:h-7 sm:w-7 text-primary shrink-0" />
+                <span className="truncate">Notebook</span>
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Tus cuadernos con fuentes y chat con SEDE AI
               </p>
             </div>
-            <Button onClick={handleCreate} disabled={creating} size="lg" className="gap-2" data-tour="create-notebook">
+            <Button onClick={handleCreate} disabled={creating} size="default" className="gap-2 self-start sm:self-auto sm:size-lg" data-tour="create-notebook">
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Crear cuaderno
             </Button>

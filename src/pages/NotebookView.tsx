@@ -757,8 +757,8 @@ const NotebookView = () => {
 
       <div className="flex flex-col h-screen bg-background">
         {/* Header */}
-        <header className="flex items-center gap-3 px-4 h-14 border-b shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")}>
+        <header className="flex items-center gap-2 px-3 sm:px-4 h-14 border-b shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/notebook")} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           {editingTitle ? (
@@ -768,16 +768,16 @@ const NotebookView = () => {
               onChange={(e) => setTitleDraft(e.target.value)}
               onBlur={handleSaveTitle}
               onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-              className="max-w-md font-semibold"
+              className="max-w-md font-semibold text-sm sm:text-base"
             />
           ) : (
             <button
-              className="flex items-center gap-2 font-semibold hover:text-primary transition"
+              className="flex items-center gap-2 font-semibold hover:text-primary transition min-w-0 flex-1"
               onClick={() => { setTitleDraft(notebook?.title || ""); setEditingTitle(true); }}
             >
-              <span className="text-lg">{notebook?.cover_emoji || "📓"}</span>
-              {notebook?.title || "Cuaderno"}
-              <Pencil className="h-3.5 w-3.5 opacity-50" />
+              <span className="text-base sm:text-lg shrink-0">{notebook?.cover_emoji || "📓"}</span>
+              <span className="text-sm sm:text-lg truncate">{notebook?.title || "Cuaderno"}</span>
+              <Pencil className="h-3.5 w-3.5 opacity-50 shrink-0" />
             </button>
           )}
         </header>
@@ -841,19 +841,6 @@ const NotebookView = () => {
               </div>
             ) : (
               <ul className="space-y-1.5">
-                <li>
-                  <button
-                    onClick={() => setActiveSourceId(null)}
-                    className={`w-full text-left flex items-center gap-2 p-2 rounded-md transition ${
-                      activeSourceId === null
-                        ? "bg-primary/10 ring-1 ring-primary/40"
-                        : "hover:bg-accent"
-                    }`}
-                  >
-                    <Sparkles className={`h-4 w-4 shrink-0 ${activeSourceId === null ? "text-primary" : "text-muted-foreground"}`} />
-                    <span className="text-sm font-medium">Todas las fuentes</span>
-                  </button>
-                </li>
                 {sources.list.data?.map((s) => {
                   const Icon = TYPE_ICONS[s.source_type] || FileText;
                   const isActive = activeSourceId === s.id;
@@ -862,11 +849,11 @@ const NotebookView = () => {
                       <div
                         role="button"
                         tabIndex={0}
-                        onClick={() => s.status === "ready" && setActiveSourceId(s.id)}
+                        onClick={() => s.status === "ready" && setActiveSourceId(isActive ? null : s.id)}
                         onKeyDown={(e) => {
                           if ((e.key === "Enter" || e.key === " ") && s.status === "ready") {
                             e.preventDefault();
-                            setActiveSourceId(s.id);
+                            setActiveSourceId(isActive ? null : s.id);
                           }
                         }}
                         className={`flex items-start gap-2 p-2 rounded-md transition cursor-pointer ${

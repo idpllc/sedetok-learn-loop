@@ -188,6 +188,10 @@ export const MindMapCanvas = ({
   const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number; active: boolean }>({
     startX: 0, startY: 0, panX: 0, panY: 0, active: false,
   });
+  const zoomRef = useRef(zoom);
+  const panRef = useRef(pan);
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  useEffect(() => { panRef.current = pan; }, [pan]);
 
   const effectiveData = useMemo(() => {
     if (maxDepth === undefined) return data;
@@ -237,6 +241,37 @@ export const MindMapCanvas = ({
     return () => ro.disconnect();
   }, [layout]);
 
+  // Native non-passive wheel + touchmove listeners so preventDefault works.
+  useEffect(() => {
+    if (preview) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const z = zoomRef.current;
+      const p = panRef.current;
+      const delta = -e.deltaY * (e.ctrlKey || e.metaKey ? 0.01 : 0.0015);
+      const nz = Math.min(2.5, Math.max(0.2, z + delta * z));
+      setZoom(nz);
+      setPan({
+        x: cx - ((cx - p.x) * nz) / z,
+        y: cy - ((cy - p.y) * nz) / z,
+      });
+    };
+    const onTouchMoveNative = (e: TouchEvent) => {
+      if (e.touches.length === 2) e.preventDefault();
+    };
+    el.addEventListener("wheel", onWheelNative, { passive: false });
+    el.addEventListener("touchmove", onTouchMoveNative, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheelNative as any);
+      el.removeEventListener("touchmove", onTouchMoveNative as any);
+    };
+  }, [preview]);
+
   const toggleCollapse = (id: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev);
@@ -244,20 +279,6 @@ export const MindMapCanvas = ({
       else next.add(id);
       return next;
     });
-  };
-
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const delta = -e.deltaY * 0.002;
-      setZoom((z) => Math.min(2, Math.max(0.3, z + delta)));
-      return;
-    }
-    // Plain wheel = pan the canvas (vertical + horizontal via shift)
-    setPan((p) => ({
-      x: p.x - (e.shiftKey ? e.deltaY : e.deltaX),
-      y: p.y - (e.shiftKey ? 0 : e.deltaY),
-    }));
   };
 
   const onMouseDown = (e: React.MouseEvent) => {
@@ -284,7 +305,26 @@ export const MindMapCanvas = ({
     dragState.current.active = false;
   };
 
+  // Pinch-to-zoom state
+  const pinchRef = useRef<{ dist: number; zoom: number; cx: number; cy: number; panX: number; panY: number } | null>(null);
+
   const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const rect = containerRef.current?.getBoundingClientRect();
+      const cx = (a.clientX + b.clientX) / 2 - (rect?.left || 0);
+      const cy = (a.clientY + b.clientY) / 2 - (rect?.top || 0);
+      pinchRef.current = {
+        dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+        zoom,
+        cx,
+        cy,
+        panX: pan.x,
+        panY: pan.y,
+      };
+      dragState.current.active = false;
+      return;
+    }
     if (e.touches.length !== 1) return;
     const target = e.target as HTMLElement;
     if (target.closest("[data-mindmap-node]") || target.closest("button") || target.closest("input") || target.closest("textarea")) return;
@@ -298,14 +338,29 @@ export const MindMapCanvas = ({
     };
   };
   const onTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchRef.current) {
+      e.preventDefault();
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      const ratio = dist / pinchRef.current.dist;
+      const nz = Math.min(2.5, Math.max(0.2, pinchRef.current.zoom * ratio));
+      const { cx, cy, panX, panY, zoom: z0 } = pinchRef.current;
+      setZoom(nz);
+      setPan({
+        x: cx - ((cx - panX) * nz) / z0,
+        y: cy - ((cy - panY) * nz) / z0,
+      });
+      return;
+    }
     if (!dragState.current.active || e.touches.length !== 1) return;
     const t = e.touches[0];
     const dx = t.clientX - dragState.current.startX;
     const dy = t.clientY - dragState.current.startY;
     setPan({ x: dragState.current.panX + dx, y: dragState.current.panY + dy });
   };
-  const onTouchEnd = () => {
-    dragState.current.active = false;
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length < 2) pinchRef.current = null;
+    if (e.touches.length === 0) dragState.current.active = false;
   };
 
   const fitView = useCallback(() => {
@@ -332,7 +387,7 @@ export const MindMapCanvas = ({
     <div
       ref={containerRef}
       className={`relative w-full h-full overflow-hidden bg-muted/20 select-none ${className || ""}`}
-      onWheel={preview ? undefined : handleWheel}
+      
       onMouseDown={preview ? undefined : onMouseDown}
       onMouseMove={preview ? undefined : onMouseMove}
       onMouseUp={preview ? undefined : onMouseUp}
