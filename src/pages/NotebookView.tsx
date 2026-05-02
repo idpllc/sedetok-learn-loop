@@ -706,6 +706,8 @@ const NotebookView = () => {
     return nextIdx >= 0 && nextIdx < sameType.length ? sameType[nextIdx] : null;
   };
 
+  const resultPlaylist = (r: SedefyResult) => studioResults.filter((x) => x.type === r.type);
+
   const openResult = (r: SedefyResult) => {
     setViewing(r);
     setViewerExpanded(false);
