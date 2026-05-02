@@ -19,6 +19,7 @@ import {
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
 import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
@@ -356,7 +357,6 @@ const NotebookView = () => {
   // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
   const [studioHighlight, setStudioHighlight] = useState(false);
   const studioCacheRef = useRef<Record<string, SedefyResult[]>>(studioCache);
-  const prefetchingStudioRef = useRef<Set<string>>(new Set());
 
   // Capsule viewer state (replaces the studio selector when active)
   const [viewing, setViewing] = useState<SedefyResult | null>(null);
@@ -402,25 +402,6 @@ const NotebookView = () => {
   const readyCount = (sources.list.data || []).filter(s => s.status === "ready").length;
   const noSources = readyCount === 0;
 
-  useEffect(() => {
-    if (noSources || !id) return;
-    const timer = window.setTimeout(() => {
-      STUDIO_OPTIONS.forEach((opt) => {
-        if (studioCacheRef.current[opt.id]?.length || prefetchingStudioRef.current.has(opt.id)) return;
-        prefetchingStudioRef.current.add(opt.id);
-        sedefySearch.search(opt.searchType, 0, 3, opt.readingSubtype)
-          .then((results) => {
-            const visible = results.filter((r) => !dismissedIds.has(r.id));
-            if (visible.length > 0) {
-              setStudioCache((prev) => (prev[opt.id]?.length ? prev : { ...prev, [opt.id]: visible.slice(0, 3) }));
-            }
-          })
-          .finally(() => prefetchingStudioRef.current.delete(opt.id));
-      });
-    }, 400);
-    return () => window.clearTimeout(timer);
-  }, [noSources, id, activeSourceId, dismissedIds, sedefySearch.search]);
-
   // Persist dismissed IDs whenever they change
   useEffect(() => {
     if (!dismissedKey) return;
@@ -431,7 +412,7 @@ const NotebookView = () => {
     if (!viewing) return;
     setOpenedViewings((prev) => (prev[viewing.id] ? prev : { ...prev, [viewing.id]: viewing }));
   }, [viewing]);
-  const iframeLoaded = viewing ? !!iframeLoadedMap[viewing.id] : true;
+  const iframeLoaded = viewing ? viewing.type === "video" || !!iframeLoadedMap[viewing.id] : true;
 
   // Source-processed announcements: when a source becomes "ready" we show a
   // user-style card in chat with a preview of the processed content. Clicking
@@ -687,6 +668,13 @@ const NotebookView = () => {
     const playlist = encodeURIComponent(sameType.map((x) => `${x.id}:${x.type}`).join(","));
     const param = r.type === "quiz" ? "quiz" : r.type === "game" ? "game" : "content";
     return `/sedetok?${param}=${r.id}&playlist=${playlist}&embed=1`;
+  };
+
+  const resultNeighbor = (r: SedefyResult, direction: "previous" | "next") => {
+    const sameType = studioResults.filter((x) => x.type === r.type);
+    const idx = sameType.findIndex((x) => x.id === r.id);
+    const nextIdx = direction === "next" ? idx + 1 : idx - 1;
+    return nextIdx >= 0 && nextIdx < sameType.length ? sameType[nextIdx] : null;
   };
 
   const openResult = (r: SedefyResult) => {
@@ -1216,14 +1204,31 @@ const NotebookView = () => {
                   {/* Only render the active capsule iframe. Mounting hidden iframes caused
                       cached videos/audio to keep playing in the background. */}
                   {viewing && (
-                    <iframe
-                      key={viewing.id}
-                      src={resultUrl(viewing)}
-                      title={viewing.title}
-                      className="absolute inset-0 w-full h-full border-0"
-                      allow="autoplay; fullscreen; clipboard-write"
-                      onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
-                    />
+                    viewing.type === "video" && viewing.video_url ? (
+                      <div className="absolute inset-0 bg-background">
+                        <VideoPlayer
+                          key={viewing.id}
+                          videoUrl={viewing.video_url}
+                          thumbnail={viewing.cover_url || undefined}
+                          contentId={viewing.id}
+                          preload="metadata"
+                          autoPlayWhenInView={false}
+                          onPrevious={resultNeighbor(viewing, "previous") ? () => setViewing(resultNeighbor(viewing, "previous")) : undefined}
+                          onNext={resultNeighbor(viewing, "next") ? () => setViewing(resultNeighbor(viewing, "next")) : undefined}
+                          hasPrevious={!!resultNeighbor(viewing, "previous")}
+                          hasNext={!!resultNeighbor(viewing, "next")}
+                        />
+                      </div>
+                    ) : (
+                      <iframe
+                        key={viewing.id}
+                        src={resultUrl(viewing)}
+                        title={viewing.title}
+                        className="absolute inset-0 w-full h-full border-0"
+                        allow="autoplay; fullscreen; clipboard-write"
+                        onLoad={() => setIframeLoadedMap((prev) => ({ ...prev, [viewing.id]: true }))}
+                      />
+                    )
                   )}
                 </div>
               </>
