@@ -404,6 +404,7 @@ export const MindMapCanvas = ({
           "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
         backgroundSize: "24px 24px",
         pointerEvents: preview ? "none" : undefined,
+        touchAction: preview ? undefined : "none",
       }}
     >
       {/* Toolbar */}
