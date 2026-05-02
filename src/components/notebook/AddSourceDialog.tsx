@@ -296,7 +296,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
               <p className="text-[11px] text-muted-foreground mt-1">Tip: describe el tema o la competencia que quieres dominar.</p>
             </div>
             <Button data-tour="source-text-submit" onClick={handleAddText} disabled={busy || !textContent.trim()}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Añadir texto
+              {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Añadir fuente
             </Button>
           </TabsContent>
 
