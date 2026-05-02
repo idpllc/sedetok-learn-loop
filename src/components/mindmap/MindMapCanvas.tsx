@@ -407,7 +407,7 @@ export const MindMapCanvas = ({
     <div
       ref={containerRef}
       className={`relative w-full h-full overflow-hidden bg-muted/20 select-none ${className || ""}`}
-      onWheel={preview ? undefined : handleWheel}
+      
       onMouseDown={preview ? undefined : onMouseDown}
       onMouseMove={preview ? undefined : onMouseMove}
       onMouseUp={preview ? undefined : onMouseUp}
