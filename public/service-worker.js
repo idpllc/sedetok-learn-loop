@@ -1,6 +1,5 @@
-// Kill-switch fallback (vite-plugin-pwa genera el SW real en el build con el mismo nombre).
-// Este archivo solo se usa en dev/preview o si el build no incluye plugin-pwa.
-// Limpia caches antiguas y se desinstala para que la PWA siempre tome la última versión.
+// Service worker mínimo: limpia caches antiguas y conserva push notifications.
+// No intercepta navegación ni assets, así las rutas nuevas siempre salen desde red.
 self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', (e) =>
   e.waitUntil(
