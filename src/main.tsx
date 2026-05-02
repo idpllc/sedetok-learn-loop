@@ -13,11 +13,38 @@ import "./index.css";
   y.parentNode?.insertBefore(t, y);
 })(window, document, "clarity", "script", "wdsodbxujo");
 
-// Remove previously shipped PWA service workers/caches so installed apps always load the latest routes.
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.getRegistrations()
-    .then((registrations) => registrations.forEach((registration) => registration.update().catch(() => {})))
+const isInIframe = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+const isPreviewHost =
+  window.location.hostname.includes("id-preview--") ||
+  window.location.hostname.includes("lovableproject.com");
+
+const clearBrowserCaches = () => {
+  if (!("caches" in window)) return;
+  caches.keys()
+    .then((names) => Promise.all(names.map((name) => caches.delete(name))))
     .catch(() => {});
+};
+
+// Keep installability/push support, but remove all SW caching so new routes are never hidden by stale shells.
+if ("serviceWorker" in navigator) {
+  if (isPreviewHost || isInIframe) {
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) => registrations.forEach((registration) => registration.unregister()))
+      .finally(clearBrowserCaches)
+      .catch(() => {});
+  } else {
+    clearBrowserCaches();
+    navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => registration.update().catch(() => {}))
+      .catch(() => {});
+  }
 }
 
 const root = createRoot(document.getElementById("root")!);
