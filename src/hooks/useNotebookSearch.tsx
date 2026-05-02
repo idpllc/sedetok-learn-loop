@@ -82,22 +82,22 @@ const extractKeywords = (sources: any[]): { titleKeywords: string[]; supportKeyw
   };
 
   for (const s of sources || []) {
+    // Both the source title AND its content/competency text describe the topic
+    // the user wants to study. Treat both as primary keywords so we don't miss
+    // results when the user puts the subject in the title and the actual topic
+    // in the content (e.g. title="Matemáticas", content="Teorema de Pitágoras").
     tokenize(s.title || "", titleCounts, 5);
-    tokenize((s.extracted_text || "").slice(0, 1200), textCounts, 1);
+    tokenize((s.extracted_text || "").slice(0, 1200), titleCounts, 3);
   }
 
   const titleKeywords = [...titleCounts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
+    .slice(0, 8)
     .map(([k]) => k);
 
-  // Support keywords = top body terms that are NOT already title keywords
-  const titleSet = new Set(titleKeywords);
-  const supportKeywords = [...textCounts.entries()]
-    .filter(([k]) => !titleSet.has(k))
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-    .map(([k]) => k);
+  // Support keywords intentionally empty now — every meaningful term from the
+  // source is a primary keyword. We keep the field for backwards compatibility.
+  const supportKeywords: string[] = [];
 
   return { titleKeywords, supportKeywords };
 };
