@@ -262,7 +262,8 @@ export const MindMapCanvas = ({
       });
     };
     const onTouchMoveNative = (e: TouchEvent) => {
-      if (e.touches.length === 2) e.preventDefault();
+      // Prevent browser default (scroll/zoom) so we can pan and pinch the canvas
+      e.preventDefault();
     };
     el.addEventListener("wheel", onWheelNative, { passive: false });
     el.addEventListener("touchmove", onTouchMoveNative, { passive: false });
