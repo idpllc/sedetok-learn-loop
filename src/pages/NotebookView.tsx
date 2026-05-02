@@ -347,6 +347,10 @@ const NotebookView = () => {
   const [highlightedResultId, setHighlightedResultId] = useState<string | null>(null);
   // Mobile tabs: fuentes | chat | studio
   const [mobileTab, setMobileTab] = useState<"fuentes" | "chat" | "studio">("chat");
+  // Source row expanded to show actions (Editar / Estudiar)
+  const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
+  // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
+  const [studioHighlight, setStudioHighlight] = useState(false);
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
