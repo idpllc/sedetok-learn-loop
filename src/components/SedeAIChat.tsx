@@ -21,6 +21,8 @@ import { AgentSelector } from "./voice/AgentSelector";
 import { VoiceAssistant3D } from "./voice/VoiceAssistant3D";
 import { VoiceAgent } from "@/lib/voiceAgents";
 import { AnimatePresence } from "framer-motion";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PaywallModal, usePaywall } from "@/components/PaywallModal";
 interface PathData {
   id: string;
   title: string;
