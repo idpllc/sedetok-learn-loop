@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PaywallModal, usePaywall } from "@/components/PaywallModal";
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -30,7 +32,23 @@ const guessType = (file: File): "pdf" | "docx" | "xlsx" | null => {
 
 export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text" }: AddSourceDialogProps) => {
   const { uploadFile, uploading } = useS3Upload();
-  const { ingest } = useNotebookSources(notebookId);
+  const { ingest, list } = useNotebookSources(notebookId);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { myPlan } = useSubscription();
+  const paywall = usePaywall();
+  const checkSourceLimit = (): boolean => {
+    const max = myPlan.data?.max_sources_per_notebook;
+    const current = list.data?.length || 0;
+    if (max !== null && max !== undefined && current >= max) {
+      paywall.show(
+        "Límite de fuentes alcanzado",
+        `Tu plan ${myPlan.data?.name || "Free"} permite ${max} fuente(s) por cuaderno. Actualiza para añadir más.`
+      );
+      return false;
+    }
+    return true;
+  };
   const { user } = useAuth();
   const { toast } = useToast();
   const textDraftKey = `notebook:add-source-text-draft:v1:${notebookId}`;
