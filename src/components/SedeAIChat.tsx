@@ -1159,7 +1159,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
                   size="icon"
                   variant="ghost"
                   className="h-8 w-8 rounded-full"
-                  onClick={() => setShowAgentSelector(true)}
+                  onClick={() => { if (!requireVoice()) return; setShowAgentSelector(true); }}
                   disabled={isLoading || uploading}
                   title="Avatar de voz 3D"
                 >
@@ -1172,6 +1172,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
                   variant="ghost"
                   className="h-8 w-8 rounded-full"
                   onClick={() => {
+                    if (!requireVoice()) return;
                     setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq');
                     setShowVoiceAssistant(true);
                   }}
