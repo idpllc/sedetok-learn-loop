@@ -21,6 +21,8 @@ import { AgentSelector } from "./voice/AgentSelector";
 import { VoiceAssistant3D } from "./voice/VoiceAssistant3D";
 import { VoiceAgent } from "@/lib/voiceAgents";
 import { AnimatePresence } from "framer-motion";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PaywallModal, usePaywall } from "@/components/PaywallModal";
 interface PathData {
   id: string;
   title: string;
@@ -348,6 +350,15 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
   const [voiceAgentId, setVoiceAgentId] = useState('');
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<(VoiceAgent & { configuredAgentId: string }) | null>(null);
+  const { myPlan } = useSubscription();
+  const paywall = usePaywall();
+  const requireVoice = () => {
+    if (!myPlan.data?.voice_chat_access) {
+      paywall.show("Chat conversacional con voz", "Activa el plan Premium o Ultra para conversar con tus agentes por voz.");
+      return false;
+    }
+    return true;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -781,10 +792,10 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
                   <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={isRecording ? stopRecording : startRecording} disabled={isLoading || uploading}>
                     {isRecording ? <Square className="w-4 h-4 text-destructive" /> : <Mic className="w-4 h-4" />}
                   </Button>
-                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => setShowAgentSelector(true)} disabled={isLoading || uploading} title="Avatar de voz 3D">
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { if (!requireVoice()) return; setShowAgentSelector(true); }} disabled={isLoading || uploading} title="Avatar de voz 3D">
                     <User className="w-4 h-4" />
                   </Button>
-                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq'); setShowVoiceAssistant(true); }} disabled={isLoading || uploading} title="Conversación de voz">
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { if (!requireVoice()) return; setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq'); setShowVoiceAssistant(true); }} disabled={isLoading || uploading} title="Conversación de voz">
                     <Phone className="w-4 h-4" />
                   </Button>
                 </div>
@@ -884,7 +895,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
             <Button
               variant={voiceMode ? "default" : "outline"}
               size="sm"
-              onClick={() => setVoiceMode(!voiceMode)}
+              onClick={() => { if (!voiceMode && !requireVoice()) return; setVoiceMode(!voiceMode); }}
               className="flex items-center gap-2"
             >
               {voiceMode ? (
@@ -1148,7 +1159,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
                   size="icon"
                   variant="ghost"
                   className="h-8 w-8 rounded-full"
-                  onClick={() => setShowAgentSelector(true)}
+                  onClick={() => { if (!requireVoice()) return; setShowAgentSelector(true); }}
                   disabled={isLoading || uploading}
                   title="Avatar de voz 3D"
                 >
@@ -1161,6 +1172,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
                   variant="ghost"
                   className="h-8 w-8 rounded-full"
                   onClick={() => {
+                    if (!requireVoice()) return;
                     setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq');
                     setShowVoiceAssistant(true);
                   }}
@@ -1228,6 +1240,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
           />
         )}
       </AnimatePresence>
+      <PaywallModal open={paywall.state.open} onClose={paywall.close} feature={paywall.state.feature} description={paywall.state.description} />
     </div>
     </ErrorBoundary>
   );

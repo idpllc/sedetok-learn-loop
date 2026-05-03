@@ -67,6 +67,7 @@ const StudyPlan = lazy(() => import("./pages/StudyPlan"));
 const Notebook = lazy(() => import("./pages/Notebook"));
 const NotebookView = lazy(() => import("./pages/NotebookView"));
 const PublishingErrorDetails = lazy(() => import("./pages/PublishingErrorDetails"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
 // (iframes used by the notebook capsule preview) to minimise boot time.
@@ -134,6 +135,7 @@ const App = () => (
             <Route path="/educoin-history" element={<EducoinHistory />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/buy-educoins" element={<BuyEducoins />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/create" element={<CreateContent />} />
             <Route path="/edit/:id" element={<EditContent />} />
             <Route path="/games/edit/:id" element={<EditGame />} />

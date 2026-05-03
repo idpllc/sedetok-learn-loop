@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PaywallModal, usePaywall } from "@/components/PaywallModal";
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -30,9 +32,24 @@ const guessType = (file: File): "pdf" | "docx" | "xlsx" | null => {
 
 export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text" }: AddSourceDialogProps) => {
   const { uploadFile, uploading } = useS3Upload();
-  const { ingest } = useNotebookSources(notebookId);
+  const { ingest, list } = useNotebookSources(notebookId);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { myPlan } = useSubscription();
+  const paywall = usePaywall();
+  const checkSourceLimit = (): boolean => {
+    const max = myPlan.data?.max_sources_per_notebook;
+    const current = list.data?.length || 0;
+    if (max !== null && max !== undefined && current >= max) {
+      paywall.show(
+        "Límite de fuentes alcanzado",
+        `Tu plan ${myPlan.data?.name || "Free"} permite ${max} fuente(s) por cuaderno. Actualiza para añadir más.`
+      );
+      return false;
+    }
+    return true;
+  };
+  const textDraftKey0 = notebookId; // placeholder no-op
   const textDraftKey = `notebook:add-source-text-draft:v1:${notebookId}`;
   const readTextDraft = () => {
     try {
@@ -104,6 +121,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!checkSourceLimit()) { e.target.value = ""; return; }
     const file = e.target.files?.[0];
     if (!file) return;
     const type = guessType(file);
@@ -134,6 +152,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleAddText = async () => {
+    if (!checkSourceLimit()) return;
     if (!textContent.trim()) return;
     await ingest.mutateAsync({
       sourceType: "text",
@@ -145,6 +164,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleAddUrl = async () => {
+    if (!checkSourceLimit()) return;
     if (!url.trim()) return;
     await ingest.mutateAsync({
       sourceType: "url",
@@ -155,6 +175,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleAddVideo = async () => {
+    if (!checkSourceLimit()) return;
     if (!videoUrl.trim()) return;
     await ingest.mutateAsync({
       sourceType: "video",
@@ -373,6 +394,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
           <Button variant="ghost" onClick={() => handleClose()} disabled={busy}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
+      <PaywallModal open={paywall.state.open} onClose={paywall.close} feature={paywall.state.feature} description={paywall.state.description} />
     </Dialog>
   );
 };
