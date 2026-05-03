@@ -8,11 +8,15 @@ import { Card } from "@/components/ui/card";
 import { Plus, BookOpen, Trash2, Loader2 } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PaywallModal, usePaywall } from "@/components/PaywallModal";
 
 const Notebook = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { list, create, remove } = useNotebooks();
+  const { myPlan } = useSubscription();
+  const paywall = usePaywall();
   const [creating, setCreating] = useState(false);
 
   if (loading) {
@@ -28,6 +32,15 @@ const Notebook = () => {
   }
 
   const handleCreate = async () => {
+    const max = myPlan.data?.max_notebooks;
+    const current = list.data?.length || 0;
+    if (max !== null && max !== undefined && current >= max) {
+      paywall.show(
+        "Límite de Notebooks alcanzado",
+        `Tu plan ${myPlan.data?.name || "Free"} permite ${max} cuaderno(s). Actualiza para crear más.`
+      );
+      return;
+    }
     setCreating(true);
     try {
       const nb = await create.mutateAsync({ title: "Cuaderno sin título" });
@@ -112,6 +125,7 @@ const Notebook = () => {
       </main>
       <NotebookTutorial />
       <NotebookTutorialHelpButton hidden={(list.data?.length || 0) > 0} />
+      <PaywallModal open={paywall.state.open} onClose={paywall.close} feature={paywall.state.feature} description={paywall.state.description} />
     </>
 
   );
