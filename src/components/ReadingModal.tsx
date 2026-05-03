@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import sofiaAvatar from "@/assets/avatars/sofia-avatar.png";
 import alejandroAvatar from "@/assets/avatars/alejandro-avatar.png";
 import { renderRichContent } from "@/lib/renderRichContent";
+import { useSubscription } from "@/hooks/useSubscription";
+import { PaywallModal, usePaywall } from "@/components/PaywallModal";
 
 const avatarImages: Record<string, string> = {
   sofia: sofiaAvatar,
@@ -33,6 +35,8 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
+  const { myPlan } = useSubscription();
+  const paywall = usePaywall();
 
   useEffect(() => {
     if (!isOpen) {
@@ -59,6 +63,10 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
   };
 
   const handleReadAloud = async (agentId: string) => {
+    if (!myPlan.data?.read_aloud_access) {
+      paywall.show("Lectura por agente", "Activa el plan Premium o Ultra para que un agente lea esta lectura por ti.");
+      return;
+    }
     // If same agent is playing, toggle pause
     if (selectedAgent === agentId && isPlaying) {
       if (isPaused) {
