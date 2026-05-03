@@ -121,6 +121,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!checkSourceLimit()) { e.target.value = ""; return; }
     const file = e.target.files?.[0];
     if (!file) return;
     const type = guessType(file);
@@ -151,6 +152,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleAddText = async () => {
+    if (!checkSourceLimit()) return;
     if (!textContent.trim()) return;
     await ingest.mutateAsync({
       sourceType: "text",
@@ -162,6 +164,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleAddUrl = async () => {
+    if (!checkSourceLimit()) return;
     if (!url.trim()) return;
     await ingest.mutateAsync({
       sourceType: "url",
@@ -172,6 +175,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   };
 
   const handleAddVideo = async () => {
+    if (!checkSourceLimit()) return;
     if (!videoUrl.trim()) return;
     await ingest.mutateAsync({
       sourceType: "video",
