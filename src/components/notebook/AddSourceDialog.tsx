@@ -49,8 +49,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     }
     return true;
   };
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const textDraftKey0 = notebookId; // placeholder no-op
   const textDraftKey = `notebook:add-source-text-draft:v1:${notebookId}`;
   const readTextDraft = () => {
     try {
