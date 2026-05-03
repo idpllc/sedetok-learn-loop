@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.publishing-preflight]
 verify_jwt = false
+
+[functions.epayco-confirmation]
+verify_jwt = false
+
+[functions.subscriptions-cron]
+verify_jwt = false
