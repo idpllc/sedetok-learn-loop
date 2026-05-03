@@ -895,7 +895,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
             <Button
               variant={voiceMode ? "default" : "outline"}
               size="sm"
-              onClick={() => setVoiceMode(!voiceMode)}
+              onClick={() => { if (!voiceMode && !requireVoice()) return; setVoiceMode(!voiceMode); }}
               className="flex items-center gap-2"
             >
               {voiceMode ? (
