@@ -1240,6 +1240,7 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
           />
         )}
       </AnimatePresence>
+      <PaywallModal open={paywall.state.open} onClose={paywall.close} feature={paywall.state.feature} description={paywall.state.description} />
     </div>
     </ErrorBoundary>
   );
