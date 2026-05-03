@@ -2770,6 +2770,104 @@ export type Database = {
           },
         ]
       }
+      subscription_payments: {
+        Row: {
+          amount_cop: number
+          created_at: string
+          id: string
+          provider: string
+          provider_transaction_id: string | null
+          raw_response: Json | null
+          reference: string | null
+          status: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cop: number
+          created_at?: string
+          id?: string
+          provider?: string
+          provider_transaction_id?: string | null
+          raw_response?: Json | null
+          reference?: string | null
+          status: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cop?: number
+          created_at?: string
+          id?: string
+          provider?: string
+          provider_transaction_id?: string | null
+          raw_response?: Json | null
+          reference?: string | null
+          status?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          max_notebooks: number | null
+          max_sources_per_notebook: number | null
+          monthly_educoins: number
+          name: string
+          premium_courses_access: boolean
+          price_cop: number
+          read_aloud_access: boolean
+          sort_order: number
+          updated_at: string
+          voice_chat_access: boolean
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_notebooks?: number | null
+          max_sources_per_notebook?: number | null
+          monthly_educoins?: number
+          name: string
+          premium_courses_access?: boolean
+          price_cop?: number
+          read_aloud_access?: boolean
+          sort_order?: number
+          updated_at?: string
+          voice_chat_access?: boolean
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_notebooks?: number | null
+          max_sources_per_notebook?: number | null
+          monthly_educoins?: number
+          name?: string
+          premium_courses_access?: boolean
+          price_cop?: number
+          read_aloud_access?: boolean
+          sort_order?: number
+          updated_at?: string
+          voice_chat_access?: boolean
+        }
+        Relationships: []
+      }
       trivia_1v1_invitations: {
         Row: {
           accepted_at: string | null
@@ -3596,6 +3694,68 @@ export type Database = {
           },
         ]
       }
+      user_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          epayco_customer_id: string | null
+          epayco_subscription_id: string | null
+          epayco_token_card: string | null
+          id: string
+          last_payment_at: string | null
+          next_billing_at: string | null
+          plan_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          epayco_customer_id?: string | null
+          epayco_subscription_id?: string | null
+          epayco_token_card?: string | null
+          id?: string
+          last_payment_at?: string | null
+          next_billing_at?: string | null
+          plan_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          epayco_customer_id?: string | null
+          epayco_subscription_id?: string | null
+          epayco_token_card?: string | null
+          id?: string
+          last_payment_at?: string | null
+          next_billing_at?: string | null
+          plan_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_xp_log: {
         Row: {
           action_type: string
@@ -3725,6 +3885,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_monthly_educoins: {
+        Args: { p_amount: number; p_reason?: string; p_user_id: string }
+        Returns: undefined
+      }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_user_detail: { Args: { _user_id: string }; Returns: Json }
       admin_search_users: {
@@ -3868,6 +4032,22 @@ export type Database = {
         }[]
       }
       get_user_path_progress_duplicate_preflight: { Args: never; Returns: Json }
+      get_user_plan: {
+        Args: { p_user_id: string }
+        Returns: {
+          code: string
+          current_period_end: string
+          max_notebooks: number
+          max_sources_per_notebook: number
+          monthly_educoins: number
+          name: string
+          plan_id: string
+          premium_courses_access: boolean
+          read_aloud_access: boolean
+          status: string
+          voice_chat_access: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
