@@ -394,6 +394,7 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
           <Button variant="ghost" onClick={() => handleClose()} disabled={busy}>Cerrar</Button>
         </DialogFooter>
       </DialogContent>
+      <PaywallModal open={paywall.state.open} onClose={paywall.close} feature={paywall.state.feature} description={paywall.state.description} />
     </Dialog>
   );
 };
