@@ -792,10 +792,10 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
                   <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={isRecording ? stopRecording : startRecording} disabled={isLoading || uploading}>
                     {isRecording ? <Square className="w-4 h-4 text-destructive" /> : <Mic className="w-4 h-4" />}
                   </Button>
-                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => setShowAgentSelector(true)} disabled={isLoading || uploading} title="Avatar de voz 3D">
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { if (!requireVoice()) return; setShowAgentSelector(true); }} disabled={isLoading || uploading} title="Avatar de voz 3D">
                     <User className="w-4 h-4" />
                   </Button>
-                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq'); setShowVoiceAssistant(true); }} disabled={isLoading || uploading} title="Conversación de voz">
+                  <Button type="button" size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={() => { if (!requireVoice()) return; setVoiceAgentId('agent_9001kc53p9b3f3da7353ycdk1bgq'); setShowVoiceAssistant(true); }} disabled={isLoading || uploading} title="Conversación de voz">
                     <Phone className="w-4 h-4" />
                   </Button>
                 </div>
