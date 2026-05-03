@@ -350,6 +350,15 @@ export const SedeAIChat = ({ embedded = false }: SedeAIChatProps) => {
   const [voiceAgentId, setVoiceAgentId] = useState('');
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<(VoiceAgent & { configuredAgentId: string }) | null>(null);
+  const { myPlan } = useSubscription();
+  const paywall = usePaywall();
+  const requireVoice = () => {
+    if (!myPlan.data?.voice_chat_access) {
+      paywall.show("Chat conversacional con voz", "Activa el plan Premium o Ultra para conversar con tus agentes por voz.");
+      return false;
+    }
+    return true;
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
