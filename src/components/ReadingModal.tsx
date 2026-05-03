@@ -223,6 +223,7 @@ export const ReadingModal = ({ isOpen, onClose, title, content, onReadComplete }
           </div>
         </ScrollArea>
       </DialogContent>
+      <PaywallModal open={paywall.state.open} onClose={paywall.close} feature={paywall.state.feature} description={paywall.state.description} />
     </Dialog>
   );
 };
