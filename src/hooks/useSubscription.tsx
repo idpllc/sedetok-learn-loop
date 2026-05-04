@@ -63,7 +63,21 @@ export const useSubscription = () => {
   const subscribe = useMutation({
     mutationFn: async (payload: { plan_code: "premium" | "ultra"; payer_email?: string }) => {
       const { data, error } = await supabase.functions.invoke("mp-create-subscription", { body: payload });
-      if (error) throw error;
+      if (error) {
+        let message = error.message || "No se pudo iniciar la suscripción";
+        const context = (error as any).context;
+
+        if (context?.json) {
+          try {
+            const body = await context.json();
+            message = body?.error || body?.message || message;
+          } catch {
+            // Keep the original function error when the response is not JSON.
+          }
+        }
+
+        throw new Error(message);
+      }
       if (!data?.init_point) throw new Error(data?.error || "No se pudo iniciar la suscripción");
       return data as { success: boolean; preapproval_id: string; init_point: string };
     },
