@@ -61,31 +61,54 @@ export const useSubscription = () => {
   });
 
   const subscribe = useMutation({
-    mutationFn: async (payload: { plan_code: "premium" | "ultra"; payer_email?: string }) => {
-      const { data, error } = await supabase.functions.invoke("mp-create-subscription", { body: payload });
+    mutationFn: async (payload: {
+      plan_code: "premium" | "ultra";
+      billing_cycle?: "monthly" | "yearly";
+      discount_code?: string;
+      payer_email?: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke("mp-create-checkout", { body: payload });
       if (error) {
-        let message = error.message || "No se pudo iniciar la suscripción";
+        let message = error.message || "No se pudo iniciar el pago";
         const context = (error as any).context;
-
         if (context?.json) {
           try {
             const body = await context.json();
             message = body?.error || body?.message || message;
-          } catch {
-            // Keep the original function error when the response is not JSON.
-          }
+          } catch {}
         }
-
         throw new Error(message);
       }
-      if (!data?.init_point) throw new Error(data?.error || "No se pudo iniciar la suscripción");
-      return data as { success: boolean; preapproval_id: string; init_point: string };
+      if (!data?.init_point) throw new Error(data?.error || "No se pudo iniciar el pago");
+      return data as {
+        success: boolean;
+        preference_id: string;
+        init_point: string;
+        final_amount_cop: number;
+        discount_amount_cop: number;
+      };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-plan"] });
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
     },
   });
+
+  const validateDiscount = async (params: {
+    code: string;
+    plan_code: string;
+    billing_cycle: "monthly" | "yearly";
+    amount_cop: number;
+  }) => {
+    const { data, error } = await supabase.rpc("validate_discount_code" as any, {
+      _code: params.code,
+      _plan_code: params.plan_code,
+      _billing_cycle: params.billing_cycle,
+      _amount_cop: params.amount_cop,
+    });
+    if (error) throw error;
+    return data as any;
+  };
 
   const cancel = useMutation({
     mutationFn: async () => {
