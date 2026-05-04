@@ -816,6 +816,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           documentUrl = imageUrl;
           thumbnailUrl = imageUrl;
         }
+      } else if (youtubeUrl && isYouTubeUrl(youtubeUrl)) {
+        videoUrl = youtubeUrl.trim();
+        thumbnailUrl = getYouTubeThumbnail(youtubeUrl) || undefined;
       }
 
       // Upload thumbnail if provided (for documents)
