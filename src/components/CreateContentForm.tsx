@@ -36,6 +36,7 @@ import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { RichContentEditor } from "./RichContentEditor";
 import { MindMapEditor } from "./mindmap/MindMapEditor";
 import { MindMapData, createEmptyMindMap } from "./mindmap/types";
+import { isYouTubeUrl, getYouTubeThumbnail, extractYouTubeId } from "@/lib/youtube";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
