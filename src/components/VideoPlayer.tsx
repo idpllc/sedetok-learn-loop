@@ -644,9 +644,128 @@ useImperativeHandle(ref, () => ({
 });
 NativeVideoPlayer.displayName = "NativeVideoPlayer";
 
+// ============== TikTok player sub-component ==============
+const TikTokPlayerInner = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
+  videoUrl, onPrevious, onNext, hasPrevious = true, hasNext = true,
+  contentId, onPlayStateChange, onVideoWatched,
+}, ref) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const hasWatchedRef = useRef(false);
+  const watchedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const embedUrl = getTikTokEmbedUrl(videoUrl);
+
+  useImperativeHandle(ref, () => ({
+    pause: () => { onPlayStateChange?.(false); },
+    play: () => { onPlayStateChange?.(true); },
+    setMuted: () => {},
+    setVolume: () => {},
+    isPlaying: isInView,
+  }));
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => setIsInView(e.isIntersecting && e.intersectionRatio > 0.5),
+      { threshold: [0.5, 0.75, 1] }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    onPlayStateChange?.(isInView);
+    if (isInView && !hasWatchedRef.current) {
+      // mark as watched after 10s in view
+      watchedTimerRef.current = setTimeout(() => {
+        if (!hasWatchedRef.current) {
+          hasWatchedRef.current = true;
+          onVideoWatched?.();
+        }
+      }, 10000);
+    } else if (!isInView && watchedTimerRef.current) {
+      clearTimeout(watchedTimerRef.current);
+      watchedTimerRef.current = null;
+    }
+    return () => {
+      if (watchedTimerRef.current) clearTimeout(watchedTimerRef.current);
+    };
+  }, [isInView, onPlayStateChange, onVideoWatched]);
+
+  useEffect(() => {
+    const h = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    const c = containerRef.current;
+    if (!c) return;
+    try {
+      if (!document.fullscreenElement) await c.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch {}
+  };
+
+  if (!embedUrl) {
+    return (
+      <div className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black text-white px-6 text-center">
+        <div>
+          <p className="mb-2">No se pudo cargar el video de TikTok.</p>
+          <a href={videoUrl} target="_blank" rel="noreferrer" className="text-primary underline">Abrir en TikTok</a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black overflow-hidden" data-content-id={contentId}>
+      {isInView ? (
+        <iframe
+          key={embedUrl}
+          src={embedUrl}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          className="absolute inset-0 w-full h-full border-0"
+          title="TikTok video"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="w-12 h-12 text-white animate-spin" />
+        </div>
+      )}
+
+      <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 flex-col gap-3">
+        {hasPrevious && onPrevious && (
+          <button onClick={onPrevious} className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform hover:bg-white shadow-lg">
+            <ChevronUp className="w-6 h-6 text-black" />
+          </button>
+        )}
+        {hasNext && onNext && (
+          <button onClick={onNext} className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:scale-110 transition-transform hover:bg-white shadow-lg">
+            <ChevronDown className="w-6 h-6 text-black" />
+          </button>
+        )}
+      </div>
+
+      <div className="absolute top-4 right-4 z-30">
+        <button onClick={toggleFullscreen} className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors">
+          {isFullscreen ? <Minimize className="w-5 h-5 text-white" /> : <Maximize className="w-5 h-5 text-white" />}
+        </button>
+      </div>
+    </div>
+  );
+});
+TikTokPlayerInner.displayName = "TikTokPlayerInner";
+
 export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>((props, ref) => {
   if (isYouTubeUrl(props.videoUrl)) {
     return <YouTubePlayerInner ref={ref} {...props} />;
+  }
+  if (isTikTokUrl(props.videoUrl)) {
+    return <TikTokPlayerInner ref={ref} {...props} />;
   }
   return <NativeVideoPlayer ref={ref} {...props} />;
 });
