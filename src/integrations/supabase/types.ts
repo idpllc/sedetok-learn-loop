@@ -3706,6 +3706,8 @@ export type Database = {
           epayco_token_card: string | null
           id: string
           last_payment_at: string | null
+          mp_payer_email: string | null
+          mp_preapproval_id: string | null
           next_billing_at: string | null
           plan_id: string
           status: string
@@ -3723,6 +3725,8 @@ export type Database = {
           epayco_token_card?: string | null
           id?: string
           last_payment_at?: string | null
+          mp_payer_email?: string | null
+          mp_preapproval_id?: string | null
           next_billing_at?: string | null
           plan_id: string
           status?: string
@@ -3740,6 +3744,8 @@ export type Database = {
           epayco_token_card?: string | null
           id?: string
           last_payment_at?: string | null
+          mp_payer_email?: string | null
+          mp_preapproval_id?: string | null
           next_billing_at?: string | null
           plan_id?: string
           status?: string
