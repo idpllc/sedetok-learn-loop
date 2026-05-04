@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from "react";
 import { Play, Pause, Volume2, VolumeX, ChevronUp, ChevronDown, Maximize, Minimize, Loader2 } from "lucide-react";
 import { isYouTubeUrl, getYouTubeEmbedUrl, extractYouTubeId } from "@/lib/youtube";
+import { isTikTokUrl, getTikTokEmbedUrl, extractTikTokId } from "@/lib/tiktok";
 
 interface VideoPlayerProps {
   videoUrl: string;
