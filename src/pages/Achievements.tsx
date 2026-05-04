@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEducoins } from "@/hooks/useEducoins";
 import { useSubscription } from "@/hooks/useSubscription";
+import { getDisplayName } from "@/lib/displayName";
 
 const Achievements = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const Achievements = () => {
       // Fetch top leaderboard
       const { data: top, error: lbError } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, institution, experience_points')
+        .select('id, username, full_name, avatar_url, institution, experience_points')
         .order('experience_points', { ascending: false })
         .limit(10);
       if (!lbError && top) setLeaderboard(top);
@@ -263,7 +264,7 @@ const Achievements = () => {
                     <div className={`text-3xl mb-2 ${idx === 0 ? 'order-2' : ''}`}>
                       {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
                     </div>
-                    <div className="text-sm font-semibold truncate">{u.username || 'Usuario'}</div>
+                    <div className="text-sm font-semibold truncate">{getDisplayName(u)}</div>
                     <div className="text-xs text-muted-foreground">{u.experience_points || 0} XP</div>
                   </div>
                 ))}
