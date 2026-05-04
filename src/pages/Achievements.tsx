@@ -35,7 +35,7 @@ const Achievements = () => {
       // Fetch top leaderboard
       const { data: top, error: lbError } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, institution, experience_points')
+        .select('id, username, full_name, avatar_url, institution, experience_points')
         .order('experience_points', { ascending: false })
         .limit(10);
       if (!lbError && top) setLeaderboard(top);
