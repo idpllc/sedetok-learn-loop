@@ -4031,28 +4031,22 @@ export type Database = {
       admin_list_discount_codes: {
         Args: never
         Returns: {
-          applies_to_cycles: string[] | null
-          applies_to_plans: string[] | null
+          applies_to_cycles: string[]
+          applies_to_plans: string[]
           code: string
           created_at: string
-          created_by: string | null
-          description: string | null
+          created_by: string
+          description: string
           discount_type: string
           discount_value: number
           id: string
           is_active: boolean
-          max_uses: number | null
+          max_uses: number
           updated_at: string
           used_count: number
-          valid_from: string | null
-          valid_until: string | null
+          valid_from: string
+          valid_until: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "discount_codes"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       admin_search_users: {
         Args: { _search: string }
