@@ -1613,22 +1613,23 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <div className="space-y-2">
               <Label htmlFor="file">Contenido de la Cápsula</Label>
 
-              {/* YouTube URL input */}
+              {/* YouTube / TikTok URL input */}
               {!uploadedFile && (
                 <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
                   <Label htmlFor="youtube-url" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Pega un enlace de YouTube
+                    Pega un enlace de YouTube o TikTok
                   </Label>
                   <div className="flex gap-2">
                     <Input
                       id="youtube-url"
                       type="url"
-                      placeholder="https://www.youtube.com/watch?v=..."
+                      placeholder="https://www.youtube.com/... o https://www.tiktok.com/..."
                       value={youtubeUrl}
                       onChange={(e) => {
                         const v = e.target.value;
                         setYoutubeUrl(v);
-                        if (v && isYouTubeUrl(v)) {
+                        const valid = v && (isYouTubeUrl(v) || isTikTokUrl(v));
+                        if (valid) {
                           setFileType('video');
                           setFilePreview(v);
                           setFormData({ ...formData, content_type: "video" as ContentType });
@@ -1658,8 +1659,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                       </Button>
                     )}
                   </div>
-                  {youtubeUrl && !isYouTubeUrl(youtubeUrl) && (
-                    <p className="text-xs text-destructive">Enlace de YouTube no válido</p>
+                  {youtubeUrl && !isYouTubeUrl(youtubeUrl) && !isTikTokUrl(youtubeUrl) && (
+                    <p className="text-xs text-destructive">Enlace de YouTube o TikTok no válido</p>
                   )}
                   {youtubeUrl && isYouTubeUrl(youtubeUrl) && (
                     <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black">
@@ -1678,6 +1679,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                       </div>
                     </div>
                   )}
+                  {youtubeUrl && isTikTokUrl(youtubeUrl) && (
+                    <div className="relative aspect-[9/16] max-h-64 mx-auto w-auto overflow-hidden rounded-md bg-black flex items-center justify-center">
+                      <div className="rounded-full bg-white/90 p-3">
+                        <Video className="h-6 w-6 text-black" />
+                      </div>
+                      <p className="absolute bottom-2 left-0 right-0 text-center text-white text-xs">Video de TikTok</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Soporta youtube.com, youtu.be, Shorts y tiktok.com. Se reproducirá en el carrusel vertical.
+                  </p>
+                </div>
+              )}
                   <p className="text-xs text-muted-foreground">
                     Soporta enlaces de youtube.com, youtu.be y Shorts. Se reproducirá en el carrusel vertical.
                   </p>
