@@ -37,6 +37,7 @@ import { RichContentEditor } from "./RichContentEditor";
 import { MindMapEditor } from "./mindmap/MindMapEditor";
 import { MindMapData, createEmptyMindMap } from "./mindmap/types";
 import { isYouTubeUrl, getYouTubeThumbnail, extractYouTubeId } from "@/lib/youtube";
+import { isTikTokUrl, getTikTokThumbnailViaOEmbed } from "@/lib/tiktok";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
