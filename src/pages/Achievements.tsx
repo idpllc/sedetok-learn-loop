@@ -21,6 +21,7 @@ const Achievements = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { balance: educoinBalance } = useEducoins();
+  const { myPlan } = useSubscription();
 
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [myXP, setMyXP] = useState<number | null>(null);
