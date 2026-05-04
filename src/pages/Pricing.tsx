@@ -2,7 +2,9 @@ import { Helmet } from "react-helmet-async";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, Sparkles, Crown, Loader2, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Check, Sparkles, Crown, Loader2, X, Tag } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -42,11 +44,57 @@ const FEATURES: Record<string, { items: string[] }> = {
   },
 };
 
+const PRICES: Record<string, { monthly: number; yearly: number }> = {
+  premium: { monthly: 14900, yearly: 149000 },
+  ultra: { monthly: 29500, yearly: 295000 },
+};
+
 const Pricing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { myPlan, mySubscription, subscribe, cancel } = useSubscription();
+  const { myPlan, mySubscription, subscribe, cancel, validateDiscount } = useSubscription();
   const [loadingCode, setLoadingCode] = useState<string | null>(null);
+  const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string;
+    discount_amount_cop: number;
+    discount_value: number;
+    discount_type: string;
+  } | null>(null);
+  const [validating, setValidating] = useState(false);
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return;
+    setValidating(true);
+    try {
+      // Validate against premium monthly base for preview; actual check happens at checkout
+      const referencePlan = "premium";
+      const amount = PRICES[referencePlan][cycle];
+      const result = await validateDiscount({
+        code: discountCode.trim(),
+        plan_code: referencePlan,
+        billing_cycle: cycle,
+        amount_cop: amount,
+      });
+      if (!result?.valid) {
+        toast.error(result?.error || "Código inválido");
+        setAppliedDiscount(null);
+      } else {
+        setAppliedDiscount({
+          code: result.code,
+          discount_amount_cop: result.discount_amount_cop,
+          discount_value: result.discount_value,
+          discount_type: result.discount_type,
+        });
+        toast.success("Código aplicado");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Error validando el código");
+    } finally {
+      setValidating(false);
+    }
+  };
 
   const handleSubscribe = async (planCode: "premium" | "ultra") => {
     if (!user) {
@@ -55,11 +103,15 @@ const Pricing = () => {
     }
     setLoadingCode(planCode);
     try {
-      const data = await subscribe.mutateAsync({ plan_code: planCode, payer_email: user.email });
-      // Redirect to MercadoPago checkout
+      const data = await subscribe.mutateAsync({
+        plan_code: planCode,
+        billing_cycle: cycle,
+        discount_code: appliedDiscount?.code,
+        payer_email: user.email,
+      });
       window.location.href = data.init_point;
     } catch (err: any) {
-      toast.error(err.message || "No se pudo iniciar la suscripción");
+      toast.error(err.message || "No se pudo iniciar el pago");
       setLoadingCode(null);
     }
   };
@@ -67,10 +119,25 @@ const Pricing = () => {
   const currentCode = myPlan.data?.code || "free";
   const sub = mySubscription.data as any;
 
-  const planCard = (code: "free" | "premium" | "ultra", price: number, label: string) => {
+  const computeDisplayPrice = (basePrice: number) => {
+    if (!appliedDiscount) return { final: basePrice, original: basePrice };
+    let discount = 0;
+    if (appliedDiscount.discount_type === "percent") {
+      discount = Math.floor(basePrice * (appliedDiscount.discount_value / 100));
+    } else {
+      discount = Math.min(appliedDiscount.discount_value, basePrice);
+    }
+    return { final: Math.max(basePrice - discount, 0), original: basePrice };
+  };
+
+  const planCard = (code: "free" | "premium" | "ultra", label: string) => {
     const isCurrent = currentCode === code;
     const accent = code === "ultra" ? "border-[#F6339A]" : code === "premium" ? "border-primary" : "";
     const isLoading = loadingCode === code;
+    const basePrice = code === "free" ? 0 : PRICES[code][cycle];
+    const { final, original } = computeDisplayPrice(basePrice);
+    const hasDiscount = appliedDiscount && code !== "free" && final < original;
+
     return (
       <Card key={code} className={`p-6 flex flex-col gap-4 relative ${accent} ${code !== "free" ? "border-2" : ""}`}>
         {code === "ultra" && (
@@ -83,8 +150,16 @@ const Pricing = () => {
           <h3 className="text-xl font-bold">{label}</h3>
         </div>
         <div>
-          <span className="text-3xl font-bold">${price.toLocaleString("es-CO")}</span>
-          <span className="text-muted-foreground"> COP/mes</span>
+          {hasDiscount && (
+            <div className="text-sm text-muted-foreground line-through">
+              ${original.toLocaleString("es-CO")} COP
+            </div>
+          )}
+          <span className="text-3xl font-bold">${final.toLocaleString("es-CO")}</span>
+          <span className="text-muted-foreground"> COP/{cycle === "yearly" ? "año" : "mes"}</span>
+          {cycle === "yearly" && code !== "free" && (
+            <div className="text-xs text-green-600 mt-1">Ahorra ~17% vs mensual</div>
+          )}
         </div>
         <ul className="space-y-2 flex-1">
           {FEATURES[code].items.map((f, i) => (
@@ -105,7 +180,7 @@ const Pricing = () => {
             className={code === "ultra" ? "bg-[#F6339A] hover:bg-[#F6339A]/90" : ""}
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Suscribirme con MercadoPago
+            Pagar con MercadoPago
           </Button>
         )}
       </Card>
@@ -121,10 +196,10 @@ const Pricing = () => {
       <Sidebar />
       <main className="ml-0 md:ml-[var(--sidebar-width,16rem)] data-[sidebar-collapsed=true]:md:ml-[var(--sidebar-collapsed-width,4rem)] transition-all">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <header className="text-center mb-10">
+          <header className="text-center mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Elige tu plan</h1>
             <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Notebooks, voz y agentes lectores.</p>
-            <p className="text-xs text-muted-foreground mt-2">Pagos recurrentes seguros con MercadoPago. Puedes cancelar cuando quieras.</p>
+            <p className="text-xs text-muted-foreground mt-2">Pagos seguros con MercadoPago: tarjetas, PSE, Nequi, Daviplata y más.</p>
             {currentCode !== "free" && sub && (
               <div className="mt-4 inline-flex items-center gap-2 text-sm bg-primary/10 px-4 py-2 rounded-full">
                 <Sparkles className="w-4 h-4 text-primary" />
@@ -135,10 +210,61 @@ const Pricing = () => {
             )}
           </header>
 
+          {/* Cycle toggle */}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex p-1 bg-muted rounded-lg">
+              <button
+                onClick={() => setCycle("monthly")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition ${cycle === "monthly" ? "bg-background shadow" : "text-muted-foreground"}`}
+              >
+                Mensual
+              </button>
+              <button
+                onClick={() => setCycle("yearly")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition ${cycle === "yearly" ? "bg-background shadow" : "text-muted-foreground"}`}
+              >
+                Anual <span className="ml-1 text-xs text-green-600">-17%</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Discount code */}
+          <div className="max-w-md mx-auto mb-8">
+            <Label htmlFor="discount" className="text-sm flex items-center gap-1 mb-1">
+              <Tag className="w-4 h-4" /> Código de descuento (opcional)
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="discount"
+                placeholder="Ej: BIENVENIDO20"
+                value={discountCode}
+                onChange={(e) => {
+                  setDiscountCode(e.target.value.toUpperCase());
+                  if (appliedDiscount) setAppliedDiscount(null);
+                }}
+              />
+              <Button
+                variant="outline"
+                onClick={handleApplyDiscount}
+                disabled={validating || !discountCode.trim()}
+              >
+                {validating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Aplicar"}
+              </Button>
+            </div>
+            {appliedDiscount && (
+              <p className="text-xs text-green-600 mt-1">
+                ✓ Código <strong>{appliedDiscount.code}</strong> aplicado
+                {appliedDiscount.discount_type === "percent"
+                  ? ` (-${appliedDiscount.discount_value}%)`
+                  : ` (-$${appliedDiscount.discount_value.toLocaleString("es-CO")} COP)`}
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {planCard("free", 0, "Free")}
-            {planCard("premium", 14900, "Premium")}
-            {planCard("ultra", 29500, "Ultra")}
+            {planCard("free", "Free")}
+            {planCard("premium", "Premium")}
+            {planCard("ultra", "Ultra")}
           </div>
 
           {currentCode !== "free" && sub && !sub.cancel_at_period_end && (

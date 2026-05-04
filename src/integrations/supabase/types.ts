@@ -756,6 +756,102 @@ export type Database = {
           },
         ]
       }
+      discount_code_redemptions: {
+        Row: {
+          amount_discounted_cop: number
+          created_at: string
+          discount_code_id: string
+          id: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_discounted_cop?: number
+          created_at?: string
+          discount_code_id: string
+          id?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_discounted_cop?: number
+          created_at?: string
+          discount_code_id?: string
+          id?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_code_redemptions_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_code_redemptions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "user_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_codes: {
+        Row: {
+          applies_to_cycles: string[] | null
+          applies_to_plans: string[] | null
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+          used_count: number
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          applies_to_cycles?: string[] | null
+          applies_to_plans?: string[] | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          applies_to_cycles?: string[] | null
+          applies_to_plans?: string[] | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       educoin_transactions: {
         Row: {
           amount: number
@@ -2779,7 +2875,10 @@ export type Database = {
       subscription_payments: {
         Row: {
           amount_cop: number
+          billing_cycle: string | null
           created_at: string
+          discount_amount_cop: number | null
+          discount_code_id: string | null
           id: string
           provider: string
           provider_transaction_id: string | null
@@ -2791,7 +2890,10 @@ export type Database = {
         }
         Insert: {
           amount_cop: number
+          billing_cycle?: string | null
           created_at?: string
+          discount_amount_cop?: number | null
+          discount_code_id?: string | null
           id?: string
           provider?: string
           provider_transaction_id?: string | null
@@ -2803,7 +2905,10 @@ export type Database = {
         }
         Update: {
           amount_cop?: number
+          billing_cycle?: string | null
           created_at?: string
+          discount_amount_cop?: number | null
+          discount_code_id?: string | null
           id?: string
           provider?: string
           provider_transaction_id?: string | null
@@ -2835,6 +2940,7 @@ export type Database = {
           name: string
           premium_courses_access: boolean
           price_cop: number
+          price_cop_yearly: number | null
           read_aloud_access: boolean
           sort_order: number
           updated_at: string
@@ -2851,6 +2957,7 @@ export type Database = {
           name: string
           premium_courses_access?: boolean
           price_cop?: number
+          price_cop_yearly?: number | null
           read_aloud_access?: boolean
           sort_order?: number
           updated_at?: string
@@ -2867,6 +2974,7 @@ export type Database = {
           name?: string
           premium_courses_access?: boolean
           price_cop?: number
+          price_cop_yearly?: number | null
           read_aloud_access?: boolean
           sort_order?: number
           updated_at?: string
@@ -3702,11 +3810,14 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          billing_cycle: string
           cancel_at_period_end: boolean
           cancelled_at: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          discount_amount_cop: number | null
+          discount_code_id: string | null
           epayco_customer_id: string | null
           epayco_subscription_id: string | null
           epayco_token_card: string | null
@@ -3714,6 +3825,7 @@ export type Database = {
           last_payment_at: string | null
           mp_payer_email: string | null
           mp_preapproval_id: string | null
+          mp_preference_id: string | null
           next_billing_at: string | null
           plan_id: string
           status: string
@@ -3721,11 +3833,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          billing_cycle?: string
           cancel_at_period_end?: boolean
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          discount_amount_cop?: number | null
+          discount_code_id?: string | null
           epayco_customer_id?: string | null
           epayco_subscription_id?: string | null
           epayco_token_card?: string | null
@@ -3733,6 +3848,7 @@ export type Database = {
           last_payment_at?: string | null
           mp_payer_email?: string | null
           mp_preapproval_id?: string | null
+          mp_preference_id?: string | null
           next_billing_at?: string | null
           plan_id: string
           status?: string
@@ -3740,11 +3856,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          billing_cycle?: string
           cancel_at_period_end?: boolean
           cancelled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          discount_amount_cop?: number | null
+          discount_code_id?: string | null
           epayco_customer_id?: string | null
           epayco_subscription_id?: string | null
           epayco_token_card?: string | null
@@ -3752,6 +3871,7 @@ export type Database = {
           last_payment_at?: string | null
           mp_payer_email?: string | null
           mp_preapproval_id?: string | null
+          mp_preference_id?: string | null
           next_billing_at?: string | null
           plan_id?: string
           status?: string
@@ -3905,8 +4025,35 @@ export type Database = {
         Args: { _delta: number; _reason?: string; _user_id: string }
         Returns: number
       }
+      admin_delete_discount_code: { Args: { _id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_user_detail: { Args: { _user_id: string }; Returns: Json }
+      admin_list_discount_codes: {
+        Args: never
+        Returns: {
+          applies_to_cycles: string[] | null
+          applies_to_plans: string[] | null
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+          used_count: number
+          valid_from: string | null
+          valid_until: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "discount_codes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_search_users: {
         Args: { _search: string }
         Returns: {
@@ -3922,6 +4069,22 @@ export type Database = {
           roles: string[]
           username: string
         }[]
+      }
+      admin_upsert_discount_code: {
+        Args: {
+          _applies_to_cycles: string[]
+          _applies_to_plans: string[]
+          _code: string
+          _description: string
+          _discount_type: string
+          _discount_value: number
+          _id: string
+          _is_active: boolean
+          _max_uses: number
+          _valid_from: string
+          _valid_until: string
+        }
+        Returns: string
       }
       award_xp_for_action: {
         Args: {
@@ -4137,6 +4300,15 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      validate_discount_code: {
+        Args: {
+          _amount_cop: number
+          _billing_cycle: string
+          _code: string
+          _plan_code: string
+        }
+        Returns: Json
       }
     }
     Enums: {
