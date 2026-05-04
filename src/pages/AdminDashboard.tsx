@@ -39,6 +39,7 @@ import { StudyPlanWebhookDocs } from "@/components/admin/StudyPlanWebhookDocs";
 import { StudyPlanManagement } from "@/components/admin/StudyPlanManagement";
 import { TriviaAdminPanel } from "@/components/trivia/TriviaAdminPanel";
 import { Brain } from "lucide-react";
+import { DiscountCodesManagement } from "@/components/admin/DiscountCodesManagement";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
