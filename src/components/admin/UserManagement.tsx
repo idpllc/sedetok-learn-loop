@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2, FilterX } from "lucide-react";
+import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2, FilterX, Award } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
