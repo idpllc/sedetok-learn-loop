@@ -820,6 +820,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       } else if (youtubeUrl && isYouTubeUrl(youtubeUrl)) {
         videoUrl = youtubeUrl.trim();
         thumbnailUrl = getYouTubeThumbnail(youtubeUrl) || undefined;
+      } else if (youtubeUrl && isTikTokUrl(youtubeUrl)) {
+        videoUrl = youtubeUrl.trim();
+        thumbnailUrl = (await getTikTokThumbnailViaOEmbed(youtubeUrl)) || undefined;
       }
 
       // Upload thumbnail if provided (for documents)
