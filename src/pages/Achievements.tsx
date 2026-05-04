@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEducoins } from "@/hooks/useEducoins";
 import { useSubscription } from "@/hooks/useSubscription";
+import { getDisplayName } from "@/lib/displayName";
 
 const Achievements = () => {
   const navigate = useNavigate();
