@@ -19,10 +19,49 @@ serve(async (req) => {
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const mpToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")!;
+    const webhookSecret = Deno.env.get("MERCADOPAGO_WEBHOOK_SECRET");
 
     const url = new URL(req.url);
     let topic = url.searchParams.get("topic") || url.searchParams.get("type") || "";
     let id = url.searchParams.get("id") || url.searchParams.get("data.id") || "";
+
+    // Validate MercadoPago webhook signature when secret is configured
+    // Docs: https://www.mercadopago.com.co/developers/en/docs/your-integrations/notifications/webhooks
+    if (webhookSecret) {
+      const xSignature = req.headers.get("x-signature") || "";
+      const xRequestId = req.headers.get("x-request-id") || "";
+      const dataId = url.searchParams.get("data.id") || id;
+
+      const parts = Object.fromEntries(
+        xSignature.split(",").map((p) => {
+          const [k, ...v] = p.trim().split("=");
+          return [k, v.join("=")];
+        })
+      ) as Record<string, string>;
+      const ts = parts.ts;
+      const v1 = parts.v1;
+
+      if (!ts || !v1) {
+        console.warn("mp-webhook: missing x-signature parts");
+        return new Response(JSON.stringify({ error: "invalid signature" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+      const key = await crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(webhookSecret),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+      const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
+      const computed = Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      if (computed !== v1) {
+        console.warn("mp-webhook: signature mismatch", { computed, v1 });
+        return new Response(JSON.stringify({ error: "invalid signature" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
 
     let body: any = {};
     if (req.headers.get("content-type")?.includes("application/json")) {
