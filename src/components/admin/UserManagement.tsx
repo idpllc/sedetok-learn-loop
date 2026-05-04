@@ -206,6 +206,9 @@ export function UserManagement() {
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
+  });
+
+  // Delete user mutation (permanent)
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await supabase.rpc("admin_delete_user", { _user_id: userId });
