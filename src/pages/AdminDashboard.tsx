@@ -407,6 +407,9 @@ export default function AdminDashboard() {
             <StudyPlanWebhookDocs />
           </TabsContent>
 
+          <TabsContent value="discounts">
+            <DiscountCodesManagement />
+          </TabsContent>
           <TabsContent value="settings">
             <ApiConfiguration />
           </TabsContent>
