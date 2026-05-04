@@ -723,14 +723,23 @@ const TikTokPlayerInner = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   return (
     <div ref={containerRef} className="relative w-full h-[calc(100vh-80px)] flex items-center justify-center bg-black overflow-hidden" data-content-id={contentId}>
       {isInView ? (
-        <iframe
-          key={embedUrl}
-          src={embedUrl}
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowFullScreen
-          className="absolute inset-0 w-full h-full border-0"
-          title="TikTok video"
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <iframe
+            key={embedUrl}
+            src={embedUrl}
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            title="TikTok video"
+            style={{
+              position: "absolute",
+              top: "-12%",
+              left: "-30%",
+              width: "160%",
+              height: "130%",
+              border: 0,
+            }}
+          />
+        </div>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
           <Loader2 className="w-12 h-12 text-white animate-spin" />
