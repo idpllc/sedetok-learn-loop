@@ -31,7 +31,8 @@ export const isNumericTikTokId = (id: string | null): boolean => !!id && /^\d{6,
 export const getTikTokEmbedUrl = (url: string): string | null => {
   const id = extractTikTokId(url);
   if (!id || !isNumericTikTokId(id)) return null;
-  return `https://www.tiktok.com/embed/v2/${id}?lang=es&autoplay=1`;
+  // v1 embed has less chrome than v2 (no related videos carousel)
+  return `https://www.tiktok.com/embed/${id}?lang=es&autoplay=1&music_info=0&description=0`;
 };
 
 export const getTikTokThumbnailViaOEmbed = async (url: string): Promise<string | null> => {
