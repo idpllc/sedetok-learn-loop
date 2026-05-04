@@ -61,32 +61,21 @@ export const useSubscription = () => {
   });
 
   const subscribe = useMutation({
-    mutationFn: async (payload: {
-      plan_code: "premium" | "ultra";
-      token_card: string;
-      card_holder?: string;
-      card_email?: string;
-      card_phone?: string;
-      doc_type?: string;
-      doc_number?: string;
-      address?: string;
-      city?: string;
-    }) => {
-      const { data, error } = await supabase.functions.invoke("epayco-create-subscription", { body: payload });
+    mutationFn: async (payload: { plan_code: "premium" | "ultra"; payer_email?: string }) => {
+      const { data, error } = await supabase.functions.invoke("mp-create-subscription", { body: payload });
       if (error) throw error;
-      if (!data?.success && data?.status !== "pending") throw new Error(data?.error || "No se pudo activar");
-      return data;
+      if (!data?.init_point) throw new Error(data?.error || "No se pudo iniciar la suscripción");
+      return data as { success: boolean; preapproval_id: string; init_point: string };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-plan"] });
       qc.invalidateQueries({ queryKey: ["my-subscription"] });
-      qc.invalidateQueries({ queryKey: ["educoin-balance"] });
     },
   });
 
   const cancel = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("epayco-cancel-subscription", { body: {} });
+      const { data, error } = await supabase.functions.invoke("mp-cancel-subscription", { body: {} });
       if (error) throw error;
       return data;
     },
