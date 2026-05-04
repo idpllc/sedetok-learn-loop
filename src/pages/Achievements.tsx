@@ -15,6 +15,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEducoins } from "@/hooks/useEducoins";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const Achievements = () => {
   const navigate = useNavigate();
