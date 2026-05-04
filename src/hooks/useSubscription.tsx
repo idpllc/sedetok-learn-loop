@@ -121,5 +121,5 @@ export const useSubscription = () => {
     },
   });
 
-  return { plans, myPlan, mySubscription, subscribe, cancel };
+  return { plans, myPlan, mySubscription, subscribe, cancel, validateDiscount };
 };
