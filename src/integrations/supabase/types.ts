@@ -1929,10 +1929,12 @@ export type Database = {
           created_at: string | null
           email_enabled: boolean | null
           email_evaluation_result: boolean | null
+          email_level_up: boolean | null
           email_mention: boolean | null
           email_new_comment: boolean | null
           email_new_follower: boolean | null
           email_new_like: boolean | null
+          email_path_enrollment: boolean | null
           email_path_update: boolean | null
           id: string
           updated_at: string | null
@@ -1942,10 +1944,12 @@ export type Database = {
           created_at?: string | null
           email_enabled?: boolean | null
           email_evaluation_result?: boolean | null
+          email_level_up?: boolean | null
           email_mention?: boolean | null
           email_new_comment?: boolean | null
           email_new_follower?: boolean | null
           email_new_like?: boolean | null
+          email_path_enrollment?: boolean | null
           email_path_update?: boolean | null
           id?: string
           updated_at?: string | null
@@ -1955,10 +1959,12 @@ export type Database = {
           created_at?: string | null
           email_enabled?: boolean | null
           email_evaluation_result?: boolean | null
+          email_level_up?: boolean | null
           email_mention?: boolean | null
           email_new_comment?: boolean | null
           email_new_follower?: boolean | null
           email_new_like?: boolean | null
+          email_path_enrollment?: boolean | null
           email_path_update?: boolean | null
           id?: string
           updated_at?: string | null
@@ -3953,6 +3959,14 @@ export type Database = {
       check_and_award_path_completion_xp: {
         Args: { p_path_id: string; p_user_id: string }
         Returns: boolean
+      }
+      compute_xp_level: {
+        Args: { _xp: number }
+        Returns: {
+          level_icon: string
+          level_index: number
+          level_name: string
+        }[]
       }
       decrement_comments_count: {
         Args: { content_id: string }
