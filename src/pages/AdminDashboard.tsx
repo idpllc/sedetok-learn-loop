@@ -26,6 +26,7 @@ import {
   GraduationCap,
   Activity,
   AlertTriangle,
+  Tag,
 } from "lucide-react";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { InteractionsAnalytics } from "@/components/admin/InteractionsAnalytics";
