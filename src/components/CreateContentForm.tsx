@@ -1731,7 +1731,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   </Button>
                 </div>
               </div>
-              {filePreview && (
+              )}
+              {filePreview && fileType === 'video' && isYouTubeUrl(filePreview) ? null : filePreview && (
                 <div className="relative">
                   {fileType === 'video' && (
                     <>
