@@ -247,6 +247,15 @@ const Pricing = () => {
       <Sidebar />
       <main className="ml-0 md:ml-[var(--sidebar-width,16rem)] data-[sidebar-collapsed=true]:md:ml-[var(--sidebar-collapsed-width,4rem)] transition-all">
         <div className="max-w-6xl mx-auto px-4 py-8">
+          {syncing && (
+            <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <div>
+                <p className="font-semibold">Confirmando tu pago...</p>
+                <p className="text-sm text-muted-foreground">Esto puede tardar unos segundos.</p>
+              </div>
+            </div>
+          )}
           <header className="text-center mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Elige tu plan</h1>
             <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Notebooks, voz y agentes lectores.</p>
