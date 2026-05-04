@@ -27,6 +27,8 @@ export interface NotificationPreferences {
   email_path_update: boolean;
   email_evaluation_result: boolean;
   email_mention: boolean;
+  email_level_up: boolean;
+  email_path_enrollment: boolean;
   created_at: string;
   updated_at: string;
 }
