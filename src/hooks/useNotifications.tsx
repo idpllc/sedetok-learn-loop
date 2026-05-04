@@ -197,6 +197,32 @@ export const useNotifications = () => {
     },
   });
 
+  // Realtime: dispatch email + push for any new notification inserted for this user
+  // (covers DB-trigger inserts like level_up and path_enrollment).
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`notifications-auto-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const n: any = payload.new;
+          queryClient.invalidateQueries({ queryKey: ["notifications"] });
+          if (n?.id && !n.email_sent) {
+            supabase.functions.invoke('email-existing-notification', {
+              body: { notificationId: n.id },
+            }).catch((e) => console.warn('email-existing-notification failed', e));
+          }
+          supabase.functions.invoke('send-push-notification', {
+            body: { userId: n.user_id, title: n.title, message: n.message },
+          }).catch(() => {});
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, queryClient]);
+
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
   return {
