@@ -10,7 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const FEATURES: Record<string, { items: string[] }> = {
   free: {
@@ -63,6 +66,54 @@ const Pricing = () => {
     discount_type: string;
   } | null>(null);
   const [validating, setValidating] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [syncing, setSyncing] = useState(false);
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const status = searchParams.get("subscription");
+    if (!status || !user) return;
+
+    if (status === "failure") {
+      toast.error("El pago no pudo completarse");
+      setSearchParams({}, { replace: true });
+      return;
+    }
+
+    if (status === "success" || status === "pending") {
+      setSyncing(true);
+      let cancelled = false;
+      let attempts = 0;
+      const maxAttempts = 12;
+
+      const poll = async () => {
+        while (!cancelled && attempts < maxAttempts) {
+          attempts++;
+          try {
+            const { data } = await supabase.functions.invoke("mp-sync-checkout", { body: {} });
+            if (data?.synced && data?.status === "active") {
+              toast.success("¡Suscripción activada!");
+              await qc.invalidateQueries({ queryKey: ["my-plan"] });
+              await qc.invalidateQueries({ queryKey: ["my-subscription"] });
+              setSyncing(false);
+              setSearchParams({}, { replace: true });
+              return;
+            }
+          } catch (e) {
+            console.error("sync error:", e);
+          }
+          await new Promise((r) => setTimeout(r, 2500));
+        }
+        if (!cancelled) {
+          setSyncing(false);
+          toast.info("Estamos confirmando tu pago. Refresca en unos segundos.");
+          setSearchParams({}, { replace: true });
+        }
+      };
+      poll();
+      return () => { cancelled = true; };
+    }
+  }, [searchParams, user?.id]);
 
   const handleApplyDiscount = async () => {
     if (!discountCode.trim()) return;
@@ -196,6 +247,15 @@ const Pricing = () => {
       <Sidebar />
       <main className="ml-0 md:ml-[var(--sidebar-width,16rem)] data-[sidebar-collapsed=true]:md:ml-[var(--sidebar-collapsed-width,4rem)] transition-all">
         <div className="max-w-6xl mx-auto px-4 py-8">
+          {syncing && (
+            <div className="mb-6 p-4 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <div>
+                <p className="font-semibold">Confirmando tu pago...</p>
+                <p className="text-sm text-muted-foreground">Esto puede tardar unos segundos.</p>
+              </div>
+            </div>
+          )}
           <header className="text-center mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Elige tu plan</h1>
             <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Notebooks, voz y agentes lectores.</p>
