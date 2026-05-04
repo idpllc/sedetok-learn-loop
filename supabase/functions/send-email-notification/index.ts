@@ -56,6 +56,8 @@ serve(async (req) => {
       'evaluation_result': 'email_evaluation_result',
       'mention': 'email_mention',
       'trivia_invitation': 'email_new_follower', // Use existing preference
+      'level_up': 'email_level_up',
+      'path_enrollment': 'email_path_enrollment',
     };
 
     const emailField = emailFieldMap[notificationType];

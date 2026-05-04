@@ -145,6 +145,34 @@ export const NotificationPreferences = () => {
                     onCheckedChange={(checked) => handleToggle("email_mention", checked)}
                   />
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="email_level_up" className="flex flex-col gap-1">
+                    <span className="font-medium">Nuevo nivel o logro</span>
+                    <span className="text-sm text-muted-foreground">
+                      Cuando alcanzas un nuevo nivel de XP
+                    </span>
+                  </Label>
+                  <Switch
+                    id="email_level_up"
+                    checked={preferences.email_level_up}
+                    onCheckedChange={(checked) => handleToggle("email_level_up", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="email_path_enrollment" className="flex flex-col gap-1">
+                    <span className="font-medium">Inscripciones a tus rutas</span>
+                    <span className="text-sm text-muted-foreground">
+                      Cuando alguien se inscribe en una ruta que creaste
+                    </span>
+                  </Label>
+                  <Switch
+                    id="email_path_enrollment"
+                    checked={preferences.email_path_enrollment}
+                    onCheckedChange={(checked) => handleToggle("email_path_enrollment", checked)}
+                  />
+                </div>
               </div>
             </div>
           </>

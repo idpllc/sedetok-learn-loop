@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +28,8 @@ export interface NotificationPreferences {
   email_path_update: boolean;
   email_evaluation_result: boolean;
   email_mention: boolean;
+  email_level_up: boolean;
+  email_path_enrollment: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -193,6 +196,32 @@ export const useNotifications = () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
+
+  // Realtime: dispatch email + push for any new notification inserted for this user
+  // (covers DB-trigger inserts like level_up and path_enrollment).
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`notifications-auto-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const n: any = payload.new;
+          queryClient.invalidateQueries({ queryKey: ["notifications"] });
+          if (n?.id && !n.email_sent) {
+            supabase.functions.invoke('email-existing-notification', {
+              body: { notificationId: n.id },
+            }).catch((e) => console.warn('email-existing-notification failed', e));
+          }
+          supabase.functions.invoke('send-push-notification', {
+            body: { userId: n.user_id, title: n.title, message: n.message },
+          }).catch(() => {});
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, queryClient]);
 
   const unreadCount = notifications?.filter((n) => !n.read).length || 0;
 
