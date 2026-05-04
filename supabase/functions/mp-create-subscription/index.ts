@@ -3,23 +3,62 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const MP_BASE = "https://api.mercadopago.com";
+
+const defaultPlans = [
+  { code: "free", name: "Free", price_cop: 0, monthly_educoins: 20, max_notebooks: 1, max_sources_per_notebook: 3, voice_chat_access: false, read_aloud_access: false, premium_courses_access: false, is_active: true, sort_order: 1 },
+  { code: "premium", name: "Premium", price_cop: 14900, monthly_educoins: 100, max_notebooks: 20, max_sources_per_notebook: 50, voice_chat_access: true, read_aloud_access: true, premium_courses_access: false, is_active: true, sort_order: 2 },
+  { code: "ultra", name: "Ultra", price_cop: 29500, monthly_educoins: 300, max_notebooks: null, max_sources_per_notebook: null, voice_chat_access: true, read_aloud_access: true, premium_courses_access: true, is_active: true, sort_order: 3 },
+];
+
+const jsonResponse = (body: Record<string, unknown>, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const normalizeBaseUrl = (value?: string) => {
+  const cleaned = (value || "https://sedefy.com").trim().replace(/\/+$/, "");
+  return /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
+};
+
+const ensureDefaultPlans = async (admin: ReturnType<typeof createClient>) => {
+  const { error } = await admin
+    .from("subscription_plans")
+    .upsert(defaultPlans, { onConflict: "code" });
+
+  if (error) {
+    console.error("Failed to ensure subscription plans:", error.message);
+    throw new Error("No se pudieron preparar los planes de suscripción");
+  }
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const mpToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN")!;
-    const customDomain = Deno.env.get("CUSTOM_DOMAIN") || "https://sedefy.com";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const mpToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
+    const missingEnv = [
+      ["SUPABASE_URL", supabaseUrl],
+      ["SUPABASE_SERVICE_ROLE_KEY", serviceKey],
+      ["MERCADOPAGO_ACCESS_TOKEN", mpToken],
+    ].filter(([, value]) => !value).map(([name]) => name);
+
+    if (missingEnv.length > 0) {
+      console.error("Missing subscription environment variables:", missingEnv.join(", "));
+      return jsonResponse({ error: "Configuración de pagos incompleta", missing: missingEnv }, 500);
+    }
+
+    const customDomain = normalizeBaseUrl(Deno.env.get("CUSTOM_DOMAIN"));
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ error: "No autorizado" }, 401);
     }
 
     const supabase = createClient(supabaseUrl, serviceKey, {
@@ -27,18 +66,20 @@ serve(async (req) => {
     });
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      return new Response(JSON.stringify({ error: "No autorizado" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ error: "No autorizado" }, 401);
     }
 
     const { plan_code, payer_email } = await req.json();
     if (!plan_code) {
-      return new Response(JSON.stringify({ error: "Falta plan_code" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ error: "Falta plan_code" }, 400);
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
+    await ensureDefaultPlans(admin);
+
     const { data: plan } = await admin.from("subscription_plans").select("*").eq("code", plan_code).maybeSingle();
     if (!plan || plan.code === "free") {
-      return new Response(JSON.stringify({ error: "Plan inválido" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ error: "Plan inválido" }, 400);
     }
 
     const email = payer_email || user.email;
@@ -77,25 +118,41 @@ serve(async (req) => {
       },
       body: JSON.stringify(preapprovalPayload),
     });
-    const mpData = await mpRes.json();
-    console.log("mp preapproval:", mpData);
+    const mpRaw = await mpRes.text();
+    let mpData: any = null;
+    try {
+      mpData = mpRaw ? JSON.parse(mpRaw) : null;
+    } catch {
+      mpData = { raw: mpRaw };
+    }
+    console.log("mp preapproval:", {
+      status: mpRes.status,
+      has_id: Boolean(mpData?.id),
+      message: mpData?.message || mpData?.error || null,
+    });
 
     if (!mpRes.ok || !mpData?.id) {
       await admin.from("user_subscriptions").update({ status: "failed" }).eq("id", pendingSub.id);
-      return new Response(JSON.stringify({ error: "No se pudo crear la suscripción", detail: mpData }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ error: "No se pudo crear la suscripción", detail: mpData }, 400);
+    }
+
+    const initPoint = mpData.init_point || mpData.sandbox_init_point;
+    if (!initPoint) {
+      await admin.from("user_subscriptions").update({ status: "failed" }).eq("id", pendingSub.id);
+      return jsonResponse({ error: "Mercado Pago no devolvió un enlace de pago", detail: mpData }, 400);
     }
 
     await admin.from("user_subscriptions").update({
       mp_preapproval_id: mpData.id,
     }).eq("id", pendingSub.id);
 
-    return new Response(JSON.stringify({
+    return jsonResponse({
       success: true,
       preapproval_id: mpData.id,
-      init_point: mpData.init_point,
-    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      init_point: initPoint,
+    });
   } catch (err) {
     console.error("mp-create-subscription error:", err);
-    return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return jsonResponse({ error: (err as Error).message }, 500);
   }
 });
