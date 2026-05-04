@@ -264,7 +264,7 @@ const Achievements = () => {
                     <div className={`text-3xl mb-2 ${idx === 0 ? 'order-2' : ''}`}>
                       {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
                     </div>
-                    <div className="text-sm font-semibold truncate">{u.username || 'Usuario'}</div>
+                    <div className="text-sm font-semibold truncate">{getDisplayName(u)}</div>
                     <div className="text-xs text-muted-foreground">{u.experience_points || 0} XP</div>
                   </div>
                 ))}
