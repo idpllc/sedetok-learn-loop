@@ -58,6 +58,9 @@ export function UserManagement() {
   const [educoinsDialog, setEducoinsDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
   const [educoinsAmount, setEducoinsAmount] = useState("");
   const [educoinsReason, setEducoinsReason] = useState("");
+  const [xpDialog, setXpDialog] = useState<{ open: boolean; userId?: string; username?: string; currentXp?: number }>({ open: false });
+  const [xpDelta, setXpDelta] = useState("");
+  const [xpReason, setXpReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | undefined>();
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
