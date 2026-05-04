@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -7,17 +6,9 @@ import { Check, Sparkles, Crown, Loader2, X } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
-declare global {
-  interface Window {
-    ePayco?: any;
-  }
-}
+import { useState } from "react";
 
 const FEATURES: Record<string, { items: string[] }> = {
   free: {
@@ -54,71 +45,22 @@ const FEATURES: Record<string, { items: string[] }> = {
 const Pricing = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { plans, myPlan, mySubscription, subscribe, cancel } = useSubscription();
-  const [selected, setSelected] = useState<"premium" | "ultra" | null>(null);
-  const [card, setCard] = useState({ number: "", name: "", exp_month: "", exp_year: "", cvc: "", email: "", phone: "", doc_number: "" });
-  const [submitting, setSubmitting] = useState(false);
-
-  // Load ePayco SDK
-  useEffect(() => {
-    if (window.ePayco) return;
-    const script = document.createElement("script");
-    script.src = "https://checkout.epayco.co/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+  const { myPlan, mySubscription, subscribe, cancel } = useSubscription();
+  const [loadingCode, setLoadingCode] = useState<string | null>(null);
 
   const handleSubscribe = async (planCode: "premium" | "ultra") => {
     if (!user) {
       navigate("/auth?redirect=/pricing");
       return;
     }
-    setSelected(planCode);
-  };
-
-  const tokenizeCard = async (): Promise<string> => {
-    const publicKey = import.meta.env.VITE_EPAYCO_PUBLIC_KEY || (window as any).EPAYCO_PUBLIC_KEY;
-    if (!publicKey) {
-      // Fallback: ask backend (simpler) — but for MVP we send PAN to a tokenization helper
-      throw new Error("Falta configurar VITE_EPAYCO_PUBLIC_KEY");
-    }
-    // ePayco token-card endpoint
-    const res = await fetch(`https://api.secure.payco.co/v1/tokens`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Basic ${btoa(publicKey + ":")}` },
-      body: JSON.stringify({
-        "card[number]": card.number.replace(/\s/g, ""),
-        "card[exp_year]": card.exp_year,
-        "card[exp_month]": card.exp_month,
-        "card[cvc]": card.cvc,
-        hasCvv: true,
-      }),
-    });
-    const data = await res.json();
-    if (!data?.id) throw new Error(data?.message || "No se pudo tokenizar la tarjeta");
-    return data.id;
-  };
-
-  const handleConfirmPayment = async () => {
-    if (!selected) return;
-    setSubmitting(true);
+    setLoadingCode(planCode);
     try {
-      const token = await tokenizeCard();
-      await subscribe.mutateAsync({
-        plan_code: selected,
-        token_card: token,
-        card_holder: card.name,
-        card_email: card.email || user?.email,
-        card_phone: card.phone,
-        doc_type: "CC",
-        doc_number: card.doc_number,
-      });
-      toast.success("¡Suscripción activada!");
-      setSelected(null);
+      const data = await subscribe.mutateAsync({ plan_code: planCode, payer_email: user.email });
+      // Redirect to MercadoPago checkout
+      window.location.href = data.init_point;
     } catch (err: any) {
-      toast.error(err.message || "No se pudo procesar el pago");
-    } finally {
-      setSubmitting(false);
+      toast.error(err.message || "No se pudo iniciar la suscripción");
+      setLoadingCode(null);
     }
   };
 
@@ -128,6 +70,7 @@ const Pricing = () => {
   const planCard = (code: "free" | "premium" | "ultra", price: number, label: string) => {
     const isCurrent = currentCode === code;
     const accent = code === "ultra" ? "border-[#F6339A]" : code === "premium" ? "border-primary" : "";
+    const isLoading = loadingCode === code;
     return (
       <Card key={code} className={`p-6 flex flex-col gap-4 relative ${accent} ${code !== "free" ? "border-2" : ""}`}>
         {code === "ultra" && (
@@ -158,9 +101,11 @@ const Pricing = () => {
         ) : (
           <Button
             onClick={() => handleSubscribe(code as "premium" | "ultra")}
+            disabled={isLoading}
             className={code === "ultra" ? "bg-[#F6339A] hover:bg-[#F6339A]/90" : ""}
           >
-            Suscribirme
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            Suscribirme con MercadoPago
           </Button>
         )}
       </Card>
@@ -179,6 +124,7 @@ const Pricing = () => {
           <header className="text-center mb-10">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Elige tu plan</h1>
             <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Notebooks, voz y agentes lectores.</p>
+            <p className="text-xs text-muted-foreground mt-2">Pagos recurrentes seguros con MercadoPago. Puedes cancelar cuando quieras.</p>
             {currentCode !== "free" && sub && (
               <div className="mt-4 inline-flex items-center gap-2 text-sm bg-primary/10 px-4 py-2 rounded-full">
                 <Sparkles className="w-4 h-4 text-primary" />
@@ -216,60 +162,6 @@ const Pricing = () => {
           )}
         </div>
       </main>
-
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Pagar plan {selected}</DialogTitle>
-            <DialogDescription>Tu tarjeta se cobrará automáticamente cada mes. Puedes cancelar cuando quieras.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3">
-            <div>
-              <Label>Número de tarjeta</Label>
-              <Input inputMode="numeric" maxLength={19} value={card.number} onChange={(e) => setCard({ ...card, number: e.target.value })} placeholder="4575 6231 8229 0326" />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <Label>Mes</Label>
-                <Input inputMode="numeric" maxLength={2} value={card.exp_month} onChange={(e) => setCard({ ...card, exp_month: e.target.value })} placeholder="12" />
-              </div>
-              <div>
-                <Label>Año</Label>
-                <Input inputMode="numeric" maxLength={4} value={card.exp_year} onChange={(e) => setCard({ ...card, exp_year: e.target.value })} placeholder="2030" />
-              </div>
-              <div>
-                <Label>CVC</Label>
-                <Input inputMode="numeric" maxLength={4} value={card.cvc} onChange={(e) => setCard({ ...card, cvc: e.target.value })} placeholder="123" />
-              </div>
-            </div>
-            <div>
-              <Label>Nombre en la tarjeta</Label>
-              <Input value={card.name} onChange={(e) => setCard({ ...card, name: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label>Email</Label>
-                <Input type="email" value={card.email} onChange={(e) => setCard({ ...card, email: e.target.value })} placeholder={user?.email || ""} />
-              </div>
-              <div>
-                <Label>Documento</Label>
-                <Input value={card.doc_number} onChange={(e) => setCard({ ...card, doc_number: e.target.value })} />
-              </div>
-            </div>
-            <div>
-              <Label>Teléfono</Label>
-              <Input value={card.phone} onChange={(e) => setCard({ ...card, phone: e.target.value })} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setSelected(null)}>Cancelar</Button>
-            <Button onClick={handleConfirmPayment} disabled={submitting} className="bg-[#F6339A] hover:bg-[#F6339A]/90">
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Pagar ${selected === "ultra" ? "29.500" : "14.900"} COP
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
