@@ -203,7 +203,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       if (contentData.video_url) {
         setFilePreview(contentData.video_url);
         setFileType('video');
-        if (/youtube\.com|youtu\.be/i.test(contentData.video_url)) {
+        if (/youtube\.com|youtu\.be|tiktok\.com/i.test(contentData.video_url)) {
           setYoutubeUrl(contentData.video_url);
         }
       } else if (contentData.document_url) {
