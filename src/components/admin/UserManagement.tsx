@@ -576,6 +576,62 @@ export function UserManagement() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={xpDialog.open} onOpenChange={(open) => setXpDialog({ open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajustar XP</DialogTitle>
+            <DialogDescription>
+              Sumar o restar puntos de experiencia a @{xpDialog.username} (actual: {xpDialog.currentXp ?? 0} XP)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="xp-delta">Cantidad (usa negativo para restar)</Label>
+              <Input
+                id="xp-delta"
+                type="number"
+                placeholder="Ej: 500 ó -500"
+                value={xpDelta}
+                onChange={(e) => setXpDelta(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="xp-reason">Motivo (opcional)</Label>
+              <Input
+                id="xp-reason"
+                placeholder="Ej: Ajuste por sanción"
+                value={xpReason}
+                onChange={(e) => setXpReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setXpDialog({ open: false }); setXpDelta(""); setXpReason(""); }}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                const delta = parseInt(xpDelta);
+                if (isNaN(delta) || delta === 0) {
+                  toast({ title: "Error", description: "Ingresa un número distinto de cero", variant: "destructive" });
+                  return;
+                }
+                if (xpDialog.userId) {
+                  adjustXpMutation.mutate({
+                    userId: xpDialog.userId,
+                    delta,
+                    reason: xpReason || "Ajuste manual por administrador",
+                  });
+                }
+              }}
+              disabled={adjustXpMutation.isPending}
+            >
+              {adjustXpMutation.isPending ? "Aplicando..." : "Aplicar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <UserDetailDialog
         userId={detailUserId}
         open={!!detailUserId}
