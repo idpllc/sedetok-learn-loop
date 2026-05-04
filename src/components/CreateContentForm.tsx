@@ -158,6 +158,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedThumbnail, setUploadedThumbnail] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>("");
+  const [youtubeUrl, setYoutubeUrl] = useState<string>("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   const [fileType, setFileType] = useState<'video' | 'document' | 'image' | null>(null);
   const [dragActive, setDragActive] = useState(false);
