@@ -3895,6 +3895,10 @@ export type Database = {
         Args: { p_amount: number; p_reason?: string; p_user_id: string }
         Returns: undefined
       }
+      admin_adjust_xp: {
+        Args: { _delta: number; _reason?: string; _user_id: string }
+        Returns: number
+      }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_user_detail: { Args: { _user_id: string }; Returns: Json }
       admin_search_users: {

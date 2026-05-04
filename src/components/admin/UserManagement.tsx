@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2, FilterX } from "lucide-react";
+import { Search, Shield, UserCog, Crown, Coins, Eye, Trash2, FilterX, Award } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +58,9 @@ export function UserManagement() {
   const [educoinsDialog, setEducoinsDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
   const [educoinsAmount, setEducoinsAmount] = useState("");
   const [educoinsReason, setEducoinsReason] = useState("");
+  const [xpDialog, setXpDialog] = useState<{ open: boolean; userId?: string; username?: string; currentXp?: number }>({ open: false });
+  const [xpDelta, setXpDelta] = useState("");
+  const [xpReason, setXpReason] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | undefined>();
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId?: string; username?: string }>({ open: false });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -179,6 +182,29 @@ export function UserManagement() {
         description: error.message,
         variant: "destructive",
       });
+    },
+  });
+
+  // Adjust XP mutation (add or remove experience points)
+  const adjustXpMutation = useMutation({
+    mutationFn: async ({ userId, delta, reason }: { userId: string; delta: number; reason: string }) => {
+      const { data, error } = await supabase.rpc("admin_adjust_xp", {
+        _user_id: userId,
+        _delta: delta,
+        _reason: reason,
+      });
+      if (error) throw error;
+      return data as number;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setXpDialog({ open: false });
+      setXpDelta("");
+      setXpReason("");
+      toast({ title: "XP actualizado", description: "Los puntos de experiencia se han actualizado" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
@@ -425,6 +451,14 @@ export function UserManagement() {
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          onClick={() => setXpDialog({ open: true, userId: user.id, username: user.username, currentXp: user.experience_points || 0 })}
+                        >
+                          <Award className="w-4 h-4 mr-1" />
+                          XP
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="destructive"
                           onClick={() => setDeleteDialog({ open: true, userId: user.id, username: user.username })}
                         >
@@ -537,6 +571,62 @@ export function UserManagement() {
               disabled={assignEducoinsMutation.isPending}
             >
               {assignEducoinsMutation.isPending ? "Asignando..." : "Asignar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={xpDialog.open} onOpenChange={(open) => setXpDialog({ open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajustar XP</DialogTitle>
+            <DialogDescription>
+              Sumar o restar puntos de experiencia a @{xpDialog.username} (actual: {xpDialog.currentXp ?? 0} XP)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="xp-delta">Cantidad (usa negativo para restar)</Label>
+              <Input
+                id="xp-delta"
+                type="number"
+                placeholder="Ej: 500 ó -500"
+                value={xpDelta}
+                onChange={(e) => setXpDelta(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="xp-reason">Motivo (opcional)</Label>
+              <Input
+                id="xp-reason"
+                placeholder="Ej: Ajuste por sanción"
+                value={xpReason}
+                onChange={(e) => setXpReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setXpDialog({ open: false }); setXpDelta(""); setXpReason(""); }}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                const delta = parseInt(xpDelta);
+                if (isNaN(delta) || delta === 0) {
+                  toast({ title: "Error", description: "Ingresa un número distinto de cero", variant: "destructive" });
+                  return;
+                }
+                if (xpDialog.userId) {
+                  adjustXpMutation.mutate({
+                    userId: xpDialog.userId,
+                    delta,
+                    reason: xpReason || "Ajuste manual por administrador",
+                  });
+                }
+              }}
+              disabled={adjustXpMutation.isPending}
+            >
+              {adjustXpMutation.isPending ? "Aplicando..." : "Aplicar"}
             </Button>
           </DialogFooter>
         </DialogContent>
