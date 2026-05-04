@@ -996,120 +996,152 @@ const NotebookView = () => {
           {/* Chat */}
           <section data-tour="chat-panel" className={`flex-col overflow-hidden lg:flex ${mobileTab === "chat" ? "flex" : "hidden"}`}>
             <div className="flex-1 overflow-y-auto px-4 md:px-12 py-6">
-              {chat.messages.length === 0 && announcedSources.length === 0 ? (
-                <div className="max-w-2xl mx-auto text-center py-12">
-                  <Sparkles className="h-12 w-12 mx-auto text-primary mb-4" />
-                  <h2 className="text-2xl font-bold mb-2">{notebook?.title || "Cuaderno"}</h2>
-                  <p className="text-muted-foreground mb-6">
-                    {noSources
-                      ? "Añade fuentes a la izquierda para empezar a conversar con SEDE AI sobre ellas."
-                      : `${readyCount} fuente${readyCount === 1 ? "" : "s"} cargada${readyCount === 1 ? "" : "s"}. Pregunta lo que quieras o usa el panel Studio a la derecha.`}
-                  </p>
-                  {!noSources && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
-                      {[
-                        "Resume las fuentes en 5 puntos clave",
-                        "¿Cuáles son los temas principales?",
-                        "Genérame preguntas de práctica",
-                        "Explica el contenido como si tuviera 10 años",
-                      ].map((q) => (
-                        <Card
-                          key={q}
-                          className="p-3 text-sm text-left cursor-pointer hover:bg-accent transition"
-                          onClick={() => chat.sendMessage(q)}
-                        >
-                          {q}
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="max-w-3xl mx-auto space-y-4">
-                  {/* Announced sources: shown as user-style cards above the conversation */}
-                  {announcedSources.map((src) => {
-                    const Icon = TYPE_ICONS[src.sourceType] || FileText;
-                    return (
-                      <div key={`announced-${src.id}`} className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => setViewingSource(src)}
-                          className="max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground text-left hover:opacity-95 transition shadow-sm"
-                          title="Ver contenido procesado"
-                        >
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <Icon className="h-4 w-4 shrink-0" />
-                            <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
-                              Fuente procesada
-                            </span>
-                          </div>
-                          <p className="font-semibold text-sm mb-1 line-clamp-1">{src.title}</p>
-                          <p className="text-xs opacity-90 whitespace-pre-wrap line-clamp-4">
-                            {src.preview}
-                          </p>
-                          <p className="text-[10px] opacity-75 mt-2 underline">
-                            Toca para ver el contenido completo
-                          </p>
-                        </button>
-                      </div>
-                    );
-                  })}
-                  {chat.messages.map((m, i) => {
-                    if (m.role === "user") {
-                      return (
-                        <div key={i} className="flex justify-end">
-                          <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-primary text-primary-foreground">
-                            <p className="whitespace-pre-wrap text-sm">{m.content}</p>
-                          </div>
+              {(() => {
+                const hasUserMsg = chat.messages.some((m) => m.role === "user");
+                const showEmpty = chat.messages.length === 0 && announcedSources.length === 0;
+                if (showEmpty) {
+                  return (
+                    <div className="max-w-2xl mx-auto text-center py-12">
+                      <Sparkles className="h-12 w-12 mx-auto text-primary mb-4" />
+                      <h2 className="text-2xl font-bold mb-2">{notebook?.title || "Cuaderno"}</h2>
+                      <p className="text-muted-foreground mb-6">
+                        {noSources
+                          ? "Añade fuentes a la izquierda para empezar a conversar con SEDE AI sobre ellas."
+                          : `${readyCount} fuente${readyCount === 1 ? "" : "s"} cargada${readyCount === 1 ? "" : "s"}. Pregunta lo que quieras o usa el panel Studio a la derecha.`}
+                      </p>
+                      {!noSources && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
+                          {[
+                            "Resume las fuentes en 5 puntos clave",
+                            "¿Cuáles son los temas principales?",
+                            "Genérame preguntas de práctica",
+                            "Explica el contenido como si tuviera 10 años",
+                          ].map((q) => (
+                            <Card
+                              key={q}
+                              className="p-3 text-sm text-left cursor-pointer hover:bg-accent transition"
+                              onClick={() => chat.sendMessage(q)}
+                            >
+                              {q}
+                            </Card>
+                          ))}
                         </div>
-                      );
-                    }
-                    const { content, paths, contentItems, studioCta, generating } = parseAssistantContent(m.content);
-                    if (generating) {
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div className="max-w-3xl mx-auto space-y-4">
+                    {chat.messages.map((m, i) => {
+                      if (m.role === "user") {
+                        return (
+                          <div key={i} className="flex justify-end">
+                            <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-primary text-primary-foreground">
+                              <p className="whitespace-pre-wrap text-sm">{m.content}</p>
+                            </div>
+                          </div>
+                        );
+                      }
+                      const { content, paths, contentItems, studioCta, generating } = parseAssistantContent(m.content);
+                      if (generating) {
+                        return (
+                          <div key={i} className="flex justify-start">
+                            <div className="max-w-[95%] w-full rounded-2xl px-4 py-5 bg-muted">
+                              <CapsuleProgressCard capsuleType={generating.type} />
+                            </div>
+                          </div>
+                        );
+                      }
                       return (
                         <div key={i} className="flex justify-start">
-                          <div className="max-w-[95%] w-full rounded-2xl px-4 py-5 bg-muted">
-                            <CapsuleProgressCard capsuleType={generating.type} />
+                          <div className="max-w-[95%] w-full rounded-2xl px-4 py-3 bg-muted">
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              <ReactMarkdown>{content || (chat.isStreaming ? "…" : "")}</ReactMarkdown>
+                            </div>
+                            {paths && paths.length > 0 && <PathPreviewCards paths={paths} />}
+                            {contentItems && contentItems.length > 0 && <ContentPreviewCards content={contentItems} />}
+                            {studioCta && !chat.isStreaming && (
+                              <div className="mt-3 flex flex-wrap items-center gap-2 pt-3 border-t border-border/40">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleCreateCapsule(studioCta.type)}
+                                  className="gap-1.5"
+                                  disabled={creatingType === studioCta.type}
+                                >
+                                  {creatingType === studioCta.type ? (
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  ) : studioCta.type === "video" ? (
+                                    <ExternalLink className="h-3.5 w-3.5" />
+                                  ) : (
+                                    <Wand2 className="h-3.5 w-3.5" />
+                                  )}
+                                  {creatingType === studioCta.type
+                                    ? "Generando…"
+                                    : STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
-                    }
-                    return (
-                      <div key={i} className="flex justify-start">
-                        <div className="max-w-[95%] w-full rounded-2xl px-4 py-3 bg-muted">
-                          <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown>{content || (chat.isStreaming ? "…" : "")}</ReactMarkdown>
-                          </div>
-                          {paths && paths.length > 0 && <PathPreviewCards paths={paths} />}
-                          {contentItems && contentItems.length > 0 && <ContentPreviewCards content={contentItems} />}
-                          {studioCta && !chat.isStreaming && (
-                            <div className="mt-3 flex flex-wrap items-center gap-2 pt-3 border-t border-border/40">
-                              <Button
-                                size="sm"
-                                onClick={() => handleCreateCapsule(studioCta.type)}
-                                className="gap-1.5"
-                                disabled={creatingType === studioCta.type}
-                              >
-                                {creatingType === studioCta.type ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : studioCta.type === "video" ? (
-                                  <ExternalLink className="h-3.5 w-3.5" />
-                                ) : (
-                                  <Wand2 className="h-3.5 w-3.5" />
-                                )}
-                                {creatingType === studioCta.type
-                                  ? "Generando…"
-                                  : STUDIO_BY_ID[studioCta.type] ? ctaLabel(STUDIO_BY_ID[studioCta.type]) : "Crear cápsula"}
-                              </Button>
+                    })}
+                    {/* Source-processed cards appended at the END so newly added sources
+                        appear as the latest message in the conversation. */}
+                    {announcedSources.map((src) => {
+                      const Icon = TYPE_ICONS[src.sourceType] || FileText;
+                      return (
+                        <div key={`announced-${src.id}`} className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setViewingSource(src)}
+                            className="max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground text-left hover:opacity-95 transition shadow-sm"
+                            title="Ver contenido procesado"
+                          >
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Icon className="h-4 w-4 shrink-0" />
+                              <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
+                                Fuente procesada
+                              </span>
                             </div>
-                          )}
+                            <p className="font-semibold text-sm mb-1 line-clamp-1">{src.title}</p>
+                            <p className="text-xs opacity-90 whitespace-pre-wrap line-clamp-4">
+                              {src.preview}
+                            </p>
+                            <p className="text-[10px] opacity-75 mt-2 underline">
+                              Toca para ver el contenido completo
+                            </p>
+                          </button>
+                        </div>
+                      );
+                    })}
+                    {/* Default suggestions remain visible until the user sends their first message */}
+                    {!hasUserMsg && !noSources && (
+                      <div className="pt-2">
+                        <p className="text-xs text-muted-foreground text-center mb-2">
+                          Sugerencias para empezar
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {[
+                            "Resume las fuentes en 5 puntos clave",
+                            "¿Cuáles son los temas principales?",
+                            "Genérame preguntas de práctica",
+                            "Explica el contenido como si tuviera 10 años",
+                          ].map((q) => (
+                            <Card
+                              key={q}
+                              className="p-3 text-sm text-left cursor-pointer hover:bg-accent transition"
+                              onClick={() => chat.sendMessage(q)}
+                            >
+                              {q}
+                            </Card>
+                          ))}
                         </div>
                       </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Input */}
