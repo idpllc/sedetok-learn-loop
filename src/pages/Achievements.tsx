@@ -15,11 +15,13 @@ import { Sidebar } from "@/components/Sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEducoins } from "@/hooks/useEducoins";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const Achievements = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { balance: educoinBalance } = useEducoins();
+  const { myPlan } = useSubscription();
 
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [myXP, setMyXP] = useState<number | null>(null);
@@ -488,6 +490,49 @@ const Achievements = () => {
                   </Button>
                   <p className="text-xs text-muted-foreground text-center mt-2">
                     Usa Educoins para generar contenido con IA, juegos, quizzes y más funciones premium en SEDEFY
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Subscription */}
+        {user && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Crown className="w-6 h-6 text-primary" />
+                <CardTitle>Mi Suscripción</CardTitle>
+              </div>
+              <CardDescription>Gestiona tu plan SEDEFY</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Plan actual</p>
+                    <p className="text-3xl font-bold text-primary capitalize">
+                      {myPlan.data?.name ?? "Free"}
+                    </p>
+                    {myPlan.data?.current_period_end && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Renueva el {new Date(myPlan.data.current_period_end).toLocaleDateString("es-CO")}
+                      </p>
+                    )}
+                  </div>
+                  <Crown className="w-16 h-16 text-primary/20" />
+                </div>
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={() => navigate("/pricing")}
+                    className="w-full gap-2"
+                  >
+                    <Crown className="w-4 h-4" />
+                    {myPlan.data?.code === "free" ? "Mejorar Plan" : "Gestionar Suscripción"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Accede a más Educoins, notebooks ilimitados, voz IA y cursos premium
                   </p>
                 </div>
               </div>
