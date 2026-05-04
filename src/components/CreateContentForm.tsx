@@ -36,6 +36,7 @@ import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { RichContentEditor } from "./RichContentEditor";
 import { MindMapEditor } from "./mindmap/MindMapEditor";
 import { MindMapData, createEmptyMindMap } from "./mindmap/types";
+import { isYouTubeUrl, getYouTubeThumbnail, extractYouTubeId } from "@/lib/youtube";
 
 type CategoryType = Database["public"]["Enums"]["category_type"];
 type ContentType = Database["public"]["Enums"]["content_type"];
@@ -158,6 +159,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedThumbnail, setUploadedThumbnail] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>("");
+  const [youtubeUrl, setYoutubeUrl] = useState<string>("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   const [fileType, setFileType] = useState<'video' | 'document' | 'image' | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -200,6 +202,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       if (contentData.video_url) {
         setFilePreview(contentData.video_url);
         setFileType('video');
+        if (/youtube\.com|youtu\.be/i.test(contentData.video_url)) {
+          setYoutubeUrl(contentData.video_url);
+        }
       } else if (contentData.document_url) {
         setFilePreview(contentData.document_url.split('/').pop() || "");
         setFileType('document');
@@ -811,6 +816,9 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           documentUrl = imageUrl;
           thumbnailUrl = imageUrl;
         }
+      } else if (youtubeUrl && isYouTubeUrl(youtubeUrl)) {
+        videoUrl = youtubeUrl.trim();
+        thumbnailUrl = getYouTubeThumbnail(youtubeUrl) || undefined;
       }
 
       // Upload thumbnail if provided (for documents)
@@ -1600,6 +1608,79 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
 
             <div className="space-y-2">
               <Label htmlFor="file">Contenido de la Cápsula</Label>
+
+              {/* YouTube URL input */}
+              {!uploadedFile && (
+                <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                  <Label htmlFor="youtube-url" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Pega un enlace de YouTube
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="youtube-url"
+                      type="url"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      value={youtubeUrl}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setYoutubeUrl(v);
+                        if (v && isYouTubeUrl(v)) {
+                          setFileType('video');
+                          setFilePreview(v);
+                          setFormData({ ...formData, content_type: "video" as ContentType });
+                        } else if (!v) {
+                          if (fileType === 'video' && !uploadedFile) {
+                            setFilePreview("");
+                            setFileType(null);
+                          }
+                        }
+                      }}
+                      disabled={editMode || !!uploadedFile}
+                    />
+                    {youtubeUrl && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setYoutubeUrl("");
+                          if (!uploadedFile) {
+                            setFilePreview("");
+                            setFileType(null);
+                          }
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {youtubeUrl && !isYouTubeUrl(youtubeUrl) && (
+                    <p className="text-xs text-destructive">Enlace de YouTube no válido</p>
+                  )}
+                  {youtubeUrl && isYouTubeUrl(youtubeUrl) && (
+                    <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black">
+                      <img
+                        src={getYouTubeThumbnail(youtubeUrl) || ''}
+                        alt="Vista previa de YouTube"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        loading="lazy"
+                        width={480}
+                        height={270}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <div className="rounded-full bg-white/90 p-3">
+                          <Video className="h-6 w-6 text-black" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Soporta enlaces de youtube.com, youtu.be y Shorts. Se reproducirá en el carrusel vertical.
+                  </p>
+                </div>
+              )}
+
+              {!youtubeUrl && (
               <div
                 onDrop={handleFileDrop}
                 onDragOver={handleDragOver}
@@ -1650,7 +1731,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   </Button>
                 </div>
               </div>
-              {filePreview && (
+              )}
+              {filePreview && !(fileType === 'video' && isYouTubeUrl(filePreview)) && (
                 <div className="relative">
                   {fileType === 'video' && (
                     <>
