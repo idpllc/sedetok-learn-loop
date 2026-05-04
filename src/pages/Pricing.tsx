@@ -66,6 +66,54 @@ const Pricing = () => {
     discount_type: string;
   } | null>(null);
   const [validating, setValidating] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [syncing, setSyncing] = useState(false);
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const status = searchParams.get("subscription");
+    if (!status || !user) return;
+
+    if (status === "failure") {
+      toast.error("El pago no pudo completarse");
+      setSearchParams({}, { replace: true });
+      return;
+    }
+
+    if (status === "success" || status === "pending") {
+      setSyncing(true);
+      let cancelled = false;
+      let attempts = 0;
+      const maxAttempts = 12;
+
+      const poll = async () => {
+        while (!cancelled && attempts < maxAttempts) {
+          attempts++;
+          try {
+            const { data } = await supabase.functions.invoke("mp-sync-checkout", { body: {} });
+            if (data?.synced && data?.status === "active") {
+              toast.success("¡Suscripción activada!");
+              await qc.invalidateQueries({ queryKey: ["my-plan"] });
+              await qc.invalidateQueries({ queryKey: ["my-subscription"] });
+              setSyncing(false);
+              setSearchParams({}, { replace: true });
+              return;
+            }
+          } catch (e) {
+            console.error("sync error:", e);
+          }
+          await new Promise((r) => setTimeout(r, 2500));
+        }
+        if (!cancelled) {
+          setSyncing(false);
+          toast.info("Estamos confirmando tu pago. Refresca en unos segundos.");
+          setSearchParams({}, { replace: true });
+        }
+      };
+      poll();
+      return () => { cancelled = true; };
+    }
+  }, [searchParams, user?.id]);
 
   const handleApplyDiscount = async () => {
     if (!discountCode.trim()) return;
