@@ -185,7 +185,27 @@ export function UserManagement() {
     },
   });
 
-  // Delete user mutation (permanent)
+  // Adjust XP mutation (add or remove experience points)
+  const adjustXpMutation = useMutation({
+    mutationFn: async ({ userId, delta, reason }: { userId: string; delta: number; reason: string }) => {
+      const { data, error } = await supabase.rpc("admin_adjust_xp", {
+        _user_id: userId,
+        _delta: delta,
+        _reason: reason,
+      });
+      if (error) throw error;
+      return data as number;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setXpDialog({ open: false });
+      setXpDelta("");
+      setXpReason("");
+      toast({ title: "XP actualizado", description: "Los puntos de experiencia se han actualizado" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { error } = await supabase.rpc("admin_delete_user", { _user_id: userId });
