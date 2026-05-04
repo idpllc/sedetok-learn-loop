@@ -451,6 +451,14 @@ export function UserManagement() {
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
+                          onClick={() => setXpDialog({ open: true, userId: user.id, username: user.username, currentXp: user.experience_points || 0 })}
+                        >
+                          <Award className="w-4 h-4 mr-1" />
+                          XP
+                        </Button>
+                        <Button
+                          size="sm"
                           variant="destructive"
                           onClick={() => setDeleteDialog({ open: true, userId: user.id, username: user.username })}
                         >
