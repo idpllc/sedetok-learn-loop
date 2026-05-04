@@ -1692,11 +1692,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
                   </p>
                 </div>
               )}
-                  <p className="text-xs text-muted-foreground">
-                    Soporta enlaces de youtube.com, youtu.be y Shorts. Se reproducirá en el carrusel vertical.
-                  </p>
-                </div>
-              )}
+
 
               {!youtubeUrl && (
               <div
