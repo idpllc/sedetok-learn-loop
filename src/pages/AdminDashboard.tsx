@@ -128,6 +128,10 @@ export default function AdminDashboard() {
               <Webhook className="w-4 h-4" />
               <span className="hidden sm:inline">Webhooks</span>
             </TabsTrigger>
+            <TabsTrigger value="discounts" className="flex items-center gap-2">
+              <Tag className="w-4 h-4" />
+              <span className="hidden sm:inline">Cupones</span>
+            </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Config</span>
