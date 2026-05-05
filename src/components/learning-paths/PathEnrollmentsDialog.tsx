@@ -217,7 +217,7 @@ export const PathEnrollmentsDialog = ({
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
-                          {getDisplayName(profile)}
+                          {getFullDisplayName(profile)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Inscrito: {new Date(enrollment.enrolled_at).toLocaleDateString("es")}
