@@ -575,7 +575,7 @@ const Index = () => {
                               </Avatar>
                             )}
                             <span className="text-xs font-semibold text-white drop-shadow-md">
-                              {getDisplayName(profile) !== "Usuario" ? getDisplayName(profile) : item.creator}
+                              {getShortFullName(profile) !== "Usuario" ? getShortFullName(profile) : item.creator}
                             </span>
                           </div>
                           <div className="absolute top-2 right-2">
