@@ -9,7 +9,7 @@ import { CheckCircle, Circle, ChevronDown, ChevronUp, Users } from "lucide-react
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { getDisplayName } from "@/lib/displayName";
+import { getDisplayName, getFullDisplayName } from "@/lib/displayName";
 
 interface PathEnrollmentsDialogProps {
   open: boolean;
