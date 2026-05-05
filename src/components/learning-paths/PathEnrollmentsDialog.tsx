@@ -9,7 +9,7 @@ import { CheckCircle, Circle, ChevronDown, ChevronUp, Users } from "lucide-react
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { getDisplayName } from "@/lib/displayName";
+import { getDisplayName, getFullDisplayName } from "@/lib/displayName";
 
 interface PathEnrollmentsDialogProps {
   open: boolean;
@@ -217,7 +217,7 @@ export const PathEnrollmentsDialog = ({
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
-                          {getDisplayName(profile)}
+                          {getFullDisplayName(profile)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Inscrito: {new Date(enrollment.enrolled_at).toLocaleDateString("es")}
