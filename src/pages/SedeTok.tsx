@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ContentCard } from "@/components/ContentCard";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
-import { getDisplayName } from "@/lib/displayName";
+import { getDisplayName, getShortFullName } from "@/lib/displayName";
 
 /**
  * When SedeTok runs inside a Notebook iframe (embed=1), notify the parent
