@@ -20,3 +20,33 @@ export const getDisplayName = (
   if (profile.username && !/^\d+$/.test(profile.username)) return profile.username;
   return "Usuario";
 };
+
+/**
+ * Returns the full name as stored, falling back to username (if not numeric) or "Usuario".
+ */
+export const getFullDisplayName = (
+  profile?: { full_name?: string | null; username?: string | null } | null
+): string => {
+  if (!profile) return "Usuario";
+  const raw = profile.full_name?.trim();
+  if (raw) return raw;
+  if (profile.username && !/^\d+$/.test(profile.username)) return profile.username;
+  return "Usuario";
+};
+
+/**
+ * Returns first name + first last name in full (e.g., "Juan Pérez").
+ */
+export const getShortFullName = (
+  profile?: { full_name?: string | null; username?: string | null } | null
+): string => {
+  if (!profile) return "Usuario";
+  const raw = profile.full_name?.trim();
+  if (raw) {
+    const parts = raw.split(/\s+/);
+    if (parts.length >= 2) return `${parts[0]} ${parts[1]}`;
+    return parts[0];
+  }
+  if (profile.username && !/^\d+$/.test(profile.username)) return profile.username;
+  return "Usuario";
+};
