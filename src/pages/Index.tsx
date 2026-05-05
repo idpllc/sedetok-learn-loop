@@ -19,7 +19,7 @@ import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, He
 import mindMapIcon from "@/assets/mind-map-icon.png";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { subjects } from "@/lib/subjects";
-import { getDisplayName } from "@/lib/displayName"; // display name helper
+import { getDisplayName, getShortFullName } from "@/lib/displayName"; // display name helper
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Database } from "@/integrations/supabase/types";
