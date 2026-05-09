@@ -741,11 +741,9 @@ const NotebookView = () => {
     const useCapsules = pathMode === "from_capsules";
     const capsules = useCapsules ? collectNotebookCapsules() : [];
     if (useCapsules && capsules.length < 2) {
-      toast({
-        title: "Necesitas más cápsulas",
-        description: "Crea al menos 2 cápsulas (videos, lecturas, quizzes o juegos) antes de armar la ruta con tu contenido.",
-        variant: "destructive",
-      } as any);
+      alert(
+        "Necesitas al menos 2 cápsulas (videos, lecturas, quizzes o juegos) creadas en este notebook antes de armar la ruta con tu contenido."
+      );
       return;
     }
 
