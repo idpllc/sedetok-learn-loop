@@ -509,48 +509,274 @@ Deno.serve(async (req) => {
 
     // ---------- LEARNING PATH / COURSE ----------
     else if (type === "path" || type === "course") {
-      const params = {
-        type: "object",
-        properties: {
-          ...META_PARAMS.properties,
-          objectives: { type: "string", description: "Objetivos de aprendizaje (3-5 bullets en HTML <ul><li>)" },
-          topic: { type: "string", description: "Tema central de la ruta" },
-          level: { type: "string", description: "Nivel descriptivo (Introductorio, Intermedio, Avanzado)" },
-          estimated_duration: { type: "number", description: "Duración estimada en minutos" },
-        },
-        required: [...META_PARAMS.required, "objectives", "topic", "level"],
+      // Helper: generate cover image via Lovable AI Gateway and upload to Cloudinary.
+      const generateAndUploadCover = async (
+        title: string,
+        description: string,
+        subject: string
+      ): Promise<string | null> => {
+        try {
+          const imgPrompt = `Portada educativa profesional, estilo ilustración digital moderna y vibrante, sin texto. Tema: "${title}". Materia: ${subject}. Concepto visual: ${description}. Composición limpia con espacio negativo, paleta de colores armónica, alta calidad.`;
+          const imgRes = await fetch(
+            "https://ai.gateway.lovable.dev/v1/chat/completions",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                model: "google/gemini-2.5-flash-image",
+                messages: [{ role: "user", content: imgPrompt }],
+                modalities: ["image", "text"],
+              }),
+            }
+          );
+          if (!imgRes.ok) {
+            console.error("Image gen error", imgRes.status, await imgRes.text());
+            return null;
+          }
+          const imgData = await imgRes.json();
+          const imgUrl: string | undefined =
+            imgData?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          if (!imgUrl) return null;
+          const base64 = imgUrl.includes(";base64,") ? imgUrl.split(";base64,")[1] : imgUrl;
+          const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME")?.trim();
+          const apiKeyCl = Deno.env.get("CLOUDINARY_API_KEY")?.trim();
+          const apiSecret = Deno.env.get("CLOUDINARY_API_SECRET")?.trim();
+          if (!cloudName || !apiKeyCl || !apiSecret) {
+            console.error("Cloudinary not configured for cover upload");
+            return null;
+          }
+          const timestamp = Math.round(Date.now() / 1000);
+          const folder = "sedefy/path_covers";
+          const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+          const enc = new TextEncoder();
+          const hash = await crypto.subtle.digest("SHA-1", enc.encode(paramsToSign + apiSecret));
+          const signature = Array.from(new Uint8Array(hash))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+          const fd = new FormData();
+          fd.append("file", `data:image/png;base64,${base64}`);
+          fd.append("api_key", apiKeyCl);
+          fd.append("timestamp", String(timestamp));
+          fd.append("folder", folder);
+          fd.append("signature", signature);
+          const upRes = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            { method: "POST", body: fd }
+          );
+          if (!upRes.ok) {
+            console.error("Cloudinary upload error", upRes.status, await upRes.text());
+            return null;
+          }
+          const upJson = await upRes.json();
+          return upJson.secure_url || upJson.url || null;
+        } catch (e) {
+          console.error("generateAndUploadCover error", e);
+          return null;
+        }
       };
 
-      const ai = await callAI(
-        systemPrompt,
-        `${baseUserPrompt}Genera la metadata de una ${type === "course" ? "curso" : "ruta de aprendizaje"} basada en las fuentes. El usuario añadirá los pasos manualmente luego.`,
-        "create_path_meta",
-        params,
-        apiKey
-      );
+      // ===== Mode: from_capsules =====
+      if (type === "path" && mode === "from_capsules") {
+        const inputCapsules: Array<{ id: string; type: string }> = Array.isArray(capsules) ? capsules : [];
+        if (inputCapsules.length < 2) {
+          return ERR("Necesitas al menos 2 cápsulas creadas en el notebook para construir una ruta.", 400);
+        }
 
-      const { data: path, error } = await supabase
-        .from("learning_paths")
-        .insert({
-          creator_id: user.id,
+        const contentIds = inputCapsules.filter((c) => ["video", "reading", "mindmap"].includes(c.type)).map((c) => c.id);
+        const quizIds = inputCapsules.filter((c) => c.type === "quiz").map((c) => c.id);
+        const gameIds = inputCapsules.filter((c) => c.type === "game").map((c) => c.id);
+
+        const [contentsRes, quizzesRes, gamesRes] = await Promise.all([
+          contentIds.length
+            ? supabase.from("content").select("id, title, description, content_type, subject").in("id", contentIds)
+            : Promise.resolve({ data: [] as any[] }),
+          quizIds.length
+            ? supabase.from("quizzes").select("id, title, description, subject").in("id", quizIds)
+            : Promise.resolve({ data: [] as any[] }),
+          gameIds.length
+            ? supabase.from("games").select("id, title, description, subject, game_type").in("id", gameIds)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+
+        const items: Array<{ id: string; type: string; title: string; description: string }> = [
+          ...((contentsRes.data || []) as any[]).map((c) => ({
+            id: c.id,
+            type: c.content_type === "video" ? "video" : c.content_type === "mapa_mental" ? "mindmap" : "reading",
+            title: c.title || "",
+            description: c.description || "",
+          })),
+          ...((quizzesRes.data || []) as any[]).map((q) => ({
+            id: q.id, type: "quiz", title: q.title || "", description: q.description || "",
+          })),
+          ...((gamesRes.data || []) as any[]).map((g) => ({
+            id: g.id, type: "game", title: g.title || "", description: g.description || "",
+          })),
+        ];
+
+        if (items.length < 2) {
+          return ERR("No se encontraron suficientes cápsulas válidas para construir la ruta.", 400);
+        }
+
+        const params = {
+          type: "object",
+          properties: {
+            ...META_PARAMS.properties,
+            objectives: { type: "string", description: "Objetivos en HTML <ul><li>" },
+            topic: { type: "string" },
+            level: { type: "string", description: "Introductorio | Intermedio | Avanzado" },
+            estimated_duration: { type: "number" },
+            ordered_items: {
+              type: "array",
+              description: "Cápsulas ordenadas pedagógicamente. Usa exactamente los IDs listados.",
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  section_name: { type: "string", description: "Sección/módulo" },
+                },
+                required: ["id"],
+              },
+            },
+          },
+          required: [...META_PARAMS.required, "objectives", "topic", "level", "ordered_items"],
+        };
+
+        const itemsList = items
+          .map((it, i) => `${i + 1}. [${it.type}] (id: ${it.id}) ${it.title} — ${it.description}`)
+          .join("\n");
+
+        const ai = await callAI(
+          systemPrompt,
+          `${baseUserPrompt}Construye una RUTA DE APRENDIZAJE coherente usando ÚNICAMENTE las cápsulas que el usuario ya creó en este notebook. Ordena los pasos pedagógicamente (de lo básico a lo avanzado) y agrúpalos en secciones lógicas. NO inventes IDs nuevos: usa exactamente los IDs listados.\n\nCápsulas disponibles:\n${itemsList}`,
+          "build_path_from_capsules",
+          params,
+          apiKey
+        );
+
+        let coverUrl: string | null = null;
+        if (generateCover) {
+          coverUrl = await generateAndUploadCover(ai.title, ai.description, ai.subject);
+        }
+
+        const { data: path, error } = await supabase
+          .from("learning_paths")
+          .insert({
+            creator_id: user.id,
+            title: ai.title,
+            description: ai.description,
+            category: ai.category,
+            grade_level: ai.grade_level,
+            subject: ai.subject,
+            topic: ai.topic,
+            level: ai.level,
+            tags: ai.tags || [],
+            objectives: ai.objectives,
+            estimated_duration: ai.estimated_duration || 60,
+            is_public: true,
+            status: "published",
+            path_type: "ruta",
+            cover_url: coverUrl,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+
+        const itemById = new Map(items.map((it) => [it.id, it]));
+        const seen = new Set<string>();
+        const ordered: Array<{ id: string; type: string; section_name?: string }> = [];
+        for (const o of (ai.ordered_items || []) as Array<{ id: string; section_name?: string }>) {
+          if (!o?.id || seen.has(o.id)) continue;
+          const it = itemById.get(o.id);
+          if (!it) continue;
+          ordered.push({ id: it.id, type: it.type, section_name: o.section_name });
+          seen.add(o.id);
+        }
+        for (const it of items) {
+          if (!seen.has(it.id)) { ordered.push({ id: it.id, type: it.type }); seen.add(it.id); }
+        }
+
+        const rows = ordered.map((o, i) => {
+          const row: any = {
+            path_id: path.id,
+            order_index: i,
+            section_name: o.section_name || null,
+            is_required: true,
+            estimated_time_minutes: 5,
+            xp_reward: 10,
+          };
+          if (o.type === "quiz") row.quiz_id = o.id;
+          else if (o.type === "game") row.game_id = o.id;
+          else row.content_id = o.id;
+          return row;
+        });
+
+        if (rows.length > 0) {
+          const { error: insErr } = await supabase.from("learning_path_content").insert(rows);
+          if (insErr) throw insErr;
+        }
+
+        result = {
+          contentId: path.id,
+          type: "path",
+          route: `/learning-paths/view/${path.id}`,
           title: ai.title,
-          description: ai.description,
-          category: ai.category,
-          grade_level: ai.grade_level,
-          subject: ai.subject,
-          topic: ai.topic,
-          level: ai.level,
-          tags: ai.tags || [],
-          objectives: ai.objectives,
-          estimated_duration: ai.estimated_duration || 60,
-          is_public: true,
-          status: "publicado",
-          path_type: type === "course" ? "curso" : "ruta",
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-      result = { contentId: path.id, type, route: `/learning-paths/view/${path.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
+          subject: ai.subject ?? null,
+          cover_url: coverUrl,
+        };
+      } else {
+        // ===== Default: metadata only =====
+        const params = {
+          type: "object",
+          properties: {
+            ...META_PARAMS.properties,
+            objectives: { type: "string", description: "Objetivos en HTML <ul><li>" },
+            topic: { type: "string" },
+            level: { type: "string" },
+            estimated_duration: { type: "number" },
+          },
+          required: [...META_PARAMS.required, "objectives", "topic", "level"],
+        };
+
+        const ai = await callAI(
+          systemPrompt,
+          `${baseUserPrompt}Genera la metadata de una ${type === "course" ? "curso" : "ruta de aprendizaje"} basada en las fuentes. El usuario añadirá los pasos manualmente luego.`,
+          "create_path_meta",
+          params,
+          apiKey
+        );
+
+        let coverUrl: string | null = null;
+        if (type === "path" && generateCover) {
+          coverUrl = await generateAndUploadCover(ai.title, ai.description, ai.subject);
+        }
+
+        const { data: path, error } = await supabase
+          .from("learning_paths")
+          .insert({
+            creator_id: user.id,
+            title: ai.title,
+            description: ai.description,
+            category: ai.category,
+            grade_level: ai.grade_level,
+            subject: ai.subject,
+            topic: ai.topic,
+            level: ai.level,
+            tags: ai.tags || [],
+            objectives: ai.objectives,
+            estimated_duration: ai.estimated_duration || 60,
+            is_public: true,
+            status: "draft",
+            path_type: type === "course" ? "curso" : "ruta",
+            cover_url: coverUrl,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+        result = { contentId: path.id, type, route: `/learning-paths/view/${path.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: coverUrl };
+      }
     }
 
     else {
