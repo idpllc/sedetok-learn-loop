@@ -15,34 +15,77 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
-const FEATURES: Record<string, { items: string[] }> = {
+type PlanBenefits = {
+  items: string[];
+  students: string[];
+  parents: string[];
+};
+
+const FEATURES: Record<string, PlanBenefits> = {
   free: {
     items: [
       "20 Educoins mensuales",
-      "1 Notebook",
-      "3 fuentes por Notebook",
+      "1 Cuaderno de estudio",
+      "3 fuentes por Cuaderno",
       "Acceso a SedeTok y rutas",
       "Sin chat conversacional con voz",
       "Sin lectura por agente",
+    ],
+    students: [
+      "1 cuaderno digital de estudio",
+      "Búsqueda básica de fuentes de aprendizaje",
+      "Créditos Educoins limitados (20)",
+    ],
+    parents: [
+      "Seguimiento básico del avance del hijo",
     ],
   },
   premium: {
     items: [
       "100 Educoins mensuales",
-      "Hasta 20 Notebooks",
-      "50 fuentes por Notebook",
+      "Hasta 10 Cuadernos de estudio",
+      "50 fuentes por Cuaderno",
       "Chat conversacional con voz",
       "Lectura por agente ilimitada",
+    ],
+    students: [
+      "Hasta 10 cuadernos digitales de estudio",
+      "Búsqueda de fuentes de aprendizaje",
+      "Variedad en formatos de aprendizaje",
+      "Créditos Educoins para servicios adicionales (100)",
+    ],
+    parents: [
+      "Notificaciones vía WhatsApp:",
+      "• Avances en estudio (Cartillas en curso, formatos de aprendizaje aplicados)",
+      "• Notas (Materia en riesgo o reprobada)",
+      "Recomendación de estudios profesionales — primer acercamiento al perfil profesional para el hijo",
     ],
   },
   ultra: {
     items: [
       "300 Educoins mensuales",
-      "Notebooks ilimitados",
+      "Cuadernos de estudio ilimitados",
       "Fuentes ilimitadas",
       "Chat conversacional con voz",
       "Lectura por agente ilimitada",
       "Acceso a cursos Premium",
+    ],
+    students: [
+      "Hasta 20 cuadernos digitales de estudio",
+      "Búsqueda de fuentes de aprendizaje",
+      "Variedad en formatos de aprendizaje",
+      "Créditos Educoins para servicios adicionales (300)",
+      "Acceso a cursos premium y tutorías (dos tutorías virtuales con expertos)",
+    ],
+    parents: [
+      "Notificaciones vía WhatsApp:",
+      "• Avances en estudio (Cuadernos en curso, formatos de aprendizaje aplicados)",
+      "• Notas (Materia en riesgo o reprobada)",
+      "• Eventos de inasistencia",
+      "• Observaciones de disciplina",
+      "• Becas y posibilidades de estudio para tu hijo",
+      "Perfil vocacional actualizado por avances del hijo",
+      "Recomendación de estudios profesionales del hijo",
     ],
   },
 };
@@ -212,7 +255,7 @@ const Pricing = () => {
             <div className="text-xs text-green-600 mt-1">Ahorra ~17% vs mensual</div>
           )}
         </div>
-        <ul className="space-y-2 flex-1">
+        <ul className="space-y-2">
           {FEATURES[code].items.map((f, i) => (
             <li key={i} className="flex items-start gap-2 text-sm">
               {f.startsWith("Sin ") ? <X className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" /> : <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />}
@@ -220,6 +263,24 @@ const Pricing = () => {
             </li>
           ))}
         </ul>
+        <div className="flex-1 space-y-4 border-t pt-4">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">Para estudiantes</h4>
+            <ul className="space-y-1.5">
+              {FEATURES[code].students.map((f, i) => (
+                <li key={i} className="text-sm text-muted-foreground leading-snug">{f}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-[#F6339A] mb-2">Para padres de familia</h4>
+            <ul className="space-y-1.5">
+              {FEATURES[code].parents.map((f, i) => (
+                <li key={i} className={`text-sm text-muted-foreground leading-snug ${f.startsWith("•") ? "pl-3" : ""}`}>{f}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
         {isCurrent ? (
           <Button disabled variant="outline">Plan actual</Button>
         ) : code === "free" ? (
@@ -242,7 +303,7 @@ const Pricing = () => {
     <>
       <Helmet>
         <title>Planes y Suscripciones | Sedefy</title>
-        <meta name="description" content="Elige tu plan: Free, Premium o Ultra. Más Educoins, Notebooks ilimitados, voz y lectura por agente." />
+        <meta name="description" content="Elige tu plan: Free, Premium o Ultra. Más Educoins, Cuadernos de estudio ilimitados, voz y lectura por agente." />
       </Helmet>
       <Sidebar />
       <main className="ml-0 md:ml-[var(--sidebar-width,16rem)] data-[sidebar-collapsed=true]:md:ml-[var(--sidebar-collapsed-width,4rem)] transition-all">
@@ -258,7 +319,7 @@ const Pricing = () => {
           )}
           <header className="text-center mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Elige tu plan</h1>
-            <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Notebooks, voz y agentes lectores.</p>
+            <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Cuadernos de estudio, voz y agentes lectores.</p>
             <p className="text-xs text-muted-foreground mt-2">Pagos seguros con MercadoPago: tarjetas, PSE, Nequi, Daviplata y más.</p>
             {currentCode !== "free" && sub && (
               <div className="mt-4 inline-flex items-center gap-2 text-sm bg-primary/10 px-4 py-2 rounded-full">
