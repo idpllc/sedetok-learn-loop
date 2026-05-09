@@ -7,10 +7,29 @@ import { BrowserRouter, Routes, Route, useLocation, useSearchParams } from "reac
 import { Loader2 } from "lucide-react";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 
+// Retry lazy imports once and force a reload if the chunk is stale (post-deploy).
+const lazyWithRetry = <T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) =>
+  lazy(async () => {
+    try {
+      return await factory();
+    } catch (err: any) {
+      const msg = String(err?.message || "");
+      if (/Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(msg)) {
+        const key = "__chunk_reloaded__";
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          window.location.reload();
+          return new Promise(() => ({})) as any;
+        }
+      }
+      throw err;
+    }
+  });
+
 // Lazy-load all pages so each route only ships its own chunk.
-// This drastically reduces initial bundle size — critical for the
-// notebook capsule iframe which mounts the app fresh on every open.
-const Index = lazy(() => import("./pages/Index"));
+const Index = lazyWithRetry(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AutoLogin = lazy(() => import("./pages/AutoLogin"));
