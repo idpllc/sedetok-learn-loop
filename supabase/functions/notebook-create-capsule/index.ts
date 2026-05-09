@@ -378,72 +378,125 @@ Deno.serve(async (req) => {
       result = { contentId: quiz.id, type: "quiz", route: `/?quiz=${quiz.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
-    // ---------- GAME (word_order by default) ----------
+    // ---------- GAME (AI decides type: column_match preferred, word_order si aplica) ----------
     else if (type === "game") {
       const params = {
         type: "object",
         properties: {
           ...META_PARAMS.properties,
-          questions: {
-            type: "array",
-            description: "8 preguntas. Cada una contiene una oración educativa de 4-10 palabras basada en las fuentes.",
-            items: {
-              type: "object",
-              properties: {
-                question_text: { type: "string", description: "Instrucción para el estudiante" },
-                correct_sentence: { type: "string", description: "Oración completa" },
-                words: { type: "array", items: { type: "string" } },
+          game_type: {
+            type: "string",
+            enum: ["column_match", "word_order"],
+            description:
+              "Tipo de juego más adecuado para las fuentes. Usa 'column_match' (Conectar Columnas) por defecto cuando el contenido tenga conceptos, definiciones, términos, fechas, eventos, países, capitales, causas/efectos, o cualquier información emparejable. Usa 'word_order' (Ordenar Palabras) SOLO cuando el contenido se preste claramente para construir oraciones gramaticales o secuencias lingüísticas (ej. idiomas, gramática, frases célebres).",
+          },
+          column_match: {
+            type: "object",
+            description: "Datos cuando game_type = 'column_match'. 6-8 pares.",
+            properties: {
+              left_items: { type: "array", items: { type: "string" }, description: "Items columna izquierda" },
+              right_items: { type: "array", items: { type: "string" }, description: "Items columna derecha (mismo orden que left_items)" },
+            },
+          },
+          word_order: {
+            type: "object",
+            description: "Datos cuando game_type = 'word_order'. 8 oraciones.",
+            properties: {
+              questions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    question_text: { type: "string" },
+                    correct_sentence: { type: "string", description: "Oración de 4-10 palabras" },
+                  },
+                  required: ["question_text", "correct_sentence"],
+                },
               },
-              required: ["question_text", "correct_sentence", "words"],
             },
           },
         },
-        required: [...META_PARAMS.required, "questions"],
+        required: [...META_PARAMS.required, "game_type"],
       };
 
       const ai = await callAI(
         systemPrompt,
-        `${baseUserPrompt}Genera un juego "Ordenar palabras" con 8 oraciones educativas extraídas de las fuentes.`,
+        `${baseUserPrompt}Decide el tipo de juego más adecuado para las fuentes. Prefiere "column_match" (Conectar Columnas) porque es más general y funciona con casi cualquier contenido (conceptos↔definiciones, términos↔ejemplos, etc.). Solo usa "word_order" cuando el contenido se preste claramente para ordenar palabras en oraciones. Devuelve los datos del tipo elegido.`,
         "create_game",
         params,
         apiKey
       );
 
+      let chosenType: "column_match" | "word_order" = ai.game_type === "word_order" ? "word_order" : "column_match";
+
+      // Fallback si IA eligió column_match pero no proveyó pares
+      const cm = ai.column_match || {};
+      const wo = ai.word_order || {};
+      if (chosenType === "column_match" && (!Array.isArray(cm.left_items) || !Array.isArray(cm.right_items) || cm.left_items.length === 0)) {
+        if (Array.isArray(wo.questions) && wo.questions.length > 0) chosenType = "word_order";
+      }
+      if (chosenType === "word_order" && (!Array.isArray(wo.questions) || wo.questions.length === 0)) {
+        if (Array.isArray(cm.left_items) && Array.isArray(cm.right_items) && cm.left_items.length > 0) chosenType = "column_match";
+      }
+
+      const baseInsert: any = {
+        creator_id: user.id,
+        title: ai.title,
+        description: ai.description,
+        category: ai.category,
+        grade_level: ai.grade_level,
+        subject: ai.subject,
+        tags: ai.tags || [],
+        game_type: chosenType,
+        time_limit: 120,
+        is_public: true,
+        status: "publicado",
+      };
+
+      if (chosenType === "column_match") {
+        const lefts = (cm.left_items || []).map((t: any) => String(t || "").trim()).filter(Boolean);
+        const rights = (cm.right_items || []).map((t: any) => String(t || "").trim()).filter(Boolean);
+        const n = Math.min(lefts.length, rights.length);
+        const leftColumnItems = Array.from({ length: n }, (_, i) => ({
+          id: `left-${i}-${Date.now()}`,
+          text: lefts[i],
+          match_id: `match-${i}-${Date.now()}`,
+        }));
+        const rightColumnItems = leftColumnItems.map((l, i) => ({
+          id: `right-${i}-${Date.now()}`,
+          text: rights[i],
+          match_id: l.match_id,
+        }));
+        baseInsert.left_column_items = leftColumnItems;
+        baseInsert.right_column_items = rightColumnItems;
+      }
+
       const { data: game, error: e1 } = await supabase
         .from("games")
-        .insert({
-          creator_id: user.id,
-          title: ai.title,
-          description: ai.description,
-          category: ai.category,
-          grade_level: ai.grade_level,
-          subject: ai.subject,
-          tags: ai.tags || [],
-          game_type: "word_order",
-          time_limit: 120,
-          is_public: true,
-          status: "publicado",
-        })
+        .insert(baseInsert)
         .select("id")
         .single();
       if (e1) throw e1;
 
-      const rows = (ai.questions || []).map((q: any, i: number) => {
-        const sentence = String(q.correct_sentence || "").trim();
-        const words = sentence ? sentence.split(/\s+/).filter(Boolean) : (q.words || []);
-        return {
-          game_id: game.id,
-          question_text: q.question_text,
-          correct_sentence: sentence,
-          words,
-          points: 10,
-          order_index: i,
-        };
-      });
-      if (rows.length > 0) {
-        const { error: eq } = await supabase.from("game_questions").insert(rows);
-        if (eq) throw eq;
+      if (chosenType === "word_order") {
+        const rows = (wo.questions || []).map((q: any, i: number) => {
+          const sentence = String(q.correct_sentence || "").trim();
+          const words = sentence ? sentence.split(/\s+/).filter(Boolean) : [];
+          return {
+            game_id: game.id,
+            question_text: q.question_text,
+            correct_sentence: sentence,
+            words,
+            points: 10,
+            order_index: i,
+          };
+        }).filter((r: any) => r.correct_sentence);
+        if (rows.length > 0) {
+          const { error: eq } = await supabase.from("game_questions").insert(rows);
+          if (eq) throw eq;
+        }
       }
+
       result = { contentId: game.id, type: "game", route: `/?game=${game.id}`, title: ai.title, subject: ai.subject ?? null, cover_url: null };
     }
 
