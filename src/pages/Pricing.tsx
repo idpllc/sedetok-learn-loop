@@ -255,7 +255,7 @@ const Pricing = () => {
             <div className="text-xs text-green-600 mt-1">Ahorra ~17% vs mensual</div>
           )}
         </div>
-        <ul className="space-y-2 flex-1">
+        <ul className="space-y-2">
           {FEATURES[code].items.map((f, i) => (
             <li key={i} className="flex items-start gap-2 text-sm">
               {f.startsWith("Sin ") ? <X className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" /> : <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />}
@@ -263,6 +263,24 @@ const Pricing = () => {
             </li>
           ))}
         </ul>
+        <div className="flex-1 space-y-4 border-t pt-4">
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">Para estudiantes</h4>
+            <ul className="space-y-1.5">
+              {FEATURES[code].students.map((f, i) => (
+                <li key={i} className="text-sm text-muted-foreground leading-snug">{f}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-[#F6339A] mb-2">Para padres de familia</h4>
+            <ul className="space-y-1.5">
+              {FEATURES[code].parents.map((f, i) => (
+                <li key={i} className={`text-sm text-muted-foreground leading-snug ${f.startsWith("•") ? "pl-3" : ""}`}>{f}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
         {isCurrent ? (
           <Button disabled variant="outline">Plan actual</Button>
         ) : code === "free" ? (
