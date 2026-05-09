@@ -1617,6 +1617,105 @@ const NotebookView = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Path creation options */}
+      <Dialog open={pathOptionsOpen} onOpenChange={setPathOptionsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Map className="w-5 h-5 text-primary" />
+              Crear ruta de aprendizaje con IA
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">¿Cómo quieres crearla?</p>
+              {(() => {
+                const available = collectNotebookCapsules();
+                const enoughCapsules = available.length >= 2;
+                return (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={!enoughCapsules}
+                      onClick={() => setPathMode("from_capsules")}
+                      className={`w-full text-left rounded-lg border p-3 transition ${
+                        pathMode === "from_capsules"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-accent"
+                      } ${!enoughCapsules ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Con el contenido de este Notebook</p>
+                          <p className="text-xs text-muted-foreground">
+                            La IA toma las cápsulas que ya creaste ({available.length} disponibles) y las organiza en una ruta coherente.
+                          </p>
+                          {!enoughCapsules && (
+                            <p className="text-xs text-amber-600 mt-1">
+                              Necesitas al menos 2 cápsulas creadas en el notebook.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPathMode("metadata")}
+                      className={`w-full text-left rounded-lg border p-3 transition ${
+                        pathMode === "metadata"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Wand2 className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Solo metadata (vacía)</p>
+                          <p className="text-xs text-muted-foreground">
+                            Crea la ruta con título, descripción y objetivos. Tú añades los pasos manualmente.
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
+
+            <label className="flex items-start gap-2 rounded-lg border p-3 cursor-pointer hover:bg-accent">
+              <input
+                type="checkbox"
+                checked={pathGenerateCover}
+                onChange={(e) => setPathGenerateCover(e.target.checked)}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Generar portada con IA
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  La IA creará una imagen única para representar la ruta.
+                </p>
+              </div>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPathOptionsOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmCreatePath} disabled={creatingType === "path"}>
+              {creatingType === "path" ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generando…</>
+              ) : (
+                <><Wand2 className="w-4 h-4 mr-2" /> Crear ruta</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <NotebookTutorial />
       <NotebookTutorialHelpButton
         hidden={
