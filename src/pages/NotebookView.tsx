@@ -351,6 +351,10 @@ const NotebookView = () => {
   const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
   // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
   const [studioHighlight, setStudioHighlight] = useState(false);
+  // Path creation options dialog
+  const [pathOptionsOpen, setPathOptionsOpen] = useState(false);
+  const [pathMode, setPathMode] = useState<"from_capsules" | "metadata">("from_capsules");
+  const [pathGenerateCover, setPathGenerateCover] = useState(true);
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
@@ -703,12 +707,109 @@ const NotebookView = () => {
     setViewerExpanded(false);
   };
 
+  // Collect capsule ids/types from all studio caches across this notebook (any scope).
+  const collectNotebookCapsules = (): Array<{ id: string; type: string }> => {
+    if (!id) return [];
+    const seen = new Set<string>();
+    const result: Array<{ id: string; type: string }> = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(`notebook:studioCache:v2:${id}:`)) continue;
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const bucket = JSON.parse(raw) as Record<string, SedefyResult[]>;
+        for (const arr of Object.values(bucket || {})) {
+          for (const r of arr || []) {
+            if (!r?.id || seen.has(r.id)) continue;
+            // Only include real capsule types we can attach to a path
+            if (!["video", "reading", "quiz", "game", "mindmap"].includes(r.type)) continue;
+            seen.add(r.id);
+            result.push({ id: r.id, type: r.type });
+          }
+        }
+      }
+    } catch {}
+    return result;
+  };
+
+  const confirmCreatePath = async () => {
+    if (!id || creatingType) return;
+    const opt = STUDIO_BY_ID["path"];
+    if (!opt) return;
+
+    const useCapsules = pathMode === "from_capsules";
+    const capsules = useCapsules ? collectNotebookCapsules() : [];
+    if (useCapsules && capsules.length < 2) {
+      alert(
+        "Necesitas al menos 2 cápsulas (videos, lecturas, quizzes o juegos) creadas en este notebook antes de armar la ruta con tu contenido."
+      );
+      return;
+    }
+
+    setPathOptionsOpen(false);
+    setCreatingType("path");
+    setMobileTab("chat");
+    const progressMarker = `|||GENERATING:${JSON.stringify({ type: "path" })}|||`;
+    const progressIndex = await chat.appendProgressLocal(
+      useCapsules
+        ? "Construyendo ruta de aprendizaje con tus cápsulas…"
+        : "Creando metadata de ruta de aprendizaje…",
+      progressMarker
+    );
+
+    try {
+      const body: any = {
+        notebookId: id,
+        type: "path",
+        notebookSourceId: activeSourceId,
+        generateCover: pathGenerateCover,
+      };
+      if (useCapsules) {
+        body.mode = "from_capsules";
+        body.capsules = capsules;
+      }
+      const { data, error } = await supabase.functions.invoke("notebook-create-capsule", { body });
+      if (error) throw error;
+      if (!data?.route) throw new Error("Respuesta inválida del generador");
+
+      await chat.finalizeProgress(
+        progressIndex,
+        useCapsules
+          ? `✅ ¡Ruta creada! Organicé ${capsules.length} cápsulas en una ruta de aprendizaje.`
+          : `✅ Listo. Creé tu ruta. Agrega los pasos manualmente.`
+      );
+
+      window.open(data.route, "_blank");
+    } catch (e: any) {
+      console.error("create-path error", e);
+      const msg = e?.context?.body
+        ? (() => { try { return JSON.parse(e.context.body)?.error; } catch { return null; } })()
+        : null;
+      await chat.finalizeProgress(
+        progressIndex,
+        `❌ No pude crear la ruta: ${msg || e?.message || "error desconocido"}.`
+      );
+    } finally {
+      setCreatingType(null);
+    }
+  };
+
   const handleCreateCapsule = async (type: string) => {
     const opt = STUDIO_BY_ID[type];
     if (!opt) return;
     // Video: no AI creator — go to manual upload
     if (!opt.createRoute || opt.id === "video") {
       navigate("/create?type=video");
+      return;
+    }
+    // Special flow for "path": let user choose mode + cover
+    if (type === "path") {
+      const available = collectNotebookCapsules();
+      // Default to from_capsules when there are >=2 capsules; else metadata-only
+      setPathMode(available.length >= 2 ? "from_capsules" : "metadata");
+      setPathGenerateCover(true);
+      setPathOptionsOpen(true);
       return;
     }
     if (!id || creatingType) return;
@@ -1512,6 +1613,105 @@ const NotebookView = () => {
                 <Pencil className="h-4 w-4" /> Editar fuente
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Path creation options */}
+      <Dialog open={pathOptionsOpen} onOpenChange={setPathOptionsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Map className="w-5 h-5 text-primary" />
+              Crear ruta de aprendizaje con IA
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">¿Cómo quieres crearla?</p>
+              {(() => {
+                const available = collectNotebookCapsules();
+                const enoughCapsules = available.length >= 2;
+                return (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={!enoughCapsules}
+                      onClick={() => setPathMode("from_capsules")}
+                      className={`w-full text-left rounded-lg border p-3 transition ${
+                        pathMode === "from_capsules"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-accent"
+                      } ${!enoughCapsules ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Con el contenido de este Notebook</p>
+                          <p className="text-xs text-muted-foreground">
+                            La IA toma las cápsulas que ya creaste ({available.length} disponibles) y las organiza en una ruta coherente.
+                          </p>
+                          {!enoughCapsules && (
+                            <p className="text-xs text-amber-600 mt-1">
+                              Necesitas al menos 2 cápsulas creadas en el notebook.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPathMode("metadata")}
+                      className={`w-full text-left rounded-lg border p-3 transition ${
+                        pathMode === "metadata"
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-accent"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Wand2 className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">Solo metadata (vacía)</p>
+                          <p className="text-xs text-muted-foreground">
+                            Crea la ruta con título, descripción y objetivos. Tú añades los pasos manualmente.
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
+
+            <label className="flex items-start gap-2 rounded-lg border p-3 cursor-pointer hover:bg-accent">
+              <input
+                type="checkbox"
+                checked={pathGenerateCover}
+                onChange={(e) => setPathGenerateCover(e.target.checked)}
+                className="mt-1"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Generar portada con IA
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  La IA creará una imagen única para representar la ruta.
+                </p>
+              </div>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPathOptionsOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmCreatePath} disabled={creatingType === "path"}>
+              {creatingType === "path" ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generando…</>
+              ) : (
+                <><Wand2 className="w-4 h-4 mr-2" /> Crear ruta</>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
