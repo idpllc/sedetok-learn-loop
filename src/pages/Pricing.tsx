@@ -15,34 +15,77 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
-const FEATURES: Record<string, { items: string[] }> = {
+type PlanBenefits = {
+  items: string[];
+  students: string[];
+  parents: string[];
+};
+
+const FEATURES: Record<string, PlanBenefits> = {
   free: {
     items: [
       "20 Educoins mensuales",
-      "1 Notebook",
-      "3 fuentes por Notebook",
+      "1 Cuaderno de estudio",
+      "3 fuentes por Cuaderno",
       "Acceso a SedeTok y rutas",
       "Sin chat conversacional con voz",
       "Sin lectura por agente",
+    ],
+    students: [
+      "1 cuaderno digital de estudio",
+      "Búsqueda básica de fuentes de aprendizaje",
+      "Créditos Educoins limitados (20)",
+    ],
+    parents: [
+      "Seguimiento básico del avance del hijo",
     ],
   },
   premium: {
     items: [
       "100 Educoins mensuales",
-      "Hasta 20 Notebooks",
-      "50 fuentes por Notebook",
+      "Hasta 10 Cuadernos de estudio",
+      "50 fuentes por Cuaderno",
       "Chat conversacional con voz",
       "Lectura por agente ilimitada",
+    ],
+    students: [
+      "Hasta 10 cuadernos digitales de estudio",
+      "Búsqueda de fuentes de aprendizaje",
+      "Variedad en formatos de aprendizaje",
+      "Créditos Educoins para servicios adicionales (100)",
+    ],
+    parents: [
+      "Notificaciones vía WhatsApp:",
+      "• Avances en estudio (Cartillas en curso, formatos de aprendizaje aplicados)",
+      "• Notas (Materia en riesgo o reprobada)",
+      "Recomendación de estudios profesionales — primer acercamiento al perfil profesional para el hijo",
     ],
   },
   ultra: {
     items: [
       "300 Educoins mensuales",
-      "Notebooks ilimitados",
+      "Cuadernos de estudio ilimitados",
       "Fuentes ilimitadas",
       "Chat conversacional con voz",
       "Lectura por agente ilimitada",
       "Acceso a cursos Premium",
+    ],
+    students: [
+      "Hasta 20 cuadernos digitales de estudio",
+      "Búsqueda de fuentes de aprendizaje",
+      "Variedad en formatos de aprendizaje",
+      "Créditos Educoins para servicios adicionales (300)",
+      "Acceso a cursos premium y tutorías (dos tutorías virtuales con expertos)",
+    ],
+    parents: [
+      "Notificaciones vía WhatsApp:",
+      "• Avances en estudio (Cuadernos en curso, formatos de aprendizaje aplicados)",
+      "• Notas (Materia en riesgo o reprobada)",
+      "• Eventos de inasistencia",
+      "• Observaciones de disciplina",
+      "• Becas y posibilidades de estudio para tu hijo",
+      "Perfil vocacional actualizado por avances del hijo",
+      "Recomendación de estudios profesionales del hijo",
     ],
   },
 };
