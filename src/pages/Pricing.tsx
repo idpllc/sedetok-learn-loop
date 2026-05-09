@@ -303,7 +303,7 @@ const Pricing = () => {
     <>
       <Helmet>
         <title>Planes y Suscripciones | Sedefy</title>
-        <meta name="description" content="Elige tu plan: Free, Premium o Ultra. Más Educoins, Notebooks ilimitados, voz y lectura por agente." />
+        <meta name="description" content="Elige tu plan: Free, Premium o Ultra. Más Educoins, Cuadernos de estudio ilimitados, voz y lectura por agente." />
       </Helmet>
       <Sidebar />
       <main className="ml-0 md:ml-[var(--sidebar-width,16rem)] data-[sidebar-collapsed=true]:md:ml-[var(--sidebar-collapsed-width,4rem)] transition-all">
