@@ -733,41 +733,67 @@ const NotebookView = () => {
     return result;
   };
 
-  const runCreateCapsule = async (
-    type: string,
-    extraBody: Record<string, any> = {}
-  ) => {
-    const opt = STUDIO_BY_ID[type];
-    if (!opt) return;
+  const confirmCreatePath = async () => {
     if (!id || creatingType) return;
+    const opt = STUDIO_BY_ID["path"];
+    if (!opt) return;
 
-    setCreatingType(type);
+    const useCapsules = pathMode === "from_capsules";
+    const capsules = useCapsules ? collectNotebookCapsules() : [];
+    if (useCapsules && capsules.length < 2) {
+      toast({
+        title: "Necesitas más cápsulas",
+        description: "Crea al menos 2 cápsulas (videos, lecturas, quizzes o juegos) antes de armar la ruta con tu contenido.",
+        variant: "destructive",
+      } as any);
+      return;
+    }
+
+    setPathOptionsOpen(false);
+    setCreatingType("path");
     setMobileTab("chat");
-    const progressMarker = `|||GENERATING:${JSON.stringify({ type })}|||`;
+    const progressMarker = `|||GENERATING:${JSON.stringify({ type: "path" })}|||`;
     const progressIndex = await chat.appendProgressLocal(
-      `Crear ${opt.label.toLowerCase()} con IA`,
+      useCapsules
+        ? "Construyendo ruta de aprendizaje con tus cápsulas…"
+        : "Creando metadata de ruta de aprendizaje…",
       progressMarker
     );
 
     try {
-      const { data, error } = await supabase.functions.invoke("notebook-create-capsule", {
-        body: { notebookId: id, type, notebookSourceId: activeSourceId, ...extraBody },
-      });
+      const body: any = {
+        notebookId: id,
+        type: "path",
+        notebookSourceId: activeSourceId,
+        generateCover: pathGenerateCover,
+      };
+      if (useCapsules) {
+        body.mode = "from_capsules";
+        body.capsules = capsules;
+      }
+      const { data, error } = await supabase.functions.invoke("notebook-create-capsule", { body });
       if (error) throw error;
       if (!data?.route) throw new Error("Respuesta inválida del generador");
-      // Continue with original success flow below — we re-enter via fall-through
-      return { data, progressIndex, opt };
+
+      await chat.finalizeProgress(
+        progressIndex,
+        useCapsules
+          ? `✅ ¡Ruta creada! Organicé ${capsules.length} cápsulas en una ruta de aprendizaje.`
+          : `✅ Listo. Creé tu ruta. Agrega los pasos manualmente.`
+      );
+
+      window.open(data.route, "_blank");
     } catch (e: any) {
-      console.error("create-capsule error", e);
+      console.error("create-path error", e);
       const msg = e?.context?.body
         ? (() => { try { return JSON.parse(e.context.body)?.error; } catch { return null; } })()
         : null;
       await chat.finalizeProgress(
         progressIndex,
-        `❌ No pude crear la cápsula con IA: ${msg || e?.message || "error desconocido"}.`
+        `❌ No pude crear la ruta: ${msg || e?.message || "error desconocido"}.`
       );
+    } finally {
       setCreatingType(null);
-      return null;
     }
   };
 
