@@ -351,6 +351,10 @@ const NotebookView = () => {
   const [expandedSourceId, setExpandedSourceId] = useState<string | null>(null);
   // Pulse highlight on the studio capsule-type buttons (desktop) for ~1s
   const [studioHighlight, setStudioHighlight] = useState(false);
+  // Path creation options dialog
+  const [pathOptionsOpen, setPathOptionsOpen] = useState(false);
+  const [pathMode, setPathMode] = useState<"from_capsules" | "metadata">("from_capsules");
+  const [pathGenerateCover, setPathGenerateCover] = useState(true);
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
