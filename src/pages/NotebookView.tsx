@@ -707,12 +707,85 @@ const NotebookView = () => {
     setViewerExpanded(false);
   };
 
+  // Collect capsule ids/types from all studio caches across this notebook (any scope).
+  const collectNotebookCapsules = (): Array<{ id: string; type: string }> => {
+    if (!id) return [];
+    const seen = new Set<string>();
+    const result: Array<{ id: string; type: string }> = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith(`notebook:studioCache:v2:${id}:`)) continue;
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const bucket = JSON.parse(raw) as Record<string, SedefyResult[]>;
+        for (const arr of Object.values(bucket || {})) {
+          for (const r of arr || []) {
+            if (!r?.id || seen.has(r.id)) continue;
+            // Only include real capsule types we can attach to a path
+            if (!["video", "reading", "quiz", "game", "mindmap"].includes(r.type)) continue;
+            seen.add(r.id);
+            result.push({ id: r.id, type: r.type });
+          }
+        }
+      }
+    } catch {}
+    return result;
+  };
+
+  const runCreateCapsule = async (
+    type: string,
+    extraBody: Record<string, any> = {}
+  ) => {
+    const opt = STUDIO_BY_ID[type];
+    if (!opt) return;
+    if (!id || creatingType) return;
+
+    setCreatingType(type);
+    setMobileTab("chat");
+    const progressMarker = `|||GENERATING:${JSON.stringify({ type })}|||`;
+    const progressIndex = await chat.appendProgressLocal(
+      `Crear ${opt.label.toLowerCase()} con IA`,
+      progressMarker
+    );
+
+    try {
+      const { data, error } = await supabase.functions.invoke("notebook-create-capsule", {
+        body: { notebookId: id, type, notebookSourceId: activeSourceId, ...extraBody },
+      });
+      if (error) throw error;
+      if (!data?.route) throw new Error("Respuesta inválida del generador");
+      // Continue with original success flow below — we re-enter via fall-through
+      return { data, progressIndex, opt };
+    } catch (e: any) {
+      console.error("create-capsule error", e);
+      const msg = e?.context?.body
+        ? (() => { try { return JSON.parse(e.context.body)?.error; } catch { return null; } })()
+        : null;
+      await chat.finalizeProgress(
+        progressIndex,
+        `❌ No pude crear la cápsula con IA: ${msg || e?.message || "error desconocido"}.`
+      );
+      setCreatingType(null);
+      return null;
+    }
+  };
+
   const handleCreateCapsule = async (type: string) => {
     const opt = STUDIO_BY_ID[type];
     if (!opt) return;
     // Video: no AI creator — go to manual upload
     if (!opt.createRoute || opt.id === "video") {
       navigate("/create?type=video");
+      return;
+    }
+    // Special flow for "path": let user choose mode + cover
+    if (type === "path") {
+      const available = collectNotebookCapsules();
+      // Default to from_capsules when there are >=2 capsules; else metadata-only
+      setPathMode(available.length >= 2 ? "from_capsules" : "metadata");
+      setPathGenerateCover(true);
+      setPathOptionsOpen(true);
       return;
     }
     if (!id || creatingType) return;
