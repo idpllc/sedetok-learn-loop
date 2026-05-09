@@ -319,7 +319,7 @@ const Pricing = () => {
           )}
           <header className="text-center mb-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Elige tu plan</h1>
-            <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Notebooks, voz y agentes lectores.</p>
+            <p className="text-muted-foreground">Potencia tu aprendizaje con más Educoins, Cuadernos de estudio, voz y agentes lectores.</p>
             <p className="text-xs text-muted-foreground mt-2">Pagos seguros con MercadoPago: tarjetas, PSE, Nequi, Daviplata y más.</p>
             {currentCode !== "free" && sub && (
               <div className="mt-4 inline-flex items-center gap-2 text-sm bg-primary/10 px-4 py-2 rounded-full">
