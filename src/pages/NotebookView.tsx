@@ -1396,16 +1396,43 @@ const NotebookView = () => {
                       handleSend();
                     }
                   }}
-                  placeholder={noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"}
+                  placeholder={
+                    isRecording ? "Escuchando… habla ahora" :
+                    isTranscribing ? "Transcribiendo audio…" :
+                    noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"
+                  }
                   className="resize-none min-h-[44px] max-h-32"
-                  disabled={chat.isStreaming}
+                  disabled={chat.isStreaming || isRecording || isTranscribing}
                 />
+                <Button
+                  type="button"
+                  variant={voiceMode ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setVoiceMode((v) => !v)}
+                  title={voiceMode ? "Desactivar voz de la IA" : "Activar voz de la IA"}
+                  className={isSpeaking ? "animate-pulse" : ""}
+                >
+                  {voiceMode ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                </Button>
+                <Button
+                  type="button"
+                  variant={isRecording ? "destructive" : "outline"}
+                  size="icon"
+                  onClick={toggleRecording}
+                  disabled={chat.isStreaming || isTranscribing || noSources}
+                  title={isRecording ? "Detener grabación" : "Hablar"}
+                >
+                  {isTranscribing ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : isRecording ? <Square className="h-4 w-4" />
+                    : <Mic className="h-4 w-4" />}
+                </Button>
                 <Button onClick={handleSend} disabled={!input.trim() || chat.isStreaming} size="icon">
                   {chat.isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
               <p className="text-[10px] text-center text-muted-foreground mt-2">
                 {readyCount} fuente{readyCount === 1 ? "" : "s"} en este cuaderno
+                {voiceMode ? " · 🔊 Voz activada" : ""}
               </p>
             </div>
           </section>
