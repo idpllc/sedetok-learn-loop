@@ -1341,7 +1341,66 @@ const NotebookView = () => {
             </div>
 
             {/* Input */}
-            <div className="border-t p-3 md:p-4 shrink-0" data-tour="chat-input">
+            <div className="border-t p-3 md:p-4 shrink-0 relative" data-tour="chat-input">
+              {voiceOpen && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 px-3 md:px-4 z-20">
+                  <div className="max-w-3xl mx-auto rounded-2xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={alejandroAvatar} />
+                          <AvatarFallback>A</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-semibold leading-none">Alejo</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            {voiceStatus === "connecting" ? (<><Loader2 className="w-3 h-3 animate-spin" /> Conectando…</>) :
+                             voiceStatus === "active" && conversation.isSpeaking ? (<><Volume2 className="w-3 h-3 text-primary animate-pulse" /> Hablando…</>) :
+                             voiceStatus === "active" ? (<><Mic className="w-3 h-3 text-primary" /> Escuchando…</>) :
+                             "Inactivo"}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => { await endVoiceConversation(); setVoiceOpen(false); }}
+                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                        aria-label="Cerrar"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div ref={voiceTranscriptRef} className="flex-1 overflow-y-auto p-3 space-y-2 max-h-56">
+                      {voiceTranscript.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center pt-4">
+                          {voiceStatus === "active" ? "Habla para iniciar la conversación 🎤" : "Preparando voz…"}
+                        </p>
+                      )}
+                      {voiceTranscript.map((msg, i) => (
+                        <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                          <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"}`}>
+                            {msg.text}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="px-4 py-2 border-t border-border flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2.5 h-2.5 rounded-full ${conversation.isSpeaking ? "bg-primary animate-pulse" : "bg-accent animate-pulse"}`} />
+                        <span className="text-xs text-muted-foreground">
+                          {voiceStatus === "active" ? (conversation.isSpeaking ? "Alejo hablando" : "Tu turno") : "—"}
+                        </span>
+                      </div>
+                      {voiceStatus === "active" && (
+                        <Button variant="destructive" size="sm" onClick={endVoiceConversation} className="h-7 text-xs gap-1.5">
+                          <MicOff className="w-3.5 h-3.5" />
+                          Finalizar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="max-w-3xl mx-auto flex items-end gap-2">
                 <Textarea
                   rows={1}
@@ -1353,35 +1412,22 @@ const NotebookView = () => {
                       handleSend();
                     }
                   }}
-                  placeholder={
-                    isRecording ? "Escuchando… habla ahora" :
-                    isTranscribing ? "Transcribiendo audio…" :
-                    noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"
-                  }
+                  placeholder={noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"}
                   className="resize-none min-h-[44px] max-h-32"
-                  disabled={chat.isStreaming || isRecording || isTranscribing}
+                  disabled={chat.isStreaming}
                 />
                 <Button
                   type="button"
-                  variant={voiceMode ? "default" : "outline"}
+                  variant={voiceOpen ? "default" : "outline"}
                   size="icon"
-                  onClick={() => setVoiceMode((v) => !v)}
-                  title={voiceMode ? "Desactivar voz de la IA" : "Activar voz de la IA"}
-                  className={isSpeaking ? "animate-pulse" : ""}
+                  onClick={toggleVoicePanel}
+                  disabled={noSources && !voiceOpen}
+                  title={voiceOpen ? "Cerrar chat de voz" : "Hablar con Alejo"}
+                  className={voiceStatus === "active" && conversation.isSpeaking ? "animate-pulse" : ""}
                 >
-                  {voiceMode ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-                </Button>
-                <Button
-                  type="button"
-                  variant={isRecording ? "destructive" : "outline"}
-                  size="icon"
-                  onClick={toggleRecording}
-                  disabled={chat.isStreaming || isTranscribing || noSources}
-                  title={isRecording ? "Detener grabación" : "Hablar"}
-                >
-                  {isTranscribing ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : isRecording ? <Square className="h-4 w-4" />
-                    : <Mic className="h-4 w-4" />}
+                  {voiceStatus === "connecting" ? <Loader2 className="h-4 w-4 animate-spin" /> :
+                   voiceOpen ? <MicOff className="h-4 w-4" /> :
+                   <Mic className="h-4 w-4" />}
                 </Button>
                 <Button onClick={handleSend} disabled={!input.trim() || chat.isStreaming} size="icon">
                   {chat.isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -1389,7 +1435,7 @@ const NotebookView = () => {
               </div>
               <p className="text-[10px] text-center text-muted-foreground mt-2">
                 {readyCount} fuente{readyCount === 1 ? "" : "s"} en este cuaderno
-                {voiceMode ? " · 🔊 Voz activada" : ""}
+                {voiceOpen ? " · 🎙️ Chat de voz con Alejo" : ""}
               </p>
             </div>
           </section>
