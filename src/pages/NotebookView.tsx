@@ -308,142 +308,94 @@ const NotebookView = () => {
 
   const [input, setInput] = useState("");
 
-  // ---- Voice chat (STT + TTS) ----
-  const [voiceMode, setVoiceMode] = useState<boolean>(() => {
-    try { return localStorage.getItem("notebook:voiceMode") === "1"; } catch { return false; }
-  });
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
-  const lastSpokenRef = useRef<string | null>(null);
+  // ---- Voice chat (ElevenLabs conversational agent — Alejo) ----
+  const ALEJO_AGENT = VOICE_AGENTS.find((a) => a.id === "alejandro")!;
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<"idle" | "connecting" | "active">("idle");
+  const [voiceTranscript, setVoiceTranscript] = useState<Array<{ role: "user" | "agent"; text: string }>>([]);
+  const voiceTranscriptRef = useRef<HTMLDivElement>(null);
+  const contextSentRef = useRef(false);
 
-  const stopSpeaking = () => {
-    try {
-      if (audioElRef.current) {
-        audioElRef.current.pause();
-        audioElRef.current.src = "";
+  const conversation = useConversation({
+    onConnect: () => {
+      setVoiceStatus("active");
+      setVoiceTranscript([]);
+      contextSentRef.current = false;
+    },
+    onDisconnect: () => {
+      setVoiceStatus("idle");
+    },
+    onMessage: (message: { message: string; source: string }) => {
+      if (message.source === "user") {
+        setVoiceTranscript((prev) => [...prev, { role: "user", text: message.message }]);
+      } else if (message.source === "ai") {
+        setVoiceTranscript((prev) => [...prev, { role: "agent", text: message.message }]);
       }
+    },
+    onError: (error) => {
+      console.error("Voice conversation error:", error);
+      toast.error("Error en la conversación de voz");
+      setVoiceStatus("idle");
+    },
+  });
+
+  useEffect(() => {
+    if (voiceTranscriptRef.current) {
+      voiceTranscriptRef.current.scrollTop = voiceTranscriptRef.current.scrollHeight;
+    }
+  }, [voiceTranscript]);
+
+  // Send notebook source titles as context once connected
+  useEffect(() => {
+    if (voiceStatus !== "active" || contextSentRef.current) return;
+    const titles = (sourcesData()?.map((s: any) => s.title).filter(Boolean) || []).slice(0, 20);
+    if (titles.length === 0) return;
+    try {
+      (conversation as any).sendContextualUpdate?.(
+        `Cuaderno del estudiante: "${notebookTitle()}". Fuentes disponibles: ${titles.join("; ")}.`
+      );
+      contextSentRef.current = true;
     } catch {}
-    setIsSpeaking(false);
-  };
-
-  const speakText = async (rawText: string) => {
-    // Strip markdown and Studio CTA markers
-    const cleaned = rawText
-      .replace(/\|\|\|STUDIO_CTA:[^|]*\|\|\|/g, "")
-      .replace(/```[\s\S]*?```/g, "")
-      .replace(/`([^`]+)`/g, "$1")
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-      .replace(/[#>*_~]/g, "")
-      .trim();
-    if (!cleaned) return;
-    try {
-      stopSpeaking();
-      setIsSpeaking(true);
-      const { data, error } = await supabase.functions.invoke("text-to-speech", {
-        body: { text: cleaned.slice(0, 4000) },
-      });
-      if (error) throw error;
-      // data may be a Blob/ArrayBuffer depending on runtime
-      let blob: Blob;
-      if (data instanceof Blob) blob = data;
-      else if (data instanceof ArrayBuffer) blob = new Blob([data], { type: "audio/mpeg" });
-      else if (data && (data as any).byteLength !== undefined) blob = new Blob([data as any], { type: "audio/mpeg" });
-      else throw new Error("Audio inválido");
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioElRef.current = audio;
-      audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-      audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-      await audio.play();
-    } catch (e) {
-      console.error("TTS error", e);
-      setIsSpeaking(false);
-    }
-  };
-
-  // When a streaming response finishes, speak the last assistant message
-  useEffect(() => {
-    if (!voiceMode) return;
-    if (chat.isStreaming) return;
-    const msgs = chat.messages;
-    if (msgs.length === 0) return;
-    const last = msgs[msgs.length - 1];
-    if (last.role !== "assistant" || !last.content) return;
-    if (lastSpokenRef.current === last.content) return;
-    lastSpokenRef.current = last.content;
-    speakText(last.content);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.isStreaming, chat.messages, voiceMode]);
+  }, [voiceStatus]);
 
-  useEffect(() => {
-    try { localStorage.setItem("notebook:voiceMode", voiceMode ? "1" : "0"); } catch {}
-    if (!voiceMode) stopSpeaking();
-  }, [voiceMode]);
-
-  useEffect(() => () => { stopSpeaking(); }, []);
-
-  const startRecording = async () => {
-    if (isRecording || isTranscribing) return;
+  const startVoiceConversation = async () => {
+    setVoiceStatus("connecting");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        if (blob.size === 0) return;
-        setIsTranscribing(true);
-        try {
-          const buf = await blob.arrayBuffer();
-          // Convert to base64 in chunks (avoids stack overflow on large arrays)
-          const bytes = new Uint8Array(buf);
-          let binary = "";
-          const chunkSize = 0x8000;
-          for (let i = 0; i < bytes.length; i += chunkSize) {
-            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-          }
-          const base64 = btoa(binary);
-          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
-            body: { audio: base64 },
-          });
-          if (error) throw error;
-          const text = (data as any)?.text?.trim();
-          if (text) {
-            // Auto-send in voice mode, otherwise fill input
-            if (voiceMode) {
-              chat.sendMessage(text);
-            } else {
-              setInput((prev) => (prev ? prev + " " : "") + text);
-            }
-          }
-        } catch (e) {
-          console.error("STT error", e);
-        } finally {
-          setIsTranscribing(false);
-        }
-      };
-      mediaRecorderRef.current = mr;
-      mr.start();
-      setIsRecording(true);
-      stopSpeaking();
-    } catch (e) {
-      console.error("Mic error", e);
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const { data, error } = await supabase.functions.invoke("elevenlabs-signed-url", {
+        body: { agent_id: ALEJO_AGENT.agentId },
+      });
+      if (error || !data?.signed_url) throw new Error("No se pudo obtener la conexión");
+      await conversation.startSession({ signedUrl: data.signed_url });
+    } catch (err: any) {
+      console.error("Failed to start conversation:", err);
+      if (err?.name === "NotAllowedError") toast.error("Necesitas permitir el acceso al micrófono");
+      else toast.error("Error al iniciar la conversación");
+      setVoiceStatus("idle");
     }
   };
 
-  const stopRecording = () => {
-    if (!isRecording) return;
-    try { mediaRecorderRef.current?.stop(); } catch {}
-    setIsRecording(false);
+  const endVoiceConversation = async () => {
+    try { await conversation.endSession(); } catch {}
+    setVoiceStatus("idle");
   };
 
-  const toggleRecording = () => { isRecording ? stopRecording() : startRecording(); };
+  const toggleVoicePanel = async () => {
+    if (voiceOpen) {
+      if (voiceStatus === "active" || voiceStatus === "connecting") await endVoiceConversation();
+      setVoiceOpen(false);
+    } else {
+      setVoiceOpen(true);
+      if (voiceStatus === "idle") startVoiceConversation();
+    }
+  };
+
+  // Helpers used in the context effect (declared after sources is defined)
+  function sourcesData() { return (sources as any)?.list?.data as any[] | undefined; }
+  function notebookTitle() { return (notebook as any)?.title || "Cuaderno"; }
+
+  useEffect(() => () => { conversation.endSession().catch(() => {}); }, []);
 
   const [showAdd, setShowAdd] = useState(false);
   const [addSourceTab, setAddSourceTab] = useState<"file" | "text" | "competence">("text");
