@@ -14,8 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft, Check, Mic, Square, Volume2, VolumeX
+  Maximize2, Minimize2, ChevronLeft, Check, Mic, MicOff, Volume2, MessageCircle, X as XIcon
 } from "lucide-react";
+import { useConversation } from "@11labs/react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { VOICE_AGENTS } from "@/lib/voiceAgents";
+import alejandroAvatar from "@/assets/avatars/alejandro-avatar.png";
+import { toast } from "sonner";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
 import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
@@ -303,142 +308,94 @@ const NotebookView = () => {
 
   const [input, setInput] = useState("");
 
-  // ---- Voice chat (STT + TTS) ----
-  const [voiceMode, setVoiceMode] = useState<boolean>(() => {
-    try { return localStorage.getItem("notebook:voiceMode") === "1"; } catch { return false; }
-  });
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
-  const lastSpokenRef = useRef<string | null>(null);
+  // ---- Voice chat (ElevenLabs conversational agent — Alejo) ----
+  const ALEJO_AGENT = VOICE_AGENTS.find((a) => a.id === "alejandro")!;
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<"idle" | "connecting" | "active">("idle");
+  const [voiceTranscript, setVoiceTranscript] = useState<Array<{ role: "user" | "agent"; text: string }>>([]);
+  const voiceTranscriptRef = useRef<HTMLDivElement>(null);
+  const contextSentRef = useRef(false);
 
-  const stopSpeaking = () => {
-    try {
-      if (audioElRef.current) {
-        audioElRef.current.pause();
-        audioElRef.current.src = "";
+  const conversation = useConversation({
+    onConnect: () => {
+      setVoiceStatus("active");
+      setVoiceTranscript([]);
+      contextSentRef.current = false;
+    },
+    onDisconnect: () => {
+      setVoiceStatus("idle");
+    },
+    onMessage: (message: { message: string; source: string }) => {
+      if (message.source === "user") {
+        setVoiceTranscript((prev) => [...prev, { role: "user", text: message.message }]);
+      } else if (message.source === "ai") {
+        setVoiceTranscript((prev) => [...prev, { role: "agent", text: message.message }]);
       }
+    },
+    onError: (error) => {
+      console.error("Voice conversation error:", error);
+      toast.error("Error en la conversación de voz");
+      setVoiceStatus("idle");
+    },
+  });
+
+  useEffect(() => {
+    if (voiceTranscriptRef.current) {
+      voiceTranscriptRef.current.scrollTop = voiceTranscriptRef.current.scrollHeight;
+    }
+  }, [voiceTranscript]);
+
+  // Send notebook source titles as context once connected
+  useEffect(() => {
+    if (voiceStatus !== "active" || contextSentRef.current) return;
+    const titles = (sourcesData()?.map((s: any) => s.title).filter(Boolean) || []).slice(0, 20);
+    if (titles.length === 0) return;
+    try {
+      (conversation as any).sendContextualUpdate?.(
+        `Cuaderno del estudiante: "${notebookTitle()}". Fuentes disponibles: ${titles.join("; ")}.`
+      );
+      contextSentRef.current = true;
     } catch {}
-    setIsSpeaking(false);
-  };
-
-  const speakText = async (rawText: string) => {
-    // Strip markdown and Studio CTA markers
-    const cleaned = rawText
-      .replace(/\|\|\|STUDIO_CTA:[^|]*\|\|\|/g, "")
-      .replace(/```[\s\S]*?```/g, "")
-      .replace(/`([^`]+)`/g, "$1")
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
-      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-      .replace(/[#>*_~]/g, "")
-      .trim();
-    if (!cleaned) return;
-    try {
-      stopSpeaking();
-      setIsSpeaking(true);
-      const { data, error } = await supabase.functions.invoke("text-to-speech", {
-        body: { text: cleaned.slice(0, 4000) },
-      });
-      if (error) throw error;
-      // data may be a Blob/ArrayBuffer depending on runtime
-      let blob: Blob;
-      if (data instanceof Blob) blob = data;
-      else if (data instanceof ArrayBuffer) blob = new Blob([data], { type: "audio/mpeg" });
-      else if (data && (data as any).byteLength !== undefined) blob = new Blob([data as any], { type: "audio/mpeg" });
-      else throw new Error("Audio inválido");
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioElRef.current = audio;
-      audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-      audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-      await audio.play();
-    } catch (e) {
-      console.error("TTS error", e);
-      setIsSpeaking(false);
-    }
-  };
-
-  // When a streaming response finishes, speak the last assistant message
-  useEffect(() => {
-    if (!voiceMode) return;
-    if (chat.isStreaming) return;
-    const msgs = chat.messages;
-    if (msgs.length === 0) return;
-    const last = msgs[msgs.length - 1];
-    if (last.role !== "assistant" || !last.content) return;
-    if (lastSpokenRef.current === last.content) return;
-    lastSpokenRef.current = last.content;
-    speakText(last.content);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.isStreaming, chat.messages, voiceMode]);
+  }, [voiceStatus]);
 
-  useEffect(() => {
-    try { localStorage.setItem("notebook:voiceMode", voiceMode ? "1" : "0"); } catch {}
-    if (!voiceMode) stopSpeaking();
-  }, [voiceMode]);
-
-  useEffect(() => () => { stopSpeaking(); }, []);
-
-  const startRecording = async () => {
-    if (isRecording || isTranscribing) return;
+  const startVoiceConversation = async () => {
+    setVoiceStatus("connecting");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        if (blob.size === 0) return;
-        setIsTranscribing(true);
-        try {
-          const buf = await blob.arrayBuffer();
-          // Convert to base64 in chunks (avoids stack overflow on large arrays)
-          const bytes = new Uint8Array(buf);
-          let binary = "";
-          const chunkSize = 0x8000;
-          for (let i = 0; i < bytes.length; i += chunkSize) {
-            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-          }
-          const base64 = btoa(binary);
-          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
-            body: { audio: base64 },
-          });
-          if (error) throw error;
-          const text = (data as any)?.text?.trim();
-          if (text) {
-            // Auto-send in voice mode, otherwise fill input
-            if (voiceMode) {
-              chat.sendMessage(text);
-            } else {
-              setInput((prev) => (prev ? prev + " " : "") + text);
-            }
-          }
-        } catch (e) {
-          console.error("STT error", e);
-        } finally {
-          setIsTranscribing(false);
-        }
-      };
-      mediaRecorderRef.current = mr;
-      mr.start();
-      setIsRecording(true);
-      stopSpeaking();
-    } catch (e) {
-      console.error("Mic error", e);
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const { data, error } = await supabase.functions.invoke("elevenlabs-signed-url", {
+        body: { agent_id: ALEJO_AGENT.agentId },
+      });
+      if (error || !data?.signed_url) throw new Error("No se pudo obtener la conexión");
+      await conversation.startSession({ signedUrl: data.signed_url });
+    } catch (err: any) {
+      console.error("Failed to start conversation:", err);
+      if (err?.name === "NotAllowedError") toast.error("Necesitas permitir el acceso al micrófono");
+      else toast.error("Error al iniciar la conversación");
+      setVoiceStatus("idle");
     }
   };
 
-  const stopRecording = () => {
-    if (!isRecording) return;
-    try { mediaRecorderRef.current?.stop(); } catch {}
-    setIsRecording(false);
+  const endVoiceConversation = async () => {
+    try { await conversation.endSession(); } catch {}
+    setVoiceStatus("idle");
   };
 
-  const toggleRecording = () => { isRecording ? stopRecording() : startRecording(); };
+  const toggleVoicePanel = async () => {
+    if (voiceOpen) {
+      if (voiceStatus === "active" || voiceStatus === "connecting") await endVoiceConversation();
+      setVoiceOpen(false);
+    } else {
+      setVoiceOpen(true);
+      if (voiceStatus === "idle") startVoiceConversation();
+    }
+  };
+
+  // Helpers used in the context effect (declared after sources is defined)
+  function sourcesData() { return (sources as any)?.list?.data as any[] | undefined; }
+  function notebookTitle() { return (notebook as any)?.title || "Cuaderno"; }
+
+  useEffect(() => () => { conversation.endSession().catch(() => {}); }, []);
 
   const [showAdd, setShowAdd] = useState(false);
   const [addSourceTab, setAddSourceTab] = useState<"file" | "text" | "competence">("text");
@@ -1384,7 +1341,66 @@ const NotebookView = () => {
             </div>
 
             {/* Input */}
-            <div className="border-t p-3 md:p-4 shrink-0" data-tour="chat-input">
+            <div className="border-t p-3 md:p-4 shrink-0 relative" data-tour="chat-input">
+              {voiceOpen && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 px-3 md:px-4 z-20">
+                  <div className="max-w-3xl mx-auto rounded-2xl bg-card border border-border shadow-2xl overflow-hidden flex flex-col">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={alejandroAvatar} />
+                          <AvatarFallback>A</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-semibold leading-none">Alejo</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            {voiceStatus === "connecting" ? (<><Loader2 className="w-3 h-3 animate-spin" /> Conectando…</>) :
+                             voiceStatus === "active" && conversation.isSpeaking ? (<><Volume2 className="w-3 h-3 text-primary animate-pulse" /> Hablando…</>) :
+                             voiceStatus === "active" ? (<><Mic className="w-3 h-3 text-primary" /> Escuchando…</>) :
+                             "Inactivo"}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => { await endVoiceConversation(); setVoiceOpen(false); }}
+                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                        aria-label="Cerrar"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div ref={voiceTranscriptRef} className="flex-1 overflow-y-auto p-3 space-y-2 max-h-56">
+                      {voiceTranscript.length === 0 && (
+                        <p className="text-xs text-muted-foreground text-center pt-4">
+                          {voiceStatus === "active" ? "Habla para iniciar la conversación 🎤" : "Preparando voz…"}
+                        </p>
+                      )}
+                      {voiceTranscript.map((msg, i) => (
+                        <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                          <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${msg.role === "user" ? "bg-primary text-primary-foreground rounded-br-md" : "bg-muted text-foreground rounded-bl-md"}`}>
+                            {msg.text}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="px-4 py-2 border-t border-border flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2.5 h-2.5 rounded-full ${conversation.isSpeaking ? "bg-primary animate-pulse" : "bg-accent animate-pulse"}`} />
+                        <span className="text-xs text-muted-foreground">
+                          {voiceStatus === "active" ? (conversation.isSpeaking ? "Alejo hablando" : "Tu turno") : "—"}
+                        </span>
+                      </div>
+                      {voiceStatus === "active" && (
+                        <Button variant="destructive" size="sm" onClick={endVoiceConversation} className="h-7 text-xs gap-1.5">
+                          <MicOff className="w-3.5 h-3.5" />
+                          Finalizar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="max-w-3xl mx-auto flex items-end gap-2">
                 <Textarea
                   rows={1}
@@ -1396,35 +1412,22 @@ const NotebookView = () => {
                       handleSend();
                     }
                   }}
-                  placeholder={
-                    isRecording ? "Escuchando… habla ahora" :
-                    isTranscribing ? "Transcribiendo audio…" :
-                    noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"
-                  }
+                  placeholder={noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"}
                   className="resize-none min-h-[44px] max-h-32"
-                  disabled={chat.isStreaming || isRecording || isTranscribing}
+                  disabled={chat.isStreaming}
                 />
                 <Button
                   type="button"
-                  variant={voiceMode ? "default" : "outline"}
+                  variant={voiceOpen ? "default" : "outline"}
                   size="icon"
-                  onClick={() => setVoiceMode((v) => !v)}
-                  title={voiceMode ? "Desactivar voz de la IA" : "Activar voz de la IA"}
-                  className={isSpeaking ? "animate-pulse" : ""}
+                  onClick={toggleVoicePanel}
+                  disabled={noSources && !voiceOpen}
+                  title={voiceOpen ? "Cerrar chat de voz" : "Hablar con Alejo"}
+                  className={voiceStatus === "active" && conversation.isSpeaking ? "animate-pulse" : ""}
                 >
-                  {voiceMode ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-                </Button>
-                <Button
-                  type="button"
-                  variant={isRecording ? "destructive" : "outline"}
-                  size="icon"
-                  onClick={toggleRecording}
-                  disabled={chat.isStreaming || isTranscribing || noSources}
-                  title={isRecording ? "Detener grabación" : "Hablar"}
-                >
-                  {isTranscribing ? <Loader2 className="h-4 w-4 animate-spin" />
-                    : isRecording ? <Square className="h-4 w-4" />
-                    : <Mic className="h-4 w-4" />}
+                  {voiceStatus === "connecting" ? <Loader2 className="h-4 w-4 animate-spin" /> :
+                   voiceOpen ? <MicOff className="h-4 w-4" /> :
+                   <Mic className="h-4 w-4" />}
                 </Button>
                 <Button onClick={handleSend} disabled={!input.trim() || chat.isStreaming} size="icon">
                   {chat.isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -1432,7 +1435,7 @@ const NotebookView = () => {
               </div>
               <p className="text-[10px] text-center text-muted-foreground mt-2">
                 {readyCount} fuente{readyCount === 1 ? "" : "s"} en este cuaderno
-                {voiceMode ? " · 🔊 Voz activada" : ""}
+                {voiceOpen ? " · 🎙️ Chat de voz con Alejo" : ""}
               </p>
             </div>
           </section>
