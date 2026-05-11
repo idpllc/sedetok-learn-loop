@@ -14,8 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft, Check, Mic, Square, Volume2, VolumeX
+  Maximize2, Minimize2, ChevronLeft, Check, Mic, MicOff, Volume2, MessageCircle, X as XIcon
 } from "lucide-react";
+import { useConversation } from "@11labs/react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { VOICE_AGENTS } from "@/lib/voiceAgents";
+import alejandroAvatar from "@/assets/avatars/alejandro-avatar.png";
+import { toast } from "sonner";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
 import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
