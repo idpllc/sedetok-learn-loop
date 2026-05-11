@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft, Check
+  Maximize2, Minimize2, ChevronLeft, Check, Mic, Square, Volume2, VolumeX
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
