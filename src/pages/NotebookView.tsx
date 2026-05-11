@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft, Check
+  Maximize2, Minimize2, ChevronLeft, Check, Mic, Square, Volume2, VolumeX
 } from "lucide-react";
 import { AddSourceDialog } from "@/components/notebook/AddSourceDialog";
 import { CapsuleProgressCard } from "@/components/notebook/CapsuleProgressCard";
@@ -302,6 +302,144 @@ const NotebookView = () => {
   const sedefySearch = useNotebookSearch(id, activeSourceId);
 
   const [input, setInput] = useState("");
+
+  // ---- Voice chat (STT + TTS) ----
+  const [voiceMode, setVoiceMode] = useState<boolean>(() => {
+    try { return localStorage.getItem("notebook:voiceMode") === "1"; } catch { return false; }
+  });
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const lastSpokenRef = useRef<string | null>(null);
+
+  const stopSpeaking = () => {
+    try {
+      if (audioElRef.current) {
+        audioElRef.current.pause();
+        audioElRef.current.src = "";
+      }
+    } catch {}
+    setIsSpeaking(false);
+  };
+
+  const speakText = async (rawText: string) => {
+    // Strip markdown and Studio CTA markers
+    const cleaned = rawText
+      .replace(/\|\|\|STUDIO_CTA:[^|]*\|\|\|/g, "")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+      .replace(/[#>*_~]/g, "")
+      .trim();
+    if (!cleaned) return;
+    try {
+      stopSpeaking();
+      setIsSpeaking(true);
+      const { data, error } = await supabase.functions.invoke("text-to-speech", {
+        body: { text: cleaned.slice(0, 4000) },
+      });
+      if (error) throw error;
+      // data may be a Blob/ArrayBuffer depending on runtime
+      let blob: Blob;
+      if (data instanceof Blob) blob = data;
+      else if (data instanceof ArrayBuffer) blob = new Blob([data], { type: "audio/mpeg" });
+      else if (data && (data as any).byteLength !== undefined) blob = new Blob([data as any], { type: "audio/mpeg" });
+      else throw new Error("Audio inválido");
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioElRef.current = audio;
+      audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch (e) {
+      console.error("TTS error", e);
+      setIsSpeaking(false);
+    }
+  };
+
+  // When a streaming response finishes, speak the last assistant message
+  useEffect(() => {
+    if (!voiceMode) return;
+    if (chat.isStreaming) return;
+    const msgs = chat.messages;
+    if (msgs.length === 0) return;
+    const last = msgs[msgs.length - 1];
+    if (last.role !== "assistant" || !last.content) return;
+    if (lastSpokenRef.current === last.content) return;
+    lastSpokenRef.current = last.content;
+    speakText(last.content);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat.isStreaming, chat.messages, voiceMode]);
+
+  useEffect(() => {
+    try { localStorage.setItem("notebook:voiceMode", voiceMode ? "1" : "0"); } catch {}
+    if (!voiceMode) stopSpeaking();
+  }, [voiceMode]);
+
+  useEffect(() => () => { stopSpeaking(); }, []);
+
+  const startRecording = async () => {
+    if (isRecording || isTranscribing) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (blob.size === 0) return;
+        setIsTranscribing(true);
+        try {
+          const buf = await blob.arrayBuffer();
+          // Convert to base64 in chunks (avoids stack overflow on large arrays)
+          const bytes = new Uint8Array(buf);
+          let binary = "";
+          const chunkSize = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+          }
+          const base64 = btoa(binary);
+          const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+            body: { audio: base64 },
+          });
+          if (error) throw error;
+          const text = (data as any)?.text?.trim();
+          if (text) {
+            // Auto-send in voice mode, otherwise fill input
+            if (voiceMode) {
+              chat.sendMessage(text);
+            } else {
+              setInput((prev) => (prev ? prev + " " : "") + text);
+            }
+          }
+        } catch (e) {
+          console.error("STT error", e);
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setIsRecording(true);
+      stopSpeaking();
+    } catch (e) {
+      console.error("Mic error", e);
+    }
+  };
+
+  const stopRecording = () => {
+    if (!isRecording) return;
+    try { mediaRecorderRef.current?.stop(); } catch {}
+    setIsRecording(false);
+  };
+
+  const toggleRecording = () => { isRecording ? stopRecording() : startRecording(); };
+
   const [showAdd, setShowAdd] = useState(false);
   const [addSourceTab, setAddSourceTab] = useState<"file" | "text" | "competence">("text");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -1258,16 +1396,43 @@ const NotebookView = () => {
                       handleSend();
                     }
                   }}
-                  placeholder={noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"}
+                  placeholder={
+                    isRecording ? "Escuchando… habla ahora" :
+                    isTranscribing ? "Transcribiendo audio…" :
+                    noSources ? "Añade una fuente para conversar…" : "Empieza a escribir…"
+                  }
                   className="resize-none min-h-[44px] max-h-32"
-                  disabled={chat.isStreaming}
+                  disabled={chat.isStreaming || isRecording || isTranscribing}
                 />
+                <Button
+                  type="button"
+                  variant={voiceMode ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setVoiceMode((v) => !v)}
+                  title={voiceMode ? "Desactivar voz de la IA" : "Activar voz de la IA"}
+                  className={isSpeaking ? "animate-pulse" : ""}
+                >
+                  {voiceMode ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                </Button>
+                <Button
+                  type="button"
+                  variant={isRecording ? "destructive" : "outline"}
+                  size="icon"
+                  onClick={toggleRecording}
+                  disabled={chat.isStreaming || isTranscribing || noSources}
+                  title={isRecording ? "Detener grabación" : "Hablar"}
+                >
+                  {isTranscribing ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : isRecording ? <Square className="h-4 w-4" />
+                    : <Mic className="h-4 w-4" />}
+                </Button>
                 <Button onClick={handleSend} disabled={!input.trim() || chat.isStreaming} size="icon">
                   {chat.isStreaming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
               </div>
               <p className="text-[10px] text-center text-muted-foreground mt-2">
                 {readyCount} fuente{readyCount === 1 ? "" : "s"} en este cuaderno
+                {voiceMode ? " · 🔊 Voz activada" : ""}
               </p>
             </div>
           </section>
