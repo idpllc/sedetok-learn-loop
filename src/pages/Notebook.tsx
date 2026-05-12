@@ -6,6 +6,7 @@ import { useNotebooks } from "@/hooks/useNotebooks";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, BookOpen, Trash2, Loader2 } from "lucide-react";
+import { getNotebookIconStyle } from "@/lib/notebookIcons";
 import { Helmet } from "react-helmet-async";
 import { NotebookTutorial, NotebookTutorialHelpButton } from "@/components/notebook/NotebookTutorial";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -92,19 +93,29 @@ const Notebook = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {list.data?.map((nb) => (
+              {list.data?.map((nb) => {
+                const style = getNotebookIconStyle({
+                  title: nb.title,
+                  description: nb.description,
+                  sourceTitles: nb.source_titles,
+                });
+                const { Icon } = style;
+                return (
                 <Card
                   key={nb.id}
-                  className="p-5 hover:shadow-lg transition cursor-pointer relative group"
+                  className={`p-5 hover:shadow-lg transition cursor-pointer relative group ${style.surface}`}
                   onClick={() => navigate(`/notebook/${nb.id}`)}
                 >
-                  <div className="text-3xl mb-2">{nb.cover_emoji || "📓"}</div>
+                  <div className={`mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl ${style.bg}`}>
+                    <Icon className={`h-6 w-6 ${style.fg}`} />
+                  </div>
                   <h3 className="font-semibold text-lg line-clamp-2">{nb.title}</h3>
                   {nb.description && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{nb.description}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-3">
                     {new Date(nb.updated_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })}
+                    {typeof nb.source_count === "number" && ` · ${nb.source_count} fuente${nb.source_count === 1 ? "" : "s"}`}
                   </p>
                   <Button
                     variant="ghost"

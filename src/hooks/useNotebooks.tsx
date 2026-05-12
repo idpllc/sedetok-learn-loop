@@ -26,6 +26,8 @@ export type Notebook = {
   cover_emoji: string | null;
   created_at: string;
   updated_at: string;
+  source_titles?: string[];
+  source_count?: number;
 };
 
 export const useNotebooks = () => {
@@ -39,11 +41,15 @@ export const useNotebooks = () => {
       if (!user) return [];
       const { data, error } = await supabase
         .from("notebooks")
-        .select("*")
+        .select("*, notebook_sources(title)")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data as Notebook[];
+      return (data || []).map((nb: any) => ({
+        ...nb,
+        source_titles: (nb.notebook_sources || []).map((s: any) => s.title).filter(Boolean),
+        source_count: (nb.notebook_sources || []).length,
+      })) as Notebook[];
     },
     enabled: !!user,
   });
