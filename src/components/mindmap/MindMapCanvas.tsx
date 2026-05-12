@@ -559,7 +559,7 @@ const NodeBox = ({
             e.stopPropagation();
             onToggleCollapse();
           }}
-          className="absolute top-1/2 -translate-y-1/2 -right-3 z-10 w-6 h-6 rounded-full bg-background border-2 border-primary/40 hover:border-primary text-primary flex items-center justify-center shadow-sm transition-colors"
+          className={`absolute -right-3 z-20 w-6 h-6 rounded-full bg-background border-2 border-primary/40 hover:border-primary text-primary flex items-center justify-center shadow-sm transition-colors ${editable ? "top-[calc(50%-16px)] -translate-y-1/2" : "top-1/2 -translate-y-1/2"}`}
           title={collapsed ? "Expandir" : "Colapsar"}
           aria-label={collapsed ? "Expandir" : "Colapsar"}
         >
@@ -645,8 +645,9 @@ const NodeBox = ({
             e.stopPropagation();
             onAddChild();
           }}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-primary text-primary-foreground border-2 border-background shadow flex items-center justify-center hover:scale-110 transition-transform"
+          className={`absolute -right-3 z-20 w-6 h-6 rounded-full bg-primary text-primary-foreground border-2 border-background shadow flex items-center justify-center hover:scale-110 transition-transform ${showInteractiveToggle ? "top-[calc(50%+16px)] -translate-y-1/2" : "top-1/2 -translate-y-1/2"}`}
           title="Agregar hijo"
+          aria-label="Agregar hijo"
         >
           <Plus className="w-3.5 h-3.5" />
         </button>
