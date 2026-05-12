@@ -580,6 +580,13 @@ const Index = () => {
                                 Mapa Mental
                               </span>
                             </div>
+                          ) : (item.content_type === 'document' || item.content_type === 'documento') && !item.cover_url && !item.thumbnail_url && item.document_url ? (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                              <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+                              <div className="relative bg-white/20 backdrop-blur-md rounded-xl px-4 py-2 border border-white/30 shadow-xl">
+                                <span className="text-white font-bold text-base tracking-widest">.{(item.document_url as string).split('.').pop()?.split('?')[0]?.toUpperCase() || 'DOC'}</span>
+                              </div>
+                            </div>
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
                               {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
