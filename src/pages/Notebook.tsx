@@ -129,7 +129,8 @@ const Notebook = () => {
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
