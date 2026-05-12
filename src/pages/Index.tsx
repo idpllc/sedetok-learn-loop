@@ -517,8 +517,29 @@ const Index = () => {
                             ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40'
                             : item.content_type === 'game' && !item.cover_url && !item.thumbnail_url
                             ? 'bg-gradient-to-br from-blue-500/20 via-indigo-500/20 to-purple-500/20'
-                            : item.content_type === 'mapa_mental' && !item.cover_url && !item.thumbnail_url
+                          : item.content_type === 'mapa_mental' && !item.cover_url && !item.thumbnail_url
                             ? 'bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-cyan-950/40'
+                            : (item.content_type === 'document' || item.content_type === 'documento') && !item.cover_url && !item.thumbnail_url && item.document_url
+                            ? `bg-gradient-to-br ${(() => {
+                                const ext = (item.document_url as string).split('.').pop()?.split('?')[0]?.toUpperCase() || '';
+                                const map: Record<string, string> = {
+                                  PDF: 'from-red-600 via-red-500 to-orange-500',
+                                  DOC: 'from-blue-700 via-blue-500 to-cyan-500',
+                                  DOCX: 'from-blue-700 via-blue-500 to-cyan-500',
+                                  XLS: 'from-green-700 via-green-500 to-emerald-500',
+                                  XLSX: 'from-green-700 via-green-500 to-emerald-500',
+                                  PPT: 'from-orange-600 via-orange-500 to-amber-500',
+                                  PPTX: 'from-orange-600 via-orange-500 to-amber-500',
+                                  ZIP: 'from-yellow-600 via-yellow-500 to-amber-400',
+                                  RAR: 'from-yellow-600 via-yellow-500 to-amber-400',
+                                  PNG: 'from-pink-600 via-fuchsia-500 to-purple-500',
+                                  JPG: 'from-pink-600 via-fuchsia-500 to-purple-500',
+                                  JPEG: 'from-pink-600 via-fuchsia-500 to-purple-500',
+                                  MP3: 'from-violet-600 via-purple-500 to-indigo-500',
+                                  MP4: 'from-indigo-600 via-blue-500 to-violet-500',
+                                };
+                                return map[ext] || 'from-slate-700 via-slate-600 to-slate-500';
+                              })()}`
                             : 'bg-gradient-to-br from-primary/20 to-secondary/20'
                         }`}>
                           {(item.cover_url || item.thumbnail_url) ? (
