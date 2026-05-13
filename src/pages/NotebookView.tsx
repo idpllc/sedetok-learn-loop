@@ -841,6 +841,7 @@ const NotebookView = () => {
 
   const resultUrl = (r: SedefyResult) => {
     if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}?embed=1`;
+    if (r.type === "presentation") return `/presentation/${r.id}?embed=1`;
     const sameType = studioResults.filter((x) => x.type === r.type);
     const playlist = encodeURIComponent(sameType.map((x) => `${x.id}:${x.type}`).join(","));
     const param = r.type === "quiz" ? "quiz" : r.type === "game" ? "game" : "content";
