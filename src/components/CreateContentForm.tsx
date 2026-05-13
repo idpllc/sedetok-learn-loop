@@ -314,6 +314,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         learning_path: "Crear Ruta de Aprendizaje",
         game: "Crear Juego",
         mapa_mental: mindMapStep === 1 ? "Constructor de Mapa Mental" : "Crear Mapa Mental",
+        presentacion: "Crear Presentación",
       };
       onTitleChange(formData.content_type ? titles[formData.content_type as ContentType | 'learning_path'] : "Crear Contenido");
     }
