@@ -308,6 +308,30 @@ const NotebookView = () => {
   const chat = useNotebookChat(id, activeSourceId);
   const sedefySearch = useNotebookSearch(id, activeSourceId);
 
+  // Detect teacher role to gate the "Presentación" capsule type.
+  const { data: isTeacher } = useQuery({
+    queryKey: ["notebook_is_teacher", user?.id],
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("tipo_usuario")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (prof?.tipo_usuario === "Docente") return true;
+      const { data: mem } = await supabase
+        .from("institution_members")
+        .select("member_role")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .in("member_role", ["teacher", "admin", "coordinator"])
+        .limit(1);
+      return !!(mem && mem.length > 0);
+    },
+  });
+
   const [input, setInput] = useState("");
 
   // ---- Voice chat (ElevenLabs conversational agent — Alejo) ----
