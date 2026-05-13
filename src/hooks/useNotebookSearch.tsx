@@ -7,7 +7,7 @@ export type SedefyResult = {
   description?: string | null;
   subject?: string | null;
   cover_url?: string | null;
-  type: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
+  type: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course" | "presentation";
   /** Subtype for readings: resumen | glosario | notas | otro */
   readingSubtype?: string | null;
   /** Relevance score (higher = better match) */
