@@ -1069,7 +1069,7 @@ const NotebookView = () => {
               ? viewerExpanded
                 ? "lg:grid-cols-[0px_0px_1fr]"
                 : "lg:grid-cols-[280px_1fr_30%]"
-              : "lg:grid-cols-[280px_1fr_320px]"
+              : "lg:grid-cols-[280px_1fr_30%]"
           }`}
         >
           {/* Sources */}
