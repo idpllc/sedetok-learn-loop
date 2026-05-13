@@ -951,7 +951,7 @@ const NotebookView = () => {
     }
   };
 
-  const handleCreateCapsule = async (type: string) => {
+  const handleCreateCapsule = async (type: string, extraBody: Record<string, any> = {}) => {
     const opt = STUDIO_BY_ID[type];
     if (!opt) return;
     // Video: no AI creator — go to manual upload
@@ -981,7 +981,7 @@ const NotebookView = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("notebook-create-capsule", {
-        body: { notebookId: id, type, notebookSourceId: activeSourceId },
+        body: { notebookId: id, type, notebookSourceId: activeSourceId, ...extraBody },
       });
       if (error) throw error;
       if (!data?.route) throw new Error("Respuesta inválida del generador");
