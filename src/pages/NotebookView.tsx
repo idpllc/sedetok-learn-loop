@@ -1539,6 +1539,23 @@ const NotebookView = () => {
                   })}
                 </div>
 
+                {/* Trivia multijugador */}
+                <button
+                  onClick={() => !noSources && setTriviaOpen(true)}
+                  disabled={noSources}
+                  className="mt-3 w-full rounded-lg border-2 border-pink/40 bg-gradient-to-br from-pink/15 to-pink/5 hover:from-pink/25 hover:to-pink/10 p-3 text-left transition disabled:opacity-50 disabled:cursor-not-allowed group"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded-lg bg-pink/20 flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 text-pink" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-pink">Trivia del tema</p>
+                      <p className="text-[11px] text-muted-foreground">Compite hasta con 30 estudiantes</p>
+                    </div>
+                  </div>
+                </button>
+
                 {noSources && (
                   <p className="text-[11px] text-muted-foreground mt-3 text-center">
                     Añade fuentes para activar Studio
