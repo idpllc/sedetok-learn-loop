@@ -1910,6 +1910,7 @@ const NotebookView = () => {
           chat.messages.some((m) => m.role === "assistant")
         }
       />
+      {id && <NotebookTriviaModal open={triviaOpen} onOpenChange={setTriviaOpen} notebookId={id} />}
     </>
 
   );
