@@ -66,6 +66,8 @@ type Keyword = { token: string; fromTitle: boolean; weight: number };
  * - Title tokens are TRUSTED keywords (must match for a result to be considered)
  * - extracted_text tokens are SUPPORTING keywords (boost score but cannot match alone)
  */
+const FILE_EXT = new Set(["pdf","docx","doc","txt","pptx","ppt","xlsx","xls","html","htm","md"]);
+
 const extractKeywords = (sources: any[]): { titleKeywords: string[]; supportKeywords: string[] } => {
   const titleCounts = new Map<string, number>();
   const textCounts = new Map<string, number>();
@@ -76,30 +78,45 @@ const extractKeywords = (sources: any[]): { titleKeywords: string[]; supportKeyw
       const t = raw.trim();
       if (t.length < 5) continue;
       if (STOPWORDS.has(t)) continue;
+      if (FILE_EXT.has(t)) continue;
       if (/^\d+$/.test(t)) continue;
       target.set(t, (target.get(t) || 0) + weight);
     }
   };
 
   for (const s of sources || []) {
-    // Both the source title AND its content/competency text describe the topic
-    // the user wants to study. Treat both as primary keywords so we don't miss
-    // results when the user puts the subject in the title and the actual topic
-    // in the content (e.g. title="Matemáticas", content="Teorema de Pitágoras").
-    tokenize(s.title || "", titleCounts, 5);
-    tokenize((s.extracted_text || "").slice(0, 1200), titleCounts, 3);
+    // Title is the strongest signal: explicitly named by the user/uploader.
+    tokenize(s.title || "", titleCounts, 10);
+    // Extracted text only contributes as SUPPORT — it often contains generic
+    // boilerplate that would otherwise pollute the primary keyword set.
+    tokenize((s.extracted_text || "").slice(0, 2000), textCounts, 1);
   }
 
+  // Primary: top tokens from titles.
   const titleKeywords = [...titleCounts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+    .slice(0, 6)
     .map(([k]) => k);
 
-  // Support keywords intentionally empty now — every meaningful term from the
-  // source is a primary keyword. We keep the field for backwards compatibility.
-  const supportKeywords: string[] = [];
+  // If there are no usable title tokens (e.g. title was just "documento.pdf"),
+  // fall back to the most repeated content tokens as primary keywords.
+  let primary = titleKeywords;
+  if (primary.length === 0) {
+    primary = [...textCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([k]) => k);
+  }
 
-  return { titleKeywords, supportKeywords };
+  // Support keywords: high-frequency content tokens not already primary.
+  const primarySet = new Set(primary);
+  const supportKeywords = [...textCounts.entries()]
+    .filter(([k, c]) => c >= 2 && !primarySet.has(k))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([k]) => k);
+
+  return { titleKeywords: primary, supportKeywords };
 };
 
 /**
