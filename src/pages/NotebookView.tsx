@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft, Check, Mic, MicOff, Volume2, MessageCircle, X as XIcon
+  Maximize2, Minimize2, ChevronLeft, Check, Mic, MicOff, Volume2, MessageCircle, X as XIcon,
+  Presentation as PresentationIcon
 } from "lucide-react";
 import { useConversation } from "@11labs/react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
