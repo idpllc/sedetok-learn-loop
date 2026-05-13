@@ -12,7 +12,7 @@ import {
 type Slide = {
   id: string;
   order: number;
-  layout: "title" | "title_bullets" | "two_column" | "quote" | "closing";
+  layout: "title" | "title_bullets" | "two_column" | "quote" | "closing" | "image_full" | "image_left" | "image_right";
   title: string;
   subtitle?: string | null;
   bullets?: string[];
@@ -21,19 +21,82 @@ type Slide = {
   quote?: string | null;
   quote_author?: string | null;
   speaker_notes?: string | null;
+  image_url?: string | null;
+  image_prompt?: string | null;
 };
 
-const SlideRenderer = ({ slide, total, index, presTitle }: { slide: Slide; total: number; index: number; presTitle: string }) => {
-  const base = "w-full h-full p-10 md:p-16 flex flex-col justify-center";
+const SlideRenderer = ({ slide }: { slide: Slide }) => {
+  const base = "w-full h-full p-10 md:p-14 flex flex-col justify-center";
+  const img = slide.image_url;
+
   switch (slide.layout) {
     case "title":
       return (
-        <div className={`${base} items-center text-center bg-gradient-to-br from-primary/15 via-primary/5 to-background`}>
-          <p className="text-xs uppercase tracking-[0.3em] text-primary mb-6">Presentación</p>
-          <h1 className="text-3xl md:text-6xl font-extrabold leading-tight">{slide.title}</h1>
-          {slide.subtitle && <p className="mt-6 text-lg md:text-2xl text-muted-foreground max-w-3xl">{slide.subtitle}</p>}
+        <div className={`${base} items-center text-center relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-background`}>
+          {img && (
+            <img
+              src={img}
+              alt=""
+              loading="lazy"
+              width={1280}
+              height={720}
+              className="absolute inset-0 w-full h-full object-cover opacity-25"
+            />
+          )}
+          <div className="relative">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-6">Presentación</p>
+            <h1 className="text-3xl md:text-6xl font-extrabold leading-tight">{slide.title}</h1>
+            {slide.subtitle && <p className="mt-6 text-lg md:text-2xl text-muted-foreground max-w-3xl">{slide.subtitle}</p>}
+          </div>
         </div>
       );
+
+    case "image_full":
+      return (
+        <div className="w-full h-full relative overflow-hidden bg-black">
+          {img && <img src={img} alt={slide.title} loading="lazy" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-8 md:p-14 text-white">
+            <h2 className="text-2xl md:text-5xl font-extrabold drop-shadow-lg">{slide.title}</h2>
+            {slide.subtitle && <p className="mt-3 text-base md:text-xl opacity-90 max-w-3xl">{slide.subtitle}</p>}
+            {!!slide.bullets?.length && (
+              <ul className="mt-4 space-y-1.5 text-sm md:text-base">
+                {slide.bullets.slice(0, 3).map((b, i) => (
+                  <li key={i} className="flex gap-2"><span>•</span><span>{b}</span></li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      );
+
+    case "image_left":
+    case "image_right": {
+      const reverse = slide.layout === "image_right";
+      return (
+        <div className={`w-full h-full grid grid-cols-1 md:grid-cols-2 ${reverse ? "md:[&>*:first-child]:order-2" : ""}`}>
+          <div className="relative bg-muted overflow-hidden min-h-[200px]">
+            {img ? (
+              <img src={img} alt={slide.title} loading="lazy" width={640} height={720} className="absolute inset-0 w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
+            )}
+          </div>
+          <div className="p-6 md:p-12 flex flex-col justify-center">
+            <h2 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">{slide.title}</h2>
+            {slide.subtitle && <p className="text-sm md:text-base text-muted-foreground mb-4">{slide.subtitle}</p>}
+            <ul className="space-y-2 md:space-y-3">
+              {(slide.bullets || []).map((b, i) => (
+                <li key={i} className="flex gap-2 text-sm md:text-lg leading-snug">
+                  <span className="text-primary font-bold">•</span><span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    }
+
     case "two_column":
       return (
         <div className={base}>
@@ -51,40 +114,61 @@ const SlideRenderer = ({ slide, total, index, presTitle }: { slide: Slide; total
           </div>
         </div>
       );
+
     case "quote":
       return (
-        <div className={`${base} items-center text-center bg-muted/30`}>
-          <PresentIcon className="h-10 w-10 text-primary mb-6 opacity-50" />
-          <blockquote className="text-2xl md:text-4xl font-serif italic leading-snug max-w-4xl">
-            “{slide.quote || slide.title}”
-          </blockquote>
-          {slide.quote_author && <cite className="not-italic mt-6 text-base text-muted-foreground">— {slide.quote_author}</cite>}
+        <div className={`${base} items-center text-center relative overflow-hidden bg-muted/30`}>
+          {img && <img src={img} alt="" loading="lazy" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover opacity-15" />}
+          <div className="relative">
+            <PresentIcon className="h-10 w-10 text-primary mb-6 opacity-50 mx-auto" />
+            <blockquote className="text-2xl md:text-4xl font-serif italic leading-snug max-w-4xl">
+              “{slide.quote || slide.title}”
+            </blockquote>
+            {slide.quote_author && <cite className="not-italic mt-6 text-base text-muted-foreground block">— {slide.quote_author}</cite>}
+          </div>
         </div>
       );
+
     case "closing":
       return (
-        <div className={`${base} items-center text-center bg-gradient-to-tr from-primary/20 to-background`}>
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4">{slide.title}</h2>
-          {slide.subtitle && <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl">{slide.subtitle}</p>}
-          {!!slide.bullets?.length && (
-            <ul className="mt-8 space-y-2 text-base md:text-xl text-left max-w-2xl">
-              {slide.bullets.map((b, i) => <li key={i}>• {b}</li>)}
-            </ul>
-          )}
+        <div className={`${base} items-center text-center relative overflow-hidden bg-gradient-to-tr from-primary/20 to-background`}>
+          {img && <img src={img} alt="" loading="lazy" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover opacity-20" />}
+          <div className="relative">
+            <h2 className="text-3xl md:text-5xl font-extrabold mb-4">{slide.title}</h2>
+            {slide.subtitle && <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl">{slide.subtitle}</p>}
+            {!!slide.bullets?.length && (
+              <ul className="mt-8 space-y-2 text-base md:text-xl text-left max-w-2xl mx-auto">
+                {slide.bullets.map((b, i) => <li key={i}>• {b}</li>)}
+              </ul>
+            )}
+          </div>
         </div>
       );
+
     case "title_bullets":
     default:
       return (
-        <div className={base}>
-          <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-10">{slide.title}</h2>
-          <ul className="space-y-3 md:space-y-5 flex-1">
-            {(slide.bullets || []).map((b, i) => (
-              <li key={i} className="flex gap-3 text-base md:text-xl leading-snug">
-                <span className="text-primary font-bold">{i + 1}.</span><span>{b}</span>
-              </li>
-            ))}
-          </ul>
+        <div className={`${base} ${img ? "" : ""}`}>
+          <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-8">{slide.title}</h2>
+          <div className={img ? "grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 flex-1 items-center" : ""}>
+            <ul className="space-y-3 md:space-y-5">
+              {(slide.bullets || []).map((b, i) => (
+                <li key={i} className="flex gap-3 text-base md:text-xl leading-snug">
+                  <span className="text-primary font-bold">{i + 1}.</span><span>{b}</span>
+                </li>
+              ))}
+            </ul>
+            {img && (
+              <img
+                src={img}
+                alt=""
+                loading="lazy"
+                width={400}
+                height={400}
+                className="hidden md:block w-64 h-64 object-cover rounded-xl shadow-lg"
+              />
+            )}
+          </div>
         </div>
       );
   }
@@ -212,7 +296,7 @@ export default function PresentationView() {
 
       <main className="flex-1 flex flex-col items-center justify-center bg-muted/20 p-3 md:p-6 overflow-hidden">
         <div className="w-full max-w-6xl aspect-video bg-card rounded-xl border shadow-2xl overflow-hidden relative">
-          <SlideRenderer slide={slide} total={slides.length} index={current} presTitle={data.title} />
+          <SlideRenderer slide={slide} />
           <span className="absolute bottom-3 right-4 text-[11px] text-muted-foreground/70 font-mono">
             {current + 1} / {slides.length}
           </span>

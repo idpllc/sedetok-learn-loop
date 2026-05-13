@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
       mode, // for type === "path": "metadata" (default) | "from_capsules"
       capsules, // [{id, type}] when mode === "from_capsules"
       generateCover, // boolean — generate AI cover image (path only)
+      instructions, // free-text user instructions (presentation only)
     } = await req.json();
     if (!notebookId || !type) return ERR("Faltan parámetros", 400);
 
@@ -808,35 +809,31 @@ Deno.serve(async (req) => {
           ...META_PARAMS.properties,
           slides: {
             type: "array",
-            description: "8-12 diapositivas en orden pedagógico (portada, agenda, contenido, conclusión).",
+            description: "Exactamente 10 diapositivas en orden pedagógico (portada, agenda, 7 contenido, conclusión).",
             items: {
               type: "object",
               properties: {
                 layout: {
                   type: "string",
-                  enum: ["title", "title_bullets", "two_column", "quote", "closing"],
-                  description: "Tipo de diapositiva. La 1ª debe ser 'title' y la última 'closing'.",
+                  enum: ["title", "title_bullets", "two_column", "quote", "closing", "image_full", "image_left", "image_right"],
+                  description: "Tipo de diapositiva. La 1ª debe ser 'title' y la última 'closing'. Usa 'image_left'/'image_right' para mostrar imagen al costado de bullets, 'image_full' para imagen grande con título superpuesto.",
                 },
                 title: { type: "string", description: "Título de la diapositiva" },
                 subtitle: { type: "string", description: "Subtítulo o lema corto (opcional)" },
                 bullets: {
                   type: "array",
                   items: { type: "string" },
-                  description: "3-6 viñetas concisas (10-18 palabras cada una).",
+                  description: "3-5 viñetas concisas (10-18 palabras cada una).",
                 },
-                left_column: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Viñetas columna izquierda si layout='two_column'.",
-                },
-                right_column: {
-                  type: "array",
-                  items: { type: "string" },
-                  description: "Viñetas columna derecha si layout='two_column'.",
-                },
-                quote: { type: "string", description: "Cita destacada si layout='quote'." },
+                left_column: { type: "array", items: { type: "string" } },
+                right_column: { type: "array", items: { type: "string" } },
+                quote: { type: "string" },
                 quote_author: { type: "string" },
-                speaker_notes: { type: "string", description: "Notas para el docente: 2-4 oraciones que amplíen el contenido." },
+                speaker_notes: { type: "string", description: "2-4 oraciones para el docente." },
+                image_prompt: {
+                  type: "string",
+                  description: "Prompt en INGLÉS para generar una imagen ilustrativa de la diapositiva (estilo profesional, sin texto). OBLIGATORIO para layouts image_*, opcional para otros si aporta valor visual.",
+                },
               },
               required: ["layout", "title"],
             },
@@ -845,28 +842,110 @@ Deno.serve(async (req) => {
         required: [...META_PARAMS.required, "slides"],
       };
 
+      const userInstructionsBlock = instructions && typeof instructions === "string" && instructions.trim()
+        ? `\n\nINSTRUCCIONES ESPECÍFICAS DEL DOCENTE (priorízalas sobre defaults):\n"""${instructions.trim().slice(0, 2000)}"""\n`
+        : "";
+
       const ai = await callAI(
         systemPrompt,
-        `${baseUserPrompt}Genera una PRESENTACIÓN tipo PowerPoint para una clase basada estrictamente en las fuentes. Estructura recomendada: 1) Portada (layout='title'), 2) Agenda u objetivos (layout='title_bullets'), 3-9) Diapositivas de desarrollo combinando 'title_bullets' y 'two_column' (alterna para variedad visual), opcionalmente 1 'quote' con cita relevante, y termina con 'closing' (cierre / preguntas). Usa lenguaje claro para estudiantes, evita párrafos largos, prefiere viñetas cortas. Incluye SIEMPRE speaker_notes útiles para el docente.`,
+        `${baseUserPrompt}Genera EXACTAMENTE 10 diapositivas tipo PowerPoint para una clase, basadas estrictamente en las fuentes. Estructura: 1) Portada (title), 2) Agenda (title_bullets), 3-9) Desarrollo combinando 'title_bullets', 'two_column', 'image_left', 'image_right' e 'image_full' (alterna para variedad visual y máximo impacto), 10) Cierre (closing). La mayoría de diapositivas deben incluir un 'image_prompt' descriptivo en inglés (estilo: editorial educativo, ilustración digital limpia, sin texto, paleta armónica). Lenguaje claro, viñetas cortas. Incluye SIEMPRE speaker_notes.${userInstructionsBlock}`,
         "create_presentation",
         params,
         apiKey,
         "google/gemini-2.5-pro"
       );
 
-      const slides = (Array.isArray(ai.slides) ? ai.slides : []).map((s: any, i: number) => ({
-        id: crypto.randomUUID(),
-        order: i,
-        layout: s.layout || "title_bullets",
-        title: String(s.title || "").slice(0, 200),
-        subtitle: s.subtitle ? String(s.subtitle).slice(0, 200) : null,
-        bullets: Array.isArray(s.bullets) ? s.bullets.map((b: any) => String(b).slice(0, 300)) : [],
-        left_column: Array.isArray(s.left_column) ? s.left_column.map((b: any) => String(b).slice(0, 300)) : [],
-        right_column: Array.isArray(s.right_column) ? s.right_column.map((b: any) => String(b).slice(0, 300)) : [],
-        quote: s.quote ? String(s.quote).slice(0, 500) : null,
-        quote_author: s.quote_author ? String(s.quote_author).slice(0, 120) : null,
-        speaker_notes: s.speaker_notes ? String(s.speaker_notes).slice(0, 1200) : null,
-      }));
+      // Helper: generate image and upload to Cloudinary, returning a URL or null.
+      const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME")?.trim();
+      const cloudKey = Deno.env.get("CLOUDINARY_API_KEY")?.trim();
+      const cloudSecret = Deno.env.get("CLOUDINARY_API_SECRET")?.trim();
+      const cloudReady = !!(cloudName && cloudKey && cloudSecret);
+
+      const generateSlideImage = async (prompt: string): Promise<string | null> => {
+        try {
+          const fullPrompt = `Educational illustration, professional clean digital art, no text, harmonious palette, vibrant but tasteful, ample negative space. Subject: ${prompt}`;
+          const imgRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash-image",
+              messages: [{ role: "user", content: fullPrompt }],
+              modalities: ["image", "text"],
+            }),
+          });
+          if (!imgRes.ok) {
+            console.error("slide image gen error", imgRes.status);
+            return null;
+          }
+          const imgData = await imgRes.json();
+          const imgUrl: string | undefined = imgData?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          if (!imgUrl) return null;
+          const base64 = imgUrl.includes(";base64,") ? imgUrl.split(";base64,")[1] : imgUrl;
+          if (!cloudReady) {
+            // Fallback: return inline data URL (works but bloats DB).
+            return `data:image/png;base64,${base64}`;
+          }
+          const timestamp = Math.round(Date.now() / 1000);
+          const folder = "sedefy/presentation_slides";
+          const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+          const enc = new TextEncoder();
+          const hash = await crypto.subtle.digest("SHA-1", enc.encode(paramsToSign + cloudSecret));
+          const signature = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+          const fd = new FormData();
+          fd.append("file", `data:image/png;base64,${base64}`);
+          fd.append("api_key", cloudKey!);
+          fd.append("timestamp", String(timestamp));
+          fd.append("folder", folder);
+          fd.append("signature", signature);
+          const upRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: fd });
+          if (!upRes.ok) {
+            console.error("slide image upload error", upRes.status);
+            return `data:image/png;base64,${base64}`;
+          }
+          const upJson = await upRes.json();
+          return upJson.secure_url || upJson.url || `data:image/png;base64,${base64}`;
+        } catch (e) {
+          console.error("generateSlideImage error", e);
+          return null;
+        }
+      };
+
+      // First, build slide skeleton (without images)
+      const rawSlides = (Array.isArray(ai.slides) ? ai.slides : []).slice(0, 12);
+
+      // Generate images in parallel (with concurrency cap of 4 to avoid rate limits)
+      const slidesWithImages: any[] = new Array(rawSlides.length);
+      const concurrency = 4;
+      for (let i = 0; i < rawSlides.length; i += concurrency) {
+        const batch = rawSlides.slice(i, i + concurrency);
+        const results = await Promise.all(
+          batch.map(async (s: any, idx: number) => {
+            const wantsImage = !!s.image_prompt && String(s.image_prompt).trim().length > 0;
+            const imgUrl = wantsImage ? await generateSlideImage(String(s.image_prompt)) : null;
+            return { slide: s, imgUrl, absoluteIdx: i + idx };
+          })
+        );
+        for (const r of results) slidesWithImages[r.absoluteIdx] = r;
+      }
+
+      const slides = slidesWithImages.map((entry, i) => {
+        const s = entry.slide;
+        return {
+          id: crypto.randomUUID(),
+          order: i,
+          layout: s.layout || "title_bullets",
+          title: String(s.title || "").slice(0, 200),
+          subtitle: s.subtitle ? String(s.subtitle).slice(0, 200) : null,
+          bullets: Array.isArray(s.bullets) ? s.bullets.map((b: any) => String(b).slice(0, 300)) : [],
+          left_column: Array.isArray(s.left_column) ? s.left_column.map((b: any) => String(b).slice(0, 300)) : [],
+          right_column: Array.isArray(s.right_column) ? s.right_column.map((b: any) => String(b).slice(0, 300)) : [],
+          quote: s.quote ? String(s.quote).slice(0, 500) : null,
+          quote_author: s.quote_author ? String(s.quote_author).slice(0, 120) : null,
+          speaker_notes: s.speaker_notes ? String(s.speaker_notes).slice(0, 1200) : null,
+          image_prompt: s.image_prompt ? String(s.image_prompt).slice(0, 500) : null,
+          image_url: entry.imgUrl,
+        };
+      });
 
       const { data: row, error } = await supabase
         .from("content")
@@ -879,7 +958,7 @@ Deno.serve(async (req) => {
           subject: ai.subject,
           tags: ai.tags || [],
           content_type: "presentacion",
-          presentation_data: { slides, theme: "default" },
+          presentation_data: { slides, theme: "default", instructions: instructions || null },
           is_public: true,
         })
         .select("id")
@@ -891,7 +970,7 @@ Deno.serve(async (req) => {
         route: `/presentation/${row.id}`,
         title: ai.title,
         subject: ai.subject ?? null,
-        cover_url: null,
+        cover_url: slides[0]?.image_url ?? null,
       };
     }
 
