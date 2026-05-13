@@ -1863,6 +1863,50 @@ const NotebookView = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Presentation: free-text instructions before generating */}
+      <Dialog open={presentationOptionsOpen} onOpenChange={setPresentationOptionsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PresentationIcon className="w-5 h-5 text-primary" />
+              Generar presentación con IA
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Cuéntanos cómo quieres tu presentación. La IA generará 10 diapositivas con imágenes ilustrativas únicas
+              basadas en tus fuentes y estas indicaciones.
+            </p>
+            <Textarea
+              autoFocus
+              rows={6}
+              placeholder={"Ej: Audiencia: estudiantes de bachillerato. Tono: motivador y visual. Quiero muchas imágenes ilustrativas con estilo cómic moderno, paleta azul y morado. Incluye una cita célebre y ejemplos cotidianos. Evita fórmulas largas."}
+              value={presentationInstructions}
+              onChange={(e) => setPresentationInstructions(e.target.value)}
+              maxLength={2000}
+              className="resize-none"
+            />
+            <p className="text-[11px] text-muted-foreground text-right">
+              {presentationInstructions.length}/2000 · La generación tarda 30-60s por las imágenes
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPresentationOptionsOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                const instr = presentationInstructions.trim();
+                setPresentationOptionsOpen(false);
+                handleCreateCapsule("presentation", instr ? { instructions: instr } : {});
+              }}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Sparkles className="w-4 h-4 mr-1" />
+              Generar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Path creation options */}
       <Dialog open={pathOptionsOpen} onOpenChange={setPathOptionsOpen}>
         <DialogContent className="max-w-md">
