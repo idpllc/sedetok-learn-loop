@@ -213,10 +213,10 @@ export const useNotebookSearch = (
         const orFilter = buildOr(titleKeywords);
 
         // Fetch a wider window than requested so we can rank locally.
-        const fetchLimit = Math.max(20, (offset + limit) * 4);
+        const fetchLimit = Math.max(40, (offset + limit) * 6);
 
         // Require a strong total score so a single weak match is not enough.
-        const MIN_SCORE = 10;
+        const MIN_SCORE = titleKeywords.length >= 3 ? 18 : 12;
         const rank = (rows: any[]) =>
           rows
             .map((r) => ({ row: r, score: scoreRow(r, titleKeywords, supportKeywords) }))
