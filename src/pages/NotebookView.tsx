@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   ArrowLeft, Plus, Send, Loader2, FileText, Type, Link as LinkIcon, Video, GraduationCap,
   Trash2, Sparkles, BookOpen, Map, Brain, Gamepad2, FileQuestion, Book, Pencil, Wand2, ExternalLink,
-  Maximize2, Minimize2, ChevronLeft, Check, Mic, MicOff, Volume2, MessageCircle, X as XIcon
+  Maximize2, Minimize2, ChevronLeft, Check, Mic, MicOff, Volume2, MessageCircle, X as XIcon,
+  Presentation as PresentationIcon
 } from "lucide-react";
 import { useConversation } from "@11labs/react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -43,11 +44,15 @@ type StudioOption = {
   /** Optional reading subtype to scope the search */
   readingSubtype?: ReadingSubtype;
   /** Content type filter for SEDEFY library search */
-  searchType: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
+  searchType: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course" | "presentation";
   /** Route to AI-powered creator. null => no AI creator (e.g., video). */
   createRoute: string | null;
   /** Prompt (legacy, unused after local search refactor) */
   prompt: string;
+  /** When true, this option is only visible to teachers */
+  teacherOnly?: boolean;
+  /** When true, clicking the option skips catalog search and goes straight to AI creation */
+  createOnly?: boolean;
 };
 
 const STUDIO_OPTIONS: StudioOption[] = [
@@ -144,6 +149,17 @@ const STUDIO_OPTIONS: StudioOption[] = [
     searchType: "course",
     createRoute: "/courses/create",
     prompt: "",
+  },
+  {
+    id: "presentation",
+    label: "Presentación",
+    icon: PresentationIcon,
+    color: "from-pink-500/15 to-pink-500/5 border-pink-500/40 text-pink-600 hover:bg-pink-500/10 dark:text-pink-400",
+    searchType: "presentation",
+    createRoute: "/notebook?presentation=1",
+    prompt: "",
+    teacherOnly: true,
+    createOnly: true,
   },
 ];
 
@@ -306,6 +322,30 @@ const NotebookView = () => {
 
   const chat = useNotebookChat(id, activeSourceId);
   const sedefySearch = useNotebookSearch(id, activeSourceId);
+
+  // Detect teacher role to gate the "Presentación" capsule type.
+  const { data: isTeacher } = useQuery({
+    queryKey: ["notebook_is_teacher", user?.id],
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("tipo_usuario")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (prof?.tipo_usuario === "Docente") return true;
+      const { data: mem } = await supabase
+        .from("institution_members")
+        .select("member_role")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .in("member_role", ["teacher", "admin", "coordinator"])
+        .limit(1);
+      return !!(mem && mem.length > 0);
+    },
+  });
 
   const [input, setInput] = useState("");
 
@@ -690,6 +730,14 @@ const NotebookView = () => {
 
   const handleStudio = async (opt: StudioOption) => {
     if (chat.isStreaming || studioSearching) return;
+
+    // Create-only options (e.g. "Presentación") skip the SEDEFY catalog search
+    // and trigger AI capsule creation immediately.
+    if (opt.createOnly) {
+      handleCreateCapsule(opt.id);
+      return;
+    }
+
     setStudioActive(opt);
     setStudioOffset(0);
 
@@ -793,6 +841,7 @@ const NotebookView = () => {
 
   const resultUrl = (r: SedefyResult) => {
     if (r.type === "path" || r.type === "course") return `/learning-paths/view/${r.id}?embed=1`;
+    if (r.type === "presentation") return `/presentation/${r.id}?embed=1`;
     const sameType = studioResults.filter((x) => x.type === r.type);
     const playlist = encodeURIComponent(sameType.map((x) => `${x.id}:${x.type}`).join(","));
     const param = r.type === "quiz" ? "quiz" : r.type === "game" ? "game" : "content";
@@ -896,7 +945,7 @@ const NotebookView = () => {
     const opt = STUDIO_BY_ID[type];
     if (!opt) return;
     // Video: no AI creator — go to manual upload
-    if (!opt.createRoute || opt.id === "video") {
+    if (!opt.createOnly && (!opt.createRoute || opt.id === "video")) {
       navigate("/create?type=video");
       return;
     }
@@ -1511,7 +1560,7 @@ const NotebookView = () => {
                 </h2>
                 <p className="text-xs text-muted-foreground mb-3">Genera cápsulas Sedefy a partir de tus fuentes.</p>
                 <div className={`grid grid-cols-2 gap-2 rounded-lg transition-all ${studioHighlight ? "ring-4 ring-pink ring-offset-2 ring-offset-background animate-pulse p-1" : ""}`}>
-                  {STUDIO_OPTIONS.map((opt) => {
+                  {STUDIO_OPTIONS.filter((o) => !o.teacherOnly || isTeacher).map((opt) => {
                     const Icon = opt.icon;
                     const isActive = studioActive?.id === opt.id;
                     const cachedCount = studioCache[opt.id]?.length ?? 0;

@@ -85,6 +85,7 @@ const LanguageTutor = lazyWithRetry(() => import("./pages/LanguageTutor"));
 const StudyPlan = lazyWithRetry(() => import("./pages/StudyPlan"));
 const Notebook = lazyWithRetry(() => import("./pages/Notebook"));
 const NotebookView = lazyWithRetry(() => import("./pages/NotebookView"));
+const PresentationView = lazyWithRetry(() => import("./pages/PresentationView"));
 const PublishingErrorDetails = lazyWithRetry(() => import("./pages/PublishingErrorDetails"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 
@@ -210,6 +211,7 @@ const App = () => (
             <Route path="/study-plan" element={<StudyPlan />} />
             <Route path="/notebook" element={<Notebook />} />
             <Route path="/notebook/:id" element={<NotebookView />} />
+            <Route path="/presentation/:id" element={<PresentationView />} />
             <Route path="/api-docs" element={<ApiDocumentation />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/chat/login" element={<ChatLogin />} />
