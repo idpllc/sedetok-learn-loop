@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
       mode, // for type === "path": "metadata" (default) | "from_capsules"
       capsules, // [{id, type}] when mode === "from_capsules"
       generateCover, // boolean — generate AI cover image (path only)
+      instructions, // free-text user instructions (presentation only)
     } = await req.json();
     if (!notebookId || !type) return ERR("Faltan parámetros", 400);
 
