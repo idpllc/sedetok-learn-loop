@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useNotebookTrivia, TriviaPlayer } from "@/hooks/useNotebookTrivia";
-import { Loader2, Users, Play, Crown, Sparkles, Trophy, Check, X, Clock, LogOut } from "lucide-react";
+import { Loader2, Users, Play as PlayIcon, Crown, Sparkles, Trophy, Check, X, Clock, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
