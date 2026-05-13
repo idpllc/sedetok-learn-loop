@@ -85,6 +85,7 @@ const LanguageTutor = lazyWithRetry(() => import("./pages/LanguageTutor"));
 const StudyPlan = lazyWithRetry(() => import("./pages/StudyPlan"));
 const Notebook = lazyWithRetry(() => import("./pages/Notebook"));
 const NotebookView = lazyWithRetry(() => import("./pages/NotebookView"));
+const PresentationView = lazyWithRetry(() => import("./pages/PresentationView"));
 const PublishingErrorDetails = lazyWithRetry(() => import("./pages/PublishingErrorDetails"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 
