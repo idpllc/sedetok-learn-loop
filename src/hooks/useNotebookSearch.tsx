@@ -66,6 +66,8 @@ type Keyword = { token: string; fromTitle: boolean; weight: number };
  * - Title tokens are TRUSTED keywords (must match for a result to be considered)
  * - extracted_text tokens are SUPPORTING keywords (boost score but cannot match alone)
  */
+const FILE_EXT = new Set(["pdf","docx","doc","txt","pptx","ppt","xlsx","xls","html","htm","md"]);
+
 const extractKeywords = (sources: any[]): { titleKeywords: string[]; supportKeywords: string[] } => {
   const titleCounts = new Map<string, number>();
   const textCounts = new Map<string, number>();
@@ -76,30 +78,45 @@ const extractKeywords = (sources: any[]): { titleKeywords: string[]; supportKeyw
       const t = raw.trim();
       if (t.length < 5) continue;
       if (STOPWORDS.has(t)) continue;
+      if (FILE_EXT.has(t)) continue;
       if (/^\d+$/.test(t)) continue;
       target.set(t, (target.get(t) || 0) + weight);
     }
   };
 
   for (const s of sources || []) {
-    // Both the source title AND its content/competency text describe the topic
-    // the user wants to study. Treat both as primary keywords so we don't miss
-    // results when the user puts the subject in the title and the actual topic
-    // in the content (e.g. title="Matemáticas", content="Teorema de Pitágoras").
-    tokenize(s.title || "", titleCounts, 5);
-    tokenize((s.extracted_text || "").slice(0, 1200), titleCounts, 3);
+    // Title is the strongest signal: explicitly named by the user/uploader.
+    tokenize(s.title || "", titleCounts, 10);
+    // Extracted text only contributes as SUPPORT — it often contains generic
+    // boilerplate that would otherwise pollute the primary keyword set.
+    tokenize((s.extracted_text || "").slice(0, 2000), textCounts, 1);
   }
 
+  // Primary: top tokens from titles.
   const titleKeywords = [...titleCounts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+    .slice(0, 6)
     .map(([k]) => k);
 
-  // Support keywords intentionally empty now — every meaningful term from the
-  // source is a primary keyword. We keep the field for backwards compatibility.
-  const supportKeywords: string[] = [];
+  // If there are no usable title tokens (e.g. title was just "documento.pdf"),
+  // fall back to the most repeated content tokens as primary keywords.
+  let primary = titleKeywords;
+  if (primary.length === 0) {
+    primary = [...textCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([k]) => k);
+  }
 
-  return { titleKeywords, supportKeywords };
+  // Support keywords: high-frequency content tokens not already primary.
+  const primarySet = new Set(primary);
+  const supportKeywords = [...textCounts.entries()]
+    .filter(([k, c]) => c >= 2 && !primarySet.has(k))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([k]) => k);
+
+  return { titleKeywords: primary, supportKeywords };
 };
 
 /**
@@ -116,31 +133,33 @@ const scoreRow = (
   const desc = norm(row.description || "");
   const subject = norm(row.subject || "");
 
-  let titleHits = 0;
+  let primaryHits = 0;
+  let supportHits = 0;
   let score = 0;
 
   for (const k of titleKeywords) {
     if (!k) continue;
-    if (title.includes(k)) {
-      score += 10;
-      titleHits++;
-    } else if (desc.includes(k)) {
-      score += 4;
-      titleHits++;
-    } else if (subject.includes(k)) {
-      score += 3;
-      titleHits++;
-    }
+    let hit = false;
+    if (title.includes(k)) { score += 12; hit = true; }
+    else if (subject.includes(k)) { score += 6; hit = true; }
+    else if (desc.includes(k)) { score += 4; hit = true; }
+    if (hit) primaryHits++;
   }
 
-  // Hard gate: at least ONE title keyword must hit somewhere.
-  if (titleHits === 0) return 0;
+  // Hard gate: require at least one PRIMARY hit. If there are 3+ primary
+  // keywords, require at least 2 hits to avoid spurious single-word matches.
+  if (primaryHits === 0) return 0;
+  if (titleKeywords.length >= 3 && primaryHits < 2) return 0;
 
   for (const k of supportKeywords) {
     if (!k) continue;
-    if (title.includes(k)) score += 2;
-    else if (desc.includes(k)) score += 1;
+    if (title.includes(k)) { score += 3; supportHits++; }
+    else if (desc.includes(k)) { score += 1; supportHits++; }
   }
+
+  // Bonus for combined coverage
+  if (primaryHits >= 2) score += 5;
+  if (supportHits >= 2) score += 3;
 
   return score;
 };
@@ -194,10 +213,10 @@ export const useNotebookSearch = (
         const orFilter = buildOr(titleKeywords);
 
         // Fetch a wider window than requested so we can rank locally.
-        const fetchLimit = Math.max(20, (offset + limit) * 4);
+        const fetchLimit = Math.max(40, (offset + limit) * 6);
 
         // Require a strong total score so a single weak match is not enough.
-        const MIN_SCORE = 10;
+        const MIN_SCORE = titleKeywords.length >= 3 ? 18 : 12;
         const rank = (rows: any[]) =>
           rows
             .map((r) => ({ row: r, score: scoreRow(r, titleKeywords, supportKeywords) }))
