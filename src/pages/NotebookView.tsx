@@ -945,7 +945,7 @@ const NotebookView = () => {
     const opt = STUDIO_BY_ID[type];
     if (!opt) return;
     // Video: no AI creator — go to manual upload
-    if (!opt.createRoute || opt.id === "video") {
+    if (!opt.createOnly && (!opt.createRoute || opt.id === "video")) {
       navigate("/create?type=video");
       return;
     }
