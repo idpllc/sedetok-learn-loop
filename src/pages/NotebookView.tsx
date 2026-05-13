@@ -28,6 +28,7 @@ import ReactMarkdown from "react-markdown";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
 import { X, FileSearch, NotebookPen, Library } from "lucide-react";
+import { NotebookTriviaModal } from "@/components/notebook/NotebookTriviaModal";
 
 const TYPE_ICONS: Record<string, any> = {
   pdf: FileText, docx: FileText, xlsx: FileText, text: Type, url: LinkIcon, video: Video, competence: GraduationCap,
