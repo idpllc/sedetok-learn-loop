@@ -150,6 +150,17 @@ const STUDIO_OPTIONS: StudioOption[] = [
     createRoute: "/courses/create",
     prompt: "",
   },
+  {
+    id: "presentation",
+    label: "Presentación",
+    icon: PresentationIcon,
+    color: "from-pink-500/15 to-pink-500/5 border-pink-500/40 text-pink-600 hover:bg-pink-500/10 dark:text-pink-400",
+    searchType: "presentation",
+    createRoute: "/notebook?presentation=1",
+    prompt: "",
+    teacherOnly: true,
+    createOnly: true,
+  },
 ];
 
 const STUDIO_BY_ID: Record<string, StudioOption> = STUDIO_OPTIONS.reduce(
