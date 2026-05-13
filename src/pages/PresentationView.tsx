@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   ChevronLeft, ChevronRight, ArrowLeft, Maximize, Minimize,
   StickyNote, Loader2, Download, Presentation as PresentIcon,
@@ -34,14 +35,8 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
       return (
         <div className={`${base} items-center text-center relative overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-background`}>
           {img && (
-            <img
-              src={img}
-              alt=""
-              loading="lazy"
-              width={1280}
-              height={720}
-              className="absolute inset-0 w-full h-full object-cover opacity-25"
-            />
+            <img src={img} alt="" loading="lazy" width={1280} height={720}
+              className="absolute inset-0 w-full h-full object-cover opacity-25" crossOrigin="anonymous" />
           )}
           <div className="relative">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-6">Presentación</p>
@@ -54,7 +49,8 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
     case "image_full":
       return (
         <div className="w-full h-full relative overflow-hidden bg-black">
-          {img && <img src={img} alt={slide.title} loading="lazy" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover" />}
+          {img && <img src={img} alt={slide.title} loading="lazy" width={1280} height={720}
+            className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-8 md:p-14 text-white">
             <h2 className="text-2xl md:text-5xl font-extrabold drop-shadow-lg">{slide.title}</h2>
@@ -77,7 +73,8 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
         <div className={`w-full h-full grid grid-cols-1 md:grid-cols-2 ${reverse ? "md:[&>*:first-child]:order-2" : ""}`}>
           <div className="relative bg-muted overflow-hidden min-h-[200px]">
             {img ? (
-              <img src={img} alt={slide.title} loading="lazy" width={640} height={720} className="absolute inset-0 w-full h-full object-cover" />
+              <img src={img} alt={slide.title} loading="lazy" width={640} height={720}
+                className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5" />
             )}
@@ -118,11 +115,12 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
     case "quote":
       return (
         <div className={`${base} items-center text-center relative overflow-hidden bg-muted/30`}>
-          {img && <img src={img} alt="" loading="lazy" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover opacity-15" />}
+          {img && <img src={img} alt="" loading="lazy" width={1280} height={720}
+            className="absolute inset-0 w-full h-full object-cover opacity-15" crossOrigin="anonymous" />}
           <div className="relative">
             <PresentIcon className="h-10 w-10 text-primary mb-6 opacity-50 mx-auto" />
             <blockquote className="text-2xl md:text-4xl font-serif italic leading-snug max-w-4xl">
-              “{slide.quote || slide.title}”
+              "{slide.quote || slide.title}"
             </blockquote>
             {slide.quote_author && <cite className="not-italic mt-6 text-base text-muted-foreground block">— {slide.quote_author}</cite>}
           </div>
@@ -132,7 +130,8 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
     case "closing":
       return (
         <div className={`${base} items-center text-center relative overflow-hidden bg-gradient-to-tr from-primary/20 to-background`}>
-          {img && <img src={img} alt="" loading="lazy" width={1280} height={720} className="absolute inset-0 w-full h-full object-cover opacity-20" />}
+          {img && <img src={img} alt="" loading="lazy" width={1280} height={720}
+            className="absolute inset-0 w-full h-full object-cover opacity-20" crossOrigin="anonymous" />}
           <div className="relative">
             <h2 className="text-3xl md:text-5xl font-extrabold mb-4">{slide.title}</h2>
             {slide.subtitle && <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl">{slide.subtitle}</p>}
@@ -148,7 +147,7 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
     case "title_bullets":
     default:
       return (
-        <div className={`${base} ${img ? "" : ""}`}>
+        <div className={base}>
           <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-8">{slide.title}</h2>
           <div className={img ? "grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 flex-1 items-center" : ""}>
             <ul className="space-y-3 md:space-y-5">
@@ -159,14 +158,8 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
               ))}
             </ul>
             {img && (
-              <img
-                src={img}
-                alt=""
-                loading="lazy"
-                width={400}
-                height={400}
-                className="hidden md:block w-64 h-64 object-cover rounded-xl shadow-lg"
-              />
+              <img src={img} alt="" loading="lazy" width={400} height={400}
+                className="hidden md:block w-64 h-64 object-cover rounded-xl shadow-lg" crossOrigin="anonymous" />
             )}
           </div>
         </div>
@@ -182,6 +175,9 @@ export default function PresentationView() {
   const [current, setCurrent] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const slideRef = useRef<HTMLDivElement>(null);
+  const exportContainerRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["presentation", id],
@@ -202,11 +198,18 @@ export default function PresentationView() {
     return Array.isArray(raw) ? raw : [];
   }, [data]);
 
+  // "slides" (16:9) o "flashcards" (1:1)
+  const presentationKind: "slides" | "flashcards" =
+    data?.presentation_data?.meta?.type === "flashcards" ? "flashcards" : "slides";
+  const aspectClass = presentationKind === "flashcards" ? "aspect-square" : "aspect-video";
+  const maxWidthClass = presentationKind === "flashcards" ? "max-w-[640px]" : "max-w-6xl";
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " ") setCurrent((c) => Math.min(c + 1, slides.length - 1));
       if (e.key === "ArrowLeft") setCurrent((c) => Math.max(c - 1, 0));
       if (e.key === "n") setShowNotes((s) => !s);
+      if (e.key === "f" || e.key === "F") toggleFs();
       if (e.key === "Escape" && document.fullscreenElement) document.exitFullscreen();
     };
     window.addEventListener("keydown", onKey);
@@ -219,33 +222,60 @@ export default function PresentationView() {
   }, [slides.length]);
 
   const toggleFs = async () => {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen?.();
-    } else {
-      await document.exitFullscreen?.();
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen?.();
+      } else {
+        await document.exitFullscreen?.();
+      }
+    } catch (e) {
+      console.error("fullscreen error", e);
     }
   };
 
-  const exportMarkdown = () => {
-    const md = slides.map((s, i) => {
-      const parts = [`# Slide ${i + 1}: ${s.title}`];
-      if (s.subtitle) parts.push(`_${s.subtitle}_`);
-      if (s.bullets?.length) parts.push(s.bullets.map((b) => `- ${b}`).join("\n"));
-      if (s.left_column?.length || s.right_column?.length) {
-        parts.push("**Columna izquierda**\n" + (s.left_column || []).map((b) => `- ${b}`).join("\n"));
-        parts.push("**Columna derecha**\n" + (s.right_column || []).map((b) => `- ${b}`).join("\n"));
+  const downloadPdf = async () => {
+    if (exporting || slides.length === 0) return;
+    setExporting(true);
+    try {
+      const [{ default: jsPDF }, html2canvasMod] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas"),
+      ]);
+      const html2canvas = html2canvasMod.default;
+
+      const isSquare = presentationKind === "flashcards";
+      // PDF page: landscape A4-ish for slides, square for flashcards
+      const pdf = isSquare
+        ? new jsPDF({ orientation: "portrait", unit: "px", format: [1080, 1080] })
+        : new jsPDF({ orientation: "landscape", unit: "px", format: [1280, 720] });
+
+      // Render each slide off-screen at high resolution
+      const container = exportContainerRef.current!;
+      for (let i = 0; i < slides.length; i++) {
+        const slideEl = container.children[i] as HTMLElement;
+        if (!slideEl) continue;
+        const canvas = await html2canvas(slideEl, {
+          scale: 1.5,
+          backgroundColor: "#ffffff",
+          useCORS: true,
+          logging: false,
+          windowWidth: slideEl.offsetWidth,
+          windowHeight: slideEl.offsetHeight,
+        });
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH);
       }
-      if (s.quote) parts.push(`> ${s.quote}${s.quote_author ? ` — ${s.quote_author}` : ""}`);
-      if (s.speaker_notes) parts.push(`\n_Notas:_ ${s.speaker_notes}`);
-      return parts.join("\n\n");
-    }).join("\n\n---\n\n");
-    const blob = new Blob([`# ${data?.title || "Presentación"}\n\n${md}`], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(data?.title || "presentacion").replace(/\s+/g, "_")}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+      pdf.save(`${(data?.title || "presentacion").replace(/\s+/g, "_")}.pdf`);
+      toast.success("PDF descargado");
+    } catch (e: any) {
+      console.error("pdf export", e);
+      toast.error("No se pudo generar el PDF");
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (isLoading) {
@@ -285,17 +315,18 @@ export default function PresentationView() {
           <Button size="sm" variant="ghost" onClick={() => setShowNotes((s) => !s)}>
             <StickyNote className="h-4 w-4" /> {showNotes ? "Ocultar notas" : "Notas"}
           </Button>
-          <Button size="sm" variant="ghost" onClick={exportMarkdown} title="Exportar a Markdown">
-            <Download className="h-4 w-4" />
+          <Button size="sm" variant="ghost" onClick={downloadPdf} disabled={exporting} title="Descargar PDF">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            <span className="hidden sm:inline ml-1">{exporting ? "Generando…" : "PDF"}</span>
           </Button>
-          <Button size="sm" variant="ghost" onClick={toggleFs}>
+          <Button size="sm" variant="ghost" onClick={toggleFs} title="Pantalla completa (F)">
             {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
           </Button>
         </header>
       )}
 
       <main className="flex-1 flex flex-col items-center justify-center bg-muted/20 p-3 md:p-6 overflow-hidden">
-        <div className="w-full max-w-6xl aspect-video bg-card rounded-xl border shadow-2xl overflow-hidden relative">
+        <div ref={slideRef} className={`w-full ${maxWidthClass} ${aspectClass} bg-card rounded-xl border shadow-2xl overflow-hidden relative`}>
           <SlideRenderer slide={slide} />
           <span className="absolute bottom-3 right-4 text-[11px] text-muted-foreground/70 font-mono">
             {current + 1} / {slides.length}
@@ -303,7 +334,7 @@ export default function PresentationView() {
         </div>
 
         {showNotes && slide.speaker_notes && (
-          <div className="w-full max-w-6xl mt-3 p-3 rounded-lg border bg-card/60 text-xs md:text-sm">
+          <div className={`w-full ${maxWidthClass} mt-3 p-3 rounded-lg border bg-card/60 text-xs md:text-sm`}>
             <p className="font-semibold text-primary mb-1 flex items-center gap-1.5"><StickyNote className="h-3.5 w-3.5" /> Notas del docente</p>
             <p className="text-muted-foreground leading-relaxed">{slide.speaker_notes}</p>
           </div>
@@ -319,6 +350,30 @@ export default function PresentationView() {
           </Button>
         </div>
       </main>
+
+      {/* Hidden off-screen container used by the PDF exporter to render every slide
+          at full resolution before snapshotting them with html2canvas. */}
+      <div
+        ref={exportContainerRef}
+        aria-hidden
+        className="fixed -left-[10000px] top-0 pointer-events-none"
+        style={{ width: presentationKind === "flashcards" ? 1080 : 1280 }}
+      >
+        {slides.map((s) => (
+          <div
+            key={s.id}
+            style={{
+              width: presentationKind === "flashcards" ? 1080 : 1280,
+              height: presentationKind === "flashcards" ? 1080 : 720,
+              background: "white",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <SlideRenderer slide={s} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
