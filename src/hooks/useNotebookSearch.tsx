@@ -133,31 +133,33 @@ const scoreRow = (
   const desc = norm(row.description || "");
   const subject = norm(row.subject || "");
 
-  let titleHits = 0;
+  let primaryHits = 0;
+  let supportHits = 0;
   let score = 0;
 
   for (const k of titleKeywords) {
     if (!k) continue;
-    if (title.includes(k)) {
-      score += 10;
-      titleHits++;
-    } else if (desc.includes(k)) {
-      score += 4;
-      titleHits++;
-    } else if (subject.includes(k)) {
-      score += 3;
-      titleHits++;
-    }
+    let hit = false;
+    if (title.includes(k)) { score += 12; hit = true; }
+    else if (subject.includes(k)) { score += 6; hit = true; }
+    else if (desc.includes(k)) { score += 4; hit = true; }
+    if (hit) primaryHits++;
   }
 
-  // Hard gate: at least ONE title keyword must hit somewhere.
-  if (titleHits === 0) return 0;
+  // Hard gate: require at least one PRIMARY hit. If there are 3+ primary
+  // keywords, require at least 2 hits to avoid spurious single-word matches.
+  if (primaryHits === 0) return 0;
+  if (titleKeywords.length >= 3 && primaryHits < 2) return 0;
 
   for (const k of supportKeywords) {
     if (!k) continue;
-    if (title.includes(k)) score += 2;
-    else if (desc.includes(k)) score += 1;
+    if (title.includes(k)) { score += 3; supportHits++; }
+    else if (desc.includes(k)) { score += 1; supportHits++; }
   }
+
+  // Bonus for combined coverage
+  if (primaryHits >= 2) score += 5;
+  if (supportHits >= 2) score += 3;
 
   return score;
 };
