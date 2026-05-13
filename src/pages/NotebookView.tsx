@@ -311,6 +311,7 @@ const NotebookView = () => {
   // ---- Voice chat (ElevenLabs conversational agent — Alejo) ----
   const ALEJO_AGENT = VOICE_AGENTS.find((a) => a.id === "alejandro")!;
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [triviaOpen, setTriviaOpen] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "connecting" | "active">("idle");
   const [voiceTranscript, setVoiceTranscript] = useState<Array<{ role: "user" | "agent"; text: string }>>([]);
   const voiceTranscriptRef = useRef<HTMLDivElement>(null);
