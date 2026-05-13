@@ -779,6 +779,113 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ---------- PRESENTATION (docente) ----------
+    else if (type === "presentation") {
+      // Verify the user is a teacher / admin / coordinator in any active institution
+      const { data: membership } = await supabase
+        .from("institution_members")
+        .select("member_role")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .in("member_role", ["teacher", "admin", "coordinator"])
+        .limit(1);
+      if (!membership || membership.length === 0) {
+        return ERR("Solo los docentes pueden crear presentaciones.", 403);
+      }
+
+      const params = {
+        type: "object",
+        properties: {
+          ...META_PARAMS.properties,
+          slides: {
+            type: "array",
+            description: "8-12 diapositivas en orden pedagógico (portada, agenda, contenido, conclusión).",
+            items: {
+              type: "object",
+              properties: {
+                layout: {
+                  type: "string",
+                  enum: ["title", "title_bullets", "two_column", "quote", "closing"],
+                  description: "Tipo de diapositiva. La 1ª debe ser 'title' y la última 'closing'.",
+                },
+                title: { type: "string", description: "Título de la diapositiva" },
+                subtitle: { type: "string", description: "Subtítulo o lema corto (opcional)" },
+                bullets: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "3-6 viñetas concisas (10-18 palabras cada una).",
+                },
+                left_column: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Viñetas columna izquierda si layout='two_column'.",
+                },
+                right_column: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Viñetas columna derecha si layout='two_column'.",
+                },
+                quote: { type: "string", description: "Cita destacada si layout='quote'." },
+                quote_author: { type: "string" },
+                speaker_notes: { type: "string", description: "Notas para el docente: 2-4 oraciones que amplíen el contenido." },
+              },
+              required: ["layout", "title"],
+            },
+          },
+        },
+        required: [...META_PARAMS.required, "slides"],
+      };
+
+      const ai = await callAI(
+        systemPrompt,
+        `${baseUserPrompt}Genera una PRESENTACIÓN tipo PowerPoint para una clase basada estrictamente en las fuentes. Estructura recomendada: 1) Portada (layout='title'), 2) Agenda u objetivos (layout='title_bullets'), 3-9) Diapositivas de desarrollo combinando 'title_bullets' y 'two_column' (alterna para variedad visual), opcionalmente 1 'quote' con cita relevante, y termina con 'closing' (cierre / preguntas). Usa lenguaje claro para estudiantes, evita párrafos largos, prefiere viñetas cortas. Incluye SIEMPRE speaker_notes útiles para el docente.`,
+        "create_presentation",
+        params,
+        apiKey,
+        "google/gemini-2.5-pro"
+      );
+
+      const slides = (Array.isArray(ai.slides) ? ai.slides : []).map((s: any, i: number) => ({
+        id: crypto.randomUUID(),
+        order: i,
+        layout: s.layout || "title_bullets",
+        title: String(s.title || "").slice(0, 200),
+        subtitle: s.subtitle ? String(s.subtitle).slice(0, 200) : null,
+        bullets: Array.isArray(s.bullets) ? s.bullets.map((b: any) => String(b).slice(0, 300)) : [],
+        left_column: Array.isArray(s.left_column) ? s.left_column.map((b: any) => String(b).slice(0, 300)) : [],
+        right_column: Array.isArray(s.right_column) ? s.right_column.map((b: any) => String(b).slice(0, 300)) : [],
+        quote: s.quote ? String(s.quote).slice(0, 500) : null,
+        quote_author: s.quote_author ? String(s.quote_author).slice(0, 120) : null,
+        speaker_notes: s.speaker_notes ? String(s.speaker_notes).slice(0, 1200) : null,
+      }));
+
+      const { data: row, error } = await supabase
+        .from("content")
+        .insert({
+          creator_id: user.id,
+          title: ai.title,
+          description: ai.description,
+          category: ai.category,
+          grade_level: ai.grade_level,
+          subject: ai.subject,
+          tags: ai.tags || [],
+          content_type: "presentacion",
+          presentation_data: { slides, theme: "default" },
+          is_public: true,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      result = {
+        contentId: row.id,
+        type: "presentation",
+        route: `/presentation/${row.id}`,
+        title: ai.title,
+        subject: ai.subject ?? null,
+        cover_url: null,
+      };
+    }
+
     else {
       return ERR("Tipo no soportado", 400);
     }
