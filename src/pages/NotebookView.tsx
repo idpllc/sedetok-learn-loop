@@ -492,6 +492,9 @@ const NotebookView = () => {
   const [pathOptionsOpen, setPathOptionsOpen] = useState(false);
   const [pathMode, setPathMode] = useState<"from_capsules" | "metadata">("from_capsules");
   const [pathGenerateCover, setPathGenerateCover] = useState(true);
+  // Presentation: free-text instructions modal
+  const [presentationOptionsOpen, setPresentationOptionsOpen] = useState(false);
+  const [presentationInstructions, setPresentationInstructions] = useState("");
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
