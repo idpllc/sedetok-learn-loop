@@ -737,6 +737,13 @@ const NotebookView = () => {
     // Create-only options (e.g. "Presentación") skip the SEDEFY catalog search
     // and trigger AI capsule creation immediately.
     if (opt.createOnly) {
+      if (opt.id === "presentation") {
+        // Open instructions modal first so the teacher can describe how they
+        // want the presentation (style, focus, audience, visual approach).
+        setPresentationInstructions("");
+        setPresentationOptionsOpen(true);
+        return;
+      }
       handleCreateCapsule(opt.id);
       return;
     }
