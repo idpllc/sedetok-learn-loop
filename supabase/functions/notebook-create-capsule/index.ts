@@ -781,15 +781,24 @@ Deno.serve(async (req) => {
 
     // ---------- PRESENTATION (docente) ----------
     else if (type === "presentation") {
-      // Verify the user is a teacher / admin / coordinator in any active institution
-      const { data: membership } = await supabase
-        .from("institution_members")
-        .select("member_role")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .in("member_role", ["teacher", "admin", "coordinator"])
-        .limit(1);
-      if (!membership || membership.length === 0) {
+      // Verify the user is a teacher (via profile or institution membership)
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("tipo_usuario")
+        .eq("id", user.id)
+        .maybeSingle();
+      let isTeacher = prof?.tipo_usuario === "Docente";
+      if (!isTeacher) {
+        const { data: membership } = await supabase
+          .from("institution_members")
+          .select("member_role")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .in("member_role", ["teacher", "admin", "coordinator"])
+          .limit(1);
+        isTeacher = !!(membership && membership.length > 0);
+      }
+      if (!isTeacher) {
         return ERR("Solo los docentes pueden crear presentaciones.", 403);
       }
 
