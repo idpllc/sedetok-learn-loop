@@ -296,7 +296,7 @@ export default function PresentationView() {
 
       <main className="flex-1 flex flex-col items-center justify-center bg-muted/20 p-3 md:p-6 overflow-hidden">
         <div className="w-full max-w-6xl aspect-video bg-card rounded-xl border shadow-2xl overflow-hidden relative">
-          <SlideRenderer slide={slide} total={slides.length} index={current} presTitle={data.title} />
+          <SlideRenderer slide={slide} />
           <span className="absolute bottom-3 right-4 text-[11px] text-muted-foreground/70 font-mono">
             {current + 1} / {slides.length}
           </span>
