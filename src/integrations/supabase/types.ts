@@ -1990,6 +1990,215 @@ export type Database = {
           },
         ]
       }
+      notebook_trivia_answers: {
+        Row: {
+          answered_at: string
+          id: string
+          is_correct: boolean
+          points: number
+          question_position: number
+          room_id: string
+          selected_index: number | null
+          time_ms: number | null
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          points?: number
+          question_position: number
+          room_id: string
+          selected_index?: number | null
+          time_ms?: number | null
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          points?: number
+          question_position?: number
+          room_id?: string
+          selected_index?: number | null
+          time_ms?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notebook_trivia_answers_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "notebook_trivia_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notebook_trivia_questions: {
+        Row: {
+          correct_index: number
+          created_at: string
+          explanation: string | null
+          id: string
+          options: Json
+          position: number
+          question: string
+          topic_key: string
+        }
+        Insert: {
+          correct_index: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options: Json
+          position: number
+          question: string
+          topic_key: string
+        }
+        Update: {
+          correct_index?: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options?: Json
+          position?: number
+          question?: string
+          topic_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notebook_trivia_questions_topic_key_fkey"
+            columns: ["topic_key"]
+            isOneToOne: false
+            referencedRelation: "notebook_trivia_topics"
+            referencedColumns: ["topic_key"]
+          },
+        ]
+      }
+      notebook_trivia_room_players: {
+        Row: {
+          avatar_url: string | null
+          correct_count: number
+          display_name: string | null
+          id: string
+          joined_at: string
+          room_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          correct_count?: number
+          display_name?: string | null
+          id?: string
+          joined_at?: string
+          room_id: string
+          score?: number
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          correct_count?: number
+          display_name?: string | null
+          id?: string
+          joined_at?: string
+          room_id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notebook_trivia_room_players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "notebook_trivia_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notebook_trivia_rooms: {
+        Row: {
+          created_at: string
+          current_question: number
+          finished_at: string | null
+          host_user_id: string
+          id: string
+          max_players: number
+          notebook_id: string | null
+          question_started_at: string | null
+          started_at: string | null
+          status: string
+          topic_key: string
+        }
+        Insert: {
+          created_at?: string
+          current_question?: number
+          finished_at?: string | null
+          host_user_id: string
+          id?: string
+          max_players?: number
+          notebook_id?: string | null
+          question_started_at?: string | null
+          started_at?: string | null
+          status?: string
+          topic_key: string
+        }
+        Update: {
+          created_at?: string
+          current_question?: number
+          finished_at?: string | null
+          host_user_id?: string
+          id?: string
+          max_players?: number
+          notebook_id?: string | null
+          question_started_at?: string | null
+          started_at?: string | null
+          status?: string
+          topic_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notebook_trivia_rooms_topic_key_fkey"
+            columns: ["topic_key"]
+            isOneToOne: false
+            referencedRelation: "notebook_trivia_topics"
+            referencedColumns: ["topic_key"]
+          },
+        ]
+      }
+      notebook_trivia_topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          source_summary: string | null
+          subject: string | null
+          title: string
+          topic_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          source_summary?: string | null
+          subject?: string | null
+          title: string
+          topic_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          source_summary?: string | null
+          subject?: string | null
+          title?: string
+          topic_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notebooks: {
         Row: {
           cover_emoji: string | null
@@ -4280,6 +4489,10 @@ export type Database = {
       }
       is_user_in_trivia_match: {
         Args: { _match_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_user_in_trivia_room: {
+        Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
       register_institution: {
