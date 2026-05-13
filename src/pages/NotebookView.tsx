@@ -730,6 +730,14 @@ const NotebookView = () => {
 
   const handleStudio = async (opt: StudioOption) => {
     if (chat.isStreaming || studioSearching) return;
+
+    // Create-only options (e.g. "Presentación") skip the SEDEFY catalog search
+    // and trigger AI capsule creation immediately.
+    if (opt.createOnly) {
+      handleCreateCapsule(opt.id);
+      return;
+    }
+
     setStudioActive(opt);
     setStudioOffset(0);
 
