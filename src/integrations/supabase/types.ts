@@ -433,6 +433,7 @@ export type Database = {
           is_public: boolean | null
           likes_count: number | null
           mind_map_data: Json | null
+          presentation_data: Json | null
           reading_type: string | null
           rich_text: string | null
           saves_count: number | null
@@ -458,6 +459,7 @@ export type Database = {
           is_public?: boolean | null
           likes_count?: number | null
           mind_map_data?: Json | null
+          presentation_data?: Json | null
           reading_type?: string | null
           rich_text?: string | null
           saves_count?: number | null
@@ -483,6 +485,7 @@ export type Database = {
           is_public?: boolean | null
           likes_count?: number | null
           mind_map_data?: Json | null
+          presentation_data?: Json | null
           reading_type?: string | null
           rich_text?: string | null
           saves_count?: number | null
@@ -4543,6 +4546,7 @@ export type Database = {
         | "lectura"
         | "game"
         | "mapa_mental"
+        | "presentacion"
       frecuencia_estudio: "Diaria" | "Semanal" | "Esporádica"
       genero: "Masculino" | "Femenino" | "Otro" | "Prefiero no decir"
       grade_level:
@@ -4762,6 +4766,7 @@ export const Constants = {
         "lectura",
         "game",
         "mapa_mental",
+        "presentacion",
       ],
       frecuencia_estudio: ["Diaria", "Semanal", "Esporádica"],
       genero: ["Masculino", "Femenino", "Otro", "Prefiero no decir"],
