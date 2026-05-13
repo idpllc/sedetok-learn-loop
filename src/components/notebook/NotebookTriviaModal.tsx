@@ -135,7 +135,7 @@ function Lobby({
         </Button>
         {isHost ? (
           <Button onClick={onStart} className="bg-pink hover:bg-pink/90 text-white" disabled={players.length < 1}>
-            <Play className="h-4 w-4 mr-1" /> Iniciar trivia
+            <PlayIcon className="h-4 w-4 mr-1" /> Iniciar trivia
           </Button>
         ) : (
           <p className="text-xs text-muted-foreground">El anfitrión iniciará la partida</p>
