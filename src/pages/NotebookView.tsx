@@ -44,11 +44,15 @@ type StudioOption = {
   /** Optional reading subtype to scope the search */
   readingSubtype?: ReadingSubtype;
   /** Content type filter for SEDEFY library search */
-  searchType: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course";
+  searchType: "video" | "reading" | "quiz" | "game" | "mindmap" | "path" | "course" | "presentation";
   /** Route to AI-powered creator. null => no AI creator (e.g., video). */
   createRoute: string | null;
   /** Prompt (legacy, unused after local search refactor) */
   prompt: string;
+  /** When true, this option is only visible to teachers */
+  teacherOnly?: boolean;
+  /** When true, clicking the option skips catalog search and goes straight to AI creation */
+  createOnly?: boolean;
 };
 
 const STUDIO_OPTIONS: StudioOption[] = [
