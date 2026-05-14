@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save, BookOpen, Layers, ListChecks, Sparkles } from "lucide-react";
+import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save, BookOpen, Layers, ListChecks, Sparkles, Mic, Square, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
