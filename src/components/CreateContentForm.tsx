@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save, BookOpen, Layers, ListChecks, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
