@@ -10,6 +10,26 @@ import {
   StickyNote, Loader2, Download, Presentation as PresentIcon,
 } from "lucide-react";
 
+// Render inline markdown: **bold**, *italic*, `code`
+const renderInline = (text: string): (string | JSX.Element)[] => {
+  if (!text) return [];
+  const parts: (string | JSX.Element)[] = [];
+  const regex = /(\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let key = 0;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    if (m[2] !== undefined) parts.push(<strong key={key++} className="font-bold">{m[2]}</strong>);
+    else if (m[3] !== undefined) parts.push(<em key={key++} className="italic">{m[3]}</em>);
+    else if (m[4] !== undefined) parts.push(<code key={key++} className="font-mono bg-muted px-1 rounded">{m[4]}</code>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+};
+const RT = ({ children }: { children?: string | null }) => <>{renderInline(children || "")}</>;
+
 type Slide = {
   id: string;
   order: number;
