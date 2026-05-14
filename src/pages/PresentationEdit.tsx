@@ -215,6 +215,12 @@ export default function PresentationEdit() {
     }
   };
 
+  useEffect(() => {
+    if (slides.length === 0) return;
+    if (current > slides.length - 1) setCurrent(slides.length - 1);
+    else if (current < 0) setCurrent(0);
+  }, [slides.length, current]);
+
   // ---- guards ----
   if (authLoading || isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -230,12 +236,6 @@ export default function PresentationEdit() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (slides.length === 0) return;
-    if (current > slides.length - 1) setCurrent(slides.length - 1);
-    else if (current < 0) setCurrent(0);
-  }, [slides.length, current]);
 
   const slide = slides.length > 0 ? (slides[current] ?? slides[0]) : null;
 
