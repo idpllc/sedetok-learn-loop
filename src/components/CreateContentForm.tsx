@@ -976,6 +976,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const isQuizMode = formData.content_type === 'quiz';
   const isPathMode = formData.content_type === 'learning_path' as any;
   const isGameMode = formData.content_type === 'game';
+  const isPresentationMode = formData.content_type === 'presentacion';
 
   const getFileTypeIcon = () => {
     if (!fileType) return <Upload className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
