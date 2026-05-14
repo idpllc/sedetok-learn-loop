@@ -290,13 +290,14 @@ Deno.serve(async (req) => {
         content_type: "presentacion",
         presentation_data: {
           slides,
-          theme: "default",
+          theme: "teal",
           instructions: instructions || null,
           meta: {
             type: kind,
             language: lang,
             class_duration_min: duration,
             text_density: density,
+            theme: "teal",
           },
         },
         is_public: true,
