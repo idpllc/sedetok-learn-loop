@@ -168,6 +168,31 @@ export default function PaymentLink() {
             >
               Pagar ahora
             </Button>
+
+            {showYearlyOption && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full border-[#F6339A]/40 hover:bg-[#F6339A]/5 text-base h-auto py-3 flex-col gap-1"
+                disabled={yearlyLoading}
+                onClick={handleYearly}
+              >
+                <span className="flex items-center gap-2 font-semibold">
+                  {yearlyLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CalendarDays className="w-4 h-4 text-[#F6339A]" />
+                  )}
+                  Pagar anual · {fmtCOP(yearlyAmount)}
+                  <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-[#F6339A]/10 text-[#F6339A] font-bold">
+                    -{yearlyDiscountPct}%
+                  </span>
+                </span>
+                <span className="text-xs text-muted-foreground font-normal">
+                  Ahorra {fmtCOP(yearlySavings)} al año
+                </span>
+              </Button>
+            )}
             {status === "failure" && (
               <p className="text-sm text-red-600 text-center">
                 El pago no se completó. Puedes intentarlo de nuevo.
