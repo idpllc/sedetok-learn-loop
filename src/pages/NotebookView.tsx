@@ -940,9 +940,15 @@ const NotebookView = () => {
       window.open(data.route, "_blank");
     } catch (e: any) {
       console.error("create-path error", e);
-      const msg = e?.context?.body
-        ? (() => { try { return JSON.parse(e.context.body)?.error; } catch { return null; } })()
-        : null;
+      let msg: string | null = null;
+      try {
+        if (e?.context && typeof e.context.json === "function") {
+          const j = await e.context.json();
+          msg = j?.error || null;
+        } else if (e?.context?.body) {
+          msg = JSON.parse(e.context.body)?.error || null;
+        }
+      } catch {}
       await chat.finalizeProgress(
         progressIndex,
         `❌ No pude crear la ruta: ${msg || e?.message || "error desconocido"}.`
