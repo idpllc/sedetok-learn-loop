@@ -231,7 +231,22 @@ export default function PresentationEdit() {
     );
   }
 
-  const slide = slides[current];
+  useEffect(() => {
+    if (slides.length === 0) return;
+    if (current > slides.length - 1) setCurrent(slides.length - 1);
+    else if (current < 0) setCurrent(0);
+  }, [slides.length, current]);
+
+  const slide = slides.length > 0 ? (slides[current] ?? slides[0]) : null;
+
+  if (!slide) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4">
+        <p className="text-muted-foreground text-sm">Esta presentación no tiene diapositivas.</p>
+        <Button onClick={() => addSlide("title")}>Añadir diapositiva</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
