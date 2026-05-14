@@ -169,6 +169,114 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [mindMapStep, setMindMapStep] = useState<0 | 1>(0); // 0 = basic info, 1 = full-screen builder
   const [isSavingMindMapDraft, setIsSavingMindMapDraft] = useState(false);
 
+  // ===== Presentation (teacher-only) =====
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [presentationConfig, setPresentationConfig] = useState({
+    presentation_type: "slides" as "slides" | "flashcards",
+    language: "es" as "es" | "en" | "pt" | "fr",
+    class_duration_min: 30,
+    text_density: "medium" as "low" | "medium" | "high",
+    instructions: "",
+  });
+  const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data: prof } = await supabase
+        .from("profiles").select("tipo_usuario").eq("id", user.id).maybeSingle();
+      let teacher = prof?.tipo_usuario === "Docente";
+      if (!teacher) {
+        const { data: m } = await supabase
+          .from("institution_members")
+          .select("member_role")
+          .eq("user_id", user.id).eq("status", "active")
+          .in("member_role", ["teacher", "admin", "coordinator"]).limit(1);
+        teacher = !!(m && m.length > 0);
+      }
+      setIsTeacher(teacher);
+    })();
+  }, [user?.id]);
+
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const buf = await blob.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += 32768) {
+          binary += String.fromCharCode.apply(null, Array.from(bytes.slice(i, i + 32768)));
+        }
+        const base64 = btoa(binary);
+        try {
+          const { data, error } = await supabase.functions.invoke("transcribe-audio", { body: { audio: base64 } });
+          if (error) throw error;
+          const text = (data as any)?.text?.trim();
+          if (text) {
+            setPresentationConfig((p) => ({
+              ...p,
+              instructions: p.instructions ? `${p.instructions} ${text}` : text,
+            }));
+            toast.success("Transcripción agregada");
+          }
+        } catch (e: any) {
+          toast.error("No se pudo transcribir el audio");
+        }
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setIsRecordingVoice(true);
+    } catch (e) {
+      toast.error("Permite el acceso al micrófono");
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecordingVoice(false);
+  };
+
+  const handleGeneratePresentation = async () => {
+    if (!formData.title || !formData.category || !formData.grade_level) {
+      toast.error("Completa título, asignatura y nivel");
+      return;
+    }
+    setIsGeneratingPresentation(true);
+    try {
+      const subjectLabel = (formData as any).subject
+        ? subjects.find((s) => s.value === (formData as any).subject)?.label || (formData as any).subject
+        : undefined;
+      const { data, error } = await supabase.functions.invoke("create-presentation-standalone", {
+        body: {
+          title: formData.title,
+          description: formData.description,
+          subject: subjectLabel,
+          category: formData.category,
+          grade_level: formData.grade_level,
+          tags,
+          ...presentationConfig,
+        },
+      });
+      if (error) throw error;
+      toast.success("Presentación creada");
+      navigate((data as any)?.route || "/");
+    } catch (e: any) {
+      toast.error(e?.message || "No se pudo crear la presentación");
+    } finally {
+      setIsGeneratingPresentation(false);
+    }
+  };
+
+
   useEffect(() => {
     if (editMode && contentData) {
       // Find the subject value from the label stored in DB
