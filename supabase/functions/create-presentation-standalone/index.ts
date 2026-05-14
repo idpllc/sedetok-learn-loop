@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
 
     const flashcardHint = kind === "flashcards"
       ? `Formato TARJETAS DE ESTUDIO 1:1 (cuadradas): cada slide es una tarjeta con un concepto clave (title), una definición o explicación corta (1-2 viñetas) y opcional image_prompt. Layouts permitidos: 'title_bullets' o 'image_full'. Sin diapositiva de cierre.`
-      : `Formato DIAPOSITIVAS PowerPoint 16:9: 1) Portada (title), 2) Agenda (title_bullets), 3 a ${slideCount - 1}) Desarrollo combinando 'title_bullets', 'two_column', 'image_left', 'image_right' e 'image_full'. ${slideCount}) Cierre (closing). La mayoría debe incluir image_prompt descriptivo en inglés.`;
+      : `Formato DIAPOSITIVAS 16:9 RICAS: 1) Portada (title), 2) Agenda (title_bullets o cards_3), 3..${slideCount - 1}) Desarrollo. CRÍTICO: al menos el 50% de las diapositivas de desarrollo deben usar layouts de TARJETAS ('cards_3' principalmente, también 'cards_2', 'cards_4' o 'cards_image'). Cada tarjeta lleva: icon (de la lista permitida), title corto (2-4 palabras) y body de 2-3 frases con **palabras clave en negrita**. Combina con 'two_column', 'image_left/right', 'quote', 'section_header' como divisores. ${slideCount}) Cierre (closing). Para cards_image incluye image_prompt en INGLÉS por tarjeta. Para diapositivas con imagen completa incluye image_prompt en INGLÉS.`;
 
     const userInstructionsBlock = instructions && String(instructions).trim()
       ? `\n\nINSTRUCCIONES ESPECÍFICAS DEL DOCENTE (priorízalas):\n"""${String(instructions).trim().slice(0, 2000)}"""\n`
