@@ -126,6 +126,7 @@ const Search = () => {
     { id: "quiz" as ContentType, label: "Quizzes", icon: "📝" },
     { id: "game" as ContentType, label: "Juegos", icon: "🎮" },
     { id: "learning_path" as const, label: "Rutas", icon: "🗺️" },
+    { id: "presentacion" as ContentType, label: "Presentaciones", icon: "🖼️" },
   ];
 
   // Filter for learning paths (client-side since they come from a different hook)

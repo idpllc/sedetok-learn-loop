@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save, BookOpen, Layers, ListChecks, Sparkles } from "lucide-react";
+import { Upload, Video, FileText, Loader2, X, ArrowRight, ArrowLeft, Save, BookOpen, Layers, ListChecks, Sparkles, Mic, Square, Presentation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -168,6 +168,114 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
   const [mindMapStep, setMindMapStep] = useState<0 | 1>(0); // 0 = basic info, 1 = full-screen builder
   const [isSavingMindMapDraft, setIsSavingMindMapDraft] = useState(false);
+
+  // ===== Presentation (teacher-only) =====
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [presentationConfig, setPresentationConfig] = useState({
+    presentation_type: "slides" as "slides" | "flashcards",
+    language: "es" as "es" | "en" | "pt" | "fr",
+    class_duration_min: 30,
+    text_density: "medium" as "low" | "medium" | "high",
+    instructions: "",
+  });
+  const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data: prof } = await supabase
+        .from("profiles").select("tipo_usuario").eq("id", user.id).maybeSingle();
+      let teacher = prof?.tipo_usuario === "Docente";
+      if (!teacher) {
+        const { data: m } = await supabase
+          .from("institution_members")
+          .select("member_role")
+          .eq("user_id", user.id).eq("status", "active")
+          .in("member_role", ["teacher", "admin", "coordinator"]).limit(1);
+        teacher = !!(m && m.length > 0);
+      }
+      setIsTeacher(teacher);
+    })();
+  }, [user?.id]);
+
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const buf = await blob.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += 32768) {
+          binary += String.fromCharCode.apply(null, Array.from(bytes.slice(i, i + 32768)));
+        }
+        const base64 = btoa(binary);
+        try {
+          const { data, error } = await supabase.functions.invoke("transcribe-audio", { body: { audio: base64 } });
+          if (error) throw error;
+          const text = (data as any)?.text?.trim();
+          if (text) {
+            setPresentationConfig((p) => ({
+              ...p,
+              instructions: p.instructions ? `${p.instructions} ${text}` : text,
+            }));
+            toast.success("Transcripción agregada");
+          }
+        } catch (e: any) {
+          toast.error("No se pudo transcribir el audio");
+        }
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setIsRecordingVoice(true);
+    } catch (e) {
+      toast.error("Permite el acceso al micrófono");
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecordingVoice(false);
+  };
+
+  const handleGeneratePresentation = async () => {
+    if (!formData.title || !formData.category || !formData.grade_level) {
+      toast.error("Completa título, asignatura y nivel");
+      return;
+    }
+    setIsGeneratingPresentation(true);
+    try {
+      const subjectLabel = (formData as any).subject
+        ? subjects.find((s) => s.value === (formData as any).subject)?.label || (formData as any).subject
+        : undefined;
+      const { data, error } = await supabase.functions.invoke("create-presentation-standalone", {
+        body: {
+          title: formData.title,
+          description: formData.description,
+          subject: subjectLabel,
+          category: formData.category,
+          grade_level: formData.grade_level,
+          tags,
+          ...presentationConfig,
+        },
+      });
+      if (error) throw error;
+      toast.success("Presentación creada");
+      navigate((data as any)?.route || "/");
+    } catch (e: any) {
+      toast.error(e?.message || "No se pudo crear la presentación");
+    } finally {
+      setIsGeneratingPresentation(false);
+    }
+  };
+
 
   useEffect(() => {
     if (editMode && contentData) {
@@ -868,6 +976,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
   const isQuizMode = formData.content_type === 'quiz';
   const isPathMode = formData.content_type === 'learning_path' as any;
   const isGameMode = formData.content_type === 'game';
+  const isPresentationMode = formData.content_type === 'presentacion';
 
   const getFileTypeIcon = () => {
     if (!fileType) return <Upload className={`w-8 h-8 ${dragActive ? "text-primary" : "text-muted-foreground"}`} />;
@@ -1508,6 +1617,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <SelectItem value="quiz">📝 Quiz</SelectItem>
             <SelectItem value="game">🎮 Juego</SelectItem>
             <SelectItem value="learning_path">🗺️ Ruta de Aprendizaje</SelectItem>
+            {isTeacher && <SelectItem value="presentacion">🖼️ Presentación</SelectItem>}
           </SelectContent>
         </Select>
       </div>
@@ -1607,7 +1717,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {/* Contenido según tipo */}
-      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
+      {!isQuizMode && !isPathMode && !isGameMode && !isPresentationMode && formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
         <>
           {(
 
@@ -1936,7 +2046,97 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         </div>
       )}
 
-      {formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
+      {isPresentationMode && (
+        <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-center gap-2">
+            <Presentation className="h-5 w-5 text-primary" />
+            <p className="text-sm font-semibold">Configuración de la presentación</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tipo de presentación</Label>
+              <Select
+                value={presentationConfig.presentation_type}
+                onValueChange={(v) => setPresentationConfig((p) => ({ ...p, presentation_type: v as any }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="slides">🖼️ Diapositivas (16:9)</SelectItem>
+                  <SelectItem value="flashcards">🃏 Tarjetas de estudio (1:1)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Idioma</Label>
+              <Select
+                value={presentationConfig.language}
+                onValueChange={(v) => setPresentationConfig((p) => ({ ...p, language: v as any }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="es">Español</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="pt">Português</SelectItem>
+                  <SelectItem value="fr">Français</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Duración de la clase (min)</Label>
+              <Input
+                type="number"
+                min={5}
+                max={180}
+                value={presentationConfig.class_duration_min}
+                onChange={(e) => setPresentationConfig((p) => ({ ...p, class_duration_min: Number(e.target.value) || 30 }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Densidad de texto</Label>
+              <Select
+                value={presentationConfig.text_density}
+                onValueChange={(v) => setPresentationConfig((p) => ({ ...p, text_density: v as any }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baja (mínima)</SelectItem>
+                  <SelectItem value="medium">Media (balanceada)</SelectItem>
+                  <SelectItem value="high">Alta (densa)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Instrucciones para la IA (opcional)</Label>
+              <Button
+                type="button"
+                size="sm"
+                variant={isRecordingVoice ? "destructive" : "outline"}
+                className="h-7 gap-1 text-[11px]"
+                onClick={isRecordingVoice ? stopVoiceRecording : startVoiceRecording}
+              >
+                {isRecordingVoice ? <Square className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                {isRecordingVoice ? "Detener" : "Dictar"}
+              </Button>
+            </div>
+            <Textarea
+              placeholder="Ej: estilo divertido para 5° grado, con ejemplos del fútbol, evita tecnicismos…"
+              value={presentationConfig.instructions}
+              onChange={(e) => setPresentationConfig((p) => ({ ...p, instructions: e.target.value }))}
+              className="min-h-[100px]"
+              maxLength={2000}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {presentationConfig.instructions.length}/2000 · La generación con imágenes tarda 30-60s
+            </p>
+          </div>
+        </div>
+      )}
+
+      {formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && !isPresentationMode && (
         <div className="space-y-2">
           <Label htmlFor="description">Descripción</Label>
           <Textarea
@@ -1945,6 +2145,19 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="min-h-[100px]"
+          />
+        </div>
+      )}
+
+      {isPresentationMode && (
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción / Tema</Label>
+          <Textarea
+            id="description"
+            placeholder="Describe el tema central que cubrirá la presentación..."
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="min-h-[80px]"
           />
         </div>
       )}
@@ -2093,6 +2306,25 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         >
           <ArrowRight className="w-4 h-4 mr-2" />
           Continuar con el Mapa Mental
+        </Button>
+      ) : isPresentationMode ? (
+        <Button
+          type="button"
+          className="w-full"
+          onClick={handleGeneratePresentation}
+          disabled={isGeneratingPresentation || !formData.title || !formData.category || !formData.grade_level}
+        >
+          {isGeneratingPresentation ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Generando presentación con IA…
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generar presentación con IA
+            </>
+          )}
         </Button>
       ) : (
         <Button type="submit" className="w-full" disabled={isLoading}>
