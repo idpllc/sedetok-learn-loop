@@ -231,7 +231,17 @@ export default function PresentationEdit() {
     );
   }
 
-  const slide = slides[current];
+  const safeIndex = slides.length === 0 ? -1 : Math.min(Math.max(0, current), slides.length - 1);
+  const slide = safeIndex >= 0 ? slides[safeIndex] : null;
+
+  if (!slide) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-4">
+        <p className="text-muted-foreground text-sm">Esta presentación no tiene diapositivas.</p>
+        <Button onClick={() => addSlide("title")}>Añadir diapositiva</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
