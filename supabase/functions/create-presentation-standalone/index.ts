@@ -238,7 +238,21 @@ Deno.serve(async (req) => {
       const results = await Promise.all(batch.map(async (s: any, idx: number) => {
         const wantsImage = !!s.image_prompt && String(s.image_prompt).trim().length > 0;
         const imgUrl = wantsImage ? await generateSlideImage(String(s.image_prompt)) : null;
-        return { slide: s, imgUrl, absoluteIdx: i + idx };
+        // Per-card images for cards_image
+        let cards: any[] = [];
+        if (Array.isArray(s.cards)) {
+          cards = await Promise.all(s.cards.slice(0, 4).map(async (c: any) => {
+            const wantsCardImg = s.layout === "cards_image" && c?.image_prompt;
+            const cImg = wantsCardImg ? await generateSlideImage(String(c.image_prompt)) : null;
+            return {
+              icon: c?.icon ? String(c.icon).toLowerCase().slice(0, 30) : null,
+              title: String(c?.title || "").slice(0, 120),
+              body: String(c?.body || "").slice(0, 400),
+              image_url: cImg,
+            };
+          }));
+        }
+        return { slide: s, imgUrl, cards, absoluteIdx: i + idx };
       }));
       for (const r of results) enriched[r.absoluteIdx] = r;
     }
@@ -254,6 +268,7 @@ Deno.serve(async (req) => {
         bullets: Array.isArray(s.bullets) ? s.bullets.map((b: any) => String(b).slice(0, 300)) : [],
         left_column: Array.isArray(s.left_column) ? s.left_column.map((b: any) => String(b).slice(0, 300)) : [],
         right_column: Array.isArray(s.right_column) ? s.right_column.map((b: any) => String(b).slice(0, 300)) : [],
+        cards: entry.cards || [],
         quote: s.quote ? String(s.quote).slice(0, 500) : null,
         quote_author: s.quote_author ? String(s.quote_author).slice(0, 120) : null,
         speaker_notes: s.speaker_notes ? String(s.speaker_notes).slice(0, 1200) : null,
