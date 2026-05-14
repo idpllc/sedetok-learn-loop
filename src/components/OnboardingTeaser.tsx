@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
+
+const MODAL_KEY = "onboarding_teaser";
 
 interface OnboardingTeaserProps {
   onOpenOnboarding: () => void;
