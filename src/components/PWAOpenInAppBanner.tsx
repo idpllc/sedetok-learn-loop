@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { X, Smartphone } from "lucide-react";
 import { usePWADetection } from "@/hooks/usePWADetection";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
 
 const DISMISSED_KEY = "pwa-banner-dismissed-v1";
+const MODAL_KEY = "pwa_open_in_app_banner";
 
 /**
  * Muestra un banner en móvil cuando la PWA está instalada (Android) o
