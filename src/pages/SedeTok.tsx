@@ -8,6 +8,12 @@ import { ContentCard } from "@/components/ContentCard";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { getDisplayName, getShortFullName } from "@/lib/displayName";
+import { CONTENT_LIST_SELECT } from "@/lib/contentSelect";
+
+const SELECT_FOR = (table: string) =>
+  table === "content"
+    ? CONTENT_LIST_SELECT
+    : `*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`;
 
 /**
  * When SedeTok runs inside a Notebook iframe (embed=1), notify the parent
@@ -127,7 +133,7 @@ async function fetchRelatedContent(
 
     const subjectPromises = tables.map(async ({ table, type, extra }) => {
       let q = (supabase.from(table as any) as any)
-        .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
+        .select(SELECT_FOR(table))
         .ilike("subject", `%${subject}%`)
         .order("created_at", { ascending: false })
         .limit(4);
@@ -156,7 +162,7 @@ async function fetchRelatedContent(
     const fillerPromises = [
       supabase
         .from("content")
-        .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`)
+        .select(CONTENT_LIST_SELECT)
         .eq("is_public", true)
         .order("created_at", { ascending: false })
         .range(randomOffset, randomOffset + fetchSize - 1),

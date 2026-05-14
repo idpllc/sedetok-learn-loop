@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tansta
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { subjects as subjectOptions } from "@/lib/subjects";
+import { CONTENT_LIST_SELECT } from "@/lib/contentSelect";
 const ITEMS_PER_PAGE = 20;
 
 // Helper to build subject filters
@@ -45,7 +46,7 @@ export const useInfiniteContent = (
       if (includeContent) {
         let q = supabase
           .from("content")
-          .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`, { count: 'exact' })
+          .select(CONTENT_LIST_SELECT, { count: 'exact' })
           .eq("is_public", true)
           .order("created_at", { ascending: false })
           .range(offset, offset + ITEMS_PER_PAGE - 1);
@@ -225,16 +226,7 @@ export const useContent = () => {
       // Fetch regular content
       const { data: contentData, error: contentError } = await supabase
         .from("content")
-        .select(`
-          *,
-          profiles:creator_id (
-            username,
-            full_name,
-            avatar_url,
-            institution,
-            is_verified
-          )
-        `)
+        .select(CONTENT_LIST_SELECT)
         .eq("is_public", true)
         .order("created_at", { ascending: false })
         .limit(50);
