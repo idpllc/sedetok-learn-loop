@@ -1617,6 +1617,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
             <SelectItem value="quiz">📝 Quiz</SelectItem>
             <SelectItem value="game">🎮 Juego</SelectItem>
             <SelectItem value="learning_path">🗺️ Ruta de Aprendizaje</SelectItem>
+            {isTeacher && <SelectItem value="presentacion">🖼️ Presentación</SelectItem>}
           </SelectContent>
         </Select>
       </div>
