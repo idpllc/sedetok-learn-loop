@@ -60,8 +60,8 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
           )}
           <div className="relative">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-6">Presentación</p>
-            <h1 className="text-3xl md:text-6xl font-extrabold leading-tight">{slide.title}</h1>
-            {slide.subtitle && <p className="mt-6 text-lg md:text-2xl text-muted-foreground max-w-3xl">{slide.subtitle}</p>}
+            <h1 className="text-3xl md:text-6xl font-extrabold leading-tight"><RT>{slide.title}</RT></h1>
+            {slide.subtitle && <p className="mt-6 text-lg md:text-2xl text-muted-foreground max-w-3xl"><RT>{slide.subtitle}</RT></p>}
           </div>
         </div>
       );
@@ -73,12 +73,12 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
             className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-8 md:p-14 text-white">
-            <h2 className="text-2xl md:text-5xl font-extrabold drop-shadow-lg">{slide.title}</h2>
-            {slide.subtitle && <p className="mt-3 text-base md:text-xl opacity-90 max-w-3xl">{slide.subtitle}</p>}
+            <h2 className="text-2xl md:text-5xl font-extrabold drop-shadow-lg"><RT>{slide.title}</RT></h2>
+            {slide.subtitle && <p className="mt-3 text-base md:text-xl opacity-90 max-w-3xl"><RT>{slide.subtitle}</RT></p>}
             {!!slide.bullets?.length && (
               <ul className="mt-4 space-y-1.5 text-sm md:text-base">
                 {slide.bullets.slice(0, 3).map((b, i) => (
-                  <li key={i} className="flex gap-2"><span>•</span><span>{b}</span></li>
+                  <li key={i} className="flex gap-2"><span>•</span><span><RT>{b}</RT></span></li>
                 ))}
               </ul>
             )}
@@ -100,12 +100,12 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
             )}
           </div>
           <div className="p-6 md:p-12 flex flex-col justify-center">
-            <h2 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">{slide.title}</h2>
-            {slide.subtitle && <p className="text-sm md:text-base text-muted-foreground mb-4">{slide.subtitle}</p>}
+            <h2 className="text-xl md:text-3xl font-bold mb-4 md:mb-6"><RT>{slide.title}</RT></h2>
+            {slide.subtitle && <p className="text-sm md:text-base text-muted-foreground mb-4"><RT>{slide.subtitle}</RT></p>}
             <ul className="space-y-2 md:space-y-3">
               {(slide.bullets || []).map((b, i) => (
                 <li key={i} className="flex gap-2 text-sm md:text-lg leading-snug">
-                  <span className="text-primary font-bold">•</span><span>{b}</span>
+                  <span className="text-primary font-bold">•</span><span><RT>{b}</RT></span>
                 </li>
               ))}
             </ul>
@@ -117,13 +117,13 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
     case "two_column":
       return (
         <div className={base}>
-          <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-10">{slide.title}</h2>
+          <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-10"><RT>{slide.title}</RT></h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 flex-1">
             {[slide.left_column || [], slide.right_column || []].map((col, ci) => (
               <ul key={ci} className="space-y-3 md:space-y-4">
                 {col.map((b, i) => (
                   <li key={i} className="flex gap-3 text-base md:text-xl leading-snug">
-                    <span className="text-primary font-bold">•</span><span>{b}</span>
+                    <span className="text-primary font-bold">•</span><span><RT>{b}</RT></span>
                   </li>
                 ))}
               </ul>
@@ -140,7 +140,7 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
           <div className="relative">
             <PresentIcon className="h-10 w-10 text-primary mb-6 opacity-50 mx-auto" />
             <blockquote className="text-2xl md:text-4xl font-serif italic leading-snug max-w-4xl">
-              "{slide.quote || slide.title}"
+              "<RT>{slide.quote || slide.title}</RT>"
             </blockquote>
             {slide.quote_author && <cite className="not-italic mt-6 text-base text-muted-foreground block">— {slide.quote_author}</cite>}
           </div>
@@ -153,11 +153,11 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
           {img && <img src={img} alt="" loading="lazy" width={1280} height={720}
             className="absolute inset-0 w-full h-full object-cover opacity-20" crossOrigin="anonymous" />}
           <div className="relative">
-            <h2 className="text-3xl md:text-5xl font-extrabold mb-4">{slide.title}</h2>
-            {slide.subtitle && <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl">{slide.subtitle}</p>}
+            <h2 className="text-3xl md:text-5xl font-extrabold mb-4"><RT>{slide.title}</RT></h2>
+            {slide.subtitle && <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl"><RT>{slide.subtitle}</RT></p>}
             {!!slide.bullets?.length && (
               <ul className="mt-8 space-y-2 text-base md:text-xl text-left max-w-2xl mx-auto">
-                {slide.bullets.map((b, i) => <li key={i}>• {b}</li>)}
+                {slide.bullets.map((b, i) => <li key={i}>• <RT>{b}</RT></li>)}
               </ul>
             )}
           </div>
@@ -168,12 +168,12 @@ const SlideRenderer = ({ slide }: { slide: Slide }) => {
     default:
       return (
         <div className={base}>
-          <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-8">{slide.title}</h2>
+          <h2 className="text-2xl md:text-4xl font-bold mb-6 md:mb-8"><RT>{slide.title}</RT></h2>
           <div className={img ? "grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 flex-1 items-center" : ""}>
             <ul className="space-y-3 md:space-y-5">
               {(slide.bullets || []).map((b, i) => (
                 <li key={i} className="flex gap-3 text-base md:text-xl leading-snug">
-                  <span className="text-primary font-bold">{i + 1}.</span><span>{b}</span>
+                  <span className="text-primary font-bold">{i + 1}.</span><span><RT>{b}</RT></span>
                 </li>
               ))}
             </ul>
