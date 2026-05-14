@@ -71,16 +71,17 @@ serve(async (req) => {
       .maybeSingle();
     if (!plan || plan.code === "free") return json({ error: "Plan inválido" }, 400);
 
-    const { data: profile } = await admin
+    const { data: profile, error: profileErr } = await admin
       .from("profiles")
-      .select("id, full_name, username, email")
+      .select("id, full_name, username")
       .eq("id", beneficiary_user_id)
       .maybeSingle();
+    if (profileErr) return json({ error: `Perfil: ${profileErr.message}` }, 500);
     if (!profile) return json({ error: "Usuario no encontrado" }, 404);
 
     // Get email from auth.users
     const { data: authUser } = await admin.auth.admin.getUserById(beneficiary_user_id);
-    const email = authUser?.user?.email || (profile as any).email;
+    const email = authUser?.user?.email;
     if (!email) return json({ error: "Sin correo del beneficiario" }, 400);
 
     const baseAmount = billing_cycle === "yearly"
