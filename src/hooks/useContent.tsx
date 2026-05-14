@@ -226,16 +226,7 @@ export const useContent = () => {
       // Fetch regular content
       const { data: contentData, error: contentError } = await supabase
         .from("content")
-        .select(`
-          *,
-          profiles:creator_id (
-            username,
-            full_name,
-            avatar_url,
-            institution,
-            is_verified
-          )
-        `)
+        .select(CONTENT_LIST_SELECT)
         .eq("is_public", true)
         .order("created_at", { ascending: false })
         .limit(50);
