@@ -1733,7 +1733,14 @@ const NotebookView = () => {
                       <Button
                         size="sm"
                         className="w-full h-7 text-[11px] gap-1"
-                        onClick={() => handleCreateCapsule(studioActive.id)}
+                        onClick={() => {
+                          if (studioActive.id === "presentation") {
+                            setPresentationInstructions("");
+                            setPresentationOptionsOpen(true);
+                          } else {
+                            handleCreateCapsule(studioActive.id);
+                          }
+                        }}
                         disabled={creatingType === studioActive.id}
                         data-tour="studio-generate-ai"
                       >
