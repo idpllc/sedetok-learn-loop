@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     const MAX_TOTAL = 18000;
     let used = 0;
     const parts: string[] = [];
-    for (const s of sources) {
+    for (const s of sources || []) {
       const header = `### ${s.title} [${s.source_type}]\n`;
       const body = (s.extracted_text || "").slice(0, 6000);
       const block = header + body + "\n\n";
