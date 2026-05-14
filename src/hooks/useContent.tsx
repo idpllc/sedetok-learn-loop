@@ -46,7 +46,7 @@ export const useInfiniteContent = (
       if (includeContent) {
         let q = supabase
           .from("content")
-          .select(`*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`, { count: 'exact' })
+          .select(CONTENT_LIST_SELECT, { count: 'exact' })
           .eq("is_public", true)
           .order("created_at", { ascending: false })
           .range(offset, offset + ITEMS_PER_PAGE - 1);
