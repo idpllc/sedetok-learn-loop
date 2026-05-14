@@ -100,6 +100,7 @@ const Index = () => {
     { id: "lectura" as ContentType, label: "Lecturas", icon: "📖" },
     { id: "mapa_mental" as ContentType, label: "Mapas mentales", icon: "🧠" },
     { id: "document" as ContentType, label: "Documentos", icon: "📄" },
+    { id: "presentacion" as ContentType, label: "Presentaciones", icon: "🖼️" },
   ];
 
   // Strip HTML tags + collapse whitespace for clean previews of rich content.
