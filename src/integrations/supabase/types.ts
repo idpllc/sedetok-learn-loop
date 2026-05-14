@@ -4022,10 +4022,12 @@ export type Database = {
       }
       user_subscriptions: {
         Row: {
+          amount_cop: number | null
           billing_cycle: string
           cancel_at_period_end: boolean
           cancelled_at: string | null
           created_at: string
+          created_by_admin: string | null
           current_period_end: string | null
           current_period_start: string | null
           discount_amount_cop: number | null
@@ -4035,20 +4037,24 @@ export type Database = {
           epayco_token_card: string | null
           id: string
           last_payment_at: string | null
+          mp_init_point: string | null
           mp_payer_email: string | null
           mp_preapproval_id: string | null
           mp_preference_id: string | null
           next_billing_at: string | null
+          plan_code_snapshot: string | null
           plan_id: string
           status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          amount_cop?: number | null
           billing_cycle?: string
           cancel_at_period_end?: boolean
           cancelled_at?: string | null
           created_at?: string
+          created_by_admin?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           discount_amount_cop?: number | null
@@ -4058,20 +4064,24 @@ export type Database = {
           epayco_token_card?: string | null
           id?: string
           last_payment_at?: string | null
+          mp_init_point?: string | null
           mp_payer_email?: string | null
           mp_preapproval_id?: string | null
           mp_preference_id?: string | null
           next_billing_at?: string | null
+          plan_code_snapshot?: string | null
           plan_id: string
           status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          amount_cop?: number | null
           billing_cycle?: string
           cancel_at_period_end?: boolean
           cancelled_at?: string | null
           created_at?: string
+          created_by_admin?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
           discount_amount_cop?: number | null
@@ -4081,10 +4091,12 @@ export type Database = {
           epayco_token_card?: string | null
           id?: string
           last_payment_at?: string | null
+          mp_init_point?: string | null
           mp_payer_email?: string | null
           mp_preapproval_id?: string | null
           mp_preference_id?: string | null
           next_billing_at?: string | null
+          plan_code_snapshot?: string | null
           plan_id?: string
           status?: string
           updated_at?: string
@@ -4415,6 +4427,7 @@ export type Database = {
         }[]
       }
       get_my_conversation_ids: { Args: never; Returns: string[] }
+      get_payment_link: { Args: { _subscription_id: string }; Returns: Json }
       get_profile_private_fields: {
         Args: { _user_id: string }
         Returns: {
