@@ -8,6 +8,12 @@ import { ContentCard } from "@/components/ContentCard";
 import { VideoPlayerRef } from "@/components/VideoPlayer";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { getDisplayName, getShortFullName } from "@/lib/displayName";
+import { CONTENT_LIST_SELECT } from "@/lib/contentSelect";
+
+const SELECT_FOR = (table: string) =>
+  table === "content"
+    ? CONTENT_LIST_SELECT
+    : `*, profiles:creator_id (username, full_name, avatar_url, institution, is_verified)`;
 
 /**
  * When SedeTok runs inside a Notebook iframe (embed=1), notify the parent
