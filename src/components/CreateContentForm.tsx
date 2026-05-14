@@ -2046,9 +2046,96 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         </div>
       )}
 
-      {formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
-        <div className="space-y-2">
-          <Label htmlFor="description">Descripción</Label>
+      {isPresentationMode && (
+        <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-center gap-2">
+            <Presentation className="h-5 w-5 text-primary" />
+            <p className="text-sm font-semibold">Configuración de la presentación</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tipo de presentación</Label>
+              <Select
+                value={presentationConfig.presentation_type}
+                onValueChange={(v) => setPresentationConfig((p) => ({ ...p, presentation_type: v as any }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="slides">🖼️ Diapositivas (16:9)</SelectItem>
+                  <SelectItem value="flashcards">🃏 Tarjetas de estudio (1:1)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Idioma</Label>
+              <Select
+                value={presentationConfig.language}
+                onValueChange={(v) => setPresentationConfig((p) => ({ ...p, language: v as any }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="es">Español</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="pt">Português</SelectItem>
+                  <SelectItem value="fr">Français</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Duración de la clase (min)</Label>
+              <Input
+                type="number"
+                min={5}
+                max={180}
+                value={presentationConfig.class_duration_min}
+                onChange={(e) => setPresentationConfig((p) => ({ ...p, class_duration_min: Number(e.target.value) || 30 }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Densidad de texto</Label>
+              <Select
+                value={presentationConfig.text_density}
+                onValueChange={(v) => setPresentationConfig((p) => ({ ...p, text_density: v as any }))}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baja (mínima)</SelectItem>
+                  <SelectItem value="medium">Media (balanceada)</SelectItem>
+                  <SelectItem value="high">Alta (densa)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Instrucciones para la IA (opcional)</Label>
+              <Button
+                type="button"
+                size="sm"
+                variant={isRecordingVoice ? "destructive" : "outline"}
+                className="h-7 gap-1 text-[11px]"
+                onClick={isRecordingVoice ? stopVoiceRecording : startVoiceRecording}
+              >
+                {isRecordingVoice ? <Square className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
+                {isRecordingVoice ? "Detener" : "Dictar"}
+              </Button>
+            </div>
+            <Textarea
+              placeholder="Ej: estilo divertido para 5° grado, con ejemplos del fútbol, evita tecnicismos…"
+              value={presentationConfig.instructions}
+              onChange={(e) => setPresentationConfig((p) => ({ ...p, instructions: e.target.value }))}
+              className="min-h-[100px]"
+              maxLength={2000}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              {presentationConfig.instructions.length}/2000 · La generación con imágenes tarda 30-60s
+            </p>
+          </div>
+        </div>
+      )}
+
           <Textarea
             id="description"
             placeholder={isQuizMode ? "Describe brevemente el contenido del quiz" : "Describe el contenido de tu cápsula..."}
