@@ -131,13 +131,27 @@ Deno.serve(async (req) => {
             properties: {
               layout: {
                 type: "string",
-                enum: ["title", "title_bullets", "two_column", "quote", "closing", "image_full", "image_left", "image_right"],
+                enum: ["title", "section_header", "title_bullets", "two_column", "cards_2", "cards_3", "cards_4", "cards_image", "quote", "closing", "image_full", "image_left", "image_right"],
               },
               title: { type: "string" },
               subtitle: { type: "string" },
               bullets: { type: "array", items: { type: "string" } },
               left_column: { type: "array", items: { type: "string" } },
               right_column: { type: "array", items: { type: "string" } },
+              cards: {
+                type: "array",
+                description: "Tarjetas para layouts cards_2, cards_3, cards_4 o cards_image (2-4 elementos).",
+                items: {
+                  type: "object",
+                  properties: {
+                    icon: { type: "string", description: "Nombre lucide: sparkles, lightbulb, book, beaker, atom, flask, microscope, leaf, sprout, tree, sun, droplet, flame, globe, heart, brain, eye, users, graduation, calculator, compass, palette, music, code, cpu, rocket, target, trophy, star, map, clock, zap, shield, dna, activity." },
+                    title: { type: "string" },
+                    body: { type: "string", description: "2-3 frases con **palabras clave en negrita**." },
+                    image_prompt: { type: "string", description: "Solo para cards_image: prompt EN INGLÉS sin texto." },
+                  },
+                  required: ["title", "body"],
+                },
+              },
               quote: { type: "string" },
               quote_author: { type: "string" },
               speaker_notes: { type: "string" },
@@ -152,7 +166,7 @@ Deno.serve(async (req) => {
 
     const flashcardHint = kind === "flashcards"
       ? `Formato TARJETAS DE ESTUDIO 1:1 (cuadradas): cada slide es una tarjeta con un concepto clave (title), una definición o explicación corta (1-2 viñetas) y opcional image_prompt. Layouts permitidos: 'title_bullets' o 'image_full'. Sin diapositiva de cierre.`
-      : `Formato DIAPOSITIVAS PowerPoint 16:9: 1) Portada (title), 2) Agenda (title_bullets), 3 a ${slideCount - 1}) Desarrollo combinando 'title_bullets', 'two_column', 'image_left', 'image_right' e 'image_full'. ${slideCount}) Cierre (closing). La mayoría debe incluir image_prompt descriptivo en inglés.`;
+      : `Formato DIAPOSITIVAS 16:9 RICAS: 1) Portada (title), 2) Agenda (title_bullets o cards_3), 3..${slideCount - 1}) Desarrollo. CRÍTICO: al menos el 50% de las diapositivas de desarrollo deben usar layouts de TARJETAS ('cards_3' principalmente, también 'cards_2', 'cards_4' o 'cards_image'). Cada tarjeta lleva: icon (de la lista permitida), title corto (2-4 palabras) y body de 2-3 frases con **palabras clave en negrita**. Combina con 'two_column', 'image_left/right', 'quote', 'section_header' como divisores. ${slideCount}) Cierre (closing). Para cards_image incluye image_prompt en INGLÉS por tarjeta. Para diapositivas con imagen completa incluye image_prompt en INGLÉS.`;
 
     const userInstructionsBlock = instructions && String(instructions).trim()
       ? `\n\nINSTRUCCIONES ESPECÍFICAS DEL DOCENTE (priorízalas):\n"""${String(instructions).trim().slice(0, 2000)}"""\n`
@@ -224,7 +238,21 @@ Deno.serve(async (req) => {
       const results = await Promise.all(batch.map(async (s: any, idx: number) => {
         const wantsImage = !!s.image_prompt && String(s.image_prompt).trim().length > 0;
         const imgUrl = wantsImage ? await generateSlideImage(String(s.image_prompt)) : null;
-        return { slide: s, imgUrl, absoluteIdx: i + idx };
+        // Per-card images for cards_image
+        let cards: any[] = [];
+        if (Array.isArray(s.cards)) {
+          cards = await Promise.all(s.cards.slice(0, 4).map(async (c: any) => {
+            const wantsCardImg = s.layout === "cards_image" && c?.image_prompt;
+            const cImg = wantsCardImg ? await generateSlideImage(String(c.image_prompt)) : null;
+            return {
+              icon: c?.icon ? String(c.icon).toLowerCase().slice(0, 30) : null,
+              title: String(c?.title || "").slice(0, 120),
+              body: String(c?.body || "").slice(0, 400),
+              image_url: cImg,
+            };
+          }));
+        }
+        return { slide: s, imgUrl, cards, absoluteIdx: i + idx };
       }));
       for (const r of results) enriched[r.absoluteIdx] = r;
     }
@@ -240,6 +268,7 @@ Deno.serve(async (req) => {
         bullets: Array.isArray(s.bullets) ? s.bullets.map((b: any) => String(b).slice(0, 300)) : [],
         left_column: Array.isArray(s.left_column) ? s.left_column.map((b: any) => String(b).slice(0, 300)) : [],
         right_column: Array.isArray(s.right_column) ? s.right_column.map((b: any) => String(b).slice(0, 300)) : [],
+        cards: entry.cards || [],
         quote: s.quote ? String(s.quote).slice(0, 500) : null,
         quote_author: s.quote_author ? String(s.quote_author).slice(0, 120) : null,
         speaker_notes: s.speaker_notes ? String(s.speaker_notes).slice(0, 1200) : null,
@@ -261,13 +290,14 @@ Deno.serve(async (req) => {
         content_type: "presentacion",
         presentation_data: {
           slides,
-          theme: "default",
+          theme: "teal",
           instructions: instructions || null,
           meta: {
             type: kind,
             language: lang,
             class_duration_min: duration,
             text_density: density,
+            theme: "teal",
           },
         },
         is_public: true,
