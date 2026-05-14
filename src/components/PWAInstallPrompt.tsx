@@ -8,6 +8,9 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
+
+const MODAL_KEY = "pwa_install_prompt";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
