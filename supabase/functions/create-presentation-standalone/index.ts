@@ -131,13 +131,27 @@ Deno.serve(async (req) => {
             properties: {
               layout: {
                 type: "string",
-                enum: ["title", "title_bullets", "two_column", "quote", "closing", "image_full", "image_left", "image_right"],
+                enum: ["title", "section_header", "title_bullets", "two_column", "cards_2", "cards_3", "cards_4", "cards_image", "quote", "closing", "image_full", "image_left", "image_right"],
               },
               title: { type: "string" },
               subtitle: { type: "string" },
               bullets: { type: "array", items: { type: "string" } },
               left_column: { type: "array", items: { type: "string" } },
               right_column: { type: "array", items: { type: "string" } },
+              cards: {
+                type: "array",
+                description: "Tarjetas para layouts cards_2, cards_3, cards_4 o cards_image (2-4 elementos).",
+                items: {
+                  type: "object",
+                  properties: {
+                    icon: { type: "string", description: "Nombre lucide: sparkles, lightbulb, book, beaker, atom, flask, microscope, leaf, sprout, tree, sun, droplet, flame, globe, heart, brain, eye, users, graduation, calculator, compass, palette, music, code, cpu, rocket, target, trophy, star, map, clock, zap, shield, dna, activity." },
+                    title: { type: "string" },
+                    body: { type: "string", description: "2-3 frases con **palabras clave en negrita**." },
+                    image_prompt: { type: "string", description: "Solo para cards_image: prompt EN INGLÉS sin texto." },
+                  },
+                  required: ["title", "body"],
+                },
+              },
               quote: { type: "string" },
               quote_author: { type: "string" },
               speaker_notes: { type: "string" },
