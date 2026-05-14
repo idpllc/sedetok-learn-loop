@@ -128,7 +128,8 @@ const GlobalChrome = () => {
     (p) => location.pathname.startsWith(p)
   );
   const isDiagnosticRoute = location.pathname === "/admin/publishing-error";
-  if (embed || isAuthRoute || isDiagnosticRoute) return null;
+  const isPaymentRoute = location.pathname.startsWith("/pay/") || location.pathname.startsWith("/payment");
+  if (embed || isAuthRoute || isDiagnosticRoute || isPaymentRoute) return null;
   return (
     <Suspense fallback={null}>
       <FloatingTutorChat />
