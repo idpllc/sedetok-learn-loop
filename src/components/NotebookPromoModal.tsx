@@ -3,8 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { BookOpen, Sparkles, Brain, FileText, MessagesSquare } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
 
 const STORAGE_KEY = "notebook_promo_dismissed_v1";
+const MODAL_KEY = "notebook_promo";
 const EXCLUDED_PREFIXES = [
   "/auth",
   "/auto-login",
