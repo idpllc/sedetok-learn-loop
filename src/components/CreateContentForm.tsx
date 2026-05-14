@@ -2307,6 +2307,25 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           <ArrowRight className="w-4 h-4 mr-2" />
           Continuar con el Mapa Mental
         </Button>
+      ) : isPresentationMode ? (
+        <Button
+          type="button"
+          className="w-full"
+          onClick={handleGeneratePresentation}
+          disabled={isGeneratingPresentation || !formData.title || !formData.category || !formData.grade_level}
+        >
+          {isGeneratingPresentation ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Generando presentación con IA…
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generar presentación con IA
+            </>
+          )}
+        </Button>
       ) : (
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
