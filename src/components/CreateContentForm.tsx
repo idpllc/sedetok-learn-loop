@@ -1717,7 +1717,7 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
       )}
 
       {/* Contenido según tipo */}
-      {!isQuizMode && !isPathMode && !isGameMode && formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
+      {!isQuizMode && !isPathMode && !isGameMode && !isPresentationMode && formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && (
         <>
           {(
 
