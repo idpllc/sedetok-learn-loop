@@ -213,6 +213,7 @@ const App = () => (
             <Route path="/notebook" element={<Notebook />} />
             <Route path="/notebook/:id" element={<NotebookView />} />
             <Route path="/presentation/:id" element={<PresentationView />} />
+            <Route path="/presentation/:id/edit" element={<PresentationEdit />} />
             <Route path="/api-docs" element={<ApiDocumentation />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/chat/login" element={<ChatLogin />} />
