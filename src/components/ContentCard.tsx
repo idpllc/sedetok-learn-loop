@@ -43,6 +43,7 @@ interface ContentCardProps {
   documentUrl?: string;
   richText?: string;
   mindMapData?: any;
+  presentationData?: any;
   contentType?: string;
   likes: number;
   comments: number;
