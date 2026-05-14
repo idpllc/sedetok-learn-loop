@@ -2376,24 +2376,44 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
           Continuar con el Mapa Mental
         </Button>
       ) : isPresentationMode ? (
-        <Button
-          type="button"
-          className="w-full"
-          onClick={handleGeneratePresentation}
-          disabled={isGeneratingPresentation || !formData.title || !formData.category || !formData.grade_level}
-        >
-          {isGeneratingPresentation ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generando presentación con IA…
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generar presentación con IA
-            </>
-          )}
-        </Button>
+        <div className="space-y-2">
+          <Button
+            type="button"
+            className="w-full"
+            onClick={handleGeneratePresentation}
+            disabled={isGeneratingPresentation || !formData.title || !formData.category || !formData.grade_level}
+          >
+            {isGeneratingPresentation ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Procesando…
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generar presentación con IA
+              </>
+            )}
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">o</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleCreatePresentationManual}
+            disabled={isGeneratingPresentation || !formData.title || !formData.category || !formData.grade_level}
+          >
+            <Presentation className="w-4 h-4 mr-2" />
+            Crear manualmente (en blanco)
+          </Button>
+          <p className="text-[11px] text-muted-foreground text-center">
+            La opción manual abre el editor de diapositivas vacío para que diseñes tú.
+          </p>
+        </div>
       ) : (
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
