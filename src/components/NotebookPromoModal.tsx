@@ -42,8 +42,12 @@ export const NotebookPromoModal = () => {
     if (params.get("embed") === "1") return;
     if (EXCLUDED_PREFIXES.some((p) => location.pathname.startsWith(p))) return;
     if (localStorage.getItem(STORAGE_KEY)) return;
+    if (!canShowModal(MODAL_KEY)) return;
 
-    const timer = setTimeout(() => setOpen(true), 5000);
+    const timer = setTimeout(() => {
+      markModalShown(MODAL_KEY);
+      setOpen(true);
+    }, 5000);
     return () => clearTimeout(timer);
   }, [location.pathname, location.search]);
 
