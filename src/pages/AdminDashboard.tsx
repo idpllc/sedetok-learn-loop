@@ -40,6 +40,8 @@ import { StudyPlanManagement } from "@/components/admin/StudyPlanManagement";
 import { TriviaAdminPanel } from "@/components/trivia/TriviaAdminPanel";
 import { Brain } from "lucide-react";
 import { DiscountCodesManagement } from "@/components/admin/DiscountCodesManagement";
+import PaymentLinksManagement from "@/components/admin/PaymentLinksManagement";
+import { CreditCard } from "lucide-react";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -91,7 +93,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-11 gap-2">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-12 gap-2">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Resumen</span>
@@ -127,6 +129,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="webhooks" className="flex items-center gap-2">
               <Webhook className="w-4 h-4" />
               <span className="hidden sm:inline">Webhooks</span>
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              <span className="hidden lg:inline">Pagos</span>
             </TabsTrigger>
             <TabsTrigger value="discounts" className="flex items-center gap-2">
               <Tag className="w-4 h-4" />
@@ -407,6 +413,9 @@ export default function AdminDashboard() {
             <StudyPlanWebhookDocs />
           </TabsContent>
 
+          <TabsContent value="payments">
+            <PaymentLinksManagement />
+          </TabsContent>
           <TabsContent value="discounts">
             <DiscountCodesManagement />
           </TabsContent>

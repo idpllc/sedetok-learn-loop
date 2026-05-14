@@ -88,6 +88,7 @@ const NotebookView = lazyWithRetry(() => import("./pages/NotebookView"));
 const PresentationView = lazyWithRetry(() => import("./pages/PresentationView"));
 const PresentationEdit = lazyWithRetry(() => import("./pages/PresentationEdit"));
 const PublishingErrorDetails = lazyWithRetry(() => import("./pages/PublishingErrorDetails"));
+const PaymentLink = lazyWithRetry(() => import("./pages/PaymentLink"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
@@ -179,6 +180,7 @@ const App = () => (
             <Route path="/courses/create" element={<CreateCourse />} />
             <Route path="/courses/:id" element={<ViewCourse />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/pay/:subscriptionId" element={<PaymentLink />} />
             <Route path="/admin/publishing-error" element={<PublishingErrorDetails />} />
             <Route path="/register-institution" element={<RegisterInstitution />} />
             <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
