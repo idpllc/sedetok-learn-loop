@@ -83,6 +83,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   documentUrl,
   richText,
   mindMapData,
+  presentationData,
   contentType,
   likes: initialLikes,
   comments: initialComments,
