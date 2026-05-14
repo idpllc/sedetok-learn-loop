@@ -3,8 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { BookOpen, Sparkles, Brain, FileText, MessagesSquare } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
 
 const STORAGE_KEY = "notebook_promo_dismissed_v1";
+const MODAL_KEY = "notebook_promo";
 const EXCLUDED_PREFIXES = [
   "/auth",
   "/auto-login",
@@ -40,8 +42,12 @@ export const NotebookPromoModal = () => {
     if (params.get("embed") === "1") return;
     if (EXCLUDED_PREFIXES.some((p) => location.pathname.startsWith(p))) return;
     if (localStorage.getItem(STORAGE_KEY)) return;
+    if (!canShowModal(MODAL_KEY)) return;
 
-    const timer = setTimeout(() => setOpen(true), 5000);
+    const timer = setTimeout(() => {
+      markModalShown(MODAL_KEY);
+      setOpen(true);
+    }, 5000);
     return () => clearTimeout(timer);
   }, [location.pathname, location.search]);
 

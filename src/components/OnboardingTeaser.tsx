@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
+
+const MODAL_KEY = "onboarding_teaser";
 
 interface OnboardingTeaserProps {
   onOpenOnboarding: () => void;
@@ -26,8 +29,11 @@ export const OnboardingTeaser = ({ onOpenOnboarding }: OnboardingTeaserProps) =>
 
         if (!profile?.perfil_completo_360) {
           const dismissed = localStorage.getItem("onboarding_teaser_dismissed");
-          if (!dismissed) {
-            setTimeout(() => setVisible(true), 10000); // Mostrar después de 10 segundos
+          if (!dismissed && canShowModal(MODAL_KEY)) {
+            setTimeout(() => {
+              markModalShown(MODAL_KEY);
+              setVisible(true);
+            }, 10000);
           }
         }
       } catch (error) {

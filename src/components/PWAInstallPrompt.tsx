@@ -8,6 +8,9 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
+
+const MODAL_KEY = "pwa_install_prompt";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -66,6 +69,9 @@ export const PWAInstallPrompt = () => {
     const permanentlyDismissed = localStorage.getItem('pwa-install-dismissed');
     if (permanentlyDismissed) return;
 
+    // Centralized gating: once per session + N-week cooldown
+    if (!canShowModal(MODAL_KEY)) return;
+
     // For Android/Chrome: Capture the beforeinstallprompt event
     const handler = (e: Event) => {
       e.preventDefault();
@@ -76,6 +82,7 @@ export const PWAInstallPrompt = () => {
     // Show prompt after 5 seconds
     const timer = setTimeout(() => {
       sessionStorage.setItem(sessionKey, 'true');
+      markModalShown(MODAL_KEY);
       setShowPrompt(true);
     }, 5000);
 

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { X, Smartphone } from "lucide-react";
 import { usePWADetection } from "@/hooks/usePWADetection";
+import { canShowModal, markModalShown } from "@/lib/modalGating";
 
 const DISMISSED_KEY = "pwa-banner-dismissed-v1";
+const MODAL_KEY = "pwa_open_in_app_banner";
 
 /**
  * Muestra un banner en móvil cuando la PWA está instalada (Android) o
@@ -22,12 +24,14 @@ export const PWAOpenInAppBanner = () => {
     // No mostrar si: ya es standalone, no es móvil, o fue descartado recientemente
     if (isStandalone || !isMobile) return;
     if (sessionStorage.getItem(DISMISSED_KEY)) return;
+    if (!canShowModal(MODAL_KEY)) return;
 
     // Esperar a que se resuelva la detección
     if (state === "unknown") return;
 
     // Mostrar: si instalada (Android) o si iOS (sugerencia)
     if (isInstalled || isIOS) {
+      markModalShown(MODAL_KEY);
       setVisible(true);
     }
   }, [state, isStandalone, isInstalled, isIOS, isMobile]);
