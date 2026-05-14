@@ -245,6 +245,74 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
     setIsRecordingVoice(false);
   };
 
+  const handleCreatePresentationManual = async () => {
+    if (!formData.title || !formData.category || !formData.grade_level) {
+      toast.error("Completa título, asignatura y nivel");
+      return;
+    }
+    setIsGeneratingPresentation(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No autenticado");
+      const subjectLabel = (formData as any).subject
+        ? subjects.find((s) => s.value === (formData as any).subject)?.label || (formData as any).subject
+        : null;
+      const blankSlides = [
+        {
+          layout: "title",
+          title: formData.title,
+          subtitle: formData.description || "",
+          bullets: [],
+          left_column: [],
+          right_column: [],
+          cards: [],
+        },
+        {
+          layout: "bullets",
+          title: "Nueva diapositiva",
+          bullets: ["Haz clic para editar"],
+          left_column: [],
+          right_column: [],
+          cards: [],
+        },
+      ];
+      const { data: row, error } = await supabase
+        .from("content")
+        .insert({
+          creator_id: user.id,
+          title: formData.title,
+          description: formData.description || null,
+          category: formData.category,
+          grade_level: formData.grade_level,
+          subject: subjectLabel,
+          tags,
+          content_type: "presentacion" as any,
+          is_public: isPublic,
+          presentation_data: {
+            slides: blankSlides,
+            theme: "teal",
+            instructions: null,
+            meta: {
+              type: presentationConfig.presentation_type,
+              language: presentationConfig.language,
+              class_duration_min: presentationConfig.class_duration_min,
+              text_density: presentationConfig.text_density,
+              theme: "teal",
+            },
+          } as any,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      toast.success("Presentación creada. Edita las diapositivas a tu gusto.");
+      navigate(`/presentation/${row.id}/edit`);
+    } catch (e: any) {
+      toast.error(e?.message || "No se pudo crear la presentación");
+    } finally {
+      setIsGeneratingPresentation(false);
+    }
+  };
+
   const handleGeneratePresentation = async () => {
     if (!formData.title || !formData.category || !formData.grade_level) {
       toast.error("Completa título, asignatura y nivel");
