@@ -130,13 +130,18 @@ Deno.serve(async (req) => {
     if (notebookSourceId) srcQuery = srcQuery.eq("id", notebookSourceId);
     const { data: sources } = await srcQuery;
 
-    if (!sources || sources.length === 0) return ERR("Añade al menos una fuente", 400);
+    // Sources are required for AI-grounded capsules, EXCEPT when building a path
+    // from existing capsules (the capsules themselves are the grounding context).
+    const isFromCapsules = type === "path" && mode === "from_capsules";
+    if (!isFromCapsules && (!sources || sources.length === 0)) {
+      return ERR("Añade al menos una fuente", 400);
+    }
 
     // Build a compact context (limit total chars to keep prompt within budget)
     const MAX_TOTAL = 18000;
     let used = 0;
     const parts: string[] = [];
-    for (const s of sources) {
+    for (const s of sources || []) {
       const header = `### ${s.title} [${s.source_type}]\n`;
       const body = (s.extracted_text || "").slice(0, 6000);
       const block = header + body + "\n\n";
