@@ -204,7 +204,7 @@ export default function PresentationEdit() {
   // --- background image upload ----
   const onBgUpload = async (file: File, applyAll: boolean) => {
     try {
-      const url = await uploadFile(file, "presentation_backgrounds");
+      const url = await uploadFile(file, "image");
       if (!url) return;
       const bg: SlideBackground = { type: "image", value: url };
       if (applyAll) setGlobalBg(bg);
