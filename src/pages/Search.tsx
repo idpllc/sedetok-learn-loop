@@ -425,11 +425,12 @@ const Search = () => {
                     <CardContent className="p-0">
                       {/* Thumbnail/Preview */}
                       <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-secondary/20">
-                        {(item.cover_url || item.thumbnail_url) ? (
+                        {(item.cover_url || item.thumbnail_url || (item.content_type === 'presentacion' && item.presentation_data?.slides?.find((s: any) => s?.image_url)?.image_url)) ? (
                           <img 
-                            src={item.cover_url || item.thumbnail_url} 
+                            src={item.cover_url || item.thumbnail_url || item.presentation_data?.slides?.find((s: any) => s?.image_url)?.image_url} 
                             alt={item.title}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                           />
                         ) : isQuiz && scientist ? (
                           <div className="w-full h-full bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-blue-500/30 flex items-center justify-center">

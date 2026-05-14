@@ -1,4 +1,4 @@
-import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin, ClipboardList, Printer, Loader2 } from "lucide-react";
+import { Heart, Share2, Bookmark, Play, Pause, Volume2, VolumeX, UserPlus, UserCheck, MessageCircle, Download, Columns3, ArrowRightLeft, CircleDot, MapPin, ClipboardList, Printer, Loader2, Presentation as PresentIcon } from "lucide-react";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -43,6 +43,7 @@ interface ContentCardProps {
   documentUrl?: string;
   richText?: string;
   mindMapData?: any;
+  presentationData?: any;
   contentType?: string;
   likes: number;
   comments: number;
@@ -82,6 +83,7 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
   documentUrl,
   richText,
   mindMapData,
+  presentationData,
   contentType,
   likes: initialLikes,
   comments: initialComments,
@@ -707,6 +709,52 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
                       </Button>
                     )}
                   </div>
+                </div>
+              </div>
+            );
+          })()
+        ) : contentType === 'presentacion' ? (
+          (() => {
+            const slides = Array.isArray(presentationData?.slides) ? presentationData.slides : [];
+            const firstImg = slides.find((s: any) => s?.image_url)?.image_url || thumbnail;
+            const isFlash = presentationData?.meta?.type === 'flashcards';
+            return (
+              <div className="w-full h-full relative overflow-hidden bg-black">
+                {firstImg ? (
+                  <img
+                    src={firstImg}
+                    alt={title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    width={800}
+                    height={600}
+                    crossOrigin="anonymous"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/10 to-background" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
+                <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center p-6">
+                  <div className="bg-white/15 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/30 text-white text-xs uppercase tracking-widest mb-5 inline-flex items-center gap-2">
+                    <PresentIcon className="w-4 h-4" />
+                    {isFlash ? 'Tarjetas de estudio' : 'Presentación'}
+                    {slides.length > 0 && <span className="opacity-80">· {slides.length}</span>}
+                  </div>
+                  <h3 className="text-2xl md:text-4xl font-extrabold text-white drop-shadow-lg max-w-2xl line-clamp-3">{title}</h3>
+                  {description && (
+                    <p className="mt-3 text-sm md:text-base text-white/85 max-w-xl line-clamp-2">{description}</p>
+                  )}
+                  <Button
+                    size="lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/presentation/${id}`);
+                    }}
+                    className="mt-7 bg-white hover:bg-white/90 text-primary font-bold text-lg px-8 py-6 shadow-2xl hover:scale-105 transition-transform pointer-events-auto"
+                  >
+                    <PresentIcon className="w-5 h-5 mr-2" />
+                    Visualizar
+                  </Button>
                 </div>
               </div>
             );
