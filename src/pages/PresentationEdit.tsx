@@ -231,8 +231,13 @@ export default function PresentationEdit() {
     );
   }
 
-  const safeIndex = slides.length === 0 ? -1 : Math.min(Math.max(0, current), slides.length - 1);
-  const slide = safeIndex >= 0 ? slides[safeIndex] : null;
+  useEffect(() => {
+    if (slides.length === 0) return;
+    if (current > slides.length - 1) setCurrent(slides.length - 1);
+    else if (current < 0) setCurrent(0);
+  }, [slides.length, current]);
+
+  const slide = slides.length > 0 ? (slides[current] ?? slides[0]) : null;
 
   if (!slide) {
     return (
