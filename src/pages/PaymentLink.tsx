@@ -4,7 +4,8 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, Sparkles, Crown, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Sparkles, Crown, ShieldCheck, CalendarDays } from "lucide-react";
+import { toast } from "sonner";
 
 const FEATURES: Record<string, string[]> = {
   premium: [
@@ -35,6 +36,7 @@ export default function PaymentLink() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [yearlyLoading, setYearlyLoading] = useState(false);
 
   const status = params.get("status");
 
@@ -79,6 +81,37 @@ export default function PaymentLink() {
   const discount = data.discount_amount_cop || 0;
   const isPaid = data.status === "active";
   const Icon = planCode === "ultra" ? Crown : Sparkles;
+  const monthlyAmount = data.monthly_amount_cop || 0;
+  const yearlyAmount = data.yearly_amount_cop || 0;
+  const yearlyEquivMonthly = monthlyAmount * 12;
+  const yearlySavings = yearlyEquivMonthly > yearlyAmount ? yearlyEquivMonthly - yearlyAmount : 0;
+  const yearlyDiscountPct = yearlyEquivMonthly > 0
+    ? Math.round((yearlySavings / yearlyEquivMonthly) * 100)
+    : 0;
+  const showYearlyOption = data.billing_cycle !== "yearly" && yearlyAmount > 0 && yearlySavings > 0;
+
+  const handleYearly = async () => {
+    setYearlyLoading(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke(
+        "payment-link-create-yearly",
+        { body: { source_subscription_id: subscriptionId } },
+      );
+      if (error) {
+        let msg = error.message || "No se pudo generar el pago anual";
+        const ctx = (error as any).context;
+        if (ctx?.json) {
+          try { const b = await ctx.json(); msg = b?.error || msg; } catch {}
+        }
+        throw new Error(msg);
+      }
+      if (!res?.init_point) throw new Error(res?.error || "No se pudo generar el pago anual");
+      window.location.href = res.init_point;
+    } catch (e: any) {
+      toast.error(e.message || "No se pudo generar el pago anual");
+      setYearlyLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-background to-purple-50 dark:from-background dark:to-background py-8 px-4">
@@ -135,6 +168,31 @@ export default function PaymentLink() {
             >
               Pagar ahora
             </Button>
+
+            {showYearlyOption && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full border-[#F6339A]/40 hover:bg-[#F6339A]/5 text-base h-auto py-3 flex-col gap-1"
+                disabled={yearlyLoading}
+                onClick={handleYearly}
+              >
+                <span className="flex items-center gap-2 font-semibold">
+                  {yearlyLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CalendarDays className="w-4 h-4 text-[#F6339A]" />
+                  )}
+                  Pagar anual · {fmtCOP(yearlyAmount)}
+                  <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-[#F6339A]/10 text-[#F6339A] font-bold">
+                    -{yearlyDiscountPct}%
+                  </span>
+                </span>
+                <span className="text-xs text-muted-foreground font-normal">
+                  Ahorra {fmtCOP(yearlySavings)} al año
+                </span>
+              </Button>
+            )}
             {status === "failure" && (
               <p className="text-sm text-red-600 text-center">
                 El pago no se completó. Puedes intentarlo de nuevo.
