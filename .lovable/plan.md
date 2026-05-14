@@ -1,62 +1,89 @@
-# Plan: Mejoras a Cápsulas tipo Presentación
+# Plan: Editor enriquecido de Presentaciones
 
-## 1. Descarga PDF + Pantalla completa en `PresentationView`
-- Añadir botón **Pantalla completa** usando `document.documentElement.requestFullscreen()` con tecla `F` y manejo de `fullscreenchange`.
-- Añadir botón **Descargar PDF** que renderiza cada slide a canvas con `html2canvas` y compone un PDF con `jspdf` (formato horizontal 16:9 para "Diapositivas", cuadrado 1:1 para "Tarjetas de estudio").
-- Mostrar loader mientras se genera el PDF.
+Objetivo: que las presentaciones se vean como las imágenes (fondos sólidos con tarjetas y contraste correcto), que la IA genere ese tipo de slides, y que el docente pueda editarlas inline con un editor estilo Google Slides.
 
-## 2. Creación desde el botón "Crear"
-Actualmente solo se crean desde dentro de un Notebook. Agregar el tipo `presentation` a `CreateContentForm.tsx` (solo visible para `tipo_usuario === 'Docente'`).
+---
 
-Modos:
-- **Manual**: el docente edita slide por slide con un editor sencillo (título + bullets + imagen opcional por slide). Botón "Añadir slide".
-- **Con IA**: muestra el formulario IA (similar al modal del Notebook) con todos los campos de abajo + chat de instrucciones + grabación de voz.
+## 1. Sistema de Temas y Fondos (con contraste garantizado)
 
-## 3. Campos del formulario (compartidos manual/IA)
-Antes del editor o de generar con IA pedir:
-- `title` (texto)
-- `category` / `subject` (selects existentes)
-- `grade_level` (select existente)
-- **`presentation_type`**: `slides` (Diapositivas 16:9) | `flashcards` (Tarjetas de estudio 1:1, contenido muy básico)
-- **`language`**: `es` | `en` | `pt` | `fr`
-- **`class_duration_min`**: número (5–120) — usado por la IA para calibrar nº de slides
-- **`text_density`**: `low` | `medium` | `high` — controla longitud de bullets
-- `tags` (chips), `description`
+Nuevo módulo `src/lib/presentationThemes.ts` con presets:
+- `teal` (verde azulado del ejemplo, cards `#0D6661` sobre `#0E7C6E`)
+- `indigo`, `slate`, `cream`, `dark`, `coral`, `forest`
+- Cada tema define: `bg`, `cardBg`, `textOn` (claro/oscuro automático), `accent`, `mutedText`, `iconColor`.
 
-En modo IA además:
-- `ai_instructions`: textarea libre
-- **Botón micrófono** que graba audio y lo transcribe vía edge function `voice-to-text` (Whisper / OpenAI). El texto resultante se concatena al campo `ai_instructions`.
+`presentation_data.meta.theme = "teal"` y opcional `meta.background = { type: "color"|"gradient"|"image", value }` por slide o global.
 
-Backend:
-- Migración: añadir columnas `presentation_type text default 'slides'`, `presentation_language text default 'es'`, `class_duration_min int`, `text_density text default 'medium'` en `content` (o dentro del JSON `presentation_data` si ya existe — verificar). Lo más limpio: guardarlas dentro de `presentation_data.meta` para no inflar la tabla.
-- Pasar todos esos campos al edge function `notebook-create-capsule` (o a uno nuevo `presentation-create`) para que ajuste el prompt y el nº de slides ≈ `duration / 3`.
-- Para `flashcards` el prompt pide tarjetas tipo pregunta/dato breve, máx 1 idea por tarjeta.
+Renderer aplica clases con tokens del tema → contraste garantizado (texto blanco sobre cards oscuras, etc.). Imágenes embebidas reciben `ring`/`shadow` claro para resaltar sobre fondos oscuros.
 
-## 4. Listado en Home + Filtros
-- Añadir `presentation` como tipo válido en:
-  - `useContent.tsx` / `useSearchResults.tsx` (filtros por `content_type`)
-  - Chips de filtro en `Index.tsx` / `SedeTok.tsx` / `Search.tsx`
-  - `ContentCard.tsx`: ícono y badge "Presentación".
-- En SedeTok el card debe abrir `PresentationView` o un preview embebido.
+## 2. Nuevos layouts tipo "tarjetas"
 
-## 5. Preview en SedeTok
-- En `SedeTok.tsx`, cuando `content_type === 'presentation'` renderizar un mini-preview: primer slide a escala (reuso de `ScaledSlide` de `PresentationView`) con auto-avance cada 3s sobre los primeros 3 slides, y CTA "Ver presentación completa" → navega a `/presentation/{id}`.
-- Card en feed muestra thumbnail = primera slide renderizada (cliente) o `thumbnail_url` si existe.
+Añadir a `Slide.layout`:
+- `cards_3` — título + 3 tarjetas (ícono + subtítulo + texto). Es exactamente la slide del ejemplo.
+- `cards_2` y `cards_4` — variantes.
+- `cards_image` — 3 tarjetas con imagen arriba (segunda imagen del usuario).
+- `section_header` — divisor de sección a pantalla completa.
 
-## Dependencias nuevas
-- `jspdf`, `html2canvas` (PDF en cliente)
-- Edge function reutilizada para STT: si no existe, crear `voice-transcribe` usando `openai/whisper-1` o Lovable AI Gateway.
+Cada tarjeta: `{ icon?: string (lucide name), title: string, body: string, image_url?: string }`.
 
-## Detalles técnicos
-- Tipos compartidos: `PresentationMeta { type: 'slides'|'flashcards'; language; duration; density }` en `src/types/presentation.ts`.
-- `PresentationView` lee `presentation_data.meta.type` y aplica aspect-ratio (`aspect-video` vs `aspect-square`).
-- Para `flashcards`, layout simplificado: un título grande + 1-2 líneas de contenido, sin imágenes complejas (icono opcional).
-- Mantener compatibilidad: presentaciones existentes sin `meta` se tratan como `slides` / `es` / densidad media.
+Modelo Slide extendido:
+```ts
+cards?: Array<{ icon?: string; title: string; body: string; image_url?: string }>;
+background?: { type: "color"|"gradient"|"image"; value: string };
+```
+
+Renderer añade los nuevos casos con `lucide-react` dinámico para iconos.
+
+## 3. IA: generación rica con tarjetas
+
+Actualizar `supabase/functions/create-presentation-standalone/index.ts` y `notebook-create-capsule`:
+- Pasar `theme` (default `teal`) al guardar.
+- Prompt que pida explícitamente layouts de tarjetas (`cards_3`, `cards_image`) en al menos 40% de las slides cuando `text_density != low`.
+- Para cada tarjeta: ícono lucide sugerido (lista cerrada de ~30 nombres), título corto y body de 2-3 frases con `**negrita**` en términos clave.
+- Si `presentation_type=slides`: mezcla balanceada `title`, `cards_3`, `cards_image`, `two_column`, `quote`, `closing`.
+
+## 4. Editor inline de presentaciones
+
+Nueva ruta `/presentation/:id/edit` (`src/pages/PresentationEdit.tsx`) accesible solo al `creator_id`, con UI tal cual las imágenes:
+
+- **Top bar**: título editable, "Público/Privado", botones guardar/compartir/presentar.
+- **Toolbar contextual**:
+  - Cuando hay texto seleccionado: Familia tipográfica, tamaño −/+, **B** _I_ U, alineación, listas, color, "Editar con IA".
+  - Cuando no: Texto, Imagen, Vídeo, Tabla, Forma, Editar con IA, **Temas**, **Fondo**.
+- **Sidebar izquierda**: thumbnails (drag-reorder, duplicar, eliminar, "Añadir diapositiva" con submenu IA/blank/layouts).
+- **Canvas central**: slide actual a escala (reusar `ScaledSlide` pattern del skill `slides-app`, fixed 1920×1080).
+- **Edición inline**: cada bloque (`title`, `subtitle`, `bullets[i]`, `cards[i].title`, `cards[i].body`) usa `contentEditable` con guardado debounced (500 ms) a `presentation_data.slides`.
+- **Panel Temas**: grid con previews de cada tema → cambia `meta.theme` global.
+- **Panel Fondo**: color picker, gradiente, subir imagen (S3) — aplica a slide o todas.
+- **Imágenes**: clic en imagen → reemplazar/eliminar/regenerar con IA.
+
+Persistencia: cada cambio hace `update content set presentation_data = ...` con `eq creator_id`. Optimistic UI + toast en error.
+
+## 5. Visualizador
+
+`PresentationView.tsx`:
+- Aplica `theme` y `background` al `SlideRenderer`.
+- Botón "Editar" visible solo al creador → navega a `/presentation/:id/edit`.
+- Soporta los nuevos layouts (`cards_*`, `section_header`) y export PDF correspondiente.
+
+## 6. Migraciones
+
+Sin migración SQL nueva: todo vive dentro del JSONB `presentation_data`. Solo actualizar el shape en TS y manejar retro-compatibilidad (slides viejas sin `cards` siguen funcionando).
+
+---
 
 ## Orden de ejecución
-1. Migración + tipos compartidos
-2. PDF + Fullscreen en `PresentationView` (rápido, valor inmediato)
-3. Edge function `voice-transcribe` + actualizar `notebook-create-capsule` con nuevos campos
-4. `CreateContentForm`: añadir tipo Presentación con modos Manual/IA + campos + voz
-5. Listado + filtros + ContentCard
-6. Preview en SedeTok
+
+1. `presentationThemes.ts` + nuevos tipos `Slide` + renderer con `cards_3`/`cards_image`/`section_header`.
+2. Actualizar `PresentationView` para aplicar tema y nuevos layouts (resultado visual igual al ejemplo).
+3. Edge functions: prompt rico con tarjetas + tema.
+4. `PresentationEdit.tsx`: sidebar + canvas + edición inline + autosave.
+5. Toolbar con Temas/Fondo/Texto/Imagen y formato tipográfico.
+6. Botón "Editar" en `PresentationView` para el creador.
+
+## Notas técnicas
+
+- Iconos: importar todos los de la lista cerrada estáticamente para evitar `import()` dinámico en Vite.
+- ContentEditable: usar un wrapper que serialice a markdown simple (`**bold**`, `*italic*`) para mantener compatibilidad con `renderInline`.
+- Autosave: hook `usePresentationAutosave(id, data)` con debounce + abort controller.
+- Subida de imágenes: reusar `useS3Upload`.
+- Mantener compatibilidad con presentaciones existentes (sin `theme` → default `teal`; sin `cards` → render normal).
