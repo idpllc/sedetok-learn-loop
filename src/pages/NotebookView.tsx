@@ -738,10 +738,11 @@ const NotebookView = () => {
     // and trigger AI capsule creation immediately.
     if (opt.createOnly) {
       if (opt.id === "presentation") {
-        // Open instructions modal first so the teacher can describe how they
-        // want the presentation (style, focus, audience, visual approach).
-        setPresentationInstructions("");
-        setPresentationOptionsOpen(true);
+        // Activate the studio panel so the teacher sees the "Generar con IA"
+        // button. The instructions modal opens only when they click it.
+        setStudioActive(opt);
+        setStudioResults([]);
+        setStudioOffset(0);
         return;
       }
       handleCreateCapsule(opt.id);
@@ -1732,7 +1733,14 @@ const NotebookView = () => {
                       <Button
                         size="sm"
                         className="w-full h-7 text-[11px] gap-1"
-                        onClick={() => handleCreateCapsule(studioActive.id)}
+                        onClick={() => {
+                          if (studioActive.id === "presentation") {
+                            setPresentationInstructions("");
+                            setPresentationOptionsOpen(true);
+                          } else {
+                            handleCreateCapsule(studioActive.id);
+                          }
+                        }}
                         disabled={creatingType === studioActive.id}
                         data-tour="studio-generate-ai"
                       >
