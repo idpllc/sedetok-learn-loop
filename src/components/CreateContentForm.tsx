@@ -2136,12 +2136,28 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         </div>
       )}
 
+      {formData.content_type !== 'lectura' && formData.content_type !== 'mapa_mental' && !isPresentationMode && (
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción</Label>
           <Textarea
             id="description"
             placeholder={isQuizMode ? "Describe brevemente el contenido del quiz" : "Describe el contenido de tu cápsula..."}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="min-h-[100px]"
+          />
+        </div>
+      )}
+
+      {isPresentationMode && (
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción / Tema</Label>
+          <Textarea
+            id="description"
+            placeholder="Describe el tema central que cubrirá la presentación..."
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="min-h-[80px]"
           />
         </div>
       )}
