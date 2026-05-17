@@ -22,6 +22,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FloatingLanguageSelector } from "@/components/FloatingLanguageSelector";
 import sedefyLogo from "@/assets/sedefy-logo.png";
+import teachers1 from "@/assets/about-teachers-1.png";
+import teachers2 from "@/assets/about-teachers-2.png";
+import teachers3 from "@/assets/about-teachers-3.png";
 
 const AboutUs = () => {
   const { t } = useTranslation();
@@ -226,6 +229,38 @@ const AboutUs = () => {
               <div className="mt-6 text-sm text-muted-foreground">{t("about.quoteAuthor")}</div>
             </CardContent>
           </Card>
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-gradient-to-b from-background to-primary/5">
+        <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+          <div className="max-w-3xl">
+            <span className="text-sm font-semibold uppercase tracking-wider text-primary">{t("about.teachersLabel")}</span>
+            <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">{t("about.teachersTitle")}</h2>
+            <p className="mt-5 text-lg text-muted-foreground">{t("about.teachersDescription")}</p>
+          </div>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {[
+              { src: teachers1, caption: t("about.teachersCaption1") },
+              { src: teachers2, caption: t("about.teachersCaption2") },
+              { src: teachers3, caption: t("about.teachersCaption3") },
+            ].map((item, i) => (
+              <figure key={i} className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img
+                    src={item.src}
+                    alt={item.caption}
+                    width={1200}
+                    height={900}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <figcaption className="p-4 text-sm text-muted-foreground">{item.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
         </div>
       </section>
 
