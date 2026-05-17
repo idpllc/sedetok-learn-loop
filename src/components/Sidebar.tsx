@@ -360,14 +360,14 @@ export const Sidebar = () => {
               <button onClick={() => navigate("/")} className="flex-shrink-0 p-0.5">
                 <Home className="w-4.5 h-4.5 text-muted-foreground" />
               </button>
-              {currentPageName !== "Inicio" && (
+              {currentPageName !== t("breadcrumb.home") && (
                 <>
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="text-sm font-medium text-foreground truncate">{currentPageName}</span>
                 </>
               )}
-              {currentPageName === "Inicio" && (
-                <span className="text-sm font-medium text-foreground">Inicio</span>
+              {currentPageName === t("breadcrumb.home") && (
+                <span className="text-sm font-medium text-foreground">{t("breadcrumb.home")}</span>
               )}
             </div>
           </div>
