@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FloatingLanguageSelector } from "@/components/FloatingLanguageSelector";
+import sedefyLogo from "@/assets/sedefy-logo.png";
 
 const AboutUs = () => {
   const { t } = useTranslation();
