@@ -17,7 +17,7 @@ export const FloatingLanguageSelector = () => {
     SUPPORTED_LANGUAGES[0];
 
   return (
-    <div className="fixed top-4 right-4 z-[70]">
+    <div className="relative z-[70]">
       <DropdownMenu>
         <DropdownMenuTrigger
           className="flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-2 text-sm shadow-md backdrop-blur transition-colors hover:bg-card"
