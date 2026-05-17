@@ -76,29 +76,42 @@ const AboutUs = () => {
         <div aria-hidden className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-pink/30 blur-3xl -z-10" />
         <div aria-hidden className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl -z-10" />
 
-        <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-pink" />
-            {t("about.badge")}
+        <div className="mx-auto max-w-6xl px-6 py-24 md:py-32 grid gap-12 lg:grid-cols-2 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5 text-pink" />
+              {t("about.badge")}
+            </div>
+            <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
+              {t("about.heroTitle1")}{" "}
+              <span className="bg-gradient-to-r from-pink to-primary bg-clip-text text-transparent">
+                {t("about.heroTitle2")}
+              </span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
+              {t("about.heroSubtitle")}{" "}
+              <span className="text-foreground font-medium">{t("about.heroSubtitleHighlight")}</span>{" "}
+              {t("about.heroSubtitleEnd")}
+            </p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Button asChild size="lg" variant="pink">
+                <Link to="/auth">{t("about.ctaJoin")} <ArrowRight className="ml-1" /></Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/">{t("about.ctaExplore")}</Link>
+              </Button>
+            </div>
           </div>
-          <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
-            {t("about.heroTitle1")}{" "}
-            <span className="bg-gradient-to-r from-pink to-primary bg-clip-text text-transparent">
-              {t("about.heroTitle2")}
-            </span>
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg md:text-xl text-muted-foreground leading-relaxed">
-            {t("about.heroSubtitle")}{" "}
-            <span className="text-foreground font-medium">{t("about.heroSubtitleHighlight")}</span>{" "}
-            {t("about.heroSubtitleEnd")}
-          </p>
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Button asChild size="lg" variant="pink">
-              <Link to="/auth">{t("about.ctaJoin")} <ArrowRight className="ml-1" /></Link>
-            </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link to="/">{t("about.ctaExplore")}</Link>
-            </Button>
+          <div className="relative">
+            <div aria-hidden className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-pink/30 to-primary/20 blur-2xl" />
+            <img
+              src="https://tsoqm1lrawz8zunu.public.blob.vercel-storage.com/institution/banners/1773886722037-Captura_de_pantalla_2026-03-18_a_las_9_17_41_p__m_.png"
+              alt={t("about.heroTitle2")}
+              width={1200}
+              height={800}
+              loading="lazy"
+              className="relative rounded-2xl border border-border shadow-2xl w-full h-auto"
+            />
           </div>
         </div>
       </section>
