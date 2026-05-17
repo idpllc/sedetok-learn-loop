@@ -110,6 +110,12 @@
     "finalTitle": "Help us democratize education.",
     "finalDescription": "Whether you're a student, teacher, creator or institution — there's a place for you in the Sedefy ecosystem.",
     "ctaStart": "Get started free",
-    "ctaPlans": "See our plans"
+    "ctaPlans": "See our plans",
+    "teachersLabel": "Transforming teaching",
+    "teachersTitle": "We're transforming the way teachers teach.",
+    "teachersDescription": "From rural classrooms to urban schools, we're equipping educators across Latin America with the tools, training and AI-powered platform they need to engage every learner and close educational gaps.",
+    "teachersCaption1": "Teacher training session on the SEDEFY ecosystem.",
+    "teachersCaption2": "Workshops with educators bringing technology into the classroom.",
+    "teachersCaption3": "Bringing digital tools to communities that need them most."
   }
 }
