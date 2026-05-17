@@ -49,6 +49,7 @@ const CreateLearningPath = lazyWithRetry(() => import("./pages/CreateLearningPat
 const ViewLearningPath = lazyWithRetry(() => import("./pages/ViewLearningPath"));
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
 const AboutSedefy = lazyWithRetry(() => import("./pages/AboutSedefy"));
+const AboutUs = lazyWithRetry(() => import("./pages/AboutUs"));
 const CreatorProgram = lazyWithRetry(() => import("./pages/CreatorProgram"));
 const TermsAndConditions = lazyWithRetry(() => import("./pages/TermsAndConditions"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
@@ -187,6 +188,7 @@ const App = () => (
             <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
             <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
             <Route path="/about" element={<AboutSedefy />} />
+            <Route path="/about-us" element={<AboutUs />} />
             <Route path="/creator-program" element={<CreatorProgram />} />
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
