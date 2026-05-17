@@ -13,6 +13,8 @@ import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "./LanguageSelector";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,6 +28,7 @@ export const Sidebar = () => {
   const [moreModalOpen, setMoreModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const scrollDirection = useScrollDirection();
+  const { t } = useTranslation();
 
   // Debug log to verify institution data
   console.log("Sidebar - myInstitution:", myInstitution);
@@ -70,65 +73,64 @@ export const Sidebar = () => {
   }, [user, signOut]);
 
   const menuItems = useMemo(() => [
-    { id: "home", icon: Home, label: "Inicio", path: "/" },
-    { id: "sedetok", icon: Play, label: "Sede tok", path: "/sedetok" },
-    { id: "notebook", icon: NotebookPen, label: "Notebook", path: "/notebook", badge: "Nuevo" },
-    { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
-    { id: "courses", icon: BookOpen, label: "Cursos", path: "/courses" },
-    { id: "trivia", icon: Gamepad2, label: "Trivia Game", path: "/trivia-game" },
-    { id: "live-games", icon: Radio, label: "Juegos en Vivo", path: "/live-games" },
-    { id: "language-tutor", icon: Languages, label: "English Tutor", path: "/language-tutor" },
-    { id: "study-plan", icon: GraduationCap, label: "Plan de Estudios", path: "/study-plan" },
-    { id: "chat", icon: MessageCircle, label: "Chat", path: "/chat" },
-    { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
-    { id: "profile", icon: User, label: "Perfil", path: "/profile" },
-  ], []);
+    { id: "home", icon: Home, label: t("nav.home"), path: "/" },
+    { id: "sedetok", icon: Play, label: t("nav.sedetok"), path: "/sedetok" },
+    { id: "notebook", icon: NotebookPen, label: t("nav.notebook"), path: "/notebook", badge: t("nav.newBadge") },
+    { id: "routes", icon: Map, label: t("nav.routes"), path: "/learning-paths" },
+    { id: "courses", icon: BookOpen, label: t("nav.courses"), path: "/courses" },
+    { id: "trivia", icon: Gamepad2, label: t("nav.trivia"), path: "/trivia-game" },
+    { id: "live-games", icon: Radio, label: t("nav.liveGames"), path: "/live-games" },
+    { id: "language-tutor", icon: Languages, label: t("nav.languageTutor"), path: "/language-tutor" },
+    { id: "study-plan", icon: GraduationCap, label: t("nav.studyPlan"), path: "/study-plan" },
+    { id: "chat", icon: MessageCircle, label: t("nav.chat"), path: "/chat" },
+    { id: "achievements", icon: Award, label: t("nav.achievements"), path: "/achievements" },
+    { id: "profile", icon: User, label: t("nav.profile"), path: "/profile" },
+  ], [t]);
 
   // Route to page name mapping for breadcrumb
   const currentPageName = useMemo(() => {
     const routeMap: Record<string, string> = {
-      "/": "Inicio",
-      "/sedetok": "Sede tok",
-      "/chat": "Chat",
-      "/search": "Explorar",
-      "/learning-paths": "Rutas",
-      "/courses": "Cursos",
-      "/trivia-game": "Trivia",
-      "/live-games": "En Vivo",
-      "/achievements": "Logros",
-      "/profile": "Perfil",
-      "/create": "Crear",
-      "/edit-profile": "Editar Perfil",
-      "/notifications": "Notificaciones",
-      "/sede-ai": "Sede AI",
-      "/language-tutor": "English Tutor",
-      "/study-plan": "Plan de Estudios",
-      "/notebook": "Notebook",
-      "/buy-educoins": "Educoins",
-      "/about": "Acerca de",
-      "/terms": "Términos",
-      "/privacy": "Privacidad",
-      "/institution-dashboard": "Institución",
-      "/vocational-profile": "Vocacional",
-      "/professional-profile": "Profesional",
-      "/cv-variations": "CV",
-      "/xp-history": "Historial XP",
-      "/educoins-history": "Historial Educoins",
-      "/creator-content": "Mi Contenido",
-      "/creator-program": "Creadores",
-      "/install": "Instalar",
+      "/": t("breadcrumb.home"),
+      "/sedetok": t("nav.sedetok"),
+      "/chat": t("nav.chat"),
+      "/search": t("breadcrumb.explore"),
+      "/learning-paths": t("nav.routes"),
+      "/courses": t("nav.courses"),
+      "/trivia-game": t("nav.trivia"),
+      "/live-games": t("nav.liveGames"),
+      "/achievements": t("nav.achievements"),
+      "/profile": t("nav.profile"),
+      "/create": t("breadcrumb.createContent"),
+      "/edit-profile": t("breadcrumb.editProfile"),
+      "/notifications": t("breadcrumb.notifications"),
+      "/sede-ai": t("breadcrumb.sedeAi"),
+      "/language-tutor": t("nav.languageTutor"),
+      "/study-plan": t("nav.studyPlan"),
+      "/notebook": t("nav.notebook"),
+      "/buy-educoins": t("breadcrumb.educoins"),
+      "/about": t("breadcrumb.about"),
+      "/terms": t("breadcrumb.terms"),
+      "/privacy": t("breadcrumb.privacy"),
+      "/institution-dashboard": t("breadcrumb.institution"),
+      "/vocational-profile": t("breadcrumb.vocational"),
+      "/professional-profile": t("breadcrumb.professional"),
+      "/cv-variations": t("breadcrumb.cv"),
+      "/xp-history": t("breadcrumb.xpHistory"),
+      "/educoins-history": t("breadcrumb.educoinsHistory"),
+      "/creator-content": t("breadcrumb.myContent"),
+      "/creator-program": t("breadcrumb.creators"),
+      "/install": t("breadcrumb.install"),
     };
     const exactMatch = routeMap[location.pathname];
     if (exactMatch) return exactMatch;
-    // Check prefix matches for dynamic routes
-    if (location.pathname.startsWith("/learning-paths/")) return "Ruta";
-    if (location.pathname.startsWith("/courses/")) return "Curso";
-    if (location.pathname.startsWith("/live-games/")) return "En Vivo";
-    if (location.pathname.startsWith("/quiz-evaluation")) return "Evaluación";
-    if (location.pathname.startsWith("/game-evaluation")) return "Evaluación";
-    if (location.pathname.startsWith("/profile/")) return "Perfil";
+    if (location.pathname.startsWith("/learning-paths/")) return t("breadcrumb.route");
+    if (location.pathname.startsWith("/courses/")) return t("nav.courses");
+    if (location.pathname.startsWith("/live-games/")) return t("nav.liveGames");
+    if (location.pathname.startsWith("/quiz-evaluation")) return t("breadcrumb.evaluation");
+    if (location.pathname.startsWith("/game-evaluation")) return t("breadcrumb.evaluation");
+    if (location.pathname.startsWith("/profile/")) return t("nav.profile");
     return "Sedefy";
-  }, [location.pathname]);
+  }, [location.pathname, t]);
 
   // Fetch user XP and ranking for mobile header badge
   const { data: userStats } = useQuery({
@@ -193,7 +195,7 @@ export const Sidebar = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
                 type="text"
-                placeholder="Buscar contenido..."
+                placeholder={t("common.searchPlaceholder")}
                 value=""
                 readOnly
                 className="pl-10 cursor-pointer"
@@ -239,10 +241,10 @@ export const Sidebar = () => {
         <button
           onClick={() => setMoreModalOpen(true)}
           className={`w-full flex items-center ${isMinified ? 'justify-center px-0' : 'gap-4 px-4'} py-2 rounded-lg transition-all text-muted-foreground hover:bg-muted hover:text-foreground`}
-          title={isMinified ? "Más" : undefined}
+          title={isMinified ? t("common.more") : undefined}
         >
           <MoreHorizontal className="w-6 h-6" />
-          {!isMinified && <span className="text-base">Más</span>}
+          {!isMinified && <span className="text-base">{t("common.more")}</span>}
         </button>
 
         {/* Institution Link - Only shown if user has an institution */}
@@ -265,6 +267,11 @@ export const Sidebar = () => {
 
       </nav>
 
+      {/* Language Selector */}
+      <div className={`px-4 pt-3 border-t border-border ${isMinified ? 'px-2' : ''}`}>
+        <LanguageSelector isMinified={isMinified} />
+      </div>
+
       {/* Create Button - Always visible */}
       <div className={`p-4 border-t border-border transition-all ${isMinified ? 'px-3' : ''}`}>
         <Button
@@ -272,10 +279,10 @@ export const Sidebar = () => {
           variant="pink"
           className={`w-full font-medium ${isMinified ? 'px-0' : 'py-6'}`}
           size={isMinified ? "icon" : "lg"}
-          title={isMinified ? "Crear" : undefined}
+          title={isMinified ? t("common.create") : undefined}
         >
           <Plus className={`w-6 h-6 ${isMinified ? '' : 'mr-2'}`} />
-          {!isMinified && "Crear"}
+          {!isMinified && t("common.create")}
         </Button>
 
         {/* Auth Button - Only show Login when logged out */}
@@ -285,10 +292,10 @@ export const Sidebar = () => {
             variant="outline"
             className={`w-full mt-2 font-medium ${isMinified ? 'px-0' : ''}`}
             size={isMinified ? "icon" : "lg"}
-            title={isMinified ? "Iniciar Sesión" : undefined}
+            title={isMinified ? t("common.login") : undefined}
           >
             <LogIn className={`w-5 h-5 ${isMinified ? '' : 'mr-2'}`} />
-            {!isMinified && "Iniciar Sesión"}
+            {!isMinified && t("common.login")}
           </Button>
         )}
       </div>
@@ -301,7 +308,7 @@ export const Sidebar = () => {
               onClick={() => handleNavigate("/about")}
               className="block hover:text-foreground transition-colors"
             >
-              Sobre Sedefy
+              {t("nav.about")}
             </button>
           </nav>
           <p className="mt-4 text-xs text-muted-foreground">© 2026 Sedefy</p>
@@ -323,7 +330,7 @@ export const Sidebar = () => {
         <button
           onClick={() => setIsCollapsed(prev => !prev)}
           className="absolute top-6 -right-3 w-6 h-6 bg-card border border-border rounded-full flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
-          title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+          title={isCollapsed ? t("common.expandMenu") : t("common.collapseMenu")}
         >
           <PanelLeft className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
         </button>
@@ -353,14 +360,14 @@ export const Sidebar = () => {
               <button onClick={() => navigate("/")} className="flex-shrink-0 p-0.5">
                 <Home className="w-4.5 h-4.5 text-muted-foreground" />
               </button>
-              {currentPageName !== "Inicio" && (
+              {currentPageName !== t("breadcrumb.home") && (
                 <>
                   <ChevronRight className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="text-sm font-medium text-foreground truncate">{currentPageName}</span>
                 </>
               )}
-              {currentPageName === "Inicio" && (
-                <span className="text-sm font-medium text-foreground">Inicio</span>
+              {currentPageName === t("breadcrumb.home") && (
+                <span className="text-sm font-medium text-foreground">{t("breadcrumb.home")}</span>
               )}
             </div>
           </div>
