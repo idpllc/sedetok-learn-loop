@@ -74,19 +74,19 @@ const AboutUs = () => {
     <main className="min-h-screen bg-background text-foreground">
       <FloatingLanguageSelector />
       <section className="relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-br from-pink/20 via-background to-background" />
-        <div aria-hidden className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-pink/30 blur-3xl -z-10" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/20 via-background to-background" />
+        <div aria-hidden className="absolute -top-32 -right-32 h-96 w-96 rounded-full bg-primary/30 blur-3xl -z-10" />
         <div aria-hidden className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-primary/20 blur-3xl -z-10" />
 
         <div className="mx-auto max-w-6xl px-6 py-24 md:py-32 grid gap-12 lg:grid-cols-2 items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-pink" />
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
               {t("about.badge")}
             </div>
             <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
               {t("about.heroTitle1")}{" "}
-              <span className="bg-gradient-to-r from-pink to-primary bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
                 {t("about.heroTitle2")}
               </span>
             </h1>
@@ -96,7 +96,7 @@ const AboutUs = () => {
               {t("about.heroSubtitleEnd")}
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
-              <Button asChild size="lg" variant="pink">
+              <Button asChild size="lg" variant="default">
                 <Link to="/auth">{t("about.ctaJoin")} <ArrowRight className="ml-1" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline">
@@ -105,7 +105,7 @@ const AboutUs = () => {
             </div>
           </div>
           <div className="relative">
-            <div aria-hidden className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-pink/30 to-primary/20 blur-2xl" />
+            <div aria-hidden className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-primary/30 to-primary/20 blur-2xl" />
             <img
               src="https://tsoqm1lrawz8zunu.public.blob.vercel-storage.com/institution/banners/1773886722037-Captura_de_pantalla_2026-03-18_a_las_9_17_41_p__m_.png"
               alt={t("about.heroTitle2")}
@@ -121,16 +121,16 @@ const AboutUs = () => {
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
           <div className="max-w-2xl">
-            <span className="text-sm font-semibold uppercase tracking-wider text-pink">{t("about.missionLabel")}</span>
+            <span className="text-sm font-semibold uppercase tracking-wider text-primary">{t("about.missionLabel")}</span>
             <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">{t("about.missionTitle")}</h2>
             <p className="mt-5 text-lg text-muted-foreground">{t("about.missionDescription")}</p>
           </div>
 
           <div className="mt-14 grid gap-6 md:grid-cols-3">
             {pillars.map((p) => (
-              <Card key={p.title} className="border-border/60 bg-card/60 backdrop-blur transition-colors hover:border-pink/50">
+              <Card key={p.title} className="border-border/60 bg-card/60 backdrop-blur transition-colors hover:border-primary/50">
                 <CardContent className="p-7">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink/10 text-pink">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <p.icon className="h-6 w-6" />
                   </div>
                   <h3 className="mt-5 text-xl font-semibold">{p.title}</h3>
@@ -147,7 +147,7 @@ const AboutUs = () => {
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((s) => (
               <div key={s.label}>
-                <div className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-br from-pink to-primary bg-clip-text text-transparent">
+                <div className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-br from-primary to-primary bg-clip-text text-transparent">
                   {s.value}
                 </div>
                 <div className="mt-2 text-sm text-muted-foreground">{s.label}</div>
@@ -161,7 +161,7 @@ const AboutUs = () => {
         <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
           <div className="flex items-end justify-between flex-wrap gap-6">
             <div className="max-w-2xl">
-              <span className="text-sm font-semibold uppercase tracking-wider text-pink">{t("about.whatLabel")}</span>
+              <span className="text-sm font-semibold uppercase tracking-wider text-primary">{t("about.whatLabel")}</span>
               <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">{t("about.whatTitle")}</h2>
             </div>
             <p className="max-w-md text-muted-foreground">{t("about.whatDescription")}</p>
@@ -169,8 +169,8 @@ const AboutUs = () => {
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {benefits.map((b) => (
-              <div key={b.title} className="group rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:border-pink/60 hover:shadow-lg">
-                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-pink/20 to-primary/10 text-pink">
+              <div key={b.title} className="group rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-1 hover:border-primary/60 hover:shadow-lg">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
                   <b.icon className="h-5 w-5" />
                 </div>
                 <h3 className="mt-5 text-base font-semibold">{b.title}</h3>
@@ -184,13 +184,13 @@ const AboutUs = () => {
       <section className="border-t border-border">
         <div className="mx-auto max-w-6xl px-6 py-20 md:py-28 grid gap-12 lg:grid-cols-2 items-center">
           <div>
-            <span className="text-sm font-semibold uppercase tracking-wider text-pink">{t("about.whyLabel")}</span>
+            <span className="text-sm font-semibold uppercase tracking-wider text-primary">{t("about.whyLabel")}</span>
             <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight">{t("about.whyTitle")}</h2>
             <p className="mt-5 text-lg text-muted-foreground">{t("about.whyDescription")}</p>
             <ul className="mt-8 space-y-4">
               {whys.map((item) => (
                 <li key={item} className="flex items-start gap-3">
-                  <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-pink/15 text-pink">
+                  <div className="mt-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary">
                     <Target className="h-3 w-3" />
                   </div>
                   <span className="text-foreground/90">{item}</span>
@@ -199,9 +199,9 @@ const AboutUs = () => {
             </ul>
           </div>
 
-          <Card className="border-pink/30 bg-gradient-to-br from-pink/10 via-card to-card">
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card">
             <CardContent className="p-8 md:p-10">
-              <GraduationCap className="h-10 w-10 text-pink" />
+              <GraduationCap className="h-10 w-10 text-primary" />
               <blockquote className="mt-6 text-xl md:text-2xl font-medium leading-relaxed">
                 {t("about.quote")}
               </blockquote>
@@ -216,7 +216,7 @@ const AboutUs = () => {
           <h2 className="text-3xl md:text-5xl font-bold tracking-tight">{t("about.finalTitle")}</h2>
           <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto">{t("about.finalDescription")}</p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" variant="pink">
+            <Button asChild size="lg" variant="default">
               <Link to="/auth">{t("about.ctaStart")} <ArrowRight className="ml-1" /></Link>
             </Button>
             <Button asChild size="lg" variant="outline">
