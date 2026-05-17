@@ -13,6 +13,8 @@ import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
+import { useTranslation } from "react-i18next";
+import { LanguageSelector } from "./LanguageSelector";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,6 +28,7 @@ export const Sidebar = () => {
   const [moreModalOpen, setMoreModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const scrollDirection = useScrollDirection();
+  const { t } = useTranslation();
 
   // Debug log to verify institution data
   console.log("Sidebar - myInstitution:", myInstitution);
@@ -70,65 +73,64 @@ export const Sidebar = () => {
   }, [user, signOut]);
 
   const menuItems = useMemo(() => [
-    { id: "home", icon: Home, label: "Inicio", path: "/" },
-    { id: "sedetok", icon: Play, label: "Sede tok", path: "/sedetok" },
-    { id: "notebook", icon: NotebookPen, label: "Notebook", path: "/notebook", badge: "Nuevo" },
-    { id: "routes", icon: Map, label: "Rutas", path: "/learning-paths" },
-    { id: "courses", icon: BookOpen, label: "Cursos", path: "/courses" },
-    { id: "trivia", icon: Gamepad2, label: "Trivia Game", path: "/trivia-game" },
-    { id: "live-games", icon: Radio, label: "Juegos en Vivo", path: "/live-games" },
-    { id: "language-tutor", icon: Languages, label: "English Tutor", path: "/language-tutor" },
-    { id: "study-plan", icon: GraduationCap, label: "Plan de Estudios", path: "/study-plan" },
-    { id: "chat", icon: MessageCircle, label: "Chat", path: "/chat" },
-    { id: "achievements", icon: Award, label: "Logros", path: "/achievements" },
-    { id: "profile", icon: User, label: "Perfil", path: "/profile" },
-  ], []);
+    { id: "home", icon: Home, label: t("nav.home"), path: "/" },
+    { id: "sedetok", icon: Play, label: t("nav.sedetok"), path: "/sedetok" },
+    { id: "notebook", icon: NotebookPen, label: t("nav.notebook"), path: "/notebook", badge: t("nav.newBadge") },
+    { id: "routes", icon: Map, label: t("nav.routes"), path: "/learning-paths" },
+    { id: "courses", icon: BookOpen, label: t("nav.courses"), path: "/courses" },
+    { id: "trivia", icon: Gamepad2, label: t("nav.trivia"), path: "/trivia-game" },
+    { id: "live-games", icon: Radio, label: t("nav.liveGames"), path: "/live-games" },
+    { id: "language-tutor", icon: Languages, label: t("nav.languageTutor"), path: "/language-tutor" },
+    { id: "study-plan", icon: GraduationCap, label: t("nav.studyPlan"), path: "/study-plan" },
+    { id: "chat", icon: MessageCircle, label: t("nav.chat"), path: "/chat" },
+    { id: "achievements", icon: Award, label: t("nav.achievements"), path: "/achievements" },
+    { id: "profile", icon: User, label: t("nav.profile"), path: "/profile" },
+  ], [t]);
 
   // Route to page name mapping for breadcrumb
   const currentPageName = useMemo(() => {
     const routeMap: Record<string, string> = {
-      "/": "Inicio",
-      "/sedetok": "Sede tok",
-      "/chat": "Chat",
-      "/search": "Explorar",
-      "/learning-paths": "Rutas",
-      "/courses": "Cursos",
-      "/trivia-game": "Trivia",
-      "/live-games": "En Vivo",
-      "/achievements": "Logros",
-      "/profile": "Perfil",
-      "/create": "Crear",
-      "/edit-profile": "Editar Perfil",
-      "/notifications": "Notificaciones",
-      "/sede-ai": "Sede AI",
-      "/language-tutor": "English Tutor",
-      "/study-plan": "Plan de Estudios",
-      "/notebook": "Notebook",
-      "/buy-educoins": "Educoins",
-      "/about": "Acerca de",
-      "/terms": "Términos",
-      "/privacy": "Privacidad",
-      "/institution-dashboard": "Institución",
-      "/vocational-profile": "Vocacional",
-      "/professional-profile": "Profesional",
-      "/cv-variations": "CV",
-      "/xp-history": "Historial XP",
-      "/educoins-history": "Historial Educoins",
-      "/creator-content": "Mi Contenido",
-      "/creator-program": "Creadores",
-      "/install": "Instalar",
+      "/": t("breadcrumb.home"),
+      "/sedetok": t("nav.sedetok"),
+      "/chat": t("nav.chat"),
+      "/search": t("breadcrumb.explore"),
+      "/learning-paths": t("nav.routes"),
+      "/courses": t("nav.courses"),
+      "/trivia-game": t("nav.trivia"),
+      "/live-games": t("nav.liveGames"),
+      "/achievements": t("nav.achievements"),
+      "/profile": t("nav.profile"),
+      "/create": t("breadcrumb.createContent"),
+      "/edit-profile": t("breadcrumb.editProfile"),
+      "/notifications": t("breadcrumb.notifications"),
+      "/sede-ai": t("breadcrumb.sedeAi"),
+      "/language-tutor": t("nav.languageTutor"),
+      "/study-plan": t("nav.studyPlan"),
+      "/notebook": t("nav.notebook"),
+      "/buy-educoins": t("breadcrumb.educoins"),
+      "/about": t("breadcrumb.about"),
+      "/terms": t("breadcrumb.terms"),
+      "/privacy": t("breadcrumb.privacy"),
+      "/institution-dashboard": t("breadcrumb.institution"),
+      "/vocational-profile": t("breadcrumb.vocational"),
+      "/professional-profile": t("breadcrumb.professional"),
+      "/cv-variations": t("breadcrumb.cv"),
+      "/xp-history": t("breadcrumb.xpHistory"),
+      "/educoins-history": t("breadcrumb.educoinsHistory"),
+      "/creator-content": t("breadcrumb.myContent"),
+      "/creator-program": t("breadcrumb.creators"),
+      "/install": t("breadcrumb.install"),
     };
     const exactMatch = routeMap[location.pathname];
     if (exactMatch) return exactMatch;
-    // Check prefix matches for dynamic routes
-    if (location.pathname.startsWith("/learning-paths/")) return "Ruta";
-    if (location.pathname.startsWith("/courses/")) return "Curso";
-    if (location.pathname.startsWith("/live-games/")) return "En Vivo";
-    if (location.pathname.startsWith("/quiz-evaluation")) return "Evaluación";
-    if (location.pathname.startsWith("/game-evaluation")) return "Evaluación";
-    if (location.pathname.startsWith("/profile/")) return "Perfil";
+    if (location.pathname.startsWith("/learning-paths/")) return t("breadcrumb.route");
+    if (location.pathname.startsWith("/courses/")) return t("nav.courses");
+    if (location.pathname.startsWith("/live-games/")) return t("nav.liveGames");
+    if (location.pathname.startsWith("/quiz-evaluation")) return t("breadcrumb.evaluation");
+    if (location.pathname.startsWith("/game-evaluation")) return t("breadcrumb.evaluation");
+    if (location.pathname.startsWith("/profile/")) return t("nav.profile");
     return "Sedefy";
-  }, [location.pathname]);
+  }, [location.pathname, t]);
 
   // Fetch user XP and ranking for mobile header badge
   const { data: userStats } = useQuery({
