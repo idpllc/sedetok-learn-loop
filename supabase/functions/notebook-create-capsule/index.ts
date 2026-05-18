@@ -633,7 +633,7 @@ Deno.serve(async (req) => {
             objectives: { type: "string", description: "Objetivos en HTML <ul><li>" },
             topic: { type: "string" },
             level: { type: "string", description: "Introductorio | Intermedio | Avanzado" },
-            estimated_duration: { type: "number" },
+            estimated_duration: { type: "integer", description: "Duración estimada en minutos (entero)" },
             ordered_items: {
               type: "array",
               description: "Cápsulas ordenadas pedagógicamente. Usa exactamente los IDs listados.",
@@ -741,7 +741,7 @@ Deno.serve(async (req) => {
             objectives: { type: "string", description: "Objetivos en HTML <ul><li>" },
             topic: { type: "string" },
             level: { type: "string" },
-            estimated_duration: { type: "number" },
+            estimated_duration: { type: "integer", description: "Duración estimada en minutos (entero)" },
           },
           required: [...META_PARAMS.required, "objectives", "topic", "level"],
         };
