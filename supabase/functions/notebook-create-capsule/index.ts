@@ -772,7 +772,7 @@ Deno.serve(async (req) => {
             level: ai.level,
             tags: ai.tags || [],
             objectives: ai.objectives,
-            estimated_duration: ai.estimated_duration || 60,
+            estimated_duration: Math.max(1, Math.round(Number(ai.estimated_duration) || 60)),
             is_public: true,
             status: "draft",
             path_type: type === "course" ? "curso" : "ruta",
