@@ -1762,15 +1762,36 @@ const NotebookView = () => {
                           )}
                         </Button>
                       )}
+
+                      {/* Instructions textarea (AI capsules only) */}
+                      {studioActive.createRoute && studioActive.id !== "video" && (
+                        <div className="space-y-1">
+                          <Textarea
+                            rows={3}
+                            placeholder={`Instrucciones para la IA (opcional). Ej: enfócate en X, usa tono Y, incluye Z…`}
+                            value={aiInstructions[studioActive.id] || ""}
+                            onChange={(e) =>
+                              setAiInstructions((prev) => ({ ...prev, [studioActive.id]: e.target.value.slice(0, 2000) }))
+                            }
+                            maxLength={2000}
+                            className="resize-none text-[11px] min-h-[64px]"
+                          />
+                          <p className="text-[10px] text-muted-foreground text-right">
+                            {(aiInstructions[studioActive.id] || "").length}/2000
+                          </p>
+                        </div>
+                      )}
+
                       <Button
                         size="sm"
                         className="w-full h-7 text-[11px] gap-1"
                         onClick={() => {
+                          const instr = (aiInstructions[studioActive.id] || "").trim();
                           if (studioActive.id === "presentation") {
-                            setPresentationInstructions("");
+                            setPresentationInstructions(instr);
                             setPresentationOptionsOpen(true);
                           } else {
-                            handleCreateCapsule(studioActive.id);
+                            handleCreateCapsule(studioActive.id, instr ? { instructions: instr } : {});
                           }
                         }}
                         disabled={creatingType === studioActive.id}
@@ -1793,6 +1814,19 @@ const NotebookView = () => {
                           </>
                         )}
                       </Button>
+
+                      {/* Manual create button — same route, no AI */}
+                      {studioActive.createRoute && !studioActive.createOnly && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full h-7 text-[11px] gap-1"
+                          onClick={() => navigate(studioActive.createRoute!)}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Crear manualmente
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
