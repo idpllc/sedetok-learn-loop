@@ -15,6 +15,21 @@ export type SlideLayout =
   | "image_full" | "image_left" | "image_right"
   | "cards_2" | "cards_3" | "cards_4" | "cards_image" | "section_header";
 
+export type SlideElement = {
+  id: string;
+  type: "heading" | "text" | "image";
+  x: number; // % of slide width (0-100)
+  y: number; // % of slide height (0-100)
+  w: number; // % of slide width
+  h?: number; // % of slide height (optional, for images)
+  content?: string; // for heading/text
+  src?: string; // for image
+  align?: "left" | "center" | "right";
+  color?: string;
+  size?: number; // px (relative to 720h slide)
+  weight?: "normal" | "bold";
+};
+
 export type Slide = {
   id: string;
   order: number;
@@ -31,6 +46,7 @@ export type Slide = {
   image_prompt?: string | null;
   cards?: SlideCard[];
   background?: SlideBackground;
+  elements?: SlideElement[];
 };
 
 // Inline markdown: **bold**, *italic*, `code`
