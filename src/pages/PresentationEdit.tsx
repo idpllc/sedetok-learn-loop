@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Loader2, Plus, Copy, Trash2, ChevronUp, ChevronDown,
   Palette, Image as ImageIcon, Play, Save, LayoutGrid, GripVertical,
+  Type, Heading1, X as XIcon,
 } from "lucide-react";
-import SlideRenderer, { type Slide, type SlideLayout } from "@/components/presentation/SlideRenderer";
+import SlideRenderer, { type Slide, type SlideLayout, type SlideElement } from "@/components/presentation/SlideRenderer";
 import { PRESENTATION_THEMES, getTheme, type SlideBackground } from "@/lib/presentationThemes";
 import { useS3Upload } from "@/hooks/useS3Upload";
 
