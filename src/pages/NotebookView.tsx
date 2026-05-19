@@ -497,6 +497,10 @@ const NotebookView = () => {
   // Presentation: free-text instructions modal
   const [presentationOptionsOpen, setPresentationOptionsOpen] = useState(false);
   const [presentationInstructions, setPresentationInstructions] = useState("");
+  // Per-capsule AI instructions (keyed by studio option id)
+  const [aiInstructions, setAiInstructions] = useState<Record<string, string>>({});
+  // Teacher: evaluation events modal
+  const [evalEventsOpen, setEvalEventsOpen] = useState(false);
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
