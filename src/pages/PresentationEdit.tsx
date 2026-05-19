@@ -20,54 +20,86 @@ import { useS3Upload } from "@/hooks/useS3Upload";
 
 // --- helpers ----------------------------------------------------------------
 
-const blankSlide = (layout: SlideLayout = "title_bullets"): Slide => {
-  const id = (typeof crypto !== "undefined" && (crypto as any).randomUUID)
-    ? (crypto as any).randomUUID()
-    : `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const base: Slide = { id, order: 0, layout, title: "Nueva diapositiva" };
-  if (layout === "cards_3") base.cards = [
-    { icon: "sparkles", title: "Tarjeta 1", body: "Describe el primer concepto." },
-    { icon: "lightbulb", title: "Tarjeta 2", body: "Describe el segundo concepto." },
-    { icon: "target", title: "Tarjeta 3", body: "Describe el tercer concepto." },
-  ];
-  if (layout === "cards_image") base.cards = [
-    { icon: "sparkles", title: "Tarjeta 1", body: "Texto." },
-    { icon: "sparkles", title: "Tarjeta 2", body: "Texto." },
-    { icon: "sparkles", title: "Tarjeta 3", body: "Texto." },
-  ];
-  if (layout === "title_bullets") base.bullets = ["Punto 1", "Punto 2", "Punto 3"];
-  if (layout === "two_column") { base.left_column = ["Idea A"]; base.right_column = ["Idea B"]; }
-  if (layout === "quote") base.quote = "Escribe una cita inspiradora aquí.";
-  return base;
+const newId = (prefix = "x") => (typeof crypto !== "undefined" && (crypto as any).randomUUID)
+  ? (crypto as any).randomUUID()
+  : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const mkEl = (partial: Omit<SlideElement, "id">): SlideElement => ({
+  id: newId("e"),
+  ...partial,
+});
+
+// Seed default editable text elements for each layout. Every block is a free
+// element so users can move/edit/delete it.
+const seedElementsForLayout = (layout: SlideLayout): SlideElement[] => {
+  switch (layout) {
+    case "title":
+    case "closing":
+      return [
+        mkEl({ type: "heading", content: "Título principal", x: 10, y: 35, w: 80, size: 64, weight: "bold", align: "center" }),
+        mkEl({ type: "text", content: "Subtítulo o descripción", x: 15, y: 56, w: 70, size: 24, align: "center" }),
+      ];
+    case "section_header":
+      return [
+        mkEl({ type: "text", content: "SECCIÓN", x: 10, y: 38, w: 80, size: 18, align: "center" }),
+        mkEl({ type: "heading", content: "Nuevo capítulo", x: 10, y: 45, w: 80, size: 72, weight: "bold", align: "center" }),
+      ];
+    case "title_bullets":
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 8, w: 88, size: 44, weight: "bold" }),
+        mkEl({ type: "text", content: "• Punto 1\n• Punto 2\n• Punto 3", x: 6, y: 28, w: 88, size: 22 }),
+      ];
+    case "two_column":
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 8, w: 88, size: 40, weight: "bold" }),
+        mkEl({ type: "text", content: "• Idea A\n• Idea B", x: 6, y: 30, w: 42, size: 22 }),
+        mkEl({ type: "text", content: "• Idea C\n• Idea D", x: 52, y: 30, w: 42, size: 22 }),
+      ];
+    case "quote":
+      return [
+        mkEl({ type: "text", content: '"Escribe una cita inspiradora"', x: 10, y: 35, w: 80, size: 40, align: "center" }),
+        mkEl({ type: "text", content: "— Autor", x: 10, y: 60, w: 80, size: 20, align: "center" }),
+      ];
+    case "cards_2":
+    case "cards_3":
+    case "cards_4": {
+      const n = layout === "cards_2" ? 2 : layout === "cards_4" ? 4 : 3;
+      const cw = n === 2 ? 44 : n === 4 ? 21 : 28;
+      const gap = n === 2 ? 4 : n === 4 ? 3 : 4;
+      const totalW = n * cw + (n - 1) * gap;
+      const startX = (100 - totalW) / 2;
+      const els: SlideElement[] = [
+        mkEl({ type: "heading", content: "Título de la sección", x: 6, y: 8, w: 88, size: 40, weight: "bold", align: "center" }),
+      ];
+      for (let i = 0; i < n; i++) {
+        const x = startX + i * (cw + gap);
+        els.push(mkEl({ type: "heading", content: `Tarjeta ${i + 1}`, x, y: 32, w: cw, size: 24, weight: "bold" }));
+        els.push(mkEl({ type: "text", content: "Describe este concepto.", x, y: 42, w: cw, size: 18 }));
+      }
+      return els;
+    }
+    case "image_full":
+    case "image_left":
+    case "image_right":
+    case "cards_image":
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 70, w: 88, size: 40, weight: "bold" }),
+        mkEl({ type: "text", content: "Subtítulo o descripción", x: 6, y: 82, w: 88, size: 20 }),
+      ];
+    default:
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 10, w: 88, size: 40, weight: "bold" }),
+      ];
+  }
 };
 
-// Editable text wrapper using contentEditable (one-line or multiline).
-const Editable = ({
-  value, onChange, className, multiline, placeholder,
-}: {
-  value: string; onChange: (v: string) => void;
-  className?: string; multiline?: boolean; placeholder?: string;
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  // Sync only when external value differs from DOM (avoid caret jumps while typing)
-  useEffect(() => {
-    if (ref.current && ref.current.innerText !== value) ref.current.innerText = value;
-  }, [value]);
-  return (
-    <div
-      ref={ref}
-      contentEditable
-      suppressContentEditableWarning
-      data-placeholder={placeholder}
-      onBlur={(e) => onChange(e.currentTarget.innerText)}
-      onKeyDown={(e) => {
-        if (!multiline && e.key === "Enter") { e.preventDefault(); (e.currentTarget as HTMLDivElement).blur(); }
-      }}
-      className={`outline-none focus:ring-2 focus:ring-primary/40 rounded px-1 -mx-1 ${className || ""}`}
-      style={{ minWidth: 8 }}
-    />
-  );
-};
+const blankSlide = (layout: SlideLayout = "title"): Slide => ({
+  id: newId("s"),
+  order: 0,
+  layout,
+  title: "",
+  elements: seedElementsForLayout(layout),
+});
 
 // --- main page --------------------------------------------------------------
 
