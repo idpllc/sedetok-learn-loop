@@ -88,11 +88,12 @@ export default function SlideRenderer({ slide, themeId, editMode = false }: Prop
   const mutedOnCardStyle: CSSProperties = { color: theme.mutedOnCard };
   const accentStyle: CSSProperties = { color: theme.accent };
 
-  // In edit mode, hide built-in text so the editable overlay doesn't ghost
-  // on top. Background, card surfaces, icons and images still render.
-  const hideTextCls = editMode
-    ? "[&_h1]:invisible [&_h2]:invisible [&_h3]:invisible [&_p]:invisible [&_li]:invisible [&_blockquote]:invisible [&_cite]:invisible"
-    : "";
+  // In edit mode, render ONLY the background. All text/cards become free
+  // draggable elements managed by the editor — guarantees no ghosting and
+  // ensures every text block is movable, editable and deletable.
+  if (editMode) {
+    return <div className="w-full h-full relative overflow-hidden" style={slideStyle} />;
+  }
 
   const FreeElements = () => {
     if (!slide.elements?.length) return null;
@@ -115,7 +116,7 @@ export default function SlideRenderer({ slide, themeId, editMode = false }: Prop
           }
           const defaultSize = el.type === "heading" ? 40 : 18;
           return (
-            <div key={el.id} style={{ ...style, fontSize: style.fontSize || `${defaultSize}px`, fontWeight: style.fontWeight || (el.type === "heading" ? 700 : 400), lineHeight: 1.25 }}>
+            <div key={el.id} style={{ ...style, fontSize: style.fontSize || `${defaultSize}px`, fontWeight: style.fontWeight || (el.type === "heading" ? 700 : 400), lineHeight: 1.25, whiteSpace: "pre-wrap" }}>
               <RT>{el.content || ""}</RT>
             </div>
           );
@@ -125,7 +126,7 @@ export default function SlideRenderer({ slide, themeId, editMode = false }: Prop
   };
 
   const Wrap = ({ children, className = "" }: { children: any; className?: string }) => (
-    <div className={`w-full h-full relative overflow-hidden ${hideTextCls} ${className}`} style={slideStyle}>
+    <div className={`w-full h-full relative overflow-hidden ${className}`} style={slideStyle}>
       {children}
       <FreeElements />
     </div>
