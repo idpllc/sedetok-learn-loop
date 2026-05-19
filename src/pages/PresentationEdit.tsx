@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Loader2, Plus, Copy, Trash2, ChevronUp, ChevronDown,
   Palette, Image as ImageIcon, Play, Save, LayoutGrid, GripVertical,
+  Type, Heading1, X as XIcon,
 } from "lucide-react";
-import SlideRenderer, { type Slide, type SlideLayout } from "@/components/presentation/SlideRenderer";
+import SlideRenderer, { type Slide, type SlideLayout, type SlideElement } from "@/components/presentation/SlideRenderer";
 import { PRESENTATION_THEMES, getTheme, type SlideBackground } from "@/lib/presentationThemes";
 import { useS3Upload } from "@/hooks/useS3Upload";
 
@@ -201,6 +202,15 @@ export default function PresentationEdit() {
     setCurrent((c) => (c === idx ? idx + dir : c === idx + dir ? idx : c));
   };
 
+  // --- free elements (insertable) ---
+  const addElement = (slideIdx: number, partial: Partial<SlideElement> & { type: SlideElement["type"] }) => {
+    const id = (typeof crypto !== "undefined" && (crypto as any).randomUUID)
+      ? (crypto as any).randomUUID()
+      : `e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const el: SlideElement = { id, x: 10, y: 10, w: 50, ...partial };
+    setSlides((prev) => prev.map((s, i) => i === slideIdx ? { ...s, elements: [...(s.elements || []), el] } : s));
+  };
+
   // --- background image upload ----
   const onBgUpload = async (file: File, applyAll: boolean) => {
     try {
@@ -335,14 +345,49 @@ export default function PresentationEdit() {
             ))}
           </div>
 
+          {/* Insert elements */}
+          <div className="w-full max-w-5xl mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground mr-1 flex items-center gap-1"><Plus className="h-3 w-3" /> Insertar:</span>
+            <button
+              onClick={() => addElement(current, { type: "heading", content: "Título", size: 40, weight: "bold", x: 10, y: 10, w: 70 })}
+              className="text-[11px] px-2 py-1 rounded border bg-background hover:bg-muted flex items-center gap-1"
+            >
+              <Heading1 className="h-3 w-3" /> Título
+            </button>
+            <button
+              onClick={() => addElement(current, { type: "text", content: "Escribe aquí…", size: 18, x: 10, y: 30, w: 70 })}
+              className="text-[11px] px-2 py-1 rounded border bg-background hover:bg-muted flex items-center gap-1"
+            >
+              <Type className="h-3 w-3" /> Párrafo
+            </button>
+            <label className="text-[11px] px-2 py-1 rounded border bg-background hover:bg-muted flex items-center gap-1 cursor-pointer">
+              <ImageIcon className="h-3 w-3" /> Imagen
+              <input
+                type="file" accept="image/*" className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0]; if (!f) return;
+                  try {
+                    const url = await uploadFile(f, "image");
+                    if (url) addElement(current, { type: "image", src: url, x: 15, y: 20, w: 40, h: 40 });
+                  } catch { toast.error("Error subiendo imagen"); }
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+
           {/* Slide stage with inline editable overlays */}
           <div className="w-full max-w-5xl rounded-xl border shadow-2xl overflow-hidden relative" style={{ aspectRatio }}>
-            <SlideRenderer slide={{ ...slide, background: slide.background || globalBg }} themeId={themeId} />
+            <SlideRenderer slide={{ ...slide, background: slide.background || globalBg }} themeId={themeId} editMode />
             <EditableOverlay
               slide={slide}
               theme={theme}
               onUpdate={(p) => updateSlide(current, p)}
               onUpdateCard={(ci, p) => updateCard(current, ci, p)}
+            />
+            <FreeElementsEditor
+              elements={slide.elements || []}
+              onUpdate={(els) => updateSlide(current, { elements: els })}
             />
           </div>
 
@@ -613,4 +658,107 @@ function EditableOverlay({
     default:
       return null;
   }
+}
+
+// --- free elements editor (draggable text/image blocks) ---------------------
+
+function FreeElementsEditor({
+  elements, onUpdate,
+}: {
+  elements: SlideElement[];
+  onUpdate: (els: SlideElement[]) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  const updateOne = (id: string, patch: Partial<SlideElement>) => {
+    onUpdate(elements.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  };
+  const removeOne = (id: string) => {
+    onUpdate(elements.filter((e) => e.id !== id));
+    if (selectedId === id) setSelectedId(null);
+  };
+
+  const onMouseDown = (e: React.MouseEvent, el: SlideElement) => {
+    if ((e.target as HTMLElement).isContentEditable) return;
+    e.preventDefault();
+    setSelectedId(el.id);
+    dragRef.current = { id: el.id, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
+    const onMove = (ev: MouseEvent) => {
+      const d = dragRef.current;
+      const c = containerRef.current;
+      if (!d || !c) return;
+      const rect = c.getBoundingClientRect();
+      const dx = ((ev.clientX - d.startX) / rect.width) * 100;
+      const dy = ((ev.clientY - d.startY) / rect.height) * 100;
+      updateOne(d.id, { x: Math.max(0, Math.min(95, d.origX + dx)), y: Math.max(0, Math.min(95, d.origY + dy)) });
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  return (
+    <div ref={containerRef} className="absolute inset-0 z-20" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}>
+      {elements.map((el) => {
+        const isSel = selectedId === el.id;
+        const style: React.CSSProperties = {
+          position: "absolute",
+          left: `${el.x}%`,
+          top: `${el.y}%`,
+          width: `${el.w}%`,
+          height: el.h ? `${el.h}%` : undefined,
+        };
+        return (
+          <div
+            key={el.id}
+            style={style}
+            className={`group ${isSel ? "ring-2 ring-primary" : "hover:ring-1 hover:ring-primary/50"} rounded`}
+            onMouseDown={(e) => onMouseDown(e, el)}
+            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+          >
+            {isSel && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); removeOne(el.id); }}
+                className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow z-10"
+                title="Eliminar"
+              >
+                <XIcon className="h-3 w-3" />
+              </button>
+            )}
+            {el.type === "image" ? (
+              el.src ? (
+                <img src={el.src} alt="" className="w-full h-full object-cover rounded-lg pointer-events-none" />
+              ) : (
+                <div className="w-full h-full bg-muted/40 flex items-center justify-center text-xs text-muted-foreground">Imagen</div>
+              )
+            ) : (
+              <div
+                contentEditable
+                suppressContentEditableWarning
+                onBlur={(e) => updateOne(el.id, { content: e.currentTarget.innerText })}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="outline-none focus:ring-2 focus:ring-primary/40 rounded px-1 w-full h-full cursor-text"
+                style={{
+                  fontSize: el.size ? `${el.size}px` : (el.type === "heading" ? 40 : 18),
+                  fontWeight: el.weight === "bold" || el.type === "heading" ? 700 : 400,
+                  textAlign: el.align || "left",
+                  color: el.color || undefined,
+                  lineHeight: 1.25,
+                }}
+              >
+                {el.content || ""}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
