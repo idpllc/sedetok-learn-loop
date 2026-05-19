@@ -1825,7 +1825,11 @@ const NotebookView = () => {
                           size="sm"
                           variant="outline"
                           className="w-full h-7 text-[11px] gap-1"
-                          onClick={() => navigate(studioActive.createRoute!)}
+                          onClick={() => {
+                            setManualCreateUrl(studioActive.createRoute!);
+                            setManualCreateTitle(studioActive.label);
+                            setManualCreateExpanded(false);
+                          }}
                         >
                           <Pencil className="h-3 w-3" />
                           Crear manualmente
