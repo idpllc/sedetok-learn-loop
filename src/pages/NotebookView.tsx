@@ -30,6 +30,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
 import { X, FileSearch, NotebookPen, Library } from "lucide-react";
 import { NotebookTriviaModal } from "@/components/notebook/NotebookTriviaModal";
+import { CreateUnifiedEvaluationEvent } from "@/components/CreateUnifiedEvaluationEvent";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 const TYPE_ICONS: Record<string, any> = {
   pdf: FileText, docx: FileText, xlsx: FileText, text: Type, url: LinkIcon, video: Video, competence: GraduationCap,
