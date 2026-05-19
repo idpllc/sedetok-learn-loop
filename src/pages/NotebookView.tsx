@@ -2088,6 +2088,9 @@ const NotebookView = () => {
         }
       />
       {id && <NotebookTriviaModal open={triviaOpen} onOpenChange={setTriviaOpen} notebookId={id} />}
+
+      {/* Teacher: create evaluation events */}
+      <CreateUnifiedEvaluationEvent open={evalEventsOpen} onOpenChange={setEvalEventsOpen} />
     </>
 
   );
