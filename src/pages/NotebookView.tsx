@@ -501,6 +501,10 @@ const NotebookView = () => {
   const [aiInstructions, setAiInstructions] = useState<Record<string, string>>({});
   // Teacher: evaluation events modal
   const [evalEventsOpen, setEvalEventsOpen] = useState(false);
+  // Manual capsule creation (inline iframe within notebook)
+  const [manualCreateUrl, setManualCreateUrl] = useState<string | null>(null);
+  const [manualCreateTitle, setManualCreateTitle] = useState<string>("");
+  const [manualCreateExpanded, setManualCreateExpanded] = useState(false);
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
