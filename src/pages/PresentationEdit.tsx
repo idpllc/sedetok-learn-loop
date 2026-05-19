@@ -202,6 +202,15 @@ export default function PresentationEdit() {
     setCurrent((c) => (c === idx ? idx + dir : c === idx + dir ? idx : c));
   };
 
+  // --- free elements (insertable) ---
+  const addElement = (slideIdx: number, partial: Partial<SlideElement> & { type: SlideElement["type"] }) => {
+    const id = (typeof crypto !== "undefined" && (crypto as any).randomUUID)
+      ? (crypto as any).randomUUID()
+      : `e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const el: SlideElement = { id, x: 10, y: 10, w: 50, ...partial };
+    setSlides((prev) => prev.map((s, i) => i === slideIdx ? { ...s, elements: [...(s.elements || []), el] } : s));
+  };
+
   // --- background image upload ----
   const onBgUpload = async (file: File, applyAll: boolean) => {
     try {
