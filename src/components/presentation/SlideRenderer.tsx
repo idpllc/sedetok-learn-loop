@@ -69,9 +69,9 @@ const renderInline = (text: string): (string | JSX.Element)[] => {
 };
 export const RT = ({ children }: { children?: string | null }) => <>{renderInline(children || "")}</>;
 
-type Props = { slide: Slide; themeId?: string | null };
+type Props = { slide: Slide; themeId?: string | null; editMode?: boolean };
 
-export default function SlideRenderer({ slide, themeId }: Props) {
+export default function SlideRenderer({ slide, themeId, editMode = false }: Props) {
   const theme = getTheme(themeId);
   const img = slide.image_url || undefined;
 
@@ -88,9 +88,46 @@ export default function SlideRenderer({ slide, themeId }: Props) {
   const mutedOnCardStyle: CSSProperties = { color: theme.mutedOnCard };
   const accentStyle: CSSProperties = { color: theme.accent };
 
+  // In edit mode, hide built-in text so the editable overlay doesn't ghost
+  // on top. Background, card surfaces, icons and images still render.
+  const hideTextCls = editMode
+    ? "[&_h1]:invisible [&_h2]:invisible [&_h3]:invisible [&_p]:invisible [&_li]:invisible [&_blockquote]:invisible [&_cite]:invisible"
+    : "";
+
+  const FreeElements = () => {
+    if (!slide.elements?.length) return null;
+    return (
+      <div className="absolute inset-0 z-[5] pointer-events-none">
+        {slide.elements.map((el) => {
+          const style: CSSProperties = {
+            position: "absolute",
+            left: `${el.x}%`,
+            top: `${el.y}%`,
+            width: `${el.w}%`,
+            height: el.h ? `${el.h}%` : undefined,
+            textAlign: el.align || "left",
+            color: el.color || theme.text,
+            fontSize: el.size ? `${el.size}px` : undefined,
+            fontWeight: el.weight === "bold" ? 700 : undefined,
+          };
+          if (el.type === "image" && el.src) {
+            return <img key={el.id} src={el.src} alt="" style={style} className="object-cover rounded-lg" crossOrigin="anonymous" />;
+          }
+          const defaultSize = el.type === "heading" ? 40 : 18;
+          return (
+            <div key={el.id} style={{ ...style, fontSize: style.fontSize || `${defaultSize}px`, fontWeight: style.fontWeight || (el.type === "heading" ? 700 : 400), lineHeight: 1.25 }}>
+              <RT>{el.content || ""}</RT>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const Wrap = ({ children, className = "" }: { children: any; className?: string }) => (
-    <div className={`w-full h-full relative overflow-hidden ${className}`} style={slideStyle}>
+    <div className={`w-full h-full relative overflow-hidden ${hideTextCls} ${className}`} style={slideStyle}>
       {children}
+      <FreeElements />
     </div>
   );
 
