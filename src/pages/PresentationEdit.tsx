@@ -340,7 +340,7 @@ export default function PresentationEdit() {
         {/* Sidebar */}
         <aside className="w-56 md:w-64 shrink-0 border-r flex flex-col bg-muted/20">
           <div className="p-2 border-b">
-            <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => addSlide("cards_3")}>
+            <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setLayoutPickerOpen(true)}>
               <Plus className="h-4 w-4" /> Añadir diapositiva
             </Button>
           </div>
