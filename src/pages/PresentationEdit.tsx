@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   ArrowLeft, Loader2, Plus, Copy, Trash2, ChevronUp, ChevronDown,
@@ -19,54 +20,86 @@ import { useS3Upload } from "@/hooks/useS3Upload";
 
 // --- helpers ----------------------------------------------------------------
 
-const blankSlide = (layout: SlideLayout = "title_bullets"): Slide => {
-  const id = (typeof crypto !== "undefined" && (crypto as any).randomUUID)
-    ? (crypto as any).randomUUID()
-    : `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const base: Slide = { id, order: 0, layout, title: "Nueva diapositiva" };
-  if (layout === "cards_3") base.cards = [
-    { icon: "sparkles", title: "Tarjeta 1", body: "Describe el primer concepto." },
-    { icon: "lightbulb", title: "Tarjeta 2", body: "Describe el segundo concepto." },
-    { icon: "target", title: "Tarjeta 3", body: "Describe el tercer concepto." },
-  ];
-  if (layout === "cards_image") base.cards = [
-    { icon: "sparkles", title: "Tarjeta 1", body: "Texto." },
-    { icon: "sparkles", title: "Tarjeta 2", body: "Texto." },
-    { icon: "sparkles", title: "Tarjeta 3", body: "Texto." },
-  ];
-  if (layout === "title_bullets") base.bullets = ["Punto 1", "Punto 2", "Punto 3"];
-  if (layout === "two_column") { base.left_column = ["Idea A"]; base.right_column = ["Idea B"]; }
-  if (layout === "quote") base.quote = "Escribe una cita inspiradora aquí.";
-  return base;
+const newId = (prefix = "x") => (typeof crypto !== "undefined" && (crypto as any).randomUUID)
+  ? (crypto as any).randomUUID()
+  : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const mkEl = (partial: Omit<SlideElement, "id">): SlideElement => ({
+  id: newId("e"),
+  ...partial,
+});
+
+// Seed default editable text elements for each layout. Every block is a free
+// element so users can move/edit/delete it.
+const seedElementsForLayout = (layout: SlideLayout): SlideElement[] => {
+  switch (layout) {
+    case "title":
+    case "closing":
+      return [
+        mkEl({ type: "heading", content: "Título principal", x: 10, y: 35, w: 80, size: 64, weight: "bold", align: "center" }),
+        mkEl({ type: "text", content: "Subtítulo o descripción", x: 15, y: 56, w: 70, size: 24, align: "center" }),
+      ];
+    case "section_header":
+      return [
+        mkEl({ type: "text", content: "SECCIÓN", x: 10, y: 38, w: 80, size: 18, align: "center" }),
+        mkEl({ type: "heading", content: "Nuevo capítulo", x: 10, y: 45, w: 80, size: 72, weight: "bold", align: "center" }),
+      ];
+    case "title_bullets":
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 8, w: 88, size: 44, weight: "bold" }),
+        mkEl({ type: "text", content: "• Punto 1\n• Punto 2\n• Punto 3", x: 6, y: 28, w: 88, size: 22 }),
+      ];
+    case "two_column":
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 8, w: 88, size: 40, weight: "bold" }),
+        mkEl({ type: "text", content: "• Idea A\n• Idea B", x: 6, y: 30, w: 42, size: 22 }),
+        mkEl({ type: "text", content: "• Idea C\n• Idea D", x: 52, y: 30, w: 42, size: 22 }),
+      ];
+    case "quote":
+      return [
+        mkEl({ type: "text", content: '"Escribe una cita inspiradora"', x: 10, y: 35, w: 80, size: 40, align: "center" }),
+        mkEl({ type: "text", content: "— Autor", x: 10, y: 60, w: 80, size: 20, align: "center" }),
+      ];
+    case "cards_2":
+    case "cards_3":
+    case "cards_4": {
+      const n = layout === "cards_2" ? 2 : layout === "cards_4" ? 4 : 3;
+      const cw = n === 2 ? 44 : n === 4 ? 21 : 28;
+      const gap = n === 2 ? 4 : n === 4 ? 3 : 4;
+      const totalW = n * cw + (n - 1) * gap;
+      const startX = (100 - totalW) / 2;
+      const els: SlideElement[] = [
+        mkEl({ type: "heading", content: "Título de la sección", x: 6, y: 8, w: 88, size: 40, weight: "bold", align: "center" }),
+      ];
+      for (let i = 0; i < n; i++) {
+        const x = startX + i * (cw + gap);
+        els.push(mkEl({ type: "heading", content: `Tarjeta ${i + 1}`, x, y: 32, w: cw, size: 24, weight: "bold" }));
+        els.push(mkEl({ type: "text", content: "Describe este concepto.", x, y: 42, w: cw, size: 18 }));
+      }
+      return els;
+    }
+    case "image_full":
+    case "image_left":
+    case "image_right":
+    case "cards_image":
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 70, w: 88, size: 40, weight: "bold" }),
+        mkEl({ type: "text", content: "Subtítulo o descripción", x: 6, y: 82, w: 88, size: 20 }),
+      ];
+    default:
+      return [
+        mkEl({ type: "heading", content: "Título", x: 6, y: 10, w: 88, size: 40, weight: "bold" }),
+      ];
+  }
 };
 
-// Editable text wrapper using contentEditable (one-line or multiline).
-const Editable = ({
-  value, onChange, className, multiline, placeholder,
-}: {
-  value: string; onChange: (v: string) => void;
-  className?: string; multiline?: boolean; placeholder?: string;
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  // Sync only when external value differs from DOM (avoid caret jumps while typing)
-  useEffect(() => {
-    if (ref.current && ref.current.innerText !== value) ref.current.innerText = value;
-  }, [value]);
-  return (
-    <div
-      ref={ref}
-      contentEditable
-      suppressContentEditableWarning
-      data-placeholder={placeholder}
-      onBlur={(e) => onChange(e.currentTarget.innerText)}
-      onKeyDown={(e) => {
-        if (!multiline && e.key === "Enter") { e.preventDefault(); (e.currentTarget as HTMLDivElement).blur(); }
-      }}
-      className={`outline-none focus:ring-2 focus:ring-primary/40 rounded px-1 -mx-1 ${className || ""}`}
-      style={{ minWidth: 8 }}
-    />
-  );
-};
+const blankSlide = (layout: SlideLayout = "title"): Slide => ({
+  id: newId("s"),
+  order: 0,
+  layout,
+  title: "",
+  elements: seedElementsForLayout(layout),
+});
 
 // --- main page --------------------------------------------------------------
 
@@ -168,13 +201,24 @@ export default function PresentationEdit() {
       return { ...s, cards };
     }));
   };
-  const addSlide = (layout: SlideLayout = "cards_3") => {
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
+  const addSlide = (layout: SlideLayout = "title") => {
     setSlides((prev) => {
       const next = [...prev, blankSlide(layout)];
       next.forEach((s, i) => (s.order = i));
       return next;
     });
     setCurrent(slides.length);
+    setLayoutPickerOpen(false);
+  };
+  // Change the layout of the current slide. If the slide has no free
+  // elements yet, seed them so the user can edit/move/delete every block.
+  const changeLayout = (idx: number, layout: SlideLayout) => {
+    setSlides((prev) => prev.map((s, i) => {
+      if (i !== idx) return s;
+      const hasEls = (s.elements || []).length > 0;
+      return { ...s, layout, elements: hasEls ? s.elements : seedElementsForLayout(layout) };
+    }));
   };
   const duplicateSlide = (idx: number) => {
     setSlides((prev) => {
@@ -296,7 +340,7 @@ export default function PresentationEdit() {
         {/* Sidebar */}
         <aside className="w-56 md:w-64 shrink-0 border-r flex flex-col bg-muted/20">
           <div className="p-2 border-b">
-            <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => addSlide("cards_3")}>
+            <Button size="sm" variant="outline" className="w-full justify-start" onClick={() => setLayoutPickerOpen(true)}>
               <Plus className="h-4 w-4" /> Añadir diapositiva
             </Button>
           </div>
@@ -337,7 +381,7 @@ export default function PresentationEdit() {
             {(["title", "section_header", "title_bullets", "cards_2", "cards_3", "cards_4", "cards_image", "two_column", "image_left", "image_right", "image_full", "quote", "closing"] as SlideLayout[]).map((l) => (
               <button
                 key={l}
-                onClick={() => updateSlide(current, { layout: l, ...(l.startsWith("cards_") && !slide.cards?.length ? { cards: blankSlide(l).cards } : {}) })}
+                onClick={() => changeLayout(current, l)}
                 className={`text-[11px] px-2 py-1 rounded border ${slide.layout === l ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"}`}
               >
                 {l}
@@ -365,12 +409,13 @@ export default function PresentationEdit() {
               <input
                 type="file" accept="image/*" className="hidden"
                 onChange={async (e) => {
-                  const f = e.target.files?.[0]; if (!f) return;
+                  const input = e.currentTarget;
+                  const f = input.files?.[0]; if (!f) return;
                   try {
                     const url = await uploadFile(f, "image");
                     if (url) addElement(current, { type: "image", src: url, x: 15, y: 20, w: 40, h: 40 });
                   } catch { toast.error("Error subiendo imagen"); }
-                  e.currentTarget.value = "";
+                  if (input) input.value = "";
                 }}
               />
             </label>
@@ -379,12 +424,6 @@ export default function PresentationEdit() {
           {/* Slide stage with inline editable overlays */}
           <div className="w-full max-w-5xl rounded-xl border shadow-2xl overflow-hidden relative" style={{ aspectRatio }}>
             <SlideRenderer slide={{ ...slide, background: slide.background || globalBg }} themeId={themeId} editMode />
-            <EditableOverlay
-              slide={slide}
-              theme={theme}
-              onUpdate={(p) => updateSlide(current, p)}
-              onUpdateCard={(ci, p) => updateCard(current, ci, p)}
-            />
             <FreeElementsEditor
               elements={slide.elements || []}
               onUpdate={(els) => updateSlide(current, { elements: els })}
@@ -478,187 +517,48 @@ export default function PresentationEdit() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Layout picker — shown when adding a new slide */}
+      <Dialog open={layoutPickerOpen} onOpenChange={setLayoutPickerOpen}>
+        <DialogContent className="max-w-3xl z-[90]">
+          <DialogHeader><DialogTitle>Elige un diseño para la nueva diapositiva</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
+            {([
+              { id: "title", label: "Portada" },
+              { id: "section_header", label: "Sección" },
+              { id: "title_bullets", label: "Lista con título" },
+              { id: "two_column", label: "Dos columnas" },
+              { id: "cards_2", label: "2 tarjetas" },
+              { id: "cards_3", label: "3 tarjetas" },
+              { id: "cards_4", label: "4 tarjetas" },
+              { id: "cards_image", label: "Tarjetas con imagen" },
+              { id: "image_left", label: "Imagen izquierda" },
+              { id: "image_right", label: "Imagen derecha" },
+              { id: "image_full", label: "Imagen completa" },
+              { id: "quote", label: "Cita" },
+              { id: "closing", label: "Cierre" },
+            ] as { id: SlideLayout; label: string }[]).map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => addSlide(opt.id)}
+                className="group rounded-lg border hover:border-primary overflow-hidden text-left transition"
+              >
+                <div className="aspect-video relative bg-muted">
+                  <SlideRenderer
+                    slide={blankSlide(opt.id)}
+                    themeId={themeId}
+                  />
+                </div>
+                <div className="p-2 text-xs font-medium">{opt.label}</div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// --- inline editable overlay (transparent on top of the rendered slide) -----
-
-function EditableOverlay({
-  slide, theme, onUpdate, onUpdateCard,
-}: {
-  slide: Slide;
-  theme: ReturnType<typeof getTheme>;
-  onUpdate: (p: Partial<Slide>) => void;
-  onUpdateCard: (idx: number, p: any) => void;
-}) {
-  // We render an absolutely-positioned editable layer that mirrors the
-  // structure of the read-only renderer for the current layout so the user
-  // can click any text and rewrite it. Keeps it simple: re-uses Tailwind
-  // utility classes but with `pointer-events-auto` and transparent bg.
-  const TEXT_CLR = { color: theme.text } as const;
-  const ON_CARD = { color: theme.textOnCard } as const;
-
-  switch (slide.layout) {
-    case "title":
-    case "closing":
-    case "section_header":
-      return (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-12 py-14 z-10">
-          <Editable value={slide.title}
-            onChange={(v) => onUpdate({ title: v })}
-            multiline
-            className="text-3xl md:text-6xl font-extrabold leading-tight max-w-5xl"
-            placeholder="Título"
-          />
-          {slide.layout !== "section_header" && (
-            <Editable value={slide.subtitle || ""}
-              onChange={(v) => onUpdate({ subtitle: v })}
-              multiline
-              className="mt-6 text-lg md:text-2xl max-w-3xl opacity-90"
-              placeholder="Subtítulo"
-            />
-          )}
-        </div>
-      );
-
-    case "cards_2":
-    case "cards_3":
-    case "cards_4":
-    case "cards_image": {
-      const n = slide.layout === "cards_2" ? 2 : slide.layout === "cards_4" ? 4 : 3;
-      const cards = (slide.cards || []).slice(0, n);
-      const grid = n === 2 ? "md:grid-cols-2" : n === 4 ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3";
-      return (
-        <div className="absolute inset-0 flex flex-col px-8 md:px-14 py-10 md:py-12 z-10">
-          <Editable value={slide.title}
-            onChange={(v) => onUpdate({ title: v })}
-            className="text-2xl md:text-5xl font-extrabold mb-6 md:mb-10 text-center md:text-left"
-            placeholder="Título de la sección"
-          />
-          <div className={`grid grid-cols-1 ${grid} gap-4 md:gap-6 flex-1 min-h-0`}>
-            {cards.map((c, i) => (
-              <div key={i} className="rounded-2xl p-5 md:p-7 flex flex-col"
-                style={{ background: "transparent" }}
-              >
-                {/* spacer for icon zone — handled by underlying renderer */}
-                <div className="h-7 md:h-9 mb-4" />
-                {slide.layout === "cards_image" && <div className="aspect-[4/3] mb-3" />}
-                <Editable value={c.title}
-                  onChange={(v) => onUpdateCard(i, { title: v })}
-                  className="text-base md:text-xl font-bold mb-2 md:mb-3"
-                  placeholder="Título de tarjeta" />
-                <Editable value={c.body} multiline
-                  onChange={(v) => onUpdateCard(i, { body: v })}
-                  className="text-sm md:text-base leading-snug opacity-90"
-                  placeholder="Descripción de la tarjeta. Usa **negrita** para resaltar." />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    case "title_bullets":
-      return (
-        <div className="absolute inset-0 flex flex-col px-8 md:px-14 py-10 md:py-12 z-10">
-          <Editable value={slide.title}
-            onChange={(v) => onUpdate({ title: v })}
-            className="text-2xl md:text-4xl font-bold mb-6 md:mb-8" placeholder="Título" />
-          <div className="space-y-3 md:space-y-5 flex-1">
-            {(slide.bullets || []).map((b, i) => (
-              <div key={i} className="flex gap-3 text-base md:text-xl leading-snug">
-                <span className="font-bold opacity-70">{i + 1}.</span>
-                <Editable value={b} multiline
-                  onChange={(v) => {
-                    const next = [...(slide.bullets || [])];
-                    next[i] = v;
-                    onUpdate({ bullets: next.filter((x) => x.trim() || true) });
-                  }}
-                  className="flex-1"
-                  placeholder="Punto…"
-                />
-                <button
-                  onClick={() => onUpdate({ bullets: (slide.bullets || []).filter((_, j) => j !== i) })}
-                  className="text-xs opacity-50 hover:opacity-100"
-                >×</button>
-              </div>
-            ))}
-            <button
-              onClick={() => onUpdate({ bullets: [...(slide.bullets || []), "Nuevo punto"] })}
-              className="text-xs opacity-70 hover:opacity-100 px-2 py-1 border rounded"
-            >+ Punto</button>
-          </div>
-        </div>
-      );
-
-    case "two_column":
-      return (
-        <div className="absolute inset-0 flex flex-col px-8 md:px-14 py-10 md:py-12 z-10">
-          <Editable value={slide.title} onChange={(v) => onUpdate({ title: v })}
-            className="text-2xl md:text-4xl font-bold mb-6 md:mb-10" placeholder="Título" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 flex-1">
-            {(["left_column", "right_column"] as const).map((key) => (
-              <div key={key} className="space-y-3">
-                {(slide[key] || []).map((b, i) => (
-                  <div key={i} className="flex gap-3 text-base md:text-xl">
-                    <span className="font-bold opacity-70">•</span>
-                    <Editable value={b} multiline
-                      onChange={(v) => {
-                        const next = [...(slide[key] || [])]; next[i] = v;
-                        onUpdate({ [key]: next } as any);
-                      }}
-                      className="flex-1" placeholder="Idea…" />
-                    <button onClick={() => onUpdate({ [key]: (slide[key] || []).filter((_, j) => j !== i) } as any)}
-                      className="text-xs opacity-50 hover:opacity-100">×</button>
-                  </div>
-                ))}
-                <button onClick={() => onUpdate({ [key]: [...(slide[key] || []), "Nueva idea"] } as any)}
-                  className="text-xs opacity-70 hover:opacity-100 px-2 py-1 border rounded">+ Idea</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "quote":
-      return (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-12 py-14 z-10">
-          <Editable value={slide.quote || ""} multiline
-            onChange={(v) => onUpdate({ quote: v })}
-            className="text-2xl md:text-4xl font-serif italic leading-snug max-w-4xl"
-            placeholder="Escribe tu cita"
-          />
-          <Editable value={slide.quote_author || ""}
-            onChange={(v) => onUpdate({ quote_author: v })}
-            className="mt-6 text-base opacity-80"
-            placeholder="— Autor"
-          />
-        </div>
-      );
-
-    case "image_left":
-    case "image_right":
-    case "image_full":
-      return (
-        <div className="absolute inset-0 flex flex-col p-6 md:p-12 z-10 pointer-events-none">
-          <div className="ml-auto mr-auto md:ml-0 md:mr-auto max-w-3xl pointer-events-auto">
-            <Editable value={slide.title}
-              onChange={(v) => onUpdate({ title: v })}
-              className="text-xl md:text-4xl font-bold drop-shadow"
-              placeholder="Título" />
-            <Editable value={slide.subtitle || ""} multiline
-              onChange={(v) => onUpdate({ subtitle: v })}
-              className="mt-3 text-sm md:text-lg opacity-90"
-              placeholder="Subtítulo o descripción" />
-          </div>
-        </div>
-      );
-
-    default:
-      return null;
-  }
-}
 
 // --- free elements editor (draggable text/image blocks) ---------------------
 
