@@ -336,14 +336,49 @@ export default function PresentationEdit() {
             ))}
           </div>
 
+          {/* Insert elements */}
+          <div className="w-full max-w-5xl mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground mr-1 flex items-center gap-1"><Plus className="h-3 w-3" /> Insertar:</span>
+            <button
+              onClick={() => addElement(current, { type: "heading", content: "Título", size: 40, weight: "bold", x: 10, y: 10, w: 70 })}
+              className="text-[11px] px-2 py-1 rounded border bg-background hover:bg-muted flex items-center gap-1"
+            >
+              <Heading1 className="h-3 w-3" /> Título
+            </button>
+            <button
+              onClick={() => addElement(current, { type: "text", content: "Escribe aquí…", size: 18, x: 10, y: 30, w: 70 })}
+              className="text-[11px] px-2 py-1 rounded border bg-background hover:bg-muted flex items-center gap-1"
+            >
+              <Type className="h-3 w-3" /> Párrafo
+            </button>
+            <label className="text-[11px] px-2 py-1 rounded border bg-background hover:bg-muted flex items-center gap-1 cursor-pointer">
+              <ImageIcon className="h-3 w-3" /> Imagen
+              <input
+                type="file" accept="image/*" className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0]; if (!f) return;
+                  try {
+                    const url = await uploadFile(f, "image");
+                    if (url) addElement(current, { type: "image", src: url, x: 15, y: 20, w: 40, h: 40 });
+                  } catch { toast.error("Error subiendo imagen"); }
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+
           {/* Slide stage with inline editable overlays */}
           <div className="w-full max-w-5xl rounded-xl border shadow-2xl overflow-hidden relative" style={{ aspectRatio }}>
-            <SlideRenderer slide={{ ...slide, background: slide.background || globalBg }} themeId={themeId} />
+            <SlideRenderer slide={{ ...slide, background: slide.background || globalBg }} themeId={themeId} editMode />
             <EditableOverlay
               slide={slide}
               theme={theme}
               onUpdate={(p) => updateSlide(current, p)}
               onUpdateCard={(ci, p) => updateCard(current, ci, p)}
+            />
+            <FreeElementsEditor
+              elements={slide.elements || []}
+              onUpdate={(els) => updateSlide(current, { elements: els })}
             />
           </div>
 
