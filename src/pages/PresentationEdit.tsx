@@ -201,13 +201,24 @@ export default function PresentationEdit() {
       return { ...s, cards };
     }));
   };
-  const addSlide = (layout: SlideLayout = "cards_3") => {
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
+  const addSlide = (layout: SlideLayout = "title") => {
     setSlides((prev) => {
       const next = [...prev, blankSlide(layout)];
       next.forEach((s, i) => (s.order = i));
       return next;
     });
     setCurrent(slides.length);
+    setLayoutPickerOpen(false);
+  };
+  // Change the layout of the current slide. If the slide has no free
+  // elements yet, seed them so the user can edit/move/delete every block.
+  const changeLayout = (idx: number, layout: SlideLayout) => {
+    setSlides((prev) => prev.map((s, i) => {
+      if (i !== idx) return s;
+      const hasEls = (s.elements || []).length > 0;
+      return { ...s, layout, elements: hasEls ? s.elements : seedElementsForLayout(layout) };
+    }));
   };
   const duplicateSlide = (idx: number) => {
     setSlides((prev) => {
