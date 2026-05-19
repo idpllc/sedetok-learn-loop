@@ -409,12 +409,13 @@ export default function PresentationEdit() {
               <input
                 type="file" accept="image/*" className="hidden"
                 onChange={async (e) => {
-                  const f = e.target.files?.[0]; if (!f) return;
+                  const input = e.currentTarget;
+                  const f = input.files?.[0]; if (!f) return;
                   try {
                     const url = await uploadFile(f, "image");
                     if (url) addElement(current, { type: "image", src: url, x: 15, y: 20, w: 40, h: 40 });
                   } catch { toast.error("Error subiendo imagen"); }
-                  e.currentTarget.value = "";
+                  if (input) input.value = "";
                 }}
               />
             </label>
