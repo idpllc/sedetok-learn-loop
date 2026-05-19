@@ -2099,6 +2099,54 @@ const NotebookView = () => {
 
       {/* Teacher: create evaluation events */}
       <CreateUnifiedEvaluationEvent open={evalEventsOpen} onOpenChange={setEvalEventsOpen} />
+
+      {/* Inline manual capsule creation */}
+      <Dialog
+        open={!!manualCreateUrl}
+        onOpenChange={(v) => { if (!v) { setManualCreateUrl(null); setManualCreateExpanded(false); sources.list.refetch?.(); } }}
+      >
+        <DialogContent
+          className={
+            manualCreateExpanded
+              ? "max-w-[100vw] w-screen h-screen p-0 gap-0 rounded-none sm:rounded-none"
+              : "max-w-5xl w-[95vw] h-[85vh] p-0 gap-0"
+          }
+        >
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b">
+            <DialogTitle className="text-sm font-medium truncate">
+              Crear {manualCreateTitle.toLowerCase()} manualmente
+            </DialogTitle>
+            <div className="flex items-center gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => setManualCreateExpanded((v) => !v)}
+                aria-label={manualCreateExpanded ? "Contraer" : "Expandir"}
+                title={manualCreateExpanded ? "Contraer" : "Expandir"}
+              >
+                {manualCreateExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => { setManualCreateUrl(null); setManualCreateExpanded(false); }}
+                aria-label="Cerrar"
+              >
+                <XIcon className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          {manualCreateUrl && (
+            <iframe
+              src={manualCreateUrl}
+              className="w-full h-full flex-1 border-0 bg-background"
+              title="Crear cápsula"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
 
   );
