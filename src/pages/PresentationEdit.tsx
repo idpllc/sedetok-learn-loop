@@ -517,6 +517,44 @@ export default function PresentationEdit() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Layout picker — shown when adding a new slide */}
+      <Dialog open={layoutPickerOpen} onOpenChange={setLayoutPickerOpen}>
+        <DialogContent className="max-w-3xl z-[90]">
+          <DialogHeader><DialogTitle>Elige un diseño para la nueva diapositiva</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
+            {([
+              { id: "title", label: "Portada" },
+              { id: "section_header", label: "Sección" },
+              { id: "title_bullets", label: "Lista con título" },
+              { id: "two_column", label: "Dos columnas" },
+              { id: "cards_2", label: "2 tarjetas" },
+              { id: "cards_3", label: "3 tarjetas" },
+              { id: "cards_4", label: "4 tarjetas" },
+              { id: "cards_image", label: "Tarjetas con imagen" },
+              { id: "image_left", label: "Imagen izquierda" },
+              { id: "image_right", label: "Imagen derecha" },
+              { id: "image_full", label: "Imagen completa" },
+              { id: "quote", label: "Cita" },
+              { id: "closing", label: "Cierre" },
+            ] as { id: SlideLayout; label: string }[]).map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => addSlide(opt.id)}
+                className="group rounded-lg border hover:border-primary overflow-hidden text-left transition"
+              >
+                <div className="aspect-video relative bg-muted">
+                  <SlideRenderer
+                    slide={blankSlide(opt.id)}
+                    themeId={themeId}
+                  />
+                </div>
+                <div className="p-2 text-xs font-medium">{opt.label}</div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
