@@ -381,7 +381,7 @@ export default function PresentationEdit() {
             {(["title", "section_header", "title_bullets", "cards_2", "cards_3", "cards_4", "cards_image", "two_column", "image_left", "image_right", "image_full", "quote", "closing"] as SlideLayout[]).map((l) => (
               <button
                 key={l}
-                onClick={() => updateSlide(current, { layout: l, ...(l.startsWith("cards_") && !slide.cards?.length ? { cards: blankSlide(l).cards } : {}) })}
+                onClick={() => changeLayout(current, l)}
                 className={`text-[11px] px-2 py-1 rounded border ${slide.layout === l ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"}`}
               >
                 {l}
