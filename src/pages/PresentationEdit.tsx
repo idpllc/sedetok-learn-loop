@@ -659,3 +659,106 @@ function EditableOverlay({
       return null;
   }
 }
+
+// --- free elements editor (draggable text/image blocks) ---------------------
+
+function FreeElementsEditor({
+  elements, onUpdate,
+}: {
+  elements: SlideElement[];
+  onUpdate: (els: SlideElement[]) => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  const updateOne = (id: string, patch: Partial<SlideElement>) => {
+    onUpdate(elements.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  };
+  const removeOne = (id: string) => {
+    onUpdate(elements.filter((e) => e.id !== id));
+    if (selectedId === id) setSelectedId(null);
+  };
+
+  const onMouseDown = (e: React.MouseEvent, el: SlideElement) => {
+    if ((e.target as HTMLElement).isContentEditable) return;
+    e.preventDefault();
+    setSelectedId(el.id);
+    dragRef.current = { id: el.id, startX: e.clientX, startY: e.clientY, origX: el.x, origY: el.y };
+    const onMove = (ev: MouseEvent) => {
+      const d = dragRef.current;
+      const c = containerRef.current;
+      if (!d || !c) return;
+      const rect = c.getBoundingClientRect();
+      const dx = ((ev.clientX - d.startX) / rect.width) * 100;
+      const dy = ((ev.clientY - d.startY) / rect.height) * 100;
+      updateOne(d.id, { x: Math.max(0, Math.min(95, d.origX + dx)), y: Math.max(0, Math.min(95, d.origY + dy)) });
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  return (
+    <div ref={containerRef} className="absolute inset-0 z-20" onMouseDown={(e) => { if (e.target === e.currentTarget) setSelectedId(null); }}>
+      {elements.map((el) => {
+        const isSel = selectedId === el.id;
+        const style: React.CSSProperties = {
+          position: "absolute",
+          left: `${el.x}%`,
+          top: `${el.y}%`,
+          width: `${el.w}%`,
+          height: el.h ? `${el.h}%` : undefined,
+        };
+        return (
+          <div
+            key={el.id}
+            style={style}
+            className={`group ${isSel ? "ring-2 ring-primary" : "hover:ring-1 hover:ring-primary/50"} rounded`}
+            onMouseDown={(e) => onMouseDown(e, el)}
+            onClick={(e) => { e.stopPropagation(); setSelectedId(el.id); }}
+          >
+            {isSel && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); removeOne(el.id); }}
+                className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow z-10"
+                title="Eliminar"
+              >
+                <XIcon className="h-3 w-3" />
+              </button>
+            )}
+            {el.type === "image" ? (
+              el.src ? (
+                <img src={el.src} alt="" className="w-full h-full object-cover rounded-lg pointer-events-none" />
+              ) : (
+                <div className="w-full h-full bg-muted/40 flex items-center justify-center text-xs text-muted-foreground">Imagen</div>
+              )
+            ) : (
+              <div
+                contentEditable
+                suppressContentEditableWarning
+                onBlur={(e) => updateOne(el.id, { content: e.currentTarget.innerText })}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="outline-none focus:ring-2 focus:ring-primary/40 rounded px-1 w-full h-full cursor-text"
+                style={{
+                  fontSize: el.size ? `${el.size}px` : (el.type === "heading" ? 40 : 18),
+                  fontWeight: el.weight === "bold" || el.type === "heading" ? 700 : 400,
+                  textAlign: el.align || "left",
+                  color: el.color || undefined,
+                  lineHeight: 1.25,
+                }}
+              >
+                {el.content || ""}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
