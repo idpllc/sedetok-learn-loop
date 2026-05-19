@@ -424,12 +424,6 @@ export default function PresentationEdit() {
           {/* Slide stage with inline editable overlays */}
           <div className="w-full max-w-5xl rounded-xl border shadow-2xl overflow-hidden relative" style={{ aspectRatio }}>
             <SlideRenderer slide={{ ...slide, background: slide.background || globalBg }} themeId={themeId} editMode />
-            <EditableOverlay
-              slide={slide}
-              theme={theme}
-              onUpdate={(p) => updateSlide(current, p)}
-              onUpdateCard={(ci, p) => updateCard(current, ci, p)}
-            />
             <FreeElementsEditor
               elements={slide.elements || []}
               onUpdate={(els) => updateSlide(current, { elements: els })}
