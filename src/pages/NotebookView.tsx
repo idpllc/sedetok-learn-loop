@@ -30,6 +30,8 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useNotebookSearch, type SedefyResult, type ReadingSubtype } from "@/hooks/useNotebookSearch";
 import { X, FileSearch, NotebookPen, Library } from "lucide-react";
 import { NotebookTriviaModal } from "@/components/notebook/NotebookTriviaModal";
+import { CreateUnifiedEvaluationEvent } from "@/components/CreateUnifiedEvaluationEvent";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 const TYPE_ICONS: Record<string, any> = {
   pdf: FileText, docx: FileText, xlsx: FileText, text: Type, url: LinkIcon, video: Video, competence: GraduationCap,
@@ -495,6 +497,10 @@ const NotebookView = () => {
   // Presentation: free-text instructions modal
   const [presentationOptionsOpen, setPresentationOptionsOpen] = useState(false);
   const [presentationInstructions, setPresentationInstructions] = useState("");
+  // Per-capsule AI instructions (keyed by studio option id)
+  const [aiInstructions, setAiInstructions] = useState<Record<string, string>>({});
+  // Teacher: evaluation events modal
+  const [evalEventsOpen, setEvalEventsOpen] = useState(false);
 
   // When the active source changes, reload the cache for that scope and clear
   // any in-flight studio selection / viewer so we don't show stale content.
@@ -1607,22 +1613,42 @@ const NotebookView = () => {
                   })}
                 </div>
 
-                {/* Trivia multijugador */}
-                <button
-                  onClick={() => !noSources && setTriviaOpen(true)}
-                  disabled={noSources}
-                  className="mt-3 w-full rounded-lg border-2 border-pink/40 bg-gradient-to-br from-pink/15 to-pink/5 hover:from-pink/25 hover:to-pink/10 p-3 text-left transition disabled:opacity-50 disabled:cursor-not-allowed group"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-lg bg-pink/20 flex items-center justify-center">
-                      <Sparkles className="h-5 w-5 text-pink" />
+                {/* Trivia multijugador — solo estudiantes */}
+                {!isTeacher && (
+                  <button
+                    onClick={() => !noSources && setTriviaOpen(true)}
+                    disabled={noSources}
+                    className="mt-3 w-full rounded-lg border-2 border-pink/40 bg-gradient-to-br from-pink/15 to-pink/5 hover:from-pink/25 hover:to-pink/10 p-3 text-left transition disabled:opacity-50 disabled:cursor-not-allowed group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-9 rounded-lg bg-pink/20 flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-pink" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-pink">Trivia del tema</p>
+                        <p className="text-[11px] text-muted-foreground">Compite hasta con 30 estudiantes</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-pink">Trivia del tema</p>
-                      <p className="text-[11px] text-muted-foreground">Compite hasta con 30 estudiantes</p>
+                  </button>
+                )}
+
+                {/* Eventos evaluativos — solo docentes */}
+                {isTeacher && (
+                  <button
+                    onClick={() => setEvalEventsOpen(true)}
+                    className="mt-3 w-full rounded-lg border-2 border-primary/40 bg-gradient-to-br from-primary/15 to-primary/5 hover:from-primary/25 hover:to-primary/10 p-3 text-left transition group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-9 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <CalendarIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-primary">Crear evento evaluativo</p>
+                        <p className="text-[11px] text-muted-foreground">Programa una evaluación con quiz o juego</p>
+                      </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                )}
 
                 {noSources && (
                   <p className="text-[11px] text-muted-foreground mt-3 text-center">
@@ -1736,15 +1762,36 @@ const NotebookView = () => {
                           )}
                         </Button>
                       )}
+
+                      {/* Instructions textarea (AI capsules only) */}
+                      {studioActive.createRoute && studioActive.id !== "video" && (
+                        <div className="space-y-1">
+                          <Textarea
+                            rows={3}
+                            placeholder={`Instrucciones para la IA (opcional). Ej: enfócate en X, usa tono Y, incluye Z…`}
+                            value={aiInstructions[studioActive.id] || ""}
+                            onChange={(e) =>
+                              setAiInstructions((prev) => ({ ...prev, [studioActive.id]: e.target.value.slice(0, 2000) }))
+                            }
+                            maxLength={2000}
+                            className="resize-none text-[11px] min-h-[64px]"
+                          />
+                          <p className="text-[10px] text-muted-foreground text-right">
+                            {(aiInstructions[studioActive.id] || "").length}/2000
+                          </p>
+                        </div>
+                      )}
+
                       <Button
                         size="sm"
                         className="w-full h-7 text-[11px] gap-1"
                         onClick={() => {
+                          const instr = (aiInstructions[studioActive.id] || "").trim();
                           if (studioActive.id === "presentation") {
-                            setPresentationInstructions("");
+                            setPresentationInstructions(instr);
                             setPresentationOptionsOpen(true);
                           } else {
-                            handleCreateCapsule(studioActive.id);
+                            handleCreateCapsule(studioActive.id, instr ? { instructions: instr } : {});
                           }
                         }}
                         disabled={creatingType === studioActive.id}
@@ -1767,6 +1814,19 @@ const NotebookView = () => {
                           </>
                         )}
                       </Button>
+
+                      {/* Manual create button — same route, no AI */}
+                      {studioActive.createRoute && !studioActive.createOnly && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full h-7 text-[11px] gap-1"
+                          onClick={() => navigate(studioActive.createRoute!)}
+                        >
+                          <Pencil className="h-3 w-3" />
+                          Crear manualmente
+                        </Button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -2028,6 +2088,9 @@ const NotebookView = () => {
         }
       />
       {id && <NotebookTriviaModal open={triviaOpen} onOpenChange={setTriviaOpen} notebookId={id} />}
+
+      {/* Teacher: create evaluation events */}
+      <CreateUnifiedEvaluationEvent open={evalEventsOpen} onOpenChange={setEvalEventsOpen} />
     </>
 
   );

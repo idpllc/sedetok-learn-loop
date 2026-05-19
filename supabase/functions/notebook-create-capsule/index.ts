@@ -156,7 +156,11 @@ Deno.serve(async (req) => {
 
     const systemPrompt = `Eres un experto creador de contenido educativo. Generas cápsulas didácticas a partir de las fuentes proporcionadas. RESPONDE EN ESPAÑOL. Devuelve SIEMPRE datos válidos según el esquema solicitado. Inferir categoría, nivel, título y descripción a partir del contenido real de las fuentes (no inventes temas ajenos).`;
 
-    const baseUserPrompt = `Contexto del cuaderno "${notebook.title}":\n\n${context}\n\n---\n`;
+    const teacherInstructionsBlock = instructions && typeof instructions === "string" && instructions.trim()
+      ? `\n\nINSTRUCCIONES ESPECÍFICAS DEL USUARIO (priorízalas sobre los defaults, respétalas al máximo):\n"""${instructions.trim().slice(0, 2000)}"""\n`
+      : "";
+
+    const baseUserPrompt = `Contexto del cuaderno "${notebook.title}":\n\n${context}\n\n---\n${teacherInstructionsBlock}`;
 
     let result: { contentId?: string; route: string; type: string; title?: string; subject?: string | null; cover_url?: string | null; readingSubtype?: string };
 
