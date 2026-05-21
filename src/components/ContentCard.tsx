@@ -514,12 +514,15 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(({
 
         ) : contentType === 'lectura' && richText ? (
           <div className="w-full h-full flex items-center justify-center p-4 relative z-20">
-            <div className="w-full max-w-2xl bg-background/95 backdrop-blur-sm rounded-lg p-6 shadow-xl overflow-hidden">
-              <div
-                className="prose prose-sm max-w-none line-clamp-[20] text-foreground rich-content"
-                dangerouslySetInnerHTML={{ __html: renderRichContent(richText) }}
-              />
-              <div className="mt-6 flex justify-center">
+            <div className="w-full max-w-2xl bg-background/95 backdrop-blur-sm rounded-lg p-6 shadow-xl flex flex-col max-h-[78vh]">
+              <div className="flex-1 min-h-0 overflow-hidden relative">
+                <div
+                  className="prose prose-sm max-w-none text-foreground rich-content h-full overflow-hidden [&_img]:max-h-40 [&_img]:object-contain [&_img]:mx-auto"
+                  dangerouslySetInnerHTML={{ __html: renderRichContent(richText) }}
+                />
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/95 to-transparent" />
+              </div>
+              <div className="mt-4 flex justify-center shrink-0">
                 <Button
                   size="lg"
                   onClick={(e) => {
