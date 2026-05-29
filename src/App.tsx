@@ -91,7 +91,7 @@ const PresentationEdit = lazyWithRetry(() => import("./pages/PresentationEdit"))
 const PublishingErrorDetails = lazyWithRetry(() => import("./pages/PublishingErrorDetails"));
 const PaymentLink = lazyWithRetry(() => import("./pages/PaymentLink"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
-const Contract = lazyWithRetry(() => import("./pages/Contract"));
+const Contacto = lazyWithRetry(() => import("./pages/Contacto"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
 // (iframes used by the notebook capsule preview) to minimise boot time.
@@ -221,7 +221,7 @@ const App = () => (
             <Route path="/presentation/:id" element={<PresentationView />} />
             <Route path="/presentation/:id/edit" element={<PresentationEdit />} />
             <Route path="/api-docs" element={<ApiDocumentation />} />
-            <Route path="/contract" element={<Contract />} />
+            <Route path="/contacto" element={<Contacto />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/chat/login" element={<ChatLogin />} />
             <Route path="/chat/login-test" element={<ChatLoginTest />} />
