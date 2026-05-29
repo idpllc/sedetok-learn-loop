@@ -578,21 +578,6 @@ const Profile = () => {
     );
   }
 
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl font-bold">Mi Perfil</h1>
-          </div>
-        </header>
-        <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-64 w-full" />
-          ))}
-        </div>
-      </div>
-      </>
-    );
-  }
 
   return (
     <>
