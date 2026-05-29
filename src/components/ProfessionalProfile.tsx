@@ -190,9 +190,10 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
       )}
 
       {/* Generador de CV - Ancho completo - Solo visible para el dueño */}
-      {profile && isOwnProfile && (
+      {profile && isOwnProfile && metrics && (
         <CVGenerator profile={{ ...profile, email: user?.email }} metrics={metrics} isOwnProfile={isOwnProfile} />
       )}
+
 
       {/* Educación Formal */}
       {profile?.education && Array.isArray(profile.education) && profile.education.length > 0 && (
