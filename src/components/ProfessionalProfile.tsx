@@ -30,7 +30,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
   const isOwnProfile = user?.id === userId;
 
   const { data: profile, refetch: refetchProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ["profile-full", userId],
+    queryKey: ["profile", userId],
     queryFn: async () => {
       if (!userId) return null;
       
@@ -58,6 +58,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
   });
+
 
   const handleUpdateCover = async (url: string) => {
     if (!userId) {
