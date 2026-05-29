@@ -91,6 +91,7 @@ const PresentationEdit = lazyWithRetry(() => import("./pages/PresentationEdit"))
 const PublishingErrorDetails = lazyWithRetry(() => import("./pages/PublishingErrorDetails"));
 const PaymentLink = lazyWithRetry(() => import("./pages/PaymentLink"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
+const Contract = lazyWithRetry(() => import("./pages/Contract"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
 // (iframes used by the notebook capsule preview) to minimise boot time.
