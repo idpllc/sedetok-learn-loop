@@ -555,28 +555,29 @@ const Profile = () => {
     );
   };
 
-  // Only block on auth loading when viewing own profile
-  if (isOwnProfile && (authLoading || !user)) {
-    return (
-      <>
-        <Sidebar />
-        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-14 md:pt-0">
-        <div className="text-center space-y-4">
-          <div className="text-6xl mb-4 animate-pulse">📚</div>
-          <p className="text-muted-foreground">Verificando acceso...</p>
-        </div>
-      </div>
-      </>
-    );
-  }
-
-  if (isLoading || profileLoading) {
+  if (profileLoading) {
     return (
       <>
         <Sidebar />
         <div className="min-h-screen bg-background pb-20 md:ml-64 pt-14 md:pt-0">
         <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-3">
           <div className="flex items-center gap-3 max-w-6xl mx-auto">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-bold">Mi Perfil</h1>
+          </div>
+        </header>
+        <div className="max-w-6xl mx-auto px-4 py-6 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-64 w-full" />
+          ))}
+        </div>
+      </div>
+      </>
+    );
+  }
+
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
