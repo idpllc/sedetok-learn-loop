@@ -82,9 +82,23 @@ const Profile = () => {
   // Determine if viewing own profile after data loads
   const isOwnProfile = !userId || (profileData && user && profileData.id === user.id);
 
-  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(profileData?.id);
-  const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(profileData?.id, 'created');
-  const { courses, isLoading: coursesLoading, deleteCourse } = useCourses(isOwnProfile ? 'created' : undefined);
+  // Resolve the target user id eagerly so dependent queries can fire in parallel
+  // with the profile lookup whenever possible (avoids serial network waterfalls).
+  const eagerTargetUserId = !userId ? user?.id : profileData?.id;
+
+  const [activeContentTab, setActiveContentTab] = useState<string>("videos");
+
+  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(eagerTargetUserId);
+  // Paths/courses are lazy: only fetch when their tab is activated.
+  const pathsTabActive = activeContentTab === "paths";
+  const coursesTabActive = activeContentTab === "courses";
+  const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(
+    pathsTabActive ? eagerTargetUserId : undefined,
+    'created'
+  );
+  const { courses, isLoading: coursesLoading, deleteCourse } = useCourses(
+    coursesTabActive && isOwnProfile ? 'created' : undefined
+  );
   const { isFollowing, toggleFollow, isProcessing } = useFollow(profileData?.id || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
@@ -102,6 +116,7 @@ const Profile = () => {
 
   // Only fetch academic metrics when vocational tab is active
   const { data: metrics } = useAcademicMetrics(profileTab === 'vocational' ? profileData?.id : undefined);
+
 
   const handleSignOut = async () => {
     await signOut();
@@ -540,22 +555,7 @@ const Profile = () => {
     );
   };
 
-  // Only block on auth loading when viewing own profile
-  if (isOwnProfile && (authLoading || !user)) {
-    return (
-      <>
-        <Sidebar />
-        <div className="min-h-screen bg-background flex items-center justify-center md:ml-64 pt-14 md:pt-0">
-        <div className="text-center space-y-4">
-          <div className="text-6xl mb-4 animate-pulse">📚</div>
-          <p className="text-muted-foreground">Verificando acceso...</p>
-        </div>
-      </div>
-      </>
-    );
-  }
-
-  if (isLoading || profileLoading) {
+  if (profileLoading) {
     return (
       <>
         <Sidebar />
@@ -577,6 +577,7 @@ const Profile = () => {
       </>
     );
   }
+
 
   return (
     <>
@@ -704,7 +705,8 @@ const Profile = () => {
         </div>
 
         {/* Content tabs */}
-        <Tabs defaultValue="videos" className="w-full">
+        <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
+
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="videos" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
