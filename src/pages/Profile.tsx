@@ -705,7 +705,8 @@ const Profile = () => {
         </div>
 
         {/* Content tabs */}
-        <Tabs defaultValue="videos" className="w-full">
+        <Tabs value={activeContentTab} onValueChange={setActiveContentTab} className="w-full">
+
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="videos" className="flex items-center gap-2">
               <Video className="w-4 h-4" />
