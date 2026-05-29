@@ -393,6 +393,19 @@ export const useContent = () => {
           .eq("user_id", user.id);
         if (error) throw error;
       } else {
+        // Check if like already exists to avoid unique constraint error
+        const { data: existingLike } = await supabase
+          .from("likes")
+          .select("id")
+          .eq(idField, contentId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (existingLike) {
+          // Like already exists, treat as success
+          return;
+        }
+
         const { error } = await supabase
           .from("likes")
           .insert([{ [idField]: contentId, user_id: user.id }]);
