@@ -82,9 +82,23 @@ const Profile = () => {
   // Determine if viewing own profile after data loads
   const isOwnProfile = !userId || (profileData && user && profileData.id === user.id);
 
-  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(profileData?.id);
-  const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(profileData?.id, 'created');
-  const { courses, isLoading: coursesLoading, deleteCourse } = useCourses(isOwnProfile ? 'created' : undefined);
+  // Resolve the target user id eagerly so dependent queries can fire in parallel
+  // with the profile lookup whenever possible (avoids serial network waterfalls).
+  const eagerTargetUserId = !userId ? user?.id : profileData?.id;
+
+  const [activeContentTab, setActiveContentTab] = useState<string>("videos");
+
+  const { userContent, isLoading, deleteMutation, updateMutation } = useUserContent(eagerTargetUserId);
+  // Paths/courses are lazy: only fetch when their tab is activated.
+  const pathsTabActive = activeContentTab === "paths";
+  const coursesTabActive = activeContentTab === "courses";
+  const { paths: learningPaths, isLoading: pathsLoading, deletePath } = useLearningPaths(
+    pathsTabActive ? eagerTargetUserId : undefined,
+    'created'
+  );
+  const { courses, isLoading: coursesLoading, deleteCourse } = useCourses(
+    coursesTabActive && isOwnProfile ? 'created' : undefined
+  );
   const { isFollowing, toggleFollow, isProcessing } = useFollow(profileData?.id || "");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contentToDelete, setContentToDelete] = useState<string | null>(null);
@@ -102,6 +116,7 @@ const Profile = () => {
 
   // Only fetch academic metrics when vocational tab is active
   const { data: metrics } = useAcademicMetrics(profileTab === 'vocational' ? profileData?.id : undefined);
+
 
   const handleSignOut = async () => {
     await signOut();
