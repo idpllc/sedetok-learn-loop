@@ -155,8 +155,6 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     );
   }
 
-  }
-
   const chartConfig = {
     score: {
       label: "Desempeño",
@@ -171,7 +169,8 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     return { label: "Por mejorar", variant: "destructive" as const, color: "bg-orange-500" };
   };
 
-  const performance = getPerformanceLevel(metrics.overallAverage);
+  const performance = metrics ? getPerformanceLevel(metrics.overallAverage) : null;
+
 
   return (
     <div className="space-y-6">
