@@ -141,8 +141,7 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
   const { data: institutionMetrics, isLoading: isLoadingInstitution } = useInstitutionAcademicMetrics(
     institutionMember?.institution_id
   );
-
-  if (isLoading || profileLoading) {
+  if (profileLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-64 w-full rounded-lg" />
@@ -156,15 +155,6 @@ export const ProfessionalProfile = ({ userId }: ProfessionalProfileProps) => {
     );
   }
 
-  if (!metrics) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <Brain className="w-16 h-16 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">No hay datos académicos disponibles</p>
-        </CardContent>
-      </Card>
-    );
   }
 
   const chartConfig = {
