@@ -231,51 +231,32 @@ Deno.serve(async (req) => {
     };
 
     const rawSlides = (Array.isArray(ai.slides) ? ai.slides : []).slice(0, slideCount + 2);
-    const enriched: any[] = new Array(rawSlides.length);
-    const concurrency = 4;
-    for (let i = 0; i < rawSlides.length; i += concurrency) {
-      const batch = rawSlides.slice(i, i + concurrency);
-      const results = await Promise.all(batch.map(async (s: any, idx: number) => {
-        const wantsImage = !!s.image_prompt && String(s.image_prompt).trim().length > 0;
-        const imgUrl = wantsImage ? await generateSlideImage(String(s.image_prompt)) : null;
-        // Per-card images for cards_image
-        let cards: any[] = [];
-        if (Array.isArray(s.cards)) {
-          cards = await Promise.all(s.cards.slice(0, 4).map(async (c: any) => {
-            const wantsCardImg = s.layout === "cards_image" && c?.image_prompt;
-            const cImg = wantsCardImg ? await generateSlideImage(String(c.image_prompt)) : null;
-            return {
-              icon: c?.icon ? String(c.icon).toLowerCase().slice(0, 30) : null,
-              title: String(c?.title || "").slice(0, 120),
-              body: String(c?.body || "").slice(0, 400),
-              image_url: cImg,
-            };
-          }));
-        }
-        return { slide: s, imgUrl, cards, absoluteIdx: i + idx };
-      }));
-      for (const r of results) enriched[r.absoluteIdx] = r;
-    }
 
-    const slides = enriched.map((entry, i) => {
-      const s = entry.slide;
-      return {
-        id: crypto.randomUUID(),
-        order: i,
-        layout: s.layout || "title_bullets",
-        title: String(s.title || "").slice(0, 200),
-        subtitle: s.subtitle ? String(s.subtitle).slice(0, 200) : null,
-        bullets: Array.isArray(s.bullets) ? s.bullets.map((b: any) => String(b).slice(0, 300)) : [],
-        left_column: Array.isArray(s.left_column) ? s.left_column.map((b: any) => String(b).slice(0, 300)) : [],
-        right_column: Array.isArray(s.right_column) ? s.right_column.map((b: any) => String(b).slice(0, 300)) : [],
-        cards: entry.cards || [],
-        quote: s.quote ? String(s.quote).slice(0, 500) : null,
-        quote_author: s.quote_author ? String(s.quote_author).slice(0, 120) : null,
-        speaker_notes: s.speaker_notes ? String(s.speaker_notes).slice(0, 1200) : null,
-        image_prompt: s.image_prompt ? String(s.image_prompt).slice(0, 500) : null,
-        image_url: entry.imgUrl,
-      };
-    });
+    // Build slides WITHOUT images first so we can return fast.
+    const baseSlides = rawSlides.map((s: any, i: number) => ({
+      id: crypto.randomUUID(),
+      order: i,
+      layout: s.layout || "title_bullets",
+      title: String(s.title || "").slice(0, 200),
+      subtitle: s.subtitle ? String(s.subtitle).slice(0, 200) : null,
+      bullets: Array.isArray(s.bullets) ? s.bullets.map((b: any) => String(b).slice(0, 300)) : [],
+      left_column: Array.isArray(s.left_column) ? s.left_column.map((b: any) => String(b).slice(0, 300)) : [],
+      right_column: Array.isArray(s.right_column) ? s.right_column.map((b: any) => String(b).slice(0, 300)) : [],
+      cards: Array.isArray(s.cards)
+        ? s.cards.slice(0, 4).map((c: any) => ({
+            icon: c?.icon ? String(c.icon).toLowerCase().slice(0, 30) : null,
+            title: String(c?.title || "").slice(0, 120),
+            body: String(c?.body || "").slice(0, 400),
+            image_url: null,
+            image_prompt: c?.image_prompt ? String(c.image_prompt).slice(0, 500) : null,
+          }))
+        : [],
+      quote: s.quote ? String(s.quote).slice(0, 500) : null,
+      quote_author: s.quote_author ? String(s.quote_author).slice(0, 120) : null,
+      speaker_notes: s.speaker_notes ? String(s.speaker_notes).slice(0, 1200) : null,
+      image_prompt: s.image_prompt ? String(s.image_prompt).slice(0, 500) : null,
+      image_url: null,
+    }));
 
     const { data: row, error } = await supabase
       .from("content")
@@ -289,9 +270,10 @@ Deno.serve(async (req) => {
         tags: safeTags,
         content_type: "presentacion",
         presentation_data: {
-          slides,
+          slides: baseSlides,
           theme: "teal",
           instructions: instructions || null,
+          images_status: "generating",
           meta: {
             type: kind,
             language: lang,
@@ -306,11 +288,81 @@ Deno.serve(async (req) => {
       .single();
     if (error) throw error;
 
+    // Backfill images in the background so the client gets a fast response.
+    const backfillImages = async () => {
+      try {
+        const enriched: any[] = new Array(baseSlides.length);
+        const concurrency = 4;
+        for (let i = 0; i < baseSlides.length; i += concurrency) {
+          const batch = baseSlides.slice(i, i + concurrency);
+          const results = await Promise.all(batch.map(async (s: any, idx: number) => {
+            const wantsImage = !!s.image_prompt && String(s.image_prompt).trim().length > 0;
+            const imgUrl = wantsImage ? await generateSlideImage(String(s.image_prompt)) : null;
+            const cards = await Promise.all((s.cards || []).map(async (c: any) => {
+              const wantsCardImg = s.layout === "cards_image" && c?.image_prompt;
+              const cImg = wantsCardImg ? await generateSlideImage(String(c.image_prompt)) : null;
+              return { ...c, image_url: cImg };
+            }));
+            return { ...s, image_url: imgUrl, cards, absoluteIdx: i + idx };
+          }));
+          for (const r of results) enriched[r.absoluteIdx] = r;
+        }
+        const finalSlides = enriched.map(({ absoluteIdx, ...rest }) => rest);
+        await supabase
+          .from("content")
+          .update({
+            presentation_data: {
+              slides: finalSlides,
+              theme: "teal",
+              instructions: instructions || null,
+              images_status: "ready",
+              meta: {
+                type: kind,
+                language: lang,
+                class_duration_min: duration,
+                text_density: density,
+                theme: "teal",
+              },
+            },
+          })
+          .eq("id", row.id);
+      } catch (e) {
+        console.error("backfillImages error:", e);
+        await supabase
+          .from("content")
+          .update({
+            presentation_data: {
+              slides: baseSlides,
+              theme: "teal",
+              instructions: instructions || null,
+              images_status: "failed",
+              meta: {
+                type: kind,
+                language: lang,
+                class_duration_min: duration,
+                text_density: density,
+                theme: "teal",
+              },
+            },
+          })
+          .eq("id", row.id);
+      }
+    };
+
+    // @ts-ignore EdgeRuntime is available in Supabase Edge Functions
+    if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(backfillImages());
+    } else {
+      backfillImages();
+    }
+
     return new Response(JSON.stringify({
       contentId: row.id,
-      route: `/presentation/${row.id}`,
+      route: `/presentation/${row.id}/edit`,
       title: String(title),
-      cover_url: slides[0]?.image_url ?? null,
+      cover_url: null,
+      images_status: "generating",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err: any) {
     console.error("create-presentation-standalone error:", err);
