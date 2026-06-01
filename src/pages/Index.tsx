@@ -544,12 +544,8 @@ const Index = () => {
                               })()}`
                             : 'bg-gradient-to-br from-primary/20 to-secondary/20'
                         }`}>
-                          {item.content_type === 'presentacion' && Array.isArray(item.presentation_data?.slides) && item.presentation_data.slides.length > 0 ? (
-                            <SlideThumbnail
-                              slide={item.presentation_data.slides[0]}
-                              themeId={item.presentation_data?.theme || item.presentation_data?.meta?.theme || 'teal'}
-                              aspect={item.presentation_data?.meta?.type === 'flashcards' ? '1/1' : '16/9'}
-                            />
+                          {item.content_type === 'presentacion' ? (
+                            <SlideThumbnail contentId={item.id} />
                           ) : (item.cover_url || item.thumbnail_url) ? (
                             <img 
                               src={item.cover_url || item.thumbnail_url} 
@@ -557,6 +553,7 @@ const Index = () => {
                               className="w-full h-full object-cover"
                               loading="lazy"
                             />
+
 
                           ) : isQuiz && scientist ? (
                             <>
