@@ -2,6 +2,14 @@ import DOMPurify from "dompurify";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
+// Ensure all links open in a new tab with noopener noreferrer
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (node.tagName === "A") {
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
+
 /**
  * Render HTML rich content with KaTeX math formulas.
  * Math is supported via:
@@ -79,10 +87,10 @@ export function renderRichContent(html: string): string {
     }
   });
 
-  // Sanitize, allowing KaTeX output
+  // Sanitize, allowing KaTeX output and link attributes
   return DOMPurify.sanitize(processed, {
     ADD_TAGS: ["math", "semantics", "annotation", "mrow", "mi", "mo", "mn", "msup", "msub", "mfrac", "msqrt", "mroot", "mtext", "mspace"],
-    ADD_ATTR: ["aria-hidden", "data-math", "style", "class"],
+    ADD_ATTR: ["aria-hidden", "data-math", "style", "class", "target", "rel"],
   });
 }
 
