@@ -544,13 +544,20 @@ const Index = () => {
                               })()}`
                             : 'bg-gradient-to-br from-primary/20 to-secondary/20'
                         }`}>
-                          {(item.cover_url || item.thumbnail_url || (item.content_type === 'presentacion' && item.presentation_data?.slides?.find((s: any) => s?.image_url)?.image_url)) ? (
+                          {item.content_type === 'presentacion' && Array.isArray(item.presentation_data?.slides) && item.presentation_data.slides.length > 0 ? (
+                            <SlideThumbnail
+                              slide={item.presentation_data.slides[0]}
+                              themeId={item.presentation_data?.theme || item.presentation_data?.meta?.theme || 'teal'}
+                              aspect={item.presentation_data?.meta?.type === 'flashcards' ? '1/1' : '16/9'}
+                            />
+                          ) : (item.cover_url || item.thumbnail_url) ? (
                             <img 
-                              src={item.cover_url || item.thumbnail_url || item.presentation_data?.slides?.find((s: any) => s?.image_url)?.image_url} 
+                              src={item.cover_url || item.thumbnail_url} 
                               alt={item.title}
                               className="w-full h-full object-cover"
                               loading="lazy"
                             />
+
                           ) : isQuiz && scientist ? (
                             <>
                               {/* Question mark pattern background */}
