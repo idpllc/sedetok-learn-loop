@@ -145,6 +145,40 @@ export default function PresentationEdit() {
     skipAutosaveRef.current = true;
   }, [initial]);
 
+  // Poll for images while the server is still generating them in the background.
+  const imagesStatus = initial?.presentation_data?.images_status;
+  useEffect(() => {
+    if (!id || imagesStatus !== "generating") return;
+    let cancelled = false;
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("content")
+        .select("presentation_data")
+        .eq("id", id)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const pd: any = data.presentation_data || {};
+      const fresh: any[] = Array.isArray(pd.slides) ? pd.slides : [];
+      // Merge only image fields into current slides to preserve user edits.
+      setSlides((prev) => prev.map((s: any, i: number) => {
+        const f = fresh[i];
+        if (!f) return s;
+        const mergedCards = Array.isArray(s.cards)
+          ? s.cards.map((c: any, ci: number) => ({
+              ...c,
+              image_url: c?.image_url || f.cards?.[ci]?.image_url || null,
+            }))
+          : s.cards;
+        return { ...s, image_url: s.image_url || f.image_url || null, cards: mergedCards };
+      }));
+      if (pd.images_status && pd.images_status !== "generating") {
+        clearInterval(interval);
+      }
+    }, 3000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [id, imagesStatus]);
+
+
   const isOwner = !!user && initial && initial.creator_id === user.id;
   const theme = getTheme(themeId);
   const presentationKind: "slides" | "flashcards" =
