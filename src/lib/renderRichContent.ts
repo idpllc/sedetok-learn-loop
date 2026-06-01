@@ -87,10 +87,10 @@ export function renderRichContent(html: string): string {
     }
   });
 
-  // Sanitize, allowing KaTeX output
+  // Sanitize, allowing KaTeX output and link attributes
   return DOMPurify.sanitize(processed, {
     ADD_TAGS: ["math", "semantics", "annotation", "mrow", "mi", "mo", "mn", "msup", "msub", "mfrac", "msqrt", "mroot", "mtext", "mspace"],
-    ADD_ATTR: ["aria-hidden", "data-math", "style", "class"],
+    ADD_ATTR: ["aria-hidden", "data-math", "style", "class", "target", "rel"],
   });
 }
 
