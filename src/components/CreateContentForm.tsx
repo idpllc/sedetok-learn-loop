@@ -335,8 +335,8 @@ export const CreateContentForm = ({ editMode = false, contentData, onUpdate, onT
         },
       });
       if (error) throw error;
-      toast.success("Presentación creada");
-      navigate((data as any)?.route || "/");
+      toast.success("Presentación lista. Las imágenes se siguen generando…");
+      navigate((data as any)?.route || `/presentation/${(data as any)?.contentId}/edit`);
     } catch (e: any) {
       toast.error(e?.message || "No se pudo crear la presentación");
     } finally {
