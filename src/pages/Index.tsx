@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
+import SlideThumbnail from "@/components/presentation/SlideThumbnail";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
 type GradeLevel = Database["public"]["Enums"]["grade_level"];
