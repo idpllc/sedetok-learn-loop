@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getQuizScientistIcon } from "@/lib/quizScientists";
+import SlideThumbnail from "@/components/presentation/SlideThumbnail";
 
 type ContentType = Database["public"]["Enums"]["content_type"];
 type GradeLevel = Database["public"]["Enums"]["grade_level"];
@@ -543,13 +544,17 @@ const Index = () => {
                               })()}`
                             : 'bg-gradient-to-br from-primary/20 to-secondary/20'
                         }`}>
-                          {(item.cover_url || item.thumbnail_url || (item.content_type === 'presentacion' && item.presentation_data?.slides?.find((s: any) => s?.image_url)?.image_url)) ? (
+                          {item.content_type === 'presentacion' ? (
+                            <SlideThumbnail contentId={item.id} />
+                          ) : (item.cover_url || item.thumbnail_url) ? (
                             <img 
-                              src={item.cover_url || item.thumbnail_url || item.presentation_data?.slides?.find((s: any) => s?.image_url)?.image_url} 
+                              src={item.cover_url || item.thumbnail_url} 
                               alt={item.title}
                               className="w-full h-full object-cover"
                               loading="lazy"
                             />
+
+
                           ) : isQuiz && scientist ? (
                             <>
                               {/* Question mark pattern background */}
