@@ -2,6 +2,14 @@ import DOMPurify from "dompurify";
 import katex from "katex";
 import "katex/dist/katex.min.css";
 
+// Ensure all links open in a new tab with noopener noreferrer
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (node.tagName === "A") {
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
+
 /**
  * Render HTML rich content with KaTeX math formulas.
  * Math is supported via:
