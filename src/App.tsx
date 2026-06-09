@@ -151,7 +151,7 @@ const IndexWithRedirect = () => {
   const quizId = searchParams.get("quizId");
   const contentId = searchParams.get("contentId");
   if (quizId || contentId) {
-    return <Navigate to="/sedetok" replace />;
+    return <Navigate to={`/sedetok${window.location.search}`} replace />;
   }
   return <Index />;
 };
