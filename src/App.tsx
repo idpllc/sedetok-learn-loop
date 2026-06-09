@@ -163,7 +163,7 @@ const App = () => (
         <OpenGraphHandler />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<IndexWithRedirect />} />
             <Route path="/sedetok" element={<SedeTok />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
