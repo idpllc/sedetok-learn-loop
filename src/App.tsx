@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { HelmetProvider } from "react-helmet-async";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useSearchParams, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 
