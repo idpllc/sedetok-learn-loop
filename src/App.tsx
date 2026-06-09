@@ -142,6 +142,20 @@ const GlobalChrome = () => {
   );
 };
 
+/**
+ * Redirects root URLs with legacy ?quizId= or ?contentId= params to /sedetok.
+ * Otherwise renders the normal home page.
+ */
+const IndexWithRedirect = () => {
+  const [searchParams] = useSearchParams();
+  const quizId = searchParams.get("quizId");
+  const contentId = searchParams.get("contentId");
+  if (quizId || contentId) {
+    return <Navigate to="/sedetok" replace />;
+  }
+  return <Index />;
+};
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
