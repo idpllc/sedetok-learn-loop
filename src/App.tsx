@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { HelmetProvider } from "react-helmet-async";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useSearchParams, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 
@@ -142,6 +142,20 @@ const GlobalChrome = () => {
   );
 };
 
+/**
+ * Redirects root URLs with legacy ?quizId= or ?contentId= params to /sedetok.
+ * Otherwise renders the normal home page.
+ */
+const IndexWithRedirect = () => {
+  const [searchParams] = useSearchParams();
+  const quizId = searchParams.get("quizId");
+  const contentId = searchParams.get("contentId");
+  if (quizId || contentId) {
+    return <Navigate to="/sedetok" replace />;
+  }
+  return <Index />;
+};
+
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
@@ -149,7 +163,7 @@ const App = () => (
         <OpenGraphHandler />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<IndexWithRedirect />} />
             <Route path="/sedetok" element={<SedeTok />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
