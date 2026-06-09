@@ -872,6 +872,24 @@ const NotebookView = () => {
   const openResult = (r: SedefyResult) => {
     setViewing(r);
     setViewerExpanded(false);
+    // Persist as studied immediately when the user opens the capsule.
+    if (id && user) {
+      (async () => {
+        try {
+          await supabase.from("notebook_capsule_progress").upsert(
+            {
+              notebook_id: id,
+              user_id: user.id,
+              capsule_id: r.id,
+              capsule_type: r.type,
+              studied_at: new Date().toISOString(),
+            },
+            { onConflict: "notebook_id,capsule_id" }
+          );
+          studiedQuery.refetch();
+        } catch { /* no-op */ }
+      })();
+    }
   };
 
   // Collect capsule ids/types from all studio caches across this notebook (any scope).
