@@ -150,8 +150,16 @@ const IndexWithRedirect = () => {
   const [searchParams] = useSearchParams();
   const quizId = searchParams.get("quizId");
   const contentId = searchParams.get("contentId");
-  if (quizId || contentId) {
-    return <Navigate to={`/sedetok${window.location.search}`} replace />;
+  const gameId = searchParams.get("gameId");
+  if (quizId || contentId || gameId) {
+    // SedeTok expects the param names `quiz`, `content`, `game` (without Id suffix).
+    // Map the legacy *Id params and drop unrelated tracking params (e.g. _gl) so
+    // useTargetItem actually receives the target id instead of falling back to random content.
+    const target = new URLSearchParams();
+    if (contentId) target.set("content", contentId);
+    if (quizId) target.set("quiz", quizId);
+    if (gameId) target.set("game", gameId);
+    return <Navigate to={`/sedetok?${target.toString()}`} replace />;
   }
   return <Index />;
 };
