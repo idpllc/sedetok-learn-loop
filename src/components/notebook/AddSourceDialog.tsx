@@ -378,9 +378,10 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-3 w-full" data-tour="source-tabs">
+          <TabsList className="grid grid-cols-4 w-full" data-tour="source-tabs">
             <TabsTrigger value="text" className="gap-1" data-tour="source-tab-text"><Type className="h-4 w-4" />Texto</TabsTrigger>
             <TabsTrigger value="file" className="gap-1"><Upload className="h-4 w-4" />Archivo</TabsTrigger>
+            <TabsTrigger value="video" className="gap-1"><Video className="h-4 w-4" />Video</TabsTrigger>
             <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
           </TabsList>
 
