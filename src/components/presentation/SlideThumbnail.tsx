@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import SlideRenderer, { type Slide } from "./SlideRenderer";
+import { getTheme, backgroundStyle } from "@/lib/presentationThemes";
 
 type Props = {
   /** Pass a slide directly if already available. */
@@ -19,8 +20,9 @@ type Props = {
  * down via CSS transform so proportions/typography match the real
  * presentation while fitting any small container (cards, grids).
  *
- * When given only `contentId`, lazy-fetches the presentation_data once and
- * caches it via react-query so feed listings can stay lightweight.
+ * The scaled slide is centered (letterboxed) inside the container and the
+ * remaining space is filled with the slide's theme background so it blends
+ * naturally on any aspect ratio (e.g. portrait mobile cards).
  */
 export default function SlideThumbnail({
   slide,
@@ -30,7 +32,7 @@ export default function SlideThumbnail({
   className = "",
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.25);
+  const [box, setBox] = useState({ scale: 0.25, offsetX: 0, offsetY: 0 });
 
   const baseW = aspect === "1/1" ? 1080 : 1280;
   const baseH = aspect === "1/1" ? 1080 : 720;
@@ -56,8 +58,11 @@ export default function SlideThumbnail({
     (Array.isArray(fetched?.slides) && fetched.slides.length > 0 ? fetched.slides[0] : null);
   const effectiveTheme =
     themeId || fetched?.theme || fetched?.meta?.theme || "teal";
-  const effectiveAspect: "16/9" | "1/1" =
-    aspect || (fetched?.meta?.type === "flashcards" ? "1/1" : "16/9");
+
+  const themeBg = backgroundStyle(
+    (effectiveSlide as any)?.background || null,
+    getTheme(effectiveTheme).bg
+  );
 
   useEffect(() => {
     const el = containerRef.current;
@@ -65,7 +70,14 @@ export default function SlideThumbnail({
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
       if (width === 0 || height === 0) return;
-      setScale(Math.min(width / baseW, height / baseH));
+      const scale = Math.min(width / baseW, height / baseH);
+      const scaledW = baseW * scale;
+      const scaledH = baseH * scale;
+      setBox({
+        scale,
+        offsetX: Math.max(0, (width - scaledW) / 2),
+        offsetY: Math.max(0, (height - scaledH) / 2),
+      });
     };
     update();
     const ro = new ResizeObserver(update);
@@ -80,16 +92,20 @@ export default function SlideThumbnail({
   }
 
   return (
-    <div ref={containerRef} className={`absolute inset-0 overflow-hidden ${className}`}>
+    <div
+      ref={containerRef}
+      className={`absolute inset-0 overflow-hidden ${className}`}
+      style={themeBg}
+    >
       <div
         style={{
           width: baseW,
           height: baseH,
-          transform: `scale(${scale})`,
+          transform: `scale(${box.scale})`,
           transformOrigin: "top left",
           position: "absolute",
-          top: 0,
-          left: 0,
+          top: box.offsetY,
+          left: box.offsetX,
         }}
       >
         <SlideRenderer slide={effectiveSlide} themeId={effectiveTheme} />
