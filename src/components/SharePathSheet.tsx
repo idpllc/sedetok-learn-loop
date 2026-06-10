@@ -17,7 +17,7 @@ export const SharePathSheet = ({ pathId, pathTitle, isPublic, trigger }: SharePa
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
 
-  const shareUrl = `${window.location.origin}/?path=${pathId}`;
+  const shareUrl = `${window.location.origin}/learning-paths/view/${pathId}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(`🎓 ${pathTitle}`);
 
