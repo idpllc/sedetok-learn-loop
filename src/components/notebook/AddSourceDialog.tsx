@@ -225,6 +225,59 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
     handleClose();
   };
 
+  const handleSearchVideos = async () => {
+    const userQ = videoQuery.trim();
+    const fallbackQ = (notebookMeta?.title || "").trim();
+    const q = userQ || fallbackQ;
+    if (!q) {
+      toast({ title: "Escribe un tema", description: "Indica qué quieres buscar en video.", variant: "destructive" });
+      return;
+    }
+    setSearching(true);
+    setSearched(true);
+    setSedefyVideos([]);
+    setYoutubeVideos([]);
+    try {
+      // 1) Priorizar Sedefy: usa la búsqueda AI del cuaderno
+      const sedefy = await searchSedefy("video", 0, 6);
+      setSedefyVideos(sedefy);
+
+      // 2) Sólo si Sedefy no devuelve resultados, buscamos en YouTube (máx 3)
+      if (sedefy.length === 0) {
+        const { data, error } = await supabase.functions.invoke("youtube-search", {
+          body: { q, maxResults: 3 },
+        });
+        if (error) throw error;
+        setYoutubeVideos((data?.results || []) as YouTubeResult[]);
+      }
+    } catch (e: any) {
+      toast({ title: "Error buscando videos", description: String(e?.message || e), variant: "destructive" });
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleAddSedefyVideo = async (v: SedefyResult) => {
+    if (!checkSourceLimit()) return;
+    const url = `https://sedefy.com/sedetok?content=${v.id}`;
+    await ingest.mutateAsync({
+      sourceType: "video",
+      title: v.title,
+      fileUrl: url,
+    });
+    handleClose();
+  };
+
+  const handleAddYouTubeVideo = async (v: YouTubeResult) => {
+    if (!checkSourceLimit()) return;
+    await ingest.mutateAsync({
+      sourceType: "video",
+      title: v.title,
+      fileUrl: v.url,
+    });
+    handleClose();
+  };
+
   // Competence picker — load study plans for current user
   const { data: studyPlans } = useQuery({
     queryKey: ["my-study-plans", user?.id],
