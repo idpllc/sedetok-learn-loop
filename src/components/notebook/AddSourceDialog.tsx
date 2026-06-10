@@ -111,12 +111,40 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
 
+  // Video search state
+  const [videoQuery, setVideoQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [sedefyVideos, setSedefyVideos] = useState<SedefyResult[]>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState<YouTubeResult[]>([]);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
+  const { search: searchSedefy } = useNotebookSearch(notebookId, null);
+
+  // Notebook title (used as fallback query when user leaves the input empty)
+  const { data: notebookMeta } = useQuery({
+    queryKey: ["notebook-meta", notebookId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notebooks")
+        .select("title, description")
+        .eq("id", notebookId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!notebookId && open && tab === "video",
+  });
+
   const reset = () => {
     setTextTitle("");
     setTextContent("");
     setUrl("");
     setVideoUrl("");
     setVideoTitle("");
+    setVideoQuery("");
+    setSearched(false);
+    setSedefyVideos([]);
+    setYoutubeVideos([]);
+    setPreviewVideoUrl(null);
     try { sessionStorage.removeItem(textDraftKey); } catch {
       // Draft persistence is best-effort only.
     }
