@@ -423,15 +423,115 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
             </Button>
           </TabsContent>
 
-          <TabsContent value="video" className="py-6 space-y-3">
-            <Label>Título</Label>
-            <Input value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="Resumen del video" />
-            <Label>URL del video (YouTube, Vimeo, etc.)</Label>
-            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
-            <p className="text-xs text-muted-foreground">El video se guardará como referencia. Para análisis del contenido pega también una transcripción en una fuente de Texto.</p>
-            <Button onClick={handleAddVideo} disabled={busy || !videoUrl.trim()}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Añadir video
-            </Button>
+          <TabsContent value="video" className="py-4 space-y-4 max-h-[60vh] overflow-auto">
+            <div className="space-y-2">
+              <Label>Buscar video por tema</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={videoQuery}
+                  onChange={(e) => setVideoQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSearchVideos(); } }}
+                  placeholder={notebookMeta?.title ? `Ej: ${notebookMeta.title}` : "Ej: Ecuaciones lineales"}
+                />
+                <Button onClick={handleSearchVideos} disabled={searching || busy}>
+                  {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <span className="ml-1 hidden sm:inline">Buscar</span>
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Priorizamos videos de Sedefy. Si no hay coincidencias, te mostramos los 3 mejores videos de YouTube.
+              </p>
+            </div>
+
+            {searched && !searching && (
+              <div className="space-y-4">
+                {sedefyVideos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#F6339A]">
+                      <Sparkles className="h-3.5 w-3.5" /> Videos de Sedefy
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {sedefyVideos.map((v) => (
+                        <div key={v.id} className="border rounded-lg overflow-hidden flex flex-col">
+                          <div className="aspect-video bg-muted relative">
+                            {v.cover_url ? (
+                              <img src={v.cover_url} alt={v.title} loading="lazy" width={320} height={180} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><Play className="h-8 w-8 text-muted-foreground" /></div>
+                            )}
+                          </div>
+                          <div className="p-2 flex-1 flex flex-col">
+                            <p className="text-xs font-medium line-clamp-2 flex-1">{v.title}</p>
+                            {v.subject && <p className="text-[10px] text-muted-foreground mt-1">{v.subject}</p>}
+                            <Button size="sm" className="mt-2 h-7 text-xs" onClick={() => handleAddSedefyVideo(v)} disabled={busy}>
+                              Añadir al cuaderno
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sedefyVideos.length === 0 && youtubeVideos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-red-600">
+                      <Youtube className="h-3.5 w-3.5" /> Mejores resultados de YouTube
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {youtubeVideos.map((v) => (
+                        <div key={v.id} className="border rounded-lg overflow-hidden flex flex-col">
+                          <button
+                            type="button"
+                            className="aspect-video bg-muted relative group"
+                            onClick={() => setPreviewVideoUrl(previewVideoUrl === v.url ? null : v.url)}
+                          >
+                            {v.thumbnail ? (
+                              <img src={v.thumbnail} alt={v.title} loading="lazy" width={320} height={180} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><Play className="h-8 w-8 text-muted-foreground" /></div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition">
+                              <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100" />
+                            </div>
+                          </button>
+                          {previewVideoUrl === v.url && (
+                            <div className="aspect-video">
+                              <iframe
+                                src={getYouTubeEmbedUrl(v.url, { autoplay: true, controls: true }) || undefined}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </div>
+                          )}
+                          <div className="p-2 flex-1 flex flex-col">
+                            <p className="text-xs font-medium line-clamp-2 flex-1">{v.title}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{v.channelTitle}</p>
+                            <Button size="sm" className="mt-2 h-7 text-xs" onClick={() => handleAddYouTubeVideo(v)} disabled={busy}>
+                              Añadir al cuaderno
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sedefyVideos.length === 0 && youtubeVideos.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Sin resultados. Prueba con otro tema o pega una URL manualmente abajo.</p>
+                )}
+              </div>
+            )}
+
+            <div className="border-t pt-4 space-y-2">
+              <Label className="text-xs text-muted-foreground">¿Tienes una URL? Pégala aquí</Label>
+              <Input value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="Título (opcional)" />
+              <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+              <Button size="sm" variant="outline" onClick={handleAddVideo} disabled={busy || !videoUrl.trim()}>
+                {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Añadir por URL
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="competence" className="py-4 max-h-96 overflow-auto space-y-3">
