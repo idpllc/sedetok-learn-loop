@@ -5,15 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, FileText, Link as LinkIcon, GraduationCap, Type, Video } from "lucide-react";
+import { Loader2, Upload, FileText, Link as LinkIcon, GraduationCap, Type, Video, Search, Sparkles, Youtube, Play } from "lucide-react";
 import { useS3Upload } from "@/hooks/useS3Upload";
 import { useNotebookSources } from "@/hooks/useNotebooks";
+import { useNotebookSearch, SedefyResult } from "@/hooks/useNotebookSearch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useSubscription } from "@/hooks/useSubscription";
 import { PaywallModal, usePaywall } from "@/components/PaywallModal";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
+
+type YouTubeResult = {
+  id: string;
+  title: string;
+  description: string;
+  channelTitle: string;
+  thumbnail: string | null;
+  publishedAt: string | null;
+  url: string;
+};
 
 interface AddSourceDialogProps {
   open: boolean;
@@ -99,12 +111,40 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
   const [videoUrl, setVideoUrl] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
 
+  // Video search state
+  const [videoQuery, setVideoQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [sedefyVideos, setSedefyVideos] = useState<SedefyResult[]>([]);
+  const [youtubeVideos, setYoutubeVideos] = useState<YouTubeResult[]>([]);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
+  const { search: searchSedefy } = useNotebookSearch(notebookId, null);
+
+  // Notebook title (used as fallback query when user leaves the input empty)
+  const { data: notebookMeta } = useQuery({
+    queryKey: ["notebook-meta", notebookId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notebooks")
+        .select("title, description")
+        .eq("id", notebookId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!notebookId && open && tab === "video",
+  });
+
   const reset = () => {
     setTextTitle("");
     setTextContent("");
     setUrl("");
     setVideoUrl("");
     setVideoTitle("");
+    setVideoQuery("");
+    setSearched(false);
+    setSedefyVideos([]);
+    setYoutubeVideos([]);
+    setPreviewVideoUrl(null);
     try { sessionStorage.removeItem(textDraftKey); } catch {
       // Draft persistence is best-effort only.
     }
@@ -181,6 +221,59 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
       sourceType: "video",
       title: videoTitle.trim() || videoUrl,
       fileUrl: videoUrl,
+    });
+    handleClose();
+  };
+
+  const handleSearchVideos = async () => {
+    const userQ = videoQuery.trim();
+    const fallbackQ = (notebookMeta?.title || "").trim();
+    const q = userQ || fallbackQ;
+    if (!q) {
+      toast({ title: "Escribe un tema", description: "Indica qué quieres buscar en video.", variant: "destructive" });
+      return;
+    }
+    setSearching(true);
+    setSearched(true);
+    setSedefyVideos([]);
+    setYoutubeVideos([]);
+    try {
+      // 1) Priorizar Sedefy: usa la búsqueda AI del cuaderno
+      const sedefy = await searchSedefy("video", 0, 6);
+      setSedefyVideos(sedefy);
+
+      // 2) Sólo si Sedefy no devuelve resultados, buscamos en YouTube (máx 3)
+      if (sedefy.length === 0) {
+        const { data, error } = await supabase.functions.invoke("youtube-search", {
+          body: { q, maxResults: 3 },
+        });
+        if (error) throw error;
+        setYoutubeVideos((data?.results || []) as YouTubeResult[]);
+      }
+    } catch (e: any) {
+      toast({ title: "Error buscando videos", description: String(e?.message || e), variant: "destructive" });
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleAddSedefyVideo = async (v: SedefyResult) => {
+    if (!checkSourceLimit()) return;
+    const url = `https://sedefy.com/sedetok?content=${v.id}`;
+    await ingest.mutateAsync({
+      sourceType: "video",
+      title: v.title,
+      fileUrl: url,
+    });
+    handleClose();
+  };
+
+  const handleAddYouTubeVideo = async (v: YouTubeResult) => {
+    if (!checkSourceLimit()) return;
+    await ingest.mutateAsync({
+      sourceType: "video",
+      title: v.title,
+      fileUrl: v.url,
     });
     handleClose();
   };
@@ -285,9 +378,10 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-3 w-full" data-tour="source-tabs">
+          <TabsList className="grid grid-cols-4 w-full" data-tour="source-tabs">
             <TabsTrigger value="text" className="gap-1" data-tour="source-tab-text"><Type className="h-4 w-4" />Texto</TabsTrigger>
             <TabsTrigger value="file" className="gap-1"><Upload className="h-4 w-4" />Archivo</TabsTrigger>
+            <TabsTrigger value="video" className="gap-1"><Video className="h-4 w-4" />Video</TabsTrigger>
             <TabsTrigger value="competence" className="gap-1"><GraduationCap className="h-4 w-4" />Plan</TabsTrigger>
           </TabsList>
 
@@ -329,15 +423,115 @@ export const AddSourceDialog = ({ open, onClose, notebookId, defaultTab = "text"
             </Button>
           </TabsContent>
 
-          <TabsContent value="video" className="py-6 space-y-3">
-            <Label>Título</Label>
-            <Input value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="Resumen del video" />
-            <Label>URL del video (YouTube, Vimeo, etc.)</Label>
-            <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
-            <p className="text-xs text-muted-foreground">El video se guardará como referencia. Para análisis del contenido pega también una transcripción en una fuente de Texto.</p>
-            <Button onClick={handleAddVideo} disabled={busy || !videoUrl.trim()}>
-              {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Añadir video
-            </Button>
+          <TabsContent value="video" className="py-4 space-y-4 max-h-[60vh] overflow-auto">
+            <div className="space-y-2">
+              <Label>Buscar video por tema</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={videoQuery}
+                  onChange={(e) => setVideoQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSearchVideos(); } }}
+                  placeholder={notebookMeta?.title ? `Ej: ${notebookMeta.title}` : "Ej: Ecuaciones lineales"}
+                />
+                <Button onClick={handleSearchVideos} disabled={searching || busy}>
+                  {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  <span className="ml-1 hidden sm:inline">Buscar</span>
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Priorizamos videos de Sedefy. Si no hay coincidencias, te mostramos los 3 mejores videos de YouTube.
+              </p>
+            </div>
+
+            {searched && !searching && (
+              <div className="space-y-4">
+                {sedefyVideos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#F6339A]">
+                      <Sparkles className="h-3.5 w-3.5" /> Videos de Sedefy
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {sedefyVideos.map((v) => (
+                        <div key={v.id} className="border rounded-lg overflow-hidden flex flex-col">
+                          <div className="aspect-video bg-muted relative">
+                            {v.cover_url ? (
+                              <img src={v.cover_url} alt={v.title} loading="lazy" width={320} height={180} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><Play className="h-8 w-8 text-muted-foreground" /></div>
+                            )}
+                          </div>
+                          <div className="p-2 flex-1 flex flex-col">
+                            <p className="text-xs font-medium line-clamp-2 flex-1">{v.title}</p>
+                            {v.subject && <p className="text-[10px] text-muted-foreground mt-1">{v.subject}</p>}
+                            <Button size="sm" className="mt-2 h-7 text-xs" onClick={() => handleAddSedefyVideo(v)} disabled={busy}>
+                              Añadir al cuaderno
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sedefyVideos.length === 0 && youtubeVideos.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-red-600">
+                      <Youtube className="h-3.5 w-3.5" /> Mejores resultados de YouTube
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {youtubeVideos.map((v) => (
+                        <div key={v.id} className="border rounded-lg overflow-hidden flex flex-col">
+                          <button
+                            type="button"
+                            className="aspect-video bg-muted relative group"
+                            onClick={() => setPreviewVideoUrl(previewVideoUrl === v.url ? null : v.url)}
+                          >
+                            {v.thumbnail ? (
+                              <img src={v.thumbnail} alt={v.title} loading="lazy" width={320} height={180} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><Play className="h-8 w-8 text-muted-foreground" /></div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition">
+                              <Play className="h-8 w-8 text-white opacity-0 group-hover:opacity-100" />
+                            </div>
+                          </button>
+                          {previewVideoUrl === v.url && (
+                            <div className="aspect-video">
+                              <iframe
+                                src={getYouTubeEmbedUrl(v.url, { autoplay: true, controls: true }) || undefined}
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </div>
+                          )}
+                          <div className="p-2 flex-1 flex flex-col">
+                            <p className="text-xs font-medium line-clamp-2 flex-1">{v.title}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{v.channelTitle}</p>
+                            <Button size="sm" className="mt-2 h-7 text-xs" onClick={() => handleAddYouTubeVideo(v)} disabled={busy}>
+                              Añadir al cuaderno
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sedefyVideos.length === 0 && youtubeVideos.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Sin resultados. Prueba con otro tema o pega una URL manualmente abajo.</p>
+                )}
+              </div>
+            )}
+
+            <div className="border-t pt-4 space-y-2">
+              <Label className="text-xs text-muted-foreground">¿Tienes una URL? Pégala aquí</Label>
+              <Input value={videoTitle} onChange={(e) => setVideoTitle(e.target.value)} placeholder="Título (opcional)" />
+              <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." />
+              <Button size="sm" variant="outline" onClick={handleAddVideo} disabled={busy || !videoUrl.trim()}>
+                {busy && <Loader2 className="h-4 w-4 animate-spin mr-2" />} Añadir por URL
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="competence" className="py-4 max-h-96 overflow-auto space-y-3">
