@@ -5,15 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Upload, FileText, Link as LinkIcon, GraduationCap, Type, Video } from "lucide-react";
+import { Loader2, Upload, FileText, Link as LinkIcon, GraduationCap, Type, Video, Search, Sparkles, Youtube, Play } from "lucide-react";
 import { useS3Upload } from "@/hooks/useS3Upload";
 import { useNotebookSources } from "@/hooks/useNotebooks";
+import { useNotebookSearch, SedefyResult } from "@/hooks/useNotebookSearch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useSubscription } from "@/hooks/useSubscription";
 import { PaywallModal, usePaywall } from "@/components/PaywallModal";
+import { getYouTubeEmbedUrl } from "@/lib/youtube";
+
+type YouTubeResult = {
+  id: string;
+  title: string;
+  description: string;
+  channelTitle: string;
+  thumbnail: string | null;
+  publishedAt: string | null;
+  url: string;
+};
 
 interface AddSourceDialogProps {
   open: boolean;
