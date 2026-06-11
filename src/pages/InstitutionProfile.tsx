@@ -91,7 +91,7 @@ export default function InstitutionProfile() {
       const ids = (members || []).map((m: any) => m.user_id);
       if (ids.length === 0) return [];
 
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("content")
         .select("id, title, thumbnail_url, content_type, creator_id, created_at, profiles:creator_id(username, full_name, avatar_url)")
         .in("creator_id", ids)
