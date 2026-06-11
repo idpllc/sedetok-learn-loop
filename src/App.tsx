@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useSearchParams, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Retry lazy imports once and force a reload if the chunk is stale (post-deploy).
 const lazyWithRetry = <T extends React.ComponentType<any>>(
