@@ -51,7 +51,22 @@ const CreateLearningPath = () => {
     tipo_aprendizaje: "",
     estimated_duration: 0,
     tags: [],
+    institutions: [] as string[],
   });
+
+  // Sync learning_path_institutions: delete all + reinsert
+  const syncInstitutions = async (targetPathId: string, ids: string[]) => {
+    try {
+      await (supabase as any).from("learning_path_institutions").delete().eq("path_id", targetPathId);
+      if (ids && ids.length > 0) {
+        await (supabase as any)
+          .from("learning_path_institutions")
+          .insert(ids.map((institution_id) => ({ path_id: targetPathId, institution_id })));
+      }
+    } catch (e) {
+      console.error("syncInstitutions failed", e);
+    }
+  };
 
   // Cargar datos existentes si estamos en modo edición o clonación
   useEffect(() => {
@@ -133,6 +148,16 @@ const CreateLearningPath = () => {
           };
           
           setPathData(loadedData);
+
+          // Load existing institutions in edit mode
+          if (id) {
+            const { data: existingInst } = await (supabase as any)
+              .from("learning_path_institutions")
+              .select("institution_id")
+              .eq("path_id", sourceId);
+            const inst = (existingInst || []).map((r: any) => r.institution_id);
+            setPathData((prev: any) => ({ ...prev, institutions: inst }));
+          }
         }
       } catch (error: any) {
         console.error("Error loading path:", error);
