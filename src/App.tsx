@@ -252,7 +252,14 @@ const App = () => (
             <Route path="/chat/login" element={<ChatLogin />} />
             <Route path="/chat/login-test" element={<ChatLoginTest />} />
             {/* Institution custom slug — MUST be the last named route before catch-all */}
-            <Route path="/:slug" element={<InstitutionProfile />} />
+            <Route
+              path="/:slug"
+              element={
+                <ErrorBoundary fallback={<NotFound />}>
+                  <InstitutionProfile />
+                </ErrorBoundary>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
