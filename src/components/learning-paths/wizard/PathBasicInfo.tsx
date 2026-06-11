@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { RouteSearchModal } from "@/components/learning-paths/RouteSearchModal";
 import { ImageUpload } from "@/components/learning-paths/ImageUpload";
+import { PathInstitutionsField } from "@/components/learning-paths/PathInstitutionsField";
 import { Combobox } from "@/components/ui/combobox";
 import { subjects, subjectToCategoryMap } from "@/lib/subjects";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ interface PathBasicInfoProps {
   pathId: string | null;
 }
 
-export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
+export const PathBasicInfo = ({ data, onChange, pathId }: PathBasicInfoProps) => {
   const [showRouteSearch, setShowRouteSearch] = useState(false);
   const [requiresPrerequisites, setRequiresPrerequisites] = useState(false);
   const [tagInput, setTagInput] = useState("");
@@ -396,6 +397,12 @@ export const PathBasicInfo = ({ data, onChange }: PathBasicInfoProps) => {
             onCheckedChange={(checked) => onChange({ ...data, is_public: checked })}
           />
         </div>
+
+        <PathInstitutionsField
+          pathId={pathId}
+          value={Array.isArray(data.institutions) ? data.institutions : []}
+          onChange={(institutions) => onChange({ ...data, institutions })}
+        />
 
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
