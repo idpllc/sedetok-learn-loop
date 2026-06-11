@@ -51,7 +51,22 @@ const CreateLearningPath = () => {
     tipo_aprendizaje: "",
     estimated_duration: 0,
     tags: [],
+    institutions: [] as string[],
   });
+
+  // Sync learning_path_institutions: delete all + reinsert
+  const syncInstitutions = async (targetPathId: string, ids: string[]) => {
+    try {
+      await (supabase as any).from("learning_path_institutions").delete().eq("path_id", targetPathId);
+      if (ids && ids.length > 0) {
+        await (supabase as any)
+          .from("learning_path_institutions")
+          .insert(ids.map((institution_id) => ({ path_id: targetPathId, institution_id })));
+      }
+    } catch (e) {
+      console.error("syncInstitutions failed", e);
+    }
+  };
 
   // Cargar datos existentes si estamos en modo edición o clonación
   useEffect(() => {
@@ -133,6 +148,16 @@ const CreateLearningPath = () => {
           };
           
           setPathData(loadedData);
+
+          // Load existing institutions in edit mode
+          if (id) {
+            const { data: existingInst } = await (supabase as any)
+              .from("learning_path_institutions")
+              .select("institution_id")
+              .eq("path_id", sourceId);
+            const inst = (existingInst || []).map((r: any) => r.institution_id);
+            setPathData((prev: any) => ({ ...prev, institutions: inst }));
+          }
         }
       } catch (error: any) {
         console.error("Error loading path:", error);
@@ -178,18 +203,25 @@ const CreateLearningPath = () => {
     );
   }
 
+  const stripExtras = (payload: any) => {
+    const { institutions: _inst, ...rest } = payload || {};
+    return rest;
+  };
+
   const handleNext = async () => {
     // Si es el primer paso y no es clonación, crear la ruta (sin toast)
     if (currentStep === 1 && !pathId && !cloneId) {
       const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
       const tags = Array.isArray(pathData.tags) ? pathData.tags : typeof pathData.tags === 'string' ? (() => { try { const p = JSON.parse(pathData.tags); return Array.isArray(p) ? p : String(pathData.tags).split(/[,;|]/).map((t:any)=>String(t).trim()).filter(Boolean);} catch { return String(pathData.tags).split(/[,;|]/).map((t:any)=>String(t).trim()).filter(Boolean);} })() : [];
-      const result = await createPath.mutateAsync({ ...pathData, subject: subjectLabel, tags });
+      const result = await createPath.mutateAsync(stripExtras({ ...pathData, subject: subjectLabel, tags }));
       setPathId(result.id);
+      await syncInstitutions(result.id, pathData.institutions || []);
     } else if (currentStep === 1 && !pathId && cloneId) {
       // Si es clonación, crear la ruta clonada (sin toast)
       const result = await clonePath.mutateAsync(cloneId);
       setPathId(result.id);
       setIsCloning(false);
+      await syncInstitutions(result.id, pathData.institutions || []);
     } else if (pathId) {
       // Si es el último paso, validar que hay contenido y que no exista una ruta idéntica
       if (currentStep === steps.length) {
@@ -251,15 +283,16 @@ const CreateLearningPath = () => {
         const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
         await updatePath.mutateAsync({ 
           id: pathId, 
-          updates: { 
+          updates: stripExtras({ 
             ...pathData,
             subject: subjectLabel,
             status: 'published',
             estimated_duration: pathData.estimated_duration,
             tags: pathData.tags || [],
             total_xp: pathData.total_xp 
-          } 
+          })
         });
+        await syncInstitutions(pathId, pathData.institutions || []);
         
         toast({
           title: "¡Ruta publicada!",
@@ -268,7 +301,8 @@ const CreateLearningPath = () => {
       } else {
         // Actualizar la ruta existente en pasos intermedios (sin toast)
         const subjectLabel = pathData.subject ? (subjects.find(s => s.value === pathData.subject)?.label || subjects.find(s => s.label === pathData.subject)?.label || pathData.subject) : pathData.subject;
-        await updatePath.mutateAsync({ id: pathId, updates: { ...pathData, subject: subjectLabel } });
+        await updatePath.mutateAsync({ id: pathId, updates: stripExtras({ ...pathData, subject: subjectLabel }) });
+        await syncInstitutions(pathId, pathData.institutions || []);
       }
     }
 
@@ -296,11 +330,13 @@ const CreateLearningPath = () => {
     if (pathId) {
       await updatePath.mutateAsync({
         id: pathId,
-        updates: { ...(pathData as any), subject: subjectLabel, tags: tagsNormalized },
+        updates: stripExtras({ ...(pathData as any), subject: subjectLabel, tags: tagsNormalized }),
       });
+      await syncInstitutions(pathId, pathData.institutions || []);
     } else {
-      const result = await createPath.mutateAsync({ ...(pathData as any), subject: subjectLabel, tags: tagsNormalized });
+      const result = await createPath.mutateAsync(stripExtras({ ...(pathData as any), subject: subjectLabel, tags: tagsNormalized }));
       setPathId(result.id);
+      await syncInstitutions(result.id, pathData.institutions || []);
     }
     navigate("/learning-paths");
   };

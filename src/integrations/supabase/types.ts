@@ -1233,6 +1233,7 @@ export type Database = {
           name: string
           nit: string | null
           sede_academico_api_url: string | null
+          slug: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1252,6 +1253,7 @@ export type Database = {
           name: string
           nit?: string | null
           sede_academico_api_url?: string | null
+          slug?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1271,6 +1273,7 @@ export type Database = {
           name?: string
           nit?: string | null
           sede_academico_api_url?: string | null
+          slug?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1506,6 +1509,42 @@ export type Database = {
             columns: ["quiz_id"]
             isOneToOne: false
             referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_path_institutions: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          path_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          path_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          path_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_path_institutions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_path_institutions_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "learning_paths"
             referencedColumns: ["id"]
           },
         ]
@@ -4333,6 +4372,10 @@ export type Database = {
         Args: { _course_id: string; _user_id: string }
         Returns: boolean
       }
+      can_view_path: {
+        Args: { _path_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_student_data: {
         Args: { _student_id: string; _viewer_id: string }
         Returns: boolean
@@ -4387,6 +4430,20 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_institution_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          city: string
+          country: string
+          cover_url: string
+          created_at: string
+          description: string
+          id: string
+          logo_url: string
+          name: string
+          slug: string
+        }[]
+      }
       get_institution_internal_ranking: {
         Args: { p_institution_id: string; p_limit?: number }
         Returns: {
@@ -4397,10 +4454,25 @@ export type Database = {
           username: string
         }[]
       }
+      get_institution_member_xp: {
+        Args: { _institution_id: string; _user_id: string }
+        Returns: number
+      }
       get_institution_student_ids: {
         Args: { p_institution_id: string }
         Returns: {
           user_id: string
+        }[]
+      }
+      get_institution_xp_ranking: {
+        Args: { _institution_id: string; _limit?: number }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          member_role: string
+          user_id: string
+          username: string
+          xp: number
         }[]
       }
       get_institutional_trivia_ranking: {
@@ -4524,6 +4596,7 @@ export type Database = {
         }
         Returns: string
       }
+      slugify: { Args: { _input: string }; Returns: string }
       validate_discount_code: {
         Args: {
           _amount_cop: number

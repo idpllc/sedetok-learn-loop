@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, BookOpen, UserPlus, Settings, Home, Calendar, Camera, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Building2, Users, BookOpen, UserPlus, Settings, Home, Calendar, Camera, ChevronLeft, ChevronRight, ExternalLink, Share2, Check, Trophy } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -30,9 +30,26 @@ export default function InstitutionDashboard() {
   const [newMemberRole, setNewMemberRole] = useState<string>("student");
   const [searchQuery, setSearchQuery] = useState("");
   const [membersPage, setMembersPage] = useState(1);
+  const [copiedSlug, setCopiedSlug] = useState(false);
   const MEMBERS_PER_PAGE = 20;
   const { uploadFile, uploading } = useCloudinary();
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const publicUrl = myInstitution?.slug
+    ? `${window.location.origin}/${myInstitution.slug}`
+    : null;
+
+  const handleCopyPublicUrl = async () => {
+    if (!publicUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedSlug(true);
+      toast({ title: "¡Enlace copiado!", description: publicUrl });
+      setTimeout(() => setCopiedSlug(false), 2000);
+    } catch {
+      toast({ title: "Error", description: "No se pudo copiar", variant: "destructive" });
+    }
+  };
 
   // Get current user's role in the institution
   const { data: currentUserRole } = useQuery({
@@ -327,17 +344,40 @@ export default function InstitutionDashboard() {
                   <h1 className="text-3xl font-bold">{myInstitution.name}</h1>
                   <p className="text-muted-foreground mt-1">{myInstitution.description}</p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate("/")}
-                  className="flex items-center gap-2"
-                >
-                  <Home className="h-4 w-4" />
-                  Inicio
-                </Button>
+                <div className="flex gap-2">
+                  {publicUrl && (
+                    <Button
+                      variant="outline"
+                      onClick={handleCopyPublicUrl}
+                      className="flex items-center gap-2"
+                    >
+                      {copiedSlug ? <Check className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
+                      Compartir
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate("/")}
+                    className="flex items-center gap-2"
+                  >
+                    <Home className="h-4 w-4" />
+                    Inicio
+                  </Button>
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm">
+                {publicUrl && (
+                  <a
+                    href={publicUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span className="font-mono">sedefy.com/{myInstitution.slug}</span>
+                  </a>
+                )}
                 {myInstitution.created_at && (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
