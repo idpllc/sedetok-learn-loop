@@ -368,7 +368,7 @@ export const useS3Upload = () => {
     setUploading(true);
     try {
       if (resourceType === "video") {
-        const result = await uploadToCloudinary(file);
+        const result = await uploadVideoToS3(file);
         return result.url;
       }
 
@@ -392,7 +392,7 @@ export const useS3Upload = () => {
   const uploadVideo = async (file: File): Promise<{ url: string; thumbnail_url: string }> => {
     setUploading(true);
     try {
-      return await uploadToCloudinary(file);
+      return await uploadVideoToS3(file);
     } catch (error) {
       console.error("[Upload] Error en uploadVideo:", error);
       const errorMessage = error instanceof Error ? error.message : "No se pudo subir el video";
