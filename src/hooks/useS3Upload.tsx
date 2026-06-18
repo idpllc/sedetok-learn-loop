@@ -262,128 +262,78 @@ export const useS3Upload = () => {
     }
   };
 
-  const getUploadUrls = (uploadUrl: string): string[] => {
-    const autoUrl = uploadUrl.replace("/video/upload", "/auto/upload");
-    return autoUrl === uploadUrl ? [uploadUrl] : [uploadUrl, autoUrl];
-  };
-
-  // Upload video directly to Cloudinary using signed params from edge function
-  const uploadToCloudinary = async (file: File): Promise<{ url: string; thumbnail_url: string }> => {
-    console.log(`[Cloudinary] Solicitando parámetros de carga para: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-
-    // Step 1: Get signed upload params from edge function (lightweight call)
-    const { data: signData, error: signError } = await supabase.functions.invoke("upload-to-cloudinary", {
-      body: {},
+  // Upload video directly to S3 using a presigned PUT URL
+  const putWithXhr = (
+    uploadUrl: string,
+    file: Blob,
+    contentType: string,
+    timeoutMs = 1000 * 60 * 30,
+  ): Promise<{ ok: boolean; status: number; bodyText: string }> =>
+    new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl, true);
+      xhr.timeout = timeoutMs;
+      xhr.setRequestHeader("Content-Type", contentType);
+      xhr.onload = () =>
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          bodyText: xhr.responseText || "",
+        });
+      xhr.onerror = () => reject(new Error("XHR network error"));
+      xhr.ontimeout = () => reject(new Error("Upload timeout"));
+      xhr.onabort = () => reject(new Error("Upload aborted"));
+      xhr.send(file);
     });
 
-    if (signError || signData?.error) {
-      const msg = signError?.message || signData?.error || "Error al obtener parámetros de carga";
-      console.error("[Cloudinary] Error obteniendo params:", msg);
+  const uploadVideoToS3 = async (file: File): Promise<{ url: string; thumbnail_url: string }> => {
+    console.log(`[S3] Solicitando URL presignada para video: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+
+    const { data, error } = await supabase.functions.invoke("s3-presign-upload", {
+      body: {
+        fileName: file.name,
+        contentType: file.type || "video/mp4",
+        folder: "videos",
+      },
+    });
+
+    if (error || data?.error) {
+      const msg = error?.message || data?.error || "No se pudo obtener URL de carga";
+      console.error("[S3] Error presign:", msg);
       throw new Error(msg);
     }
 
-    const { uploadUrl, folder, apiKey, timestamp, signature, uploadPreset } = signData;
-    const uploadUrls = getUploadUrls(uploadUrl);
-
-    const signedFields: Record<string, string> = {
-      api_key: apiKey,
-      timestamp: String(timestamp),
-      signature,
-      folder,
-      ...(uploadPreset ? { upload_preset: uploadPreset } : {}),
+    const { uploadUrl, publicUrl, contentType } = data as {
+      uploadUrl: string;
+      publicUrl: string;
+      contentType: string;
     };
 
-    const unsignedFields: Record<string, string> | null = uploadPreset
-      ? {
-          upload_preset: uploadPreset,
-          folder,
-        }
-      : null;
+    console.log("[S3] Subiendo video directamente a S3...");
 
-    console.log("[Cloudinary] Subiendo video directamente a Cloudinary (signed)...");
-
-    let signedResponse: CloudinaryUploadResponse | null = null;
-    let lastSignedError: unknown = null;
-
-    for (const url of uploadUrls) {
+    const maxRetries = 3;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        signedResponse = await uploadWithResilience(url, file, signedFields);
-        break;
-      } catch (error) {
-        lastSignedError = error;
-        if (!isNetworkUploadError(error)) throw error;
-      }
-    }
-
-    if (!signedResponse) {
-      if (uploadPreset) {
-        console.warn("[Cloudinary] Signed upload con error de red. Reintentando como unsigned...");
-
-        for (const url of uploadUrls) {
-          try {
-            if (!unsignedFields) break;
-            const unsignedResponse = await uploadWithResilience(url, file, unsignedFields);
-            if (!unsignedResponse.ok) {
-              const unsignedError = parseCloudinaryError(unsignedResponse.bodyText);
-              throw new Error(`Error al subir video: ${unsignedResponse.status} - ${unsignedError}`);
-            }
-            return parseSuccessResponse(unsignedResponse.bodyText);
-          } catch (error) {
-            lastSignedError = error;
-            if (!isNetworkUploadError(error)) throw error;
-          }
+        const res = await putWithXhr(uploadUrl, file, contentType);
+        if (res.ok) {
+          console.log("[S3] Video subido exitosamente:", publicUrl);
+          return { url: publicUrl, thumbnail_url: publicUrl };
         }
-      }
-
-      const networkMessage =
-        lastSignedError instanceof Error
-          ? lastSignedError.message
-          : "No se pudo conectar durante la carga";
-
-      throw new Error(`Error de red al subir video: ${networkMessage}`);
-    }
-
-    if (!signedResponse.ok) {
-      const signedError = parseCloudinaryError(signedResponse.bodyText);
-      console.error("[Cloudinary] Signed upload failed:", signedResponse.bodyText);
-
-      const shouldFallbackToUnsigned =
-        Boolean(uploadPreset) &&
-        (signedResponse.status === 401 ||
-          signedResponse.status === 403 ||
-          /invalid signature|unsigned|upload preset/i.test(signedError));
-
-      if (shouldFallbackToUnsigned) {
-        console.warn("[Cloudinary] Reintentando como unsigned con upload_preset...");
-
-        for (const url of uploadUrls) {
-          try {
-            if (!unsignedFields) break;
-            const unsignedResponse = await uploadWithResilience(url, file, unsignedFields);
-            if (unsignedResponse.ok) {
-              return parseSuccessResponse(unsignedResponse.bodyText);
-            }
-
-            const unsignedError = parseCloudinaryError(unsignedResponse.bodyText);
-            console.error("[Cloudinary] Unsigned fallback failed:", unsignedResponse.bodyText);
-
-            if (url === uploadUrls[uploadUrls.length - 1]) {
-              throw new Error(`Error al subir video: ${unsignedResponse.status} - ${unsignedError}`);
-            }
-          } catch (error) {
-            if (!isNetworkUploadError(error) || url === uploadUrls[uploadUrls.length - 1]) {
-              throw error;
-            }
-          }
+        if (res.status >= 400 && res.status < 500) {
+          throw new Error(`Error S3 ${res.status}: ${res.bodyText.slice(0, 200)}`);
         }
+        lastError = new Error(`Error S3 ${res.status}: ${res.bodyText.slice(0, 200)}`);
+      } catch (err) {
+        lastError = err;
+        if (!isNetworkUploadError(err) || attempt >= maxRetries) throw err;
+        const waitMs = Math.min(2000 * Math.pow(2, attempt - 1), 10000);
+        console.warn(`[S3] Intento ${attempt} falló, esperando ${waitMs}ms...`);
+        await delay(waitMs);
       }
-
-      throw new Error(`Error al subir video: ${signedResponse.status} - ${signedError}`);
     }
 
-    const result = parseSuccessResponse(signedResponse.bodyText);
-    console.log("[Cloudinary] Video subido exitosamente:", result.url);
-    return result;
+    throw lastError instanceof Error ? lastError : new Error("No se pudo subir el video");
   };
 
   // Upload other files to S3
@@ -418,7 +368,7 @@ export const useS3Upload = () => {
     setUploading(true);
     try {
       if (resourceType === "video") {
-        const result = await uploadToCloudinary(file);
+        const result = await uploadVideoToS3(file);
         return result.url;
       }
 
@@ -442,7 +392,7 @@ export const useS3Upload = () => {
   const uploadVideo = async (file: File): Promise<{ url: string; thumbnail_url: string }> => {
     setUploading(true);
     try {
-      return await uploadToCloudinary(file);
+      return await uploadVideoToS3(file);
     } catch (error) {
       console.error("[Upload] Error en uploadVideo:", error);
       const errorMessage = error instanceof Error ? error.message : "No se pudo subir el video";
