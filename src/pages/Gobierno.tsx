@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Orb from "@/components/Orb";
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
