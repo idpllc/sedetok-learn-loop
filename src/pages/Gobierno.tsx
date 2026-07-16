@@ -358,7 +358,7 @@ const DashboardMock = () => {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
-          { label: "Estudiantes activos", value: 1284932, color: "#22D3B7" },
+          { label: "Estudiantes activos", value: 12000, color: "#22D3B7" },
           { label: "Índice de bienestar", value: 87, suffix: "%", color: "#A3E635" },
           { label: "Alertas activas", value: 342, color: "#4ADE80" },
           { label: "Deserción proyectada", value: 4.2, suffix: "%", color: "#4ADE80" },
