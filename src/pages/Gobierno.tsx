@@ -541,12 +541,7 @@ const Gobierno = () => {
       <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 bg-[#0B1220]/60 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg"
-              style={{ background: "linear-gradient(135deg, #F6339A, #22D3B7)" }}
-            >
-              <Cpu className="h-4 w-4 text-[#0B1220]" />
-            </div>
+            <img src={sedefyLogo} alt="SEDEFY" width={32} height={32} loading="lazy" className="h-8 w-8 object-contain" />
             <span className="font-semibold tracking-tight">SEDEFY <span className="text-white/50">/ Gobierno</span></span>
           </div>
           <div className="hidden gap-8 text-sm text-white/70 md:flex">
