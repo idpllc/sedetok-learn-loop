@@ -94,6 +94,7 @@ const PaymentLink = lazyWithRetry(() => import("./pages/PaymentLink"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Contacto = lazyWithRetry(() => import("./pages/Contacto"));
 const InstitutionProfile = lazyWithRetry(() => import("./pages/InstitutionProfile"));
+const Gobierno = lazyWithRetry(() => import("./pages/Gobierno"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
 // (iframes used by the notebook capsule preview) to minimise boot time.
