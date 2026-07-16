@@ -244,11 +244,11 @@ const Eyebrow = ({ children }: { children: React.ReactNode }) => (
 /*  Data sources radial diagram                                               */
 /* -------------------------------------------------------------------------- */
 const DataOrbit = () => {
-  const sources = [
-    "Calificaciones", "Asistencia", "Observador", "Convivencia",
-    "Socioeconómico", "Psicosocial", "Encuestas", "Docentes",
-    "Padres", "Evaluaciones", "Videos", "Gamificación",
-    "Pruebas Saber", "Competencias",
+  const decisions = [
+    "Deserción escolar", "Programas de refuerzo", "Políticas educativas", "Rutas de aprendizaje",
+    "Asignación de recursos", "Mejora continua", "Evaluación institucional", "Formación docente",
+    "Infraestructura", "Bienestar estudiantil", "Alimentación escolar", "Transporte escolar",
+    "Becas", "Inclusión",
   ];
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[640px]">
@@ -279,9 +279,9 @@ const DataOrbit = () => {
           SEDEFY AI
         </div>
       </div>
-      {/* sources */}
-      {sources.map((s, i) => {
-        const angle = (i / sources.length) * Math.PI * 2 - Math.PI / 2;
+      {/* decisions */}
+      {decisions.map((s, i) => {
+        const angle = (i / decisions.length) * Math.PI * 2 - Math.PI / 2;
         const R = 44; // percent
         const left = 50 + Math.cos(angle) * R;
         const top = 50 + Math.sin(angle) * R;
@@ -295,7 +295,7 @@ const DataOrbit = () => {
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${left}%`, top: `${top}%` }}
           >
-            <div className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[11px] text-white/80 backdrop-blur-xl">
+            <div className="rounded-full border border-[#22D3B7]/20 bg-white/[0.05] px-3 py-1.5 text-[11px] text-white/80 backdrop-blur-xl shadow-[0_0_20px_rgba(34,211,183,0.08)]">
               {s}
             </div>
           </motion.div>
@@ -305,12 +305,19 @@ const DataOrbit = () => {
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <linearGradient id="line" x1="0" x2="1">
-            <stop offset="0%" stopColor="#22D3B7" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#4ADE80" stopOpacity="0" />
+            <stop offset="0%" stopColor="#22D3B7" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#4ADE80" stopOpacity="0.2" />
           </linearGradient>
+          <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="0.8" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
-        {sources.map((_, i) => {
-          const angle = (i / sources.length) * Math.PI * 2 - Math.PI / 2;
+        {decisions.map((_, i) => {
+          const angle = (i / decisions.length) * Math.PI * 2 - Math.PI / 2;
           const R = 44;
           const x = 50 + Math.cos(angle) * R;
           const y = 50 + Math.sin(angle) * R;
@@ -318,11 +325,11 @@ const DataOrbit = () => {
             <motion.line
               key={i}
               x1="50" y1="50" x2={x} y2={y}
-              stroke="url(#line)" strokeWidth="0.15"
-              initial={{ pathLength: 0 }}
-              whileInView={{ pathLength: 1 }}
+              stroke="url(#line)" strokeWidth="0.35" filter="url(#lineGlow)"
+              initial={{ pathLength: 0, opacity: 0 }}
+              whileInView={{ pathLength: 1, opacity: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 1.5, delay: i * 0.05 }}
+              transition={{ duration: 1.2, delay: i * 0.05 }}
             />
           );
         })}
@@ -351,7 +358,7 @@ const DashboardMock = () => {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
-          { label: "Estudiantes activos", value: 1284932, color: "#22D3B7" },
+          { label: "Estudiantes activos", value: 12000, color: "#22D3B7" },
           { label: "Índice de bienestar", value: 87, suffix: "%", color: "#A3E635" },
           { label: "Alertas activas", value: 342, color: "#4ADE80" },
           { label: "Deserción proyectada", value: 4.2, suffix: "%", color: "#4ADE80" },
