@@ -244,11 +244,11 @@ const Eyebrow = ({ children }: { children: React.ReactNode }) => (
 /*  Data sources radial diagram                                               */
 /* -------------------------------------------------------------------------- */
 const DataOrbit = () => {
-  const sources = [
-    "Calificaciones", "Asistencia", "Observador", "Convivencia",
-    "Socioeconómico", "Psicosocial", "Encuestas", "Docentes",
-    "Padres", "Evaluaciones", "Videos", "Gamificación",
-    "Pruebas Saber", "Competencias",
+  const decisions = [
+    "Deserción escolar", "Programas de refuerzo", "Políticas educativas", "Rutas de aprendizaje",
+    "Asignación de recursos", "Mejora continua", "Evaluación institucional", "Formación docente",
+    "Infraestructura", "Bienestar estudiantil", "Alimentación escolar", "Transporte escolar",
+    "Becas", "Inclusión",
   ];
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[640px]">
