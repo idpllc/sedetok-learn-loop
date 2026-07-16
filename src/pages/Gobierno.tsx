@@ -561,7 +561,7 @@ const Gobierno = () => {
         <div className="absolute inset-0 opacity-40"><NodesNetwork /></div>
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="relative aspect-square w-[min(1080px,120vmin)]">
-            <Orb hue={81} hoverIntensity={0} rotateOnHover forceHoverState={false} />
+            <Orb hue={280} hoverIntensity={0} rotateOnHover forceHoverState={false} />
           </div>
         </div>
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 55%, #0B1220 90%)" }} />
