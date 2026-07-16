@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Orb from "@/components/Orb";
+import sedefyLogo from "@/assets/sedefy-logo.png";
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
@@ -92,7 +93,7 @@ const NodesNetwork = ({ density = 90 }: { density?: number }) => {
           const d = Math.hypot(dx, dy);
           if (d < 140 * dpr) {
             const alpha = 1 - d / (140 * dpr);
-            ctx.strokeStyle = `rgba(0, 229, 255, ${alpha * 0.35})`;
+            ctx.strokeStyle = `rgba(246, 51, 154, ${alpha * 0.35})`;
             ctx.lineWidth = 0.6 * dpr;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -111,8 +112,8 @@ const NodesNetwork = ({ density = 90 }: { density?: number }) => {
           ctx.stroke();
         }
         // node
-        ctx.fillStyle = "rgba(0, 229, 255, 0.85)";
-        ctx.shadowColor = "rgba(0, 229, 255, 0.7)";
+        ctx.fillStyle = "rgba(246, 51, 154, 0.85)";
+        ctx.shadowColor = "rgba(246, 51, 154, 0.7)";
         ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
@@ -161,7 +162,7 @@ const GlassCard = ({
       className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl ${className}`}
       style={{
         boxShadow: glow
-          ? "0 0 0 1px rgba(0,229,255,0.08), 0 30px 80px -30px rgba(0,229,255,0.25)"
+          ? "0 0 0 1px rgba(246,51,154,0.08), 0 30px 80px -30px rgba(246,51,154,0.25)"
           : "0 20px 60px -30px rgba(0,0,0,0.6)",
       }}
     >
@@ -169,7 +170,7 @@ const GlassCard = ({
         aria-hidden
         className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
-          background: `radial-gradient(400px circle at ${mx.get()}px ${my.get()}px, rgba(0,229,255,0.15), transparent 40%)`,
+          background: `radial-gradient(400px circle at ${mx.get()}px ${my.get()}px, rgba(246,51,154,0.15), transparent 40%)`,
         }}
       />
       <div className="relative">{children}</div>
@@ -216,8 +217,8 @@ const MagneticButton = ({
         <span
           className="absolute inset-0 rounded-full"
           style={{
-            background: "linear-gradient(135deg, #00E5FF 0%, #7C5CFF 100%)",
-            boxShadow: "0 10px 40px -10px rgba(0,229,255,0.6)",
+            background: "linear-gradient(135deg, #F6339A 0%, #22D3B7 100%)",
+            boxShadow: "0 10px 40px -10px rgba(246,51,154,0.6)",
           }}
         />
       )}
@@ -233,8 +234,8 @@ const MagneticButton = ({
 /*  Section title                                                             */
 /* -------------------------------------------------------------------------- */
 const Eyebrow = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[#00E5FF] backdrop-blur">
-    <span className="h-1.5 w-1.5 rounded-full bg-[#00E5FF] shadow-[0_0_10px_#00E5FF]" />
+  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[#F6339A] backdrop-blur">
+    <span className="h-1.5 w-1.5 rounded-full bg-[#F6339A] shadow-[0_0_10px_#F6339A]" />
     {children}
   </div>
 );
@@ -268,8 +269,8 @@ const DataOrbit = () => {
           transition={{ duration: 3, repeat: Infinity }}
           className="relative flex h-32 w-32 items-center justify-center rounded-full"
           style={{
-            background: "radial-gradient(circle at 30% 30%, #7C5CFF, #00E5FF 60%, #0B1220 100%)",
-            boxShadow: "0 0 80px rgba(0,229,255,0.5), inset 0 0 40px rgba(255,255,255,0.15)",
+            background: "radial-gradient(circle at 30% 30%, #22D3B7, #F6339A 60%, #0B1220 100%)",
+            boxShadow: "0 0 80px rgba(246,51,154,0.5), inset 0 0 40px rgba(255,255,255,0.15)",
           }}
         >
           <Brain className="h-12 w-12 text-white" />
@@ -304,8 +305,8 @@ const DataOrbit = () => {
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <linearGradient id="line" x1="0" x2="1">
-            <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#7C5CFF" stopOpacity="0" />
+            <stop offset="0%" stopColor="#F6339A" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#22D3B7" stopOpacity="0" />
           </linearGradient>
         </defs>
         {sources.map((_, i) => {
@@ -342,17 +343,17 @@ const DashboardMock = () => {
           <div className="text-xs uppercase tracking-widest text-white/50">Panel Nacional</div>
           <div className="mt-1 text-lg font-semibold text-white">Inteligencia Educativa · Tiempo real</div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-[#00D26A]">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[#00D26A] shadow-[0_0_10px_#00D26A]" />
+        <div className="flex items-center gap-2 text-xs text-[#F6B93B]">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-[#F6B93B] shadow-[0_0_10px_#F6B93B]" />
           En vivo
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
-          { label: "Estudiantes activos", value: 1284932, color: "#00E5FF" },
-          { label: "Índice de bienestar", value: 87, suffix: "%", color: "#00D26A" },
-          { label: "Alertas activas", value: 342, color: "#7C5CFF" },
+          { label: "Estudiantes activos", value: 1284932, color: "#F6339A" },
+          { label: "Índice de bienestar", value: 87, suffix: "%", color: "#F6B93B" },
+          { label: "Alertas activas", value: 342, color: "#22D3B7" },
           { label: "Deserción proyectada", value: 4.2, suffix: "%", color: "#FF6A88" },
         ].map((k) => (
           <div key={k.label} className="rounded-xl border border-white/5 bg-black/20 p-3">
@@ -390,8 +391,8 @@ const DashboardMock = () => {
                 transition={{ duration: 1, delay: i * 0.06 }}
                 className="flex-1 rounded-t"
                 style={{
-                  background: "linear-gradient(to top, rgba(0,229,255,0.15), #00E5FF)",
-                  boxShadow: "0 0 20px rgba(0,229,255,0.3)",
+                  background: "linear-gradient(to top, rgba(246,51,154,0.15), #F6339A)",
+                  boxShadow: "0 0 20px rgba(246,51,154,0.3)",
                 }}
               />
             ))}
@@ -403,7 +404,7 @@ const DashboardMock = () => {
             {Array.from({ length: 36 }).map((_, i) => {
               const v = Math.random();
               const color =
-                v > 0.75 ? "#00E5FF" : v > 0.5 ? "#7C5CFF" : v > 0.25 ? "#00D26A" : "rgba(255,255,255,0.06)";
+                v > 0.75 ? "#F6339A" : v > 0.5 ? "#22D3B7" : v > 0.25 ? "#F6B93B" : "rgba(255,255,255,0.06)";
               return (
                 <motion.div
                   key={i}
@@ -438,7 +439,7 @@ const AIChat = () => {
       <div className="mb-4 flex items-center gap-3">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{ background: "linear-gradient(135deg, #7C5CFF, #00E5FF)" }}
+          style={{ background: "linear-gradient(135deg, #22D3B7, #F6339A)" }}
         >
           <Sparkles className="h-5 w-5 text-white" />
         </div>
@@ -466,8 +467,8 @@ const AIChat = () => {
               style={
                 m.role === "ai"
                   ? {
-                      background: "linear-gradient(135deg, rgba(124,92,255,0.15), rgba(0,229,255,0.08))",
-                      border: "1px solid rgba(0,229,255,0.2)",
+                      background: "linear-gradient(135deg, rgba(124,92,255,0.15), rgba(246,51,154,0.08))",
+                      border: "1px solid rgba(246,51,154,0.2)",
                     }
                   : { border: "1px solid rgba(255,255,255,0.08)" }
               }
@@ -523,7 +524,7 @@ const Gobierno = () => {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(1200px 600px at 20% 0%, rgba(0,229,255,0.15), transparent 60%), radial-gradient(1000px 500px at 80% 30%, rgba(124,92,255,0.18), transparent 60%), radial-gradient(800px 400px at 50% 100%, rgba(0,210,106,0.08), transparent 60%)",
+              "radial-gradient(1200px 600px at 20% 0%, rgba(246,51,154,0.15), transparent 60%), radial-gradient(1000px 500px at 80% 30%, rgba(124,92,255,0.18), transparent 60%), radial-gradient(800px 400px at 50% 100%, rgba(0,210,106,0.08), transparent 60%)",
           }}
         />
         <div
@@ -540,12 +541,7 @@ const Gobierno = () => {
       <nav className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 bg-[#0B1220]/60 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg"
-              style={{ background: "linear-gradient(135deg, #00E5FF, #7C5CFF)" }}
-            >
-              <Cpu className="h-4 w-4 text-[#0B1220]" />
-            </div>
+            <img src={sedefyLogo} alt="SEDEFY" width={32} height={32} loading="lazy" className="h-8 w-8 object-contain" />
             <span className="font-semibold tracking-tight">SEDEFY <span className="text-white/50">/ Gobierno</span></span>
           </div>
           <div className="hidden gap-8 text-sm text-white/70 md:flex">
@@ -565,7 +561,7 @@ const Gobierno = () => {
         <div className="absolute inset-0 opacity-40"><NodesNetwork /></div>
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div className="relative aspect-square w-[min(1080px,120vmin)]">
-            <Orb hue={81} hoverIntensity={0} rotateOnHover forceHoverState={false} />
+            <Orb hue={280} hoverIntensity={0} rotateOnHover forceHoverState={false} />
           </div>
         </div>
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 55%, #0B1220 90%)" }} />
@@ -581,7 +577,7 @@ const Gobierno = () => {
             El Sistema Operativo de{" "}
             <span
               className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "linear-gradient(135deg, #00E5FF 0%, #7C5CFF 60%, #00D26A 100%)" }}
+              style={{ backgroundImage: "linear-gradient(135deg, #F6339A 0%, #22D3B7 60%, #F6B93B 100%)" }}
             >
               Inteligencia
             </span>{" "}
@@ -611,9 +607,9 @@ const Gobierno = () => {
             transition={{ delay: 1.2 }}
             className="mt-16 flex items-center justify-center gap-8 text-xs uppercase tracking-widest text-white/40"
           >
-            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#00D26A]" /> Ministerios</div>
-            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#00E5FF]" /> Secretarías</div>
-            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#7C5CFF]" /> Gobernaciones</div>
+            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#F6B93B]" /> Ministerios</div>
+            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#F6339A]" /> Secretarías</div>
+            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#22D3B7]" /> Gobernaciones</div>
           </motion.div>
         </motion.div>
 
@@ -676,8 +672,8 @@ const Gobierno = () => {
               ))}
               <defs>
                 <linearGradient id="connGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#7C5CFF" stopOpacity="1" />
+                  <stop offset="0%" stopColor="#F6339A" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#22D3B7" stopOpacity="1" />
                 </linearGradient>
               </defs>
             </svg>
@@ -689,8 +685,8 @@ const Gobierno = () => {
                 viewport={{ once: true }}
                 className="relative flex h-24 w-24 items-center justify-center rounded-full"
                 style={{
-                  background: "radial-gradient(circle at 30% 30%, #7C5CFF, #00E5FF 70%)",
-                  boxShadow: "0 0 60px rgba(0,229,255,0.6)",
+                  background: "radial-gradient(circle at 30% 30%, #22D3B7, #F6339A 70%)",
+                  boxShadow: "0 0 60px rgba(246,51,154,0.6)",
                 }}
               >
                 <Brain className="h-10 w-10 text-white" />
@@ -720,7 +716,7 @@ const Gobierno = () => {
                   { icon: Eye, label: "Trazabilidad total" },
                 ].map((f) => (
                   <div key={f.label} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white/70">
-                    <f.icon className="h-4 w-4 text-[#00E5FF]" />
+                    <f.icon className="h-4 w-4 text-[#F6339A]" />
                     {f.label}
                   </div>
                 ))}
@@ -753,11 +749,11 @@ const Gobierno = () => {
                   <div
                     className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl"
                     style={{
-                      background: "linear-gradient(135deg, rgba(0,229,255,0.15), rgba(124,92,255,0.15))",
-                      border: "1px solid rgba(0,229,255,0.2)",
+                      background: "linear-gradient(135deg, rgba(246,51,154,0.15), rgba(124,92,255,0.15))",
+                      border: "1px solid rgba(246,51,154,0.2)",
                     }}
                   >
-                    <c.icon className="h-5 w-5 text-[#00E5FF]" />
+                    <c.icon className="h-5 w-5 text-[#F6339A]" />
                   </div>
                   <div className="mb-2 text-xs font-mono text-white/40">0{i + 1}</div>
                   <h3 className="mb-3 text-xl font-semibold text-white">{c.title}</h3>
@@ -814,7 +810,7 @@ const Gobierno = () => {
                 className="relative"
               >
                 <GlassCard className="p-6 text-center">
-                  <s.icon className="mx-auto mb-3 h-6 w-6 text-[#00E5FF]" />
+                  <s.icon className="mx-auto mb-3 h-6 w-6 text-[#F6339A]" />
                   <div className="text-xs font-mono text-white/40">Paso 0{i + 1}</div>
                   <div className="mt-1 text-sm font-semibold text-white">{s.label}</div>
                 </GlassCard>
@@ -839,7 +835,7 @@ const Gobierno = () => {
                 transition={{ delay: i * 0.1 }}
               >
                 <GlassCard className="p-6">
-                  <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-widest text-[#7C5CFF]">
+                  <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-widest text-[#22D3B7]">
                     <Sparkles className="h-3.5 w-3.5" /> IA recomienda
                   </div>
                   <div className="text-base font-semibold text-white">{r.title}</div>
@@ -870,12 +866,12 @@ const Gobierno = () => {
                 transition={{ delay: i * 0.08 }}
               >
                 <GlassCard className="h-full p-6" glow>
-                  <a.icon className="mb-4 h-7 w-7 text-[#00E5FF]" />
+                  <a.icon className="mb-4 h-7 w-7 text-[#F6339A]" />
                   <h3 className="text-lg font-semibold text-white">{a.title}</h3>
                   <ul className="mt-4 space-y-2">
                     {a.stats.map((s) => (
                       <li key={s} className="flex items-center gap-2 text-sm text-white/60">
-                        <span className="h-1 w-1 rounded-full bg-[#00D26A]" /> {s}
+                        <span className="h-1 w-1 rounded-full bg-[#F6B93B]" /> {s}
                       </li>
                     ))}
                   </ul>
@@ -915,7 +911,7 @@ const Gobierno = () => {
                   <div
                     className="text-5xl font-semibold tracking-tight md:text-6xl"
                     style={{
-                      background: "linear-gradient(135deg, #00E5FF 0%, #7C5CFF 100%)",
+                      background: "linear-gradient(135deg, #F6339A 0%, #22D3B7 100%)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                     }}
@@ -950,7 +946,7 @@ const Gobierno = () => {
                   "¿Qué institución mejoró más este semestre?",
                 ].map((q) => (
                   <div key={q} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
-                    <MessageSquare className="h-4 w-4 text-[#7C5CFF]" />
+                    <MessageSquare className="h-4 w-4 text-[#22D3B7]" />
                     {q}
                   </div>
                 ))}
@@ -974,7 +970,7 @@ const Gobierno = () => {
             Las decisiones educativas más importantes ya no deben basarse en{" "}
             <span
               className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "linear-gradient(135deg, #00E5FF 0%, #7C5CFF 100%)" }}
+              style={{ backgroundImage: "linear-gradient(135deg, #F6339A 0%, #22D3B7 100%)" }}
             >
               intuición
             </span>.
@@ -993,12 +989,7 @@ const Gobierno = () => {
       <footer className="border-t border-white/5 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 md:flex-row">
           <div className="flex items-center gap-2 text-sm text-white/50">
-            <div
-              className="flex h-6 w-6 items-center justify-center rounded-md"
-              style={{ background: "linear-gradient(135deg, #00E5FF, #7C5CFF)" }}
-            >
-              <Cpu className="h-3 w-3 text-[#0B1220]" />
-            </div>
+            <img src={sedefyLogo} alt="SEDEFY" width={24} height={24} loading="lazy" className="h-6 w-6 object-contain" />
             SEDEFY · Inteligencia para la educación
           </div>
           <div className="text-xs text-white/40">© {new Date().getFullYear()} SEDEFY. Todos los derechos reservados.</div>
