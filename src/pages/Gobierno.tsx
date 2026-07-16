@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Orb from "@/components/Orb";
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
@@ -561,8 +562,13 @@ const Gobierno = () => {
 
       {/* HERO */}
       <section ref={heroRef} className="relative flex min-h-screen items-center justify-center overflow-hidden pt-20">
-        <div className="absolute inset-0"><NodesNetwork /></div>
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 40%, #0B1220 85%)" }} />
+        <div className="absolute inset-0 opacity-40"><NodesNetwork /></div>
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="relative aspect-square w-[min(1080px,120vmin)]">
+            <Orb hue={81} hoverIntensity={0} rotateOnHover forceHoverState={false} />
+          </div>
+        </div>
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 55%, #0B1220 90%)" }} />
 
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 mx-auto max-w-5xl px-6 text-center">
           <Eyebrow>Inteligencia gubernamental para la educación</Eyebrow>
