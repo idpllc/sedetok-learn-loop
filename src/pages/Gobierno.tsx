@@ -989,12 +989,7 @@ const Gobierno = () => {
       <footer className="border-t border-white/5 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 md:flex-row">
           <div className="flex items-center gap-2 text-sm text-white/50">
-            <div
-              className="flex h-6 w-6 items-center justify-center rounded-md"
-              style={{ background: "linear-gradient(135deg, #F6339A, #22D3B7)" }}
-            >
-              <Cpu className="h-3 w-3 text-[#0B1220]" />
-            </div>
+            <img src={sedefyLogo} alt="SEDEFY" width={24} height={24} loading="lazy" className="h-6 w-6 object-contain" />
             SEDEFY · Inteligencia para la educación
           </div>
           <div className="text-xs text-white/40">© {new Date().getFullYear()} SEDEFY. Todos los derechos reservados.</div>
