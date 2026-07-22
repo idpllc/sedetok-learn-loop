@@ -114,7 +114,29 @@ export const useAcademicMetrics = (userId?: string) => {
           `)
           .eq("user_id", userId)
           .eq("completed", true)
-          .not("path_id", "is", null)
+          .not("path_id", "is", null),
+
+        // 6. Plan de estudios institucional (calificaciones cargadas por la institución)
+        (async () => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("numero_documento")
+            .eq("id", userId)
+            .maybeSingle();
+          const doc = profile?.numero_documento ?? null;
+          const byUser = supabase
+            .from("student_study_plans")
+            .select("periodos")
+            .eq("user_id", userId);
+          const byDoc = doc
+            ? supabase
+                .from("student_study_plans")
+                .select("periodos")
+                .eq("document_number", doc)
+            : Promise.resolve({ data: [], error: null } as any);
+          const [u, d] = await Promise.all([byUser, byDoc]);
+          return { data: [...(u.data || []), ...(d.data || [])], error: null };
+        })()
       ]);
 
       const watchedVideos = watchedVideosResult.data;
@@ -122,6 +144,7 @@ export const useAcademicMetrics = (userId?: string) => {
       const subjectResults = subjectResultsResult.data;
       const likedContent = likedContentResult.data;
       const completedPaths = completedPathsResult.data;
+      const studyPlans = (arguments[0], (await Promise.resolve()), null); // placeholder removed below
 
       // Procesar videos vistos
       if (watchedVideos) {
