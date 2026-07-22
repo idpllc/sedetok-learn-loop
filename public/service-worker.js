@@ -1,5 +1,7 @@
 // Service worker mínimo: limpia caches antiguas y conserva push notifications.
 // No intercepta navegación ni assets, así las rutas nuevas siempre salen desde red.
+// Importante: no navegar/reload clientes durante activate; eso puede dejar la SPA
+// en blanco o atrapada en recargas durante despliegues.
 self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', (e) =>
   e.waitUntil(
@@ -7,18 +9,6 @@ self.addEventListener('activate', (e) =>
       await self.clients.claim();
       const names = await caches.keys();
       await Promise.all(names.map((n) => caches.delete(n)));
-      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      await Promise.all(
-        clients.map((c) => {
-          try {
-            const url = new URL(c.url);
-            url.searchParams.set('sw-cleanup', Date.now().toString());
-            return c.navigate(url.toString());
-          } catch {
-            return null;
-          }
-        })
-      );
     })()
   )
 );
