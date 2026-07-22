@@ -290,6 +290,65 @@ export const useAcademicMetrics = (userId?: string) => {
         });
       }
 
+      // Procesar plan de estudios institucional (notas escala 0-5 => %)
+      // Alimenta las gráficas por área usando la nota final de asignatura,
+      // o el promedio de evaluaciones/competencias cuando la final no está.
+      if (studyPlans && studyPlans.length > 0) {
+        const dedup = new Map<string, { subject: string; pct: number }>();
+        studyPlans.forEach((plan: any) => {
+          const periodos = Array.isArray(plan?.periodos) ? plan.periodos : [];
+          periodos.forEach((periodo: any, pIdx: number) => {
+            const asigs = Array.isArray(periodo?.asignaturas) ? periodo.asignaturas : [];
+            asigs.forEach((asig: any) => {
+              const subject: string | undefined = asig?.nombre_asignatura;
+              if (!subject) return;
+
+              let nota: number | null =
+                typeof asig?.nota_final_asignatura === "number" ? asig.nota_final_asignatura : null;
+
+              if (nota === null) {
+                const notas: number[] = [];
+                (asig?.competencias || []).forEach((c: any) => {
+                  if (typeof c?.calificacion_competencia === "number") {
+                    notas.push(c.calificacion_competencia);
+                  }
+                  (c?.evaluaciones || []).forEach((e: any) => {
+                    if (typeof e?.nota === "number") notas.push(e.nota);
+                  });
+                });
+                if (notas.length > 0) {
+                  nota = notas.reduce((a, b) => a + b, 0) / notas.length;
+                }
+              }
+
+              if (nota === null || isNaN(nota)) return;
+              // Escala colombiana 0-5 → 0-100
+              const pct = Math.max(0, Math.min(100, (nota / 5) * 100));
+              const key = `${periodo?.periodo_nombre || pIdx}::${subject.toLowerCase().trim()}`;
+              dedup.set(key, { subject, pct });
+            });
+          });
+        });
+
+        dedup.forEach(({ subject, pct }) => {
+          const areaId = getAreaForSubject(subject);
+          if (areaId && areaMetrics[areaId]) {
+            areaMetrics[areaId].quizzesCompleted++;
+            areaMetrics[areaId].totalScore += pct;
+            areaMetrics[areaId].quizCount++;
+          }
+          const intelligenceIds = getIntelligencesForSubject(subject);
+          intelligenceIds.forEach((intId) => {
+            if (intelligenceMetrics[intId]) {
+              intelligenceMetrics[intId].quizzesCompleted++;
+              intelligenceMetrics[intId].totalScore += pct;
+              intelligenceMetrics[intId].quizCount++;
+            }
+          });
+        });
+      }
+
+
       // Calcular promedios y normalizar para gráfica de radar (0-100)
       const radarData = academicAreas.map(area => {
         const metrics = areaMetrics[area.id];
