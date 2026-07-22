@@ -2,6 +2,7 @@
 // Uses notebook sources as grounding context. AI infers title/category/grade/description.
 // Persists the capsule with is_public=true and returns its route.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { uploadBytesToS3, base64ToBytes } from "../_shared/s3-upload.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
