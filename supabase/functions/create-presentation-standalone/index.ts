@@ -3,6 +3,7 @@
 // notebook. Mirrors the presentation branch of `notebook-create-capsule`
 // but grounds the AI on the form fields instead of notebook sources.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { uploadBytesToS3, base64ToBytes } from "../_shared/s3-upload.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
