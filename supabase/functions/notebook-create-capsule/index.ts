@@ -520,7 +520,7 @@ Deno.serve(async (req) => {
 
     // ---------- LEARNING PATH / COURSE ----------
     else if (type === "path" || type === "course") {
-      // Helper: generate cover image via Lovable AI Gateway and upload to Cloudinary.
+      // Helper: generate cover image via Lovable AI Gateway and upload to S3.
       const generateAndUploadCover = async (
         title: string,
         description: string,
@@ -552,42 +552,19 @@ Deno.serve(async (req) => {
             imgData?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
           if (!imgUrl) return null;
           const base64 = imgUrl.includes(";base64,") ? imgUrl.split(";base64,")[1] : imgUrl;
-          const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME")?.trim();
-          const apiKeyCl = Deno.env.get("CLOUDINARY_API_KEY")?.trim();
-          const apiSecret = Deno.env.get("CLOUDINARY_API_SECRET")?.trim();
-          if (!cloudName || !apiKeyCl || !apiSecret) {
-            console.error("Cloudinary not configured for cover upload");
-            return null;
-          }
-          const timestamp = Math.round(Date.now() / 1000);
-          const folder = "sedefy/path_covers";
-          const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
-          const enc = new TextEncoder();
-          const hash = await crypto.subtle.digest("SHA-1", enc.encode(paramsToSign + apiSecret));
-          const signature = Array.from(new Uint8Array(hash))
-            .map((b) => b.toString(16).padStart(2, "0"))
-            .join("");
-          const fd = new FormData();
-          fd.append("file", `data:image/png;base64,${base64}`);
-          fd.append("api_key", apiKeyCl);
-          fd.append("timestamp", String(timestamp));
-          fd.append("folder", folder);
-          fd.append("signature", signature);
-          const upRes = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-            { method: "POST", body: fd }
-          );
-          if (!upRes.ok) {
-            console.error("Cloudinary upload error", upRes.status, await upRes.text());
-            return null;
-          }
-          const upJson = await upRes.json();
-          return upJson.secure_url || upJson.url || null;
+          const bytes = base64ToBytes(base64);
+          return await uploadBytesToS3({
+            bytes,
+            contentType: "image/png",
+            folder: "path_covers",
+            extension: "png",
+          });
         } catch (e) {
           console.error("generateAndUploadCover error", e);
           return null;
         }
       };
+
 
       // ===== Mode: from_capsules =====
       if (type === "path" && mode === "from_capsules") {
