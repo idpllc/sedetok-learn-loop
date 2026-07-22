@@ -144,7 +144,7 @@ export const useAcademicMetrics = (userId?: string) => {
       const subjectResults = subjectResultsResult.data;
       const likedContent = likedContentResult.data;
       const completedPaths = completedPathsResult.data;
-      const studyPlans = (arguments[0], (await Promise.resolve()), null); // placeholder removed below
+      const studyPlans: any[] = (studyPlansResult as any)?.data || [];
 
       // Procesar videos vistos
       if (watchedVideos) {
