@@ -48,7 +48,7 @@ export const useAcademicMetrics = (userId?: string) => {
       });
 
       // Ejecutar todas las queries en paralelo para mejor rendimiento
-      const [watchedVideosResult, quizResultsResult, subjectResultsResult, likedContentResult, completedPathsResult] = await Promise.all([
+      const [watchedVideosResult, quizResultsResult, subjectResultsResult, likedContentResult, completedPathsResult, studyPlansResult] = await Promise.all([
         // 1. Videos vistos
         supabase
           .from("user_path_progress")
