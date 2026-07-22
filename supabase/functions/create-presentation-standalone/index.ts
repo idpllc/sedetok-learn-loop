@@ -185,12 +185,7 @@ Deno.serve(async (req) => {
 
     const ai = await callAI(systemPrompt, userPrompt, "create_presentation", params, apiKey);
 
-    // Image generation (parallel, concurrency 4)
-    const cloudName = Deno.env.get("CLOUDINARY_CLOUD_NAME")?.trim();
-    const cloudKey = Deno.env.get("CLOUDINARY_API_KEY")?.trim();
-    const cloudSecret = Deno.env.get("CLOUDINARY_API_SECRET")?.trim();
-    const cloudReady = !!(cloudName && cloudKey && cloudSecret);
-
+    // Image generation (parallel, concurrency 4) — uploads to S3.
     const generateSlideImage = async (prompt: string): Promise<string | null> => {
       try {
         const fullPrompt = `Educational illustration, professional clean digital art, no text, harmonious palette, vibrant but tasteful, ample negative space. Subject: ${prompt}`;
@@ -208,23 +203,14 @@ Deno.serve(async (req) => {
         const imgUrl: string | undefined = imgData?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
         if (!imgUrl) return null;
         const base64 = imgUrl.includes(";base64,") ? imgUrl.split(";base64,")[1] : imgUrl;
-        if (!cloudReady) return `data:image/png;base64,${base64}`;
-        const timestamp = Math.round(Date.now() / 1000);
-        const folder = "sedefy/presentation_slides";
-        const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
-        const enc = new TextEncoder();
-        const hash = await crypto.subtle.digest("SHA-1", enc.encode(paramsToSign + cloudSecret));
-        const signature = Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
-        const fd = new FormData();
-        fd.append("file", `data:image/png;base64,${base64}`);
-        fd.append("api_key", cloudKey!);
-        fd.append("timestamp", String(timestamp));
-        fd.append("folder", folder);
-        fd.append("signature", signature);
-        const upRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: fd });
-        if (!upRes.ok) return `data:image/png;base64,${base64}`;
-        const upJson = await upRes.json();
-        return upJson.secure_url || upJson.url || `data:image/png;base64,${base64}`;
+        const bytes = base64ToBytes(base64);
+        const s3Url = await uploadBytesToS3({
+          bytes,
+          contentType: "image/png",
+          folder: "presentation_slides",
+          extension: "png",
+        });
+        return s3Url ?? `data:image/png;base64,${base64}`;
       } catch (e) {
         console.error("generateSlideImage error", e);
         return null;
