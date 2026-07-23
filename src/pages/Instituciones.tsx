@@ -245,9 +245,9 @@ const Eyebrow = ({ children }: { children: React.ReactNode }) => (
 /* -------------------------------------------------------------------------- */
 const DataOrbit = () => {
   const decisions = [
-    "Deserción escolar", "Programas de refuerzo", "Políticas educativas", "Rutas de aprendizaje",
-    "Asignación de recursos", "Mejora continua", "Evaluación institucional", "Formación docente",
-    "Infraestructura", "Bienestar estudiantil", "Alimentación escolar", "Transporte escolar",
+    "Deserción escolar", "Programas de refuerzo", "Planes de estudio", "Rutas de aprendizaje",
+    "Refuerzo académico", "Mejora continua", "Convivencia escolar", "Formación docente",
+    "Orientación vocacional", "Bienestar estudiantil", "Acompañamiento docente", "Comunicación con familias",
     "Becas", "Inclusión",
   ];
   return (
@@ -347,7 +347,7 @@ const DashboardMock = () => {
     <GlassCard className="p-6" glow>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <div className="text-xs uppercase tracking-widest text-white/50">Panel Nacional</div>
+          <div className="text-xs uppercase tracking-widest text-white/50">Panel Institucional</div>
           <div className="mt-1 text-lg font-semibold text-white">Inteligencia Educativa · Tiempo real</div>
         </div>
         <div className="flex items-center gap-2 text-xs text-[#A3E635]">
@@ -492,7 +492,7 @@ const AIChat = () => {
 /* -------------------------------------------------------------------------- */
 /*  MAIN PAGE                                                                 */
 /* -------------------------------------------------------------------------- */
-const Gobierno = () => {
+const Instituciones = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 200]);
@@ -502,25 +502,25 @@ const Gobierno = () => {
     { icon: Target, title: "Perfil Vocacional Inteligente", desc: "Descubre con alta precisión el perfil vocacional de cada estudiante utilizando cientos de variables académicas, conductuales y psicosociales." },
     { icon: Users, title: "Perfil Integral del Estudiante", desc: "Construye automáticamente un perfil único que combina rendimiento, bienestar, contexto familiar y evolución educativa." },
     { icon: AlertTriangle, title: "Detección Temprana de Riesgos", desc: "Identifica estudiantes con riesgo de deserción, bajo rendimiento, convivencia o salud mental antes de que el problema ocurra." },
-    { icon: Activity, title: "Indicadores Inteligentes", desc: "Alertas automáticas para docentes, rectores, secretarías y ministerios con recomendaciones accionables." },
-    { icon: Map, title: "Inteligencia Territorial", desc: "Descubre patrones educativos por municipio, institución, región o departamento en tiempo real." },
+    { icon: Activity, title: "Indicadores Inteligentes", desc: "Alertas automáticas para docentes, coordinadores y rectores con recomendaciones accionables." },
+    { icon: Map, title: "Inteligencia por Grados y Sedes", desc: "Descubre patrones educativos por curso, grado, sede y asignatura en tiempo real." },
     { icon: Brain, title: "IA Educativa", desc: "Asistente inteligente que recomienda acciones concretas para mejorar los resultados educativos." },
   ];
 
   const audiences = [
-    { icon: Landmark, title: "Ministerios de Educación", stats: ["Visión nacional", "32 departamentos", "Política basada en datos"] },
-    { icon: Building2, title: "Secretarías de Educación", stats: ["Gestión territorial", "Comparativos regionales", "Reportes automáticos"] },
-    { icon: Shield, title: "Gobernaciones", stats: ["Impacto social", "Alertas ciudadanas", "Rendición de cuentas"] },
-    { icon: School, title: "Instituciones Educativas", stats: ["Gestión escolar", "Perfil por estudiante", "Acompañamiento docente"] },
+    { icon: GraduationCap, title: "Rectores", stats: ["Visión 360 de la institución", "KPIs académicos", "Decisiones basadas en datos"] },
+    { icon: Building2, title: "Coordinadores", stats: ["Gestión por grados", "Comparativos por curso", "Reportes automáticos"] },
+    { icon: Users, title: "Docentes", stats: ["Seguimiento por estudiante", "Alertas tempranas", "Rutas de refuerzo"] },
+    { icon: School, title: "Familias", stats: ["Reportes claros", "Comunicación directa", "Acompañamiento en casa"] },
   ];
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#0B1220] text-white antialiased" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
       <Helmet>
-        <title>SEDEFY Gobierno · Inteligencia para la Educación</title>
-        <meta name="description" content="El sistema operativo de inteligencia educativa para Ministerios, Secretarías y Gobernaciones. Transformamos millones de datos en decisiones inteligentes." />
-        <meta property="og:title" content="SEDEFY Gobierno · Inteligencia para la Educación" />
-        <meta property="og:description" content="Plataforma de inteligencia gubernamental para transformar la calidad educativa de un país." />
+        <title>SEDEFY Instituciones · Inteligencia para colegios y universidades</title>
+        <meta name="description" content="La plataforma de inteligencia académica para colegios, universidades e instituciones educativas. Transformamos los datos de tu institución en decisiones inteligentes." />
+        <meta property="og:title" content="SEDEFY Instituciones · Inteligencia para colegios y universidades" />
+        <meta property="og:description" content="Plataforma de inteligencia académica para transformar la calidad educativa de tu institución." />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
@@ -573,7 +573,7 @@ const Gobierno = () => {
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 55%, #0B1220 90%)" }} />
 
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative z-10 mx-auto max-w-5xl px-6 text-center">
-          <Eyebrow>Inteligencia gubernamental para la educación</Eyebrow>
+          <Eyebrow>Inteligencia académica para instituciones educativas</Eyebrow>
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -595,7 +595,7 @@ const Gobierno = () => {
             transition={{ delay: 0.3, duration: 1 }}
             className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/60 md:text-xl"
           >
-            Transformamos millones de datos educativos en decisiones inteligentes para mejorar la calidad educativa de un país.
+            Transformamos millones de datos educativos en decisiones inteligentes para mejorar la calidad educativa de tu institución.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -613,9 +613,9 @@ const Gobierno = () => {
             transition={{ delay: 1.2 }}
             className="mt-16 flex items-center justify-center gap-8 text-xs uppercase tracking-widest text-white/40"
           >
-            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#A3E635]" /> Ministerios</div>
-            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#22D3B7]" /> Secretarías</div>
-            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#4ADE80]" /> Gobernaciones</div>
+            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#A3E635]" /> Rectores</div>
+            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#22D3B7]" /> Coordinadores</div>
+            <div className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-[#4ADE80]" /> Docentes</div>
           </motion.div>
         </motion.div>
 
@@ -775,12 +775,12 @@ const Gobierno = () => {
       <section id="dashboard" className="relative py-32">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-3xl text-center">
-            <Eyebrow>Dashboard gubernamental</Eyebrow>
+            <Eyebrow>Dashboard institucional</Eyebrow>
             <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-              La sala de control de la educación de un país.
+              La sala de control académica de tu institución.
             </h2>
             <p className="mt-6 text-lg text-white/60">
-              KPIs en vivo, mapas de calor, comparativos entre municipios, colegios y grados. Todo con filtros dinámicos.
+              KPIs en vivo, mapas de calor, comparativos entre grados, cursos y asignaturas. Todo con filtros dinámicos.
             </p>
           </div>
           <div className="mt-16">
@@ -829,9 +829,9 @@ const Gobierno = () => {
 
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             {[
-              { title: "Riesgo de deserción alto", body: "IE Villa del Norte · Grado 9. Recomiendo activar acompañamiento psicosocial para 34 estudiantes." },
-              { title: "Bajo rendimiento matemáticas", body: "3 municipios con caída sostenida. Sugiero ruta de refuerzo dirigida a 812 estudiantes." },
-              { title: "Convivencia elevada", body: "42 alertas en última semana. Priorizar formación docente en 6 instituciones." },
+              { title: "Riesgo de deserción alto", body: "Grado 9°B. Recomiendo activar acompañamiento psicosocial para 8 estudiantes." },
+              { title: "Bajo rendimiento matemáticas", body: "3 cursos con caída sostenida. Sugiero ruta de refuerzo dirigida a 62 estudiantes." },
+              { title: "Convivencia elevada", body: "12 alertas en la última semana. Priorizar acompañamiento en 3 cursos." },
             ].map((r, i) => (
               <motion.div
                 key={i}
@@ -859,7 +859,7 @@ const Gobierno = () => {
           <div className="mx-auto max-w-3xl text-center">
             <Eyebrow>Para quién</Eyebrow>
             <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-              Diseñado para quienes deciden la educación de un país.
+              Diseñado para quienes lideran la educación en cada institución.
             </h2>
           </div>
           <div className="mt-16 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -939,17 +939,17 @@ const Gobierno = () => {
             <div>
               <Eyebrow>IA conversacional</Eyebrow>
               <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-                Pregúntele a la educación de su territorio.
+                Pregúntele a la educación de su institución.
               </h2>
               <p className="mt-6 text-lg text-white/60">
                 SEDEFY AI responde en lenguaje natural con gráficos, listados accionables y recomendaciones fundadas en los datos reales del sistema educativo.
               </p>
               <div className="mt-8 space-y-3">
                 {[
-                  "¿Qué municipios presentan mayor riesgo de deserción?",
+                  "¿Qué cursos presentan mayor riesgo de deserción?",
                   "¿Qué estudiantes requieren acompañamiento psicosocial?",
                   "¿Qué docentes necesitan apoyo pedagógico?",
-                  "¿Qué institución mejoró más este semestre?",
+                  "¿Qué grado mejoró más este semestre?",
                 ].map((q) => (
                   <div key={q} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
                     <MessageSquare className="h-4 w-4 text-[#4ADE80]" />
@@ -982,11 +982,11 @@ const Gobierno = () => {
             </span>.
           </h2>
           <p className="mx-auto mt-8 max-w-2xl text-lg text-white/60">
-            Conozca cómo SEDEFY transforma millones de datos en inteligencia para construir una mejor educación.
+            Conozca cómo SEDEFY transforma los datos de su institución en inteligencia para construir una mejor educación.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <a href="/contacto"><MagneticButton>Solicitar demostración</MagneticButton></a>
-            <a href="mailto:gobierno@sedefy.com"><MagneticButton variant="ghost">Hablar con ventas</MagneticButton></a>
+            <a href="mailto:instituciones@sedefy.com"><MagneticButton variant="ghost">Hablar con ventas</MagneticButton></a>
           </div>
         </div>
       </section>
@@ -1005,4 +1005,4 @@ const Gobierno = () => {
   );
 };
 
-export default Gobierno;
+export default Instituciones;
