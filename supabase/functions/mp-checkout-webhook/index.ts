@@ -20,35 +20,40 @@ serve(async (req) => {
     let topic = url.searchParams.get("topic") || url.searchParams.get("type") || "";
     let id = url.searchParams.get("id") || url.searchParams.get("data.id") || "";
 
+    // Signature verification (log-only; never reject to avoid missing legitimate payments)
     if (webhookSecret) {
-      const xSignature = req.headers.get("x-signature") || "";
-      const xRequestId = req.headers.get("x-request-id") || "";
-      const dataId = url.searchParams.get("data.id") || id;
-      const parts = Object.fromEntries(
-        xSignature.split(",").map((p) => {
-          const [k, ...v] = p.trim().split("=");
-          return [k, v.join("=")];
-        })
-      ) as Record<string, string>;
-      const ts = parts.ts;
-      const v1 = parts.v1;
-      if (ts && v1) {
-        const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-        const key = await crypto.subtle.importKey(
-          "raw",
-          new TextEncoder().encode(webhookSecret),
-          { name: "HMAC", hash: "SHA-256" },
-          false,
-          ["sign"]
-        );
-        const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
-        const computed = Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-        if (computed !== v1) {
-          console.warn("checkout webhook signature mismatch");
-          return new Response(JSON.stringify({ error: "invalid signature" }), { status: 401, headers: corsHeaders });
+      try {
+        const xSignature = req.headers.get("x-signature") || "";
+        const xRequestId = req.headers.get("x-request-id") || "";
+        const dataId = (url.searchParams.get("data.id") || id || "").toString().toLowerCase();
+        const parts = Object.fromEntries(
+          xSignature.split(",").map((p) => {
+            const [k, ...v] = p.trim().split("=");
+            return [k, v.join("=")];
+          })
+        ) as Record<string, string>;
+        const ts = parts.ts;
+        const v1 = parts.v1;
+        if (ts && v1) {
+          const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+          const key = await crypto.subtle.importKey(
+            "raw",
+            new TextEncoder().encode(webhookSecret),
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+          );
+          const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
+          const computed = Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+          if (computed !== v1) {
+            console.warn("mp-checkout-webhook signature mismatch (continuing, will verify payment via MP API)", { dataId, xRequestId });
+          }
         }
+      } catch (sigErr) {
+        console.warn("mp-checkout-webhook signature check error (continuing):", sigErr);
       }
     }
+
 
     let body: any = {};
     if (req.headers.get("content-type")?.includes("application/json")) {
@@ -57,11 +62,13 @@ serve(async (req) => {
     topic = topic || body.topic || body.type || "";
     id = id || body.data?.id || body.id || "";
 
-    console.log("mp-checkout-webhook:", { topic, id });
+    console.log("mp-checkout-webhook:", { topic, id, url: req.url });
 
     if (topic !== "payment" && topic !== "merchant_order") {
+      console.log("mp-checkout-webhook: ignored topic", topic);
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
     }
+
     if (!id) return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
 
     let payment: any = null;
@@ -72,20 +79,32 @@ serve(async (req) => {
       const r = await fetch(`${MP_BASE}/merchant_orders/${id}`, { headers: { Authorization: `Bearer ${mpToken}` } });
       const mo = await r.json();
       const approved = (mo.payments || []).find((p: any) => p.status === "approved");
-      if (!approved) return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+      if (!approved) {
+        console.log("mp-checkout-webhook: merchant_order without approved payment", { id });
+        return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+      }
       const r2 = await fetch(`${MP_BASE}/v1/payments/${approved.id}`, { headers: { Authorization: `Bearer ${mpToken}` } });
       payment = await r2.json();
     }
 
+    console.log("mp-checkout-webhook: payment fetched", { id: payment?.id, status: payment?.status, external_reference: payment?.external_reference });
+
     const externalRef = payment.external_reference;
-    if (!externalRef) return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+    if (!externalRef) {
+      console.warn("mp-checkout-webhook: no external_reference", payment);
+      return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+    }
 
     const { data: sub } = await supabase
       .from("user_subscriptions")
       .select("*, subscription_plans(*)")
       .eq("id", externalRef)
       .maybeSingle();
-    if (!sub) return new Response(JSON.stringify({ ok: true, note: "sub not found" }), { headers: corsHeaders });
+    if (!sub) {
+      console.warn("mp-checkout-webhook: subscription not found", externalRef);
+      return new Response(JSON.stringify({ ok: true, note: "sub not found" }), { headers: corsHeaders });
+    }
+
 
     const status = (payment.status || "").toLowerCase();
     const approved = status === "approved" || status === "accredited";
