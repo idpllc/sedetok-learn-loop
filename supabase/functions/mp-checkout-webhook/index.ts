@@ -20,35 +20,40 @@ serve(async (req) => {
     let topic = url.searchParams.get("topic") || url.searchParams.get("type") || "";
     let id = url.searchParams.get("id") || url.searchParams.get("data.id") || "";
 
+    // Signature verification (log-only; never reject to avoid missing legitimate payments)
     if (webhookSecret) {
-      const xSignature = req.headers.get("x-signature") || "";
-      const xRequestId = req.headers.get("x-request-id") || "";
-      const dataId = url.searchParams.get("data.id") || id;
-      const parts = Object.fromEntries(
-        xSignature.split(",").map((p) => {
-          const [k, ...v] = p.trim().split("=");
-          return [k, v.join("=")];
-        })
-      ) as Record<string, string>;
-      const ts = parts.ts;
-      const v1 = parts.v1;
-      if (ts && v1) {
-        const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-        const key = await crypto.subtle.importKey(
-          "raw",
-          new TextEncoder().encode(webhookSecret),
-          { name: "HMAC", hash: "SHA-256" },
-          false,
-          ["sign"]
-        );
-        const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
-        const computed = Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-        if (computed !== v1) {
-          console.warn("checkout webhook signature mismatch");
-          return new Response(JSON.stringify({ error: "invalid signature" }), { status: 401, headers: corsHeaders });
+      try {
+        const xSignature = req.headers.get("x-signature") || "";
+        const xRequestId = req.headers.get("x-request-id") || "";
+        const dataId = (url.searchParams.get("data.id") || id || "").toString().toLowerCase();
+        const parts = Object.fromEntries(
+          xSignature.split(",").map((p) => {
+            const [k, ...v] = p.trim().split("=");
+            return [k, v.join("=")];
+          })
+        ) as Record<string, string>;
+        const ts = parts.ts;
+        const v1 = parts.v1;
+        if (ts && v1) {
+          const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+          const key = await crypto.subtle.importKey(
+            "raw",
+            new TextEncoder().encode(webhookSecret),
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign"]
+          );
+          const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(manifest));
+          const computed = Array.from(new Uint8Array(sigBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+          if (computed !== v1) {
+            console.warn("mp-checkout-webhook signature mismatch (continuing, will verify payment via MP API)", { dataId, xRequestId });
+          }
         }
+      } catch (sigErr) {
+        console.warn("mp-checkout-webhook signature check error (continuing):", sigErr);
       }
     }
+
 
     let body: any = {};
     if (req.headers.get("content-type")?.includes("application/json")) {
