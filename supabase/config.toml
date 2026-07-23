@@ -29,6 +29,3 @@ verify_jwt = false
 
 [functions.payment-link-create-yearly]
 verify_jwt = false
-
-[functions.mp-diagnose]
-verify_jwt = false
