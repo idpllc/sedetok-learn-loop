@@ -79,20 +79,32 @@ serve(async (req) => {
       const r = await fetch(`${MP_BASE}/merchant_orders/${id}`, { headers: { Authorization: `Bearer ${mpToken}` } });
       const mo = await r.json();
       const approved = (mo.payments || []).find((p: any) => p.status === "approved");
-      if (!approved) return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+      if (!approved) {
+        console.log("mp-checkout-webhook: merchant_order without approved payment", { id });
+        return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+      }
       const r2 = await fetch(`${MP_BASE}/v1/payments/${approved.id}`, { headers: { Authorization: `Bearer ${mpToken}` } });
       payment = await r2.json();
     }
 
+    console.log("mp-checkout-webhook: payment fetched", { id: payment?.id, status: payment?.status, external_reference: payment?.external_reference });
+
     const externalRef = payment.external_reference;
-    if (!externalRef) return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+    if (!externalRef) {
+      console.warn("mp-checkout-webhook: no external_reference", payment);
+      return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+    }
 
     const { data: sub } = await supabase
       .from("user_subscriptions")
       .select("*, subscription_plans(*)")
       .eq("id", externalRef)
       .maybeSingle();
-    if (!sub) return new Response(JSON.stringify({ ok: true, note: "sub not found" }), { headers: corsHeaders });
+    if (!sub) {
+      console.warn("mp-checkout-webhook: subscription not found", externalRef);
+      return new Response(JSON.stringify({ ok: true, note: "sub not found" }), { headers: corsHeaders });
+    }
+
 
     const status = (payment.status || "").toLowerCase();
     const approved = status === "approved" || status === "accredited";
