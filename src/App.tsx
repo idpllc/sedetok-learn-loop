@@ -95,6 +95,7 @@ const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const Contacto = lazyWithRetry(() => import("./pages/Contacto"));
 const InstitutionProfile = lazyWithRetry(() => import("./pages/InstitutionProfile"));
 const Gobierno = lazyWithRetry(() => import("./pages/Gobierno"));
+const Instituciones = lazyWithRetry(() => import("./pages/Instituciones"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
 // (iframes used by the notebook capsule preview) to minimise boot time.
@@ -253,6 +254,7 @@ const App = () => (
             <Route path="/chat/login" element={<ChatLogin />} />
             <Route path="/chat/login-test" element={<ChatLoginTest />} />
             <Route path="/gobierno" element={<Gobierno />} />
+            <Route path="/instituciones" element={<Instituciones />} />
             {/* Institution custom slug — MUST be the last named route before catch-all */}
             <Route
               path="/:slug"
