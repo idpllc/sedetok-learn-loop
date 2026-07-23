@@ -62,11 +62,13 @@ serve(async (req) => {
     topic = topic || body.topic || body.type || "";
     id = id || body.data?.id || body.id || "";
 
-    console.log("mp-checkout-webhook:", { topic, id });
+    console.log("mp-checkout-webhook:", { topic, id, url: req.url });
 
     if (topic !== "payment" && topic !== "merchant_order") {
+      console.log("mp-checkout-webhook: ignored topic", topic);
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
     }
+
     if (!id) return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
 
     let payment: any = null;
