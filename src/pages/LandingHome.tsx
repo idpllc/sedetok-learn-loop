@@ -276,7 +276,11 @@ const PILLAR_ICONS: Record<string, typeof Brain> = {
   potential: LineChart,
   vocation: Compass,
   teaching: Lightbulb,
+  environment: Leaf,
+  coexistence: Handshake,
+  curriculum: LayoutGrid,
 };
+
 
 const PrimaryLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <Link
