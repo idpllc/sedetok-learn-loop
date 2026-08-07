@@ -355,27 +355,26 @@ const LandingHome = () => {
       </Helmet>
 
       {/* NAV */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-[#0B1220]/70 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={sedefyLogo} alt="SEDEFY" width={36} height={36} loading="eager" className="h-9 w-9 object-contain" />
-            <span className="text-sm font-semibold tracking-wide">SEDEFY</span>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-black/5 bg-white shadow-sm">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+          <Link to="/" className="flex items-center">
+            <img src={sedefyLogo} alt="SEDEFY" width={200} height={56} loading="eager" className="h-12 w-auto object-contain md:h-14" />
           </Link>
-          <div className="hidden items-center gap-8 text-sm text-white/60 md:flex">
-            <a href="#pillars" className="transition-colors hover:text-white">{c.nav.pillars}</a>
-            <a href="#how" className="transition-colors hover:text-white">{c.nav.how}</a>
-            <a href="#impact" className="transition-colors hover:text-white">{c.nav.impact}</a>
+          <div className="hidden items-center gap-8 text-sm text-[#0B1220]/60 md:flex">
+            <a href="#pillars" className="transition-colors hover:text-[#0B1220]">{c.nav.pillars}</a>
+            <a href="#how" className="transition-colors hover:text-[#0B1220]">{c.nav.how}</a>
+            <a href="#impact" className="transition-colors hover:text-[#0B1220]">{c.nav.impact}</a>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={toggleLang}
               aria-label="Language / Idioma"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/80 transition-colors hover:bg-white/[0.1]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/[0.03] px-3 py-1.5 text-xs text-[#0B1220]/80 transition-colors hover:bg-black/[0.07]"
             >
               <Languages className="h-3.5 w-3.5" />
               {lang === "es" ? "EN" : "ES"}
             </button>
-            <Link to="/auth" className="hidden text-sm text-white/70 transition-colors hover:text-white sm:inline">
+            <Link to="/auth" className="hidden text-sm text-[#0B1220]/70 transition-colors hover:text-[#0B1220] sm:inline">
               {c.nav.login}
             </Link>
             <Link
@@ -388,6 +387,7 @@ const LandingHome = () => {
           </div>
         </nav>
       </header>
+
 
       {/* HERO */}
       <section className="relative flex min-h-[92vh] items-center overflow-hidden pt-28">
