@@ -172,6 +172,27 @@ const COPY = {
         text: "Which content works, where the class loses the thread and which strategy pays off. Concrete recommendations to adjust teaching practice.",
         bullets: ["Effectiveness by resource and topic", "Learning drop-off points", "AI-assisted teaching suggestions"],
       },
+      {
+        icon: "environment",
+        tag: "Environment",
+        title: "Environmental & context risks",
+        text: "Context factors that shape learning: campus, area, connectivity, transport, nutrition, weather season and classroom conditions.",
+        bullets: ["Risk map by campus and area", "Connectivity and resource gaps", "Context impact on attendance and results"],
+      },
+      {
+        icon: "coexistence",
+        tag: "Climate",
+        title: "School climate & coexistence",
+        text: "Signals of conflict, exclusion or bullying from participation, interaction and reports — so you intervene with data, not perceptions.",
+        bullets: ["Climate thermometer per class", "Isolation and exclusion detection", "Case and intervention follow-up"],
+      },
+      {
+        icon: "curriculum",
+        tag: "Curriculum",
+        title: "Curriculum design & improvement",
+        text: "Real competency coverage, coherence between what is planned and what is learned, and evidence to adjust syllabi and cross-cutting projects.",
+        bullets: ["Competency coverage per term", "Gaps between plan and real learning", "AI-assisted curriculum adjustments"],
+      },
     ],
     howTitle: "From daily activity to pedagogical decisions",
     howSteps: [
