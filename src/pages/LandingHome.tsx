@@ -66,6 +66,27 @@ const COPY = {
         text: "Qué contenidos funcionan, dónde se pierde el grupo y qué estrategia rinde más. Recomendaciones concretas para ajustar la práctica pedagógica.",
         bullets: ["Efectividad por recurso y tema", "Puntos de fuga del aprendizaje", "Sugerencias didácticas con IA"],
       },
+      {
+        icon: "environment",
+        tag: "Entorno",
+        title: "Riesgos ambientales y de contexto",
+        text: "Factores del entorno que condicionan el aprendizaje: sede, zona, conectividad, transporte, alimentación, temporada climática y condiciones del aula.",
+        bullets: ["Mapa de riesgo por sede y zona", "Brechas de conectividad y recursos", "Efecto del contexto en asistencia y desempeño"],
+      },
+      {
+        icon: "coexistence",
+        tag: "Convivencia",
+        title: "Clima escolar y convivencia",
+        text: "Señales de conflicto, exclusión o acoso a partir de participación, interacción y reportes. Permite intervenir con datos, no con percepciones.",
+        bullets: ["Termómetro de clima por curso", "Detección de aislamiento y exclusión", "Seguimiento a casos e intervenciones"],
+      },
+      {
+        icon: "curriculum",
+        tag: "Currículo",
+        title: "Diseño y mejora curricular",
+        text: "Cobertura real de competencias, coherencia entre lo planeado y lo aprendido, y evidencia para ajustar mallas, planes de área y proyectos transversales.",
+        bullets: ["Cobertura de competencias por periodo", "Brechas entre plan y aprendizaje real", "Sugerencias de ajuste curricular con IA"],
+      },
     ],
     howTitle: "De la actividad diaria a la decisión pedagógica",
     howSteps: [
