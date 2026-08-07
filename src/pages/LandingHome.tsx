@@ -534,7 +534,7 @@ const LandingHome = () => {
             <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">{c.pillarsTitle}</h2>
             <p className="mt-6 text-lg text-white/60">{c.pillarsSub}</p>
           </div>
-          <div className="mt-14 grid gap-6 md:grid-cols-2">
+          <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {c.pillars.map((p, i) => {
               const Icon = PILLAR_ICONS[p.icon] ?? Sparkles;
               return (
