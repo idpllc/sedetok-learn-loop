@@ -7,6 +7,7 @@ import sedefyLogo from "@/assets/sedefy-logo.png";
 import {
   Brain, HeartPulse, Compass, GraduationCap, Sparkles, ArrowRight, Languages,
   ShieldCheck, LineChart, Users, BookOpen, Lightbulb, AlertTriangle, Target, MessageSquare,
+  Leaf, Handshake, LayoutGrid,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
@@ -34,8 +35,8 @@ const COPY = {
       cta2: "Explorar la plataforma",
       badges: ["Sin instalar nada", "Datos protegidos", "Español · English"],
     },
-    pillarsTitle: "Cuatro señales que ninguna institución debería seguir ignorando",
-    pillarsSub: "SEDEFY analiza patrones de uso, desempeño y comportamiento para hacer visible lo que hoy pasa desapercibido.",
+    pillarsTitle: "Siete señales que ninguna institución debería seguir ignorando",
+    pillarsSub: "SEDEFY analiza patrones de uso, desempeño, convivencia y contexto para hacer visible lo que hoy pasa desapercibido.",
     pillars: [
       {
         icon: "risk",
@@ -64,6 +65,27 @@ const COPY = {
         title: "Mejoras a la enseñanza",
         text: "Qué contenidos funcionan, dónde se pierde el grupo y qué estrategia rinde más. Recomendaciones concretas para ajustar la práctica pedagógica.",
         bullets: ["Efectividad por recurso y tema", "Puntos de fuga del aprendizaje", "Sugerencias didácticas con IA"],
+      },
+      {
+        icon: "environment",
+        tag: "Entorno",
+        title: "Riesgos ambientales y de contexto",
+        text: "Factores del entorno que condicionan el aprendizaje: sede, zona, conectividad, transporte, alimentación, temporada climática y condiciones del aula.",
+        bullets: ["Mapa de riesgo por sede y zona", "Brechas de conectividad y recursos", "Efecto del contexto en asistencia y desempeño"],
+      },
+      {
+        icon: "coexistence",
+        tag: "Convivencia",
+        title: "Clima escolar y convivencia",
+        text: "Señales de conflicto, exclusión o acoso a partir de participación, interacción y reportes. Permite intervenir con datos, no con percepciones.",
+        bullets: ["Termómetro de clima por curso", "Detección de aislamiento y exclusión", "Seguimiento a casos e intervenciones"],
+      },
+      {
+        icon: "curriculum",
+        tag: "Currículo",
+        title: "Diseño y mejora curricular",
+        text: "Cobertura real de competencias, coherencia entre lo planeado y lo aprendido, y evidencia para ajustar mallas, planes de área y proyectos transversales.",
+        bullets: ["Cobertura de competencias por periodo", "Brechas entre plan y aprendizaje real", "Sugerencias de ajuste curricular con IA"],
       },
     ],
     howTitle: "De la actividad diaria a la decisión pedagógica",
@@ -119,8 +141,8 @@ const COPY = {
       cta2: "Explore the platform",
       badges: ["Nothing to install", "Protected data", "Español · English"],
     },
-    pillarsTitle: "Four signals no school should keep ignoring",
-    pillarsSub: "SEDEFY analyses usage, performance and behaviour patterns to make visible what goes unnoticed today.",
+    pillarsTitle: "Seven signals no school should keep ignoring",
+    pillarsSub: "SEDEFY analyses usage, performance, school climate and context to make visible what goes unnoticed today.",
     pillars: [
       {
         icon: "risk",
@@ -149,6 +171,27 @@ const COPY = {
         title: "Better ways to teach",
         text: "Which content works, where the class loses the thread and which strategy pays off. Concrete recommendations to adjust teaching practice.",
         bullets: ["Effectiveness by resource and topic", "Learning drop-off points", "AI-assisted teaching suggestions"],
+      },
+      {
+        icon: "environment",
+        tag: "Environment",
+        title: "Environmental & context risks",
+        text: "Context factors that shape learning: campus, area, connectivity, transport, nutrition, weather season and classroom conditions.",
+        bullets: ["Risk map by campus and area", "Connectivity and resource gaps", "Context impact on attendance and results"],
+      },
+      {
+        icon: "coexistence",
+        tag: "Climate",
+        title: "School climate & coexistence",
+        text: "Signals of conflict, exclusion or bullying from participation, interaction and reports — so you intervene with data, not perceptions.",
+        bullets: ["Climate thermometer per class", "Isolation and exclusion detection", "Case and intervention follow-up"],
+      },
+      {
+        icon: "curriculum",
+        tag: "Curriculum",
+        title: "Curriculum design & improvement",
+        text: "Real competency coverage, coherence between what is planned and what is learned, and evidence to adjust syllabi and cross-cutting projects.",
+        bullets: ["Competency coverage per term", "Gaps between plan and real learning", "AI-assisted curriculum adjustments"],
       },
     ],
     howTitle: "From daily activity to pedagogical decisions",
@@ -276,7 +319,11 @@ const PILLAR_ICONS: Record<string, typeof Brain> = {
   potential: LineChart,
   vocation: Compass,
   teaching: Lightbulb,
+  environment: Leaf,
+  coexistence: Handshake,
+  curriculum: LayoutGrid,
 };
+
 
 const PrimaryLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <Link
@@ -355,27 +402,26 @@ const LandingHome = () => {
       </Helmet>
 
       {/* NAV */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-[#0B1220]/70 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={sedefyLogo} alt="SEDEFY" width={36} height={36} loading="eager" className="h-9 w-9 object-contain" />
-            <span className="text-sm font-semibold tracking-wide">SEDEFY</span>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-black/5 bg-white shadow-sm">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+          <Link to="/" className="flex items-center">
+            <img src={sedefyLogo} alt="SEDEFY" width={200} height={56} loading="eager" className="h-12 w-auto object-contain md:h-14" />
           </Link>
-          <div className="hidden items-center gap-8 text-sm text-white/60 md:flex">
-            <a href="#pillars" className="transition-colors hover:text-white">{c.nav.pillars}</a>
-            <a href="#how" className="transition-colors hover:text-white">{c.nav.how}</a>
-            <a href="#impact" className="transition-colors hover:text-white">{c.nav.impact}</a>
+          <div className="hidden items-center gap-8 text-sm text-[#0B1220]/60 md:flex">
+            <a href="#pillars" className="transition-colors hover:text-[#0B1220]">{c.nav.pillars}</a>
+            <a href="#how" className="transition-colors hover:text-[#0B1220]">{c.nav.how}</a>
+            <a href="#impact" className="transition-colors hover:text-[#0B1220]">{c.nav.impact}</a>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={toggleLang}
               aria-label="Language / Idioma"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/80 transition-colors hover:bg-white/[0.1]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/[0.03] px-3 py-1.5 text-xs text-[#0B1220]/80 transition-colors hover:bg-black/[0.07]"
             >
               <Languages className="h-3.5 w-3.5" />
               {lang === "es" ? "EN" : "ES"}
             </button>
-            <Link to="/auth" className="hidden text-sm text-white/70 transition-colors hover:text-white sm:inline">
+            <Link to="/auth" className="hidden text-sm text-[#0B1220]/70 transition-colors hover:text-[#0B1220] sm:inline">
               {c.nav.login}
             </Link>
             <Link
@@ -388,6 +434,7 @@ const LandingHome = () => {
           </div>
         </nav>
       </header>
+
 
       {/* HERO */}
       <section className="relative flex min-h-[92vh] items-center overflow-hidden pt-28">
@@ -487,7 +534,7 @@ const LandingHome = () => {
             <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">{c.pillarsTitle}</h2>
             <p className="mt-6 text-lg text-white/60">{c.pillarsSub}</p>
           </div>
-          <div className="mt-14 grid gap-6 md:grid-cols-2">
+          <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {c.pillars.map((p, i) => {
               const Icon = PILLAR_ICONS[p.icon] ?? Sparkles;
               return (
