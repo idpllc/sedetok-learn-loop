@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation, useSearchParams, Navigate } 
 import { Loader2 } from "lucide-react";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useAuth } from "@/hooks/useAuth";
 
 // Retry lazy imports once and force a reload if the chunk is stale (post-deploy).
 const lazyWithRetry = <T extends React.ComponentType<any>>(
