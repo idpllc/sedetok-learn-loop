@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation, useSearchParams, Navigate } 
 import { Loader2 } from "lucide-react";
 import { OpenGraphHandler } from "@/components/OpenGraphHandler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useAuth } from "@/hooks/useAuth";
 
 // Retry lazy imports once and force a reload if the chunk is stale (post-deploy).
 const lazyWithRetry = <T extends React.ComponentType<any>>(
@@ -96,6 +97,7 @@ const Contacto = lazyWithRetry(() => import("./pages/Contacto"));
 const InstitutionProfile = lazyWithRetry(() => import("./pages/InstitutionProfile"));
 const Gobierno = lazyWithRetry(() => import("./pages/Gobierno"));
 const Instituciones = lazyWithRetry(() => import("./pages/Instituciones"));
+const LandingHome = lazyWithRetry(() => import("./pages/LandingHome"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
 // (iframes used by the notebook capsule preview) to minimise boot time.
@@ -152,6 +154,7 @@ const GlobalChrome = () => {
  */
 const IndexWithRedirect = () => {
   const [searchParams] = useSearchParams();
+  const { user, loading } = useAuth();
   const quizId = searchParams.get("quizId");
   const contentId = searchParams.get("contentId");
   const gameId = searchParams.get("gameId");
@@ -166,6 +169,9 @@ const IndexWithRedirect = () => {
     if (gameId) target.set("game", gameId);
     return <Navigate to={`/sedetok?${target.toString()}`} replace />;
   }
+
+  if (loading) return <RouteFallback />;
+  if (!user) return <LandingHome />;
 
   return <Index />;
 };
