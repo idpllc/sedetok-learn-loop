@@ -36,7 +36,8 @@ const COPY = {
       badges: ["Sin instalar nada", "Datos protegidos", "Español · English"],
     },
     pillarsTitle: "Cuatro señales que ninguna institución debería seguir ignorando",
-    pillarsSub: "SEDEFY analiza patrones de uso, desempeño y comportamiento para hacer visible lo que hoy pasa desapercibido.",
+    pillarsTitle: "Siete señales que ninguna institución debería seguir ignorando",
+    pillarsSub: "SEDEFY analiza patrones de uso, desempeño, convivencia y contexto para hacer visible lo que hoy pasa desapercibido.",
     pillars: [
       {
         icon: "risk",
