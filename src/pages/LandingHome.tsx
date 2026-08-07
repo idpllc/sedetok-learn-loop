@@ -141,8 +141,8 @@ const COPY = {
       cta2: "Explore the platform",
       badges: ["Nothing to install", "Protected data", "Español · English"],
     },
-    pillarsTitle: "Four signals no school should keep ignoring",
-    pillarsSub: "SEDEFY analyses usage, performance and behaviour patterns to make visible what goes unnoticed today.",
+    pillarsTitle: "Seven signals no school should keep ignoring",
+    pillarsSub: "SEDEFY analyses usage, performance, school climate and context to make visible what goes unnoticed today.",
     pillars: [
       {
         icon: "risk",
