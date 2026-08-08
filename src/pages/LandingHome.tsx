@@ -47,6 +47,7 @@ const COPY = {
         { name: "Nelson Pantoja", when: "hace 1 mes", text: "Para los docentes es algo innovador para facilitar la subida de notas, desempeños, actividades y más. Excelente soporte." },
         { name: "Fabian Vasquez", when: "hace 1 mes", text: "Muy buena plataforma… la tenemos en nuestra institución educativa… Recomendada 100 %." },
         { name: "Edgar Ruiz", when: "hace 4 meses", text: "Plataforma muy útil para la gestión educativa." },
+        { name: "Rocio Cuaran", when: "hace 3 meses", text: "Esta plataforma digital es una herramienta innovadora, muy eficiente y altamente recomendada para cualquier institución educativa que busca modernizar sus procesos de enseñanza y aprendizaje. El enfoque integral contribuye significativamente a mejorar la calidad educativa y a orientar a los estudiantes para los desafíos del mundo actual. La plataforma también se destaca por ser accesible y por fortalecer la comunicación permanente con los padres de familia. A través de ella, pueden mantenerse informados en tiempo real sobre el desempeño académico y de convivencia de sus hijos, lo que fomenta un acompañamiento más cercano, oportuno y efectivo en su proceso educativo. ¡Excelente plataforma!" },
       ],
 
     },
