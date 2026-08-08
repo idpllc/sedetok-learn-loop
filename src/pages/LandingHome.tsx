@@ -46,6 +46,7 @@ const COPY = {
         { name: "María F.", text: "La inteligencia educativa de Sedefy ha transformado nuestra institución. Ahora tomamos decisiones con datos reales." },
         { name: "Andrés L.", text: "Muy fácil de usar y con herramientas poderosas para docentes. El perfil vocacional es impresionante." },
       ],
+    },
     pillarsTitle: "Siete señales que ninguna institución debería seguir ignorando",
     pillarsSub: "SEDEFY analiza patrones de uso, desempeño, convivencia y contexto para hacer visible lo que hoy pasa desapercibido.",
     pillars: [
