@@ -556,7 +556,11 @@ const Instituciones = () => {
             <a href="#dashboard" className="hover:text-white">Dashboard</a>
             <a href="#impacto" className="hover:text-white">Impacto</a>
           </div>
-          <a href="#demo">
+          <a
+            href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <MagneticButton variant="ghost">Solicitar demo</MagneticButton>
           </a>
         </div>

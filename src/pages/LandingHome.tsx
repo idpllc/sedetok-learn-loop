@@ -423,13 +423,15 @@ const LandingHome = () => {
             <Link to="/auth" className="hidden text-sm text-[#0F172A]/70 transition-colors hover:text-[#0F172A] sm:inline">
               {c.nav.login}
             </Link>
-            <Link
-              to="/contacto"
+            <a
+              href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede"
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-full px-4 py-2 text-xs font-medium text-[#0B1220]"
               style={{ background: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)" }}
             >
               {c.nav.demo}
-            </Link>
+            </a>
           </div>
         </nav>
       </header>
