@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import {
+  Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
   Brain, HeartPulse, Compass, GraduationCap, Sparkles, ArrowRight, Languages,
   ShieldCheck, LineChart, Users, BookOpen, Lightbulb, AlertTriangle, Target, MessageSquare,
   Leaf, Handshake, LayoutGrid, Star,
@@ -40,6 +43,8 @@ const COPY = {
       rating: "5.0",
       count: "12 opiniones",
       cta: "Calificar en Google",
+      more: "Leer más",
+      less: "Leer menos",
       url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
       items: [
         { name: "Yulieth CRn", when: "hace 3 días", text: "Me ha gustado Sedefy porque es muy fácil de usar y aprender con ella." },
@@ -162,6 +167,8 @@ const COPY = {
       rating: "5.0",
       count: "12 reviews",
       cta: "Rate us on Google",
+      more: "Read more",
+      less: "Read less",
       url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
       items: [
         { name: "Yulieth CRn", when: "3 days ago", text: "I like Sedefy because it is very easy to use and to learn with." },
@@ -365,6 +372,51 @@ const GhostLink = ({ to, children }: { to: string; children: React.ReactNode }) 
     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
   </Link>
 );
+
+const ReviewCard = ({
+  item,
+  moreLabel,
+  lessLabel,
+}: {
+  item: { name: string; when: string; text: string };
+  moreLabel: string;
+  lessLabel: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const isLong = item.text.length > 180;
+  const shown = isLong && !open ? `${item.text.slice(0, 175).trimEnd()}…` : item.text;
+
+  return (
+    <GlassCard className="flex h-full flex-col p-5">
+      <div className="flex items-center gap-2">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
+          {item.name.split(" ").map((n) => n[0]).join("")}
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="flex gap-0.5">
+              {[...Array(5)].map((_, s) => (
+                <Star key={s} className="h-3 w-3 fill-[#FBBF24] text-[#FBBF24]" />
+              ))}
+            </span>
+            <span className="text-xs text-[#0F172A]/50">{item.when}</span>
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-[#0F172A]/70">“{shown}”</p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="mt-2 self-start text-xs font-semibold text-[#0F766E] hover:underline"
+        >
+          {open ? lessLabel : moreLabel}
+        </button>
+      )}
+    </GlassCard>
+  );
+};
 
 /* -------------------------------------------------------------------------- */
 /*  Landing                                                                    */
