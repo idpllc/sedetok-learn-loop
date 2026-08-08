@@ -169,6 +169,7 @@ const COPY = {
         { name: "Nelson Pantoja", when: "1 month ago", text: "For teachers it is truly innovative: uploading grades, performance records, activities and more is much easier. Excellent support." },
         { name: "Fabian Vasquez", when: "1 month ago", text: "Very good platform… we use it in our school… 100% recommended." },
         { name: "Edgar Ruiz", when: "4 months ago", text: "A very useful platform for educational management." },
+        { name: "Rocio Cuaran", when: "3 months ago", text: "This digital platform is an innovative, highly efficient and strongly recommended tool for any school that wants to modernise its teaching and learning processes. Its comprehensive approach significantly improves educational quality and guides students toward the challenges of today's world. The platform also stands out for being accessible and for strengthening ongoing communication with families. Through it, parents can stay informed in real time about their children's academic performance and school behaviour, encouraging closer, timelier and more effective support throughout their education. An excellent platform!" },
       ],
     },
     pillarsTitle: "Seven signals no school should keep ignoring",
