@@ -7,7 +7,7 @@ import sedefyLogo from "@/assets/sedefy-logo.png";
 import {
   Brain, HeartPulse, Compass, GraduationCap, Sparkles, ArrowRight, Languages,
   ShieldCheck, LineChart, Users, BookOpen, Lightbulb, AlertTriangle, Target, MessageSquare,
-  Leaf, Handshake, LayoutGrid,
+  Leaf, Handshake, LayoutGrid, Star,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
@@ -34,6 +34,18 @@ const COPY = {
       cta1: "Solicitar demostración",
       cta2: "Explorar la plataforma",
       badges: ["Sin instalar nada", "Datos protegidos", "Español · English"],
+    },
+    reviews: {
+      eyebrow: "Opiniones de Google",
+      rating: "5.0",
+      count: "12 opiniones",
+      cta: "Calificar en Google",
+      url: "https://www.google.com/maps/place/Sedefy/data=!4m2!3m1!1s0x0:0xbd197bb29c206fa6?sa=X&ved=1t:2428&ictx=111",
+      items: [
+        { name: "Carlos M.", text: "Excelente plataforma para mejorar el aprendizaje de los estudiantes. La IA detecta riesgos antes de que se conviertan en problemas mayores." },
+        { name: "María F.", text: "La inteligencia educativa de Sedefy ha transformado nuestra institución. Ahora tomamos decisiones con datos reales." },
+        { name: "Andrés L.", text: "Muy fácil de usar y con herramientas poderosas para docentes. El perfil vocacional es impresionante." },
+      ],
     },
     pillarsTitle: "Siete señales que ninguna institución debería seguir ignorando",
     pillarsSub: "SEDEFY analiza patrones de uso, desempeño, convivencia y contexto para hacer visible lo que hoy pasa desapercibido.",
@@ -140,6 +152,18 @@ const COPY = {
       cta1: "Request a demo",
       cta2: "Explore the platform",
       badges: ["Nothing to install", "Protected data", "Español · English"],
+    },
+    reviews: {
+      eyebrow: "Google Reviews",
+      rating: "5.0",
+      count: "12 reviews",
+      cta: "Rate us on Google",
+      url: "https://www.google.com/maps/place/Sedefy/data=!4m2!3m1!1s0x0:0xbd197bb29c206fa6?sa=X&ved=1t:2428&ictx=111",
+      items: [
+        { name: "Carlos M.", text: "Excellent platform for improving student learning. The AI detects risks before they become bigger problems." },
+        { name: "María F.", text: "SEDEFY's educational intelligence has transformed our institution. We now make decisions based on real data." },
+        { name: "Andrés L.", text: "Very easy to use and with powerful tools for teachers. The vocational profile is impressive." },
+      ],
     },
     pillarsTitle: "Seven signals no school should keep ignoring",
     pillarsSub: "SEDEFY analyses usage, performance, school climate and context to make visible what goes unnoticed today.",
@@ -523,6 +547,62 @@ const LandingHome = () => {
               </div>
             </GlassCard>
           </motion.div>
+        </div>
+      </section>
+
+      {/* REVIEWS */}
+      <section className="relative border-y border-black/5 bg-white py-16">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col items-center justify-between gap-8 lg:flex-row">
+            <div className="text-center lg:text-left">
+              <Eyebrow>{c.reviews.eyebrow}</Eyebrow>
+              <div className="mt-4 flex items-center justify-center gap-4 lg:justify-start">
+                <div className="text-5xl font-semibold text-[#0F172A]">{c.reviews.rating}</div>
+                <div className="text-left">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 fill-[#FBBF24] text-[#FBBF24]" />
+                    ))}
+                  </div>
+                  <div className="mt-1 text-sm text-[#0F172A]/60">{c.reviews.count}</div>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {c.reviews.items.map((item, i) => (
+                <motion.div
+                  key={item.name}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <GlassCard className="h-full p-5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
+                        {item.name.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
+                    </div>
+                    <p className="mt-3 text-sm leading-relaxed text-[#0F172A]/70">“{item.text}”</p>
+                  </GlassCard>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          <div className="mt-10 flex justify-center">
+            <a
+              href={c.reviews.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-medium text-[#0F172A]/80 shadow-sm transition-colors hover:bg-black/[0.03]"
+            >
+              <span className="flex items-center gap-1">
+                <Star className="h-4 w-4 fill-[#FBBF24] text-[#FBBF24]" />
+                {c.reviews.cta}
+              </span>
+            </a>
+          </div>
         </div>
       </section>
 
