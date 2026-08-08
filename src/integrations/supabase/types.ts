@@ -4498,6 +4498,7 @@ export type Database = {
           xp_per_capita: number
         }[]
       }
+      get_my_admin_conversation_ids: { Args: never; Returns: string[] }
       get_my_conversation_ids: { Args: never; Returns: string[] }
       get_payment_link: { Args: { _subscription_id: string }; Returns: Json }
       get_profile_private_fields: {
@@ -4573,6 +4574,10 @@ export type Database = {
       }
       is_institution_staff: {
         Args: { _institution_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_path_creator: {
+        Args: { _path_id: string; _user_id: string }
         Returns: boolean
       }
       is_user_in_live_game: {
