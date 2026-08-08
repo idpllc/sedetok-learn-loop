@@ -324,24 +324,6 @@ const PILLAR_ICONS: Record<string, typeof Brain> = {
 };
 
 
-const PrimaryLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
-  <Link
-    to={to}
-    className="group relative inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium text-[#0B1220]"
-  >
-    <span
-      className="absolute inset-0 rounded-full"
-      style={{
-        background: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)",
-        boxShadow: "0 10px 40px -10px rgba(34,211,183,0.5)",
-      }}
-    />
-    <span className="relative flex items-center gap-2">
-      {children}
-      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-    </span>
-  </Link>
-);
 
 const GhostLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <Link
@@ -423,13 +405,15 @@ const LandingHome = () => {
             <Link to="/auth" className="hidden text-sm text-[#0F172A]/70 transition-colors hover:text-[#0F172A] sm:inline">
               {c.nav.login}
             </Link>
-            <Link
-              to="/contacto"
+            <a
+              href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede"
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-full px-4 py-2 text-xs font-medium text-[#0B1220]"
               style={{ background: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)" }}
             >
               {c.nav.demo}
-            </Link>
+            </a>
           </div>
         </nav>
       </header>
@@ -459,7 +443,24 @@ const LandingHome = () => {
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-[#0F172A]/60">{c.hero.sub}</p>
             <div className="mt-10 flex flex-wrap gap-4">
-              <PrimaryLink to="/contacto">{c.hero.cta1}</PrimaryLink>
+              <a
+                href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium text-[#0B1220]"
+              >
+                <span
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)",
+                    boxShadow: "0 10px 40px -10px rgba(34,211,183,0.5)",
+                  }}
+                />
+                <span className="relative flex items-center gap-2">
+                  {c.hero.cta1}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </a>
               <GhostLink to="/auth">{c.hero.cta2}</GhostLink>
             </div>
             <div className="mt-8 flex flex-wrap gap-3 text-xs text-[#0F172A]/50">
@@ -681,7 +682,24 @@ const LandingHome = () => {
           </h2>
           <p className="mx-auto mt-8 max-w-2xl text-lg text-[#0F172A]/60">{c.ctaSub}</p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <PrimaryLink to="/contacto">{c.cta1}</PrimaryLink>
+            <a
+              href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium text-[#0B1220]"
+            >
+              <span
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)",
+                  boxShadow: "0 10px 40px -10px rgba(34,211,183,0.5)",
+                }}
+              />
+              <span className="relative flex items-center gap-2">
+                {c.cta1}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </a>
             <GhostLink to="/auth">{c.cta2}</GhostLink>
           </div>
         </div>

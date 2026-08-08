@@ -556,7 +556,11 @@ const Instituciones = () => {
             <a href="#dashboard" className="hover:text-white">Dashboard</a>
             <a href="#impacto" className="hover:text-white">Impacto</a>
           </div>
-          <a href="#demo">
+          <a
+            href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <MagneticButton variant="ghost">Solicitar demo</MagneticButton>
           </a>
         </div>
@@ -603,7 +607,7 @@ const Instituciones = () => {
             transition={{ delay: 0.5, duration: 1 }}
             className="mt-10 flex flex-wrap items-center justify-center gap-4"
           >
-            <a href="#demo"><MagneticButton>Solicitar demostración</MagneticButton></a>
+            <a href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede" target="_blank" rel="noopener noreferrer"><MagneticButton>Solicitar demostración</MagneticButton></a>
             <a href="#plataforma"><MagneticButton variant="ghost">Conocer la plataforma</MagneticButton></a>
           </motion.div>
 
@@ -985,7 +989,7 @@ const Instituciones = () => {
             Conozca cómo SEDEFY transforma los datos de su institución en inteligencia para construir una mejor educación.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <a href="/contacto"><MagneticButton>Solicitar demostración</MagneticButton></a>
+            <a href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede" target="_blank" rel="noopener noreferrer"><MagneticButton>Solicitar demostración</MagneticButton></a>
             <a href="mailto:instituciones@sedefy.com"><MagneticButton variant="ghost">Hablar con ventas</MagneticButton></a>
           </div>
         </div>
