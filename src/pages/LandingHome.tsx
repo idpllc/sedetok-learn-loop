@@ -7,7 +7,7 @@ import sedefyLogo from "@/assets/sedefy-logo.png";
 import {
   Brain, HeartPulse, Compass, GraduationCap, Sparkles, ArrowRight, Languages,
   ShieldCheck, LineChart, Users, BookOpen, Lightbulb, AlertTriangle, Target, MessageSquare,
-  Leaf, Handshake, LayoutGrid,
+  Leaf, Handshake, LayoutGrid, Star,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
