@@ -40,12 +40,15 @@ const COPY = {
       rating: "5.0",
       count: "12 opiniones",
       cta: "Calificar en Google",
-      url: "https://www.google.com/maps/place/Sedefy/data=!4m2!3m1!1s0x0:0xbd197bb29c206fa6?sa=X&ved=1t:2428&ictx=111",
+      url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
       items: [
-        { name: "Carlos M.", text: "Excelente plataforma para mejorar el aprendizaje de los estudiantes. La IA detecta riesgos antes de que se conviertan en problemas mayores." },
-        { name: "María F.", text: "La inteligencia educativa de Sedefy ha transformado nuestra institución. Ahora tomamos decisiones con datos reales." },
-        { name: "Andrés L.", text: "Muy fácil de usar y con herramientas poderosas para docentes. El perfil vocacional es impresionante." },
+        { name: "Yulieth CRn", when: "hace 3 días", text: "Me ha gustado Sedefy porque es muy fácil de usar y aprender con ella." },
+        { name: "Fabian Cuacialpud", when: "hace 3 semanas", text: "Plataforma de fácil uso y de contenido acorde a nuestros requerimientos." },
+        { name: "Nelson Pantoja", when: "hace 1 mes", text: "Para los docentes es algo innovador para facilitar la subida de notas, desempeños, actividades y más. Excelente soporte." },
+        { name: "Fabian Vasquez", when: "hace 1 mes", text: "Muy buena plataforma… la tenemos en nuestra institución educativa… Recomendada 100 %." },
+        { name: "Edgar Ruiz", when: "hace 4 meses", text: "Plataforma muy útil para la gestión educativa." },
       ],
+
     },
     pillarsTitle: "Siete señales que ninguna institución debería seguir ignorando",
     pillarsSub: "SEDEFY analiza patrones de uso, desempeño, convivencia y contexto para hacer visible lo que hoy pasa desapercibido.",
@@ -158,11 +161,13 @@ const COPY = {
       rating: "5.0",
       count: "12 reviews",
       cta: "Rate us on Google",
-      url: "https://www.google.com/maps/place/Sedefy/data=!4m2!3m1!1s0x0:0xbd197bb29c206fa6?sa=X&ved=1t:2428&ictx=111",
+      url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
       items: [
-        { name: "Carlos M.", text: "Excellent platform for improving student learning. The AI detects risks before they become bigger problems." },
-        { name: "María F.", text: "SEDEFY's educational intelligence has transformed our institution. We now make decisions based on real data." },
-        { name: "Andrés L.", text: "Very easy to use and with powerful tools for teachers. The vocational profile is impressive." },
+        { name: "Yulieth CRn", when: "3 days ago", text: "I like Sedefy because it is very easy to use and to learn with." },
+        { name: "Fabian Cuacialpud", when: "3 weeks ago", text: "Easy-to-use platform with content that matches our requirements." },
+        { name: "Nelson Pantoja", when: "1 month ago", text: "For teachers it is truly innovative: uploading grades, performance records, activities and more is much easier. Excellent support." },
+        { name: "Fabian Vasquez", when: "1 month ago", text: "Very good platform… we use it in our school… 100% recommended." },
+        { name: "Edgar Ruiz", when: "4 months ago", text: "A very useful platform for educational management." },
       ],
     },
     pillarsTitle: "Seven signals no school should keep ignoring",
@@ -553,10 +558,10 @@ const LandingHome = () => {
       {/* REVIEWS */}
       <section className="relative border-y border-black/5 bg-white py-16">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="flex flex-col items-center justify-between gap-8 lg:flex-row">
-            <div className="text-center lg:text-left">
+          <div className="flex flex-col items-center gap-8">
+            <div className="text-center">
               <Eyebrow>{c.reviews.eyebrow}</Eyebrow>
-              <div className="mt-4 flex items-center justify-center gap-4 lg:justify-start">
+              <div className="mt-4 flex items-center justify-center gap-4">
                 <div className="text-5xl font-semibold text-[#0F172A]">{c.reviews.rating}</div>
                 <div className="text-left">
                   <div className="flex gap-0.5">
@@ -568,21 +573,31 @@ const LandingHome = () => {
                 </div>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {c.reviews.items.map((item, i) => (
                 <motion.div
                   key={item.name}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.08 }}
                 >
                   <GlassCard className="h-full p-5">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
                         {item.name.split(" ").map((n) => n[0]).join("")}
                       </div>
-                      <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex gap-0.5">
+                            {[...Array(5)].map((_, s) => (
+                              <Star key={s} className="h-3 w-3 fill-[#FBBF24] text-[#FBBF24]" />
+                            ))}
+                          </span>
+                          <span className="text-xs text-[#0F172A]/50">{item.when}</span>
+                        </div>
+                      </div>
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-[#0F172A]/70">“{item.text}”</p>
                   </GlassCard>
@@ -590,6 +605,7 @@ const LandingHome = () => {
               ))}
             </div>
           </div>
+
           <div className="mt-10 flex justify-center">
             <a
               href={c.reviews.url}
