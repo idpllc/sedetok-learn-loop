@@ -153,6 +153,18 @@ const COPY = {
       cta2: "Explore the platform",
       badges: ["Nothing to install", "Protected data", "Español · English"],
     },
+    reviews: {
+      eyebrow: "Google Reviews",
+      rating: "5.0",
+      count: "12 reviews",
+      cta: "Rate us on Google",
+      url: "https://www.google.com/maps/place/Sedefy/data=!4m2!3m1!1s0x0:0xbd197bb29c206fa6?sa=X&ved=1t:2428&ictx=111",
+      items: [
+        { name: "Carlos M.", text: "Excellent platform for improving student learning. The AI detects risks before they become bigger problems." },
+        { name: "María F.", text: "SEDEFY's educational intelligence has transformed our institution. We now make decisions based on real data." },
+        { name: "Andrés L.", text: "Very easy to use and with powerful tools for teachers. The vocational profile is impressive." },
+      ],
+    },
     pillarsTitle: "Seven signals no school should keep ignoring",
     pillarsSub: "SEDEFY analyses usage, performance, school climate and context to make visible what goes unnoticed today.",
     pillars: [
