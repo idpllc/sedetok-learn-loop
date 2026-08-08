@@ -409,7 +409,32 @@ const LandingHome = () => {
             offers: { "@type": "Offer", price: "0", priceCurrency: "COP" },
           })}
         </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Sedefy",
+            url: "https://sedefy.com/",
+            sameAs: ["https://maps.app.goo.gl/C1CWDTroEWvK3vrh6"],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "5.0",
+              bestRating: "5",
+              worstRating: "1",
+              reviewCount: String(c.reviews.items.length),
+              ratingCount: "12",
+            },
+            review: c.reviews.items.map((item) => ({
+              "@type": "Review",
+              author: { "@type": "Person", name: item.name },
+              reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+              reviewBody: item.text,
+              publisher: { "@type": "Organization", name: "Google" },
+            })),
+          })}
+        </script>
       </Helmet>
+
 
       {/* NAV */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-black/5 bg-white shadow-sm">
