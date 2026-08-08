@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import {
+  Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
   Brain, HeartPulse, Compass, GraduationCap, Sparkles, ArrowRight, Languages,
   ShieldCheck, LineChart, Users, BookOpen, Lightbulb, AlertTriangle, Target, MessageSquare,
   Leaf, Handshake, LayoutGrid, Star,
@@ -40,6 +43,8 @@ const COPY = {
       rating: "5.0",
       count: "12 opiniones",
       cta: "Calificar en Google",
+      more: "Leer más",
+      less: "Leer menos",
       url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
       items: [
         { name: "Yulieth CRn", when: "hace 3 días", text: "Me ha gustado Sedefy porque es muy fácil de usar y aprender con ella." },
@@ -47,6 +52,7 @@ const COPY = {
         { name: "Nelson Pantoja", when: "hace 1 mes", text: "Para los docentes es algo innovador para facilitar la subida de notas, desempeños, actividades y más. Excelente soporte." },
         { name: "Fabian Vasquez", when: "hace 1 mes", text: "Muy buena plataforma… la tenemos en nuestra institución educativa… Recomendada 100 %." },
         { name: "Edgar Ruiz", when: "hace 4 meses", text: "Plataforma muy útil para la gestión educativa." },
+        { name: "Rocio Cuaran", when: "hace 3 meses", text: "Esta plataforma digital es una herramienta innovadora, muy eficiente y altamente recomendada para cualquier institución educativa que busca modernizar sus procesos de enseñanza y aprendizaje. El enfoque integral contribuye significativamente a mejorar la calidad educativa y a orientar a los estudiantes para los desafíos del mundo actual. La plataforma también se destaca por ser accesible y por fortalecer la comunicación permanente con los padres de familia. A través de ella, pueden mantenerse informados en tiempo real sobre el desempeño académico y de convivencia de sus hijos, lo que fomenta un acompañamiento más cercano, oportuno y efectivo en su proceso educativo. ¡Excelente plataforma!" },
       ],
 
     },
@@ -161,6 +167,8 @@ const COPY = {
       rating: "5.0",
       count: "12 reviews",
       cta: "Rate us on Google",
+      more: "Read more",
+      less: "Read less",
       url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
       items: [
         { name: "Yulieth CRn", when: "3 days ago", text: "I like Sedefy because it is very easy to use and to learn with." },
@@ -168,6 +176,7 @@ const COPY = {
         { name: "Nelson Pantoja", when: "1 month ago", text: "For teachers it is truly innovative: uploading grades, performance records, activities and more is much easier. Excellent support." },
         { name: "Fabian Vasquez", when: "1 month ago", text: "Very good platform… we use it in our school… 100% recommended." },
         { name: "Edgar Ruiz", when: "4 months ago", text: "A very useful platform for educational management." },
+        { name: "Rocio Cuaran", when: "3 months ago", text: "This digital platform is an innovative, highly efficient and strongly recommended tool for any school that wants to modernise its teaching and learning processes. Its comprehensive approach significantly improves educational quality and guides students toward the challenges of today's world. The platform also stands out for being accessible and for strengthening ongoing communication with families. Through it, parents can stay informed in real time about their children's academic performance and school behaviour, encouraging closer, timelier and more effective support throughout their education. An excellent platform!" },
       ],
     },
     pillarsTitle: "Seven signals no school should keep ignoring",
@@ -364,6 +373,51 @@ const GhostLink = ({ to, children }: { to: string; children: React.ReactNode }) 
   </Link>
 );
 
+const ReviewCard = ({
+  item,
+  moreLabel,
+  lessLabel,
+}: {
+  item: { name: string; when: string; text: string };
+  moreLabel: string;
+  lessLabel: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const isLong = item.text.length > 180;
+  const shown = isLong && !open ? `${item.text.slice(0, 175).trimEnd()}…` : item.text;
+
+  return (
+    <GlassCard className="flex h-full flex-col p-5">
+      <div className="flex items-center gap-2">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
+          {item.name.split(" ").map((n) => n[0]).join("")}
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="flex gap-0.5">
+              {[...Array(5)].map((_, s) => (
+                <Star key={s} className="h-3 w-3 fill-[#FBBF24] text-[#FBBF24]" />
+              ))}
+            </span>
+            <span className="text-xs text-[#0F172A]/50">{item.when}</span>
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-[#0F172A]/70">“{shown}”</p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="mt-2 self-start text-xs font-semibold text-[#0F766E] hover:underline"
+        >
+          {open ? lessLabel : moreLabel}
+        </button>
+      )}
+    </GlassCard>
+  );
+};
+
 /* -------------------------------------------------------------------------- */
 /*  Landing                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -409,7 +463,32 @@ const LandingHome = () => {
             offers: { "@type": "Offer", price: "0", priceCurrency: "COP" },
           })}
         </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Sedefy",
+            url: "https://sedefy.com/",
+            sameAs: ["https://maps.app.goo.gl/C1CWDTroEWvK3vrh6"],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "5.0",
+              bestRating: "5",
+              worstRating: "1",
+              reviewCount: String(c.reviews.items.length),
+              ratingCount: "12",
+            },
+            review: c.reviews.items.map((item) => ({
+              "@type": "Review",
+              author: { "@type": "Person", name: item.name },
+              reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+              reviewBody: item.text,
+              publisher: { "@type": "Organization", name: "Google" },
+            })),
+          })}
+        </script>
       </Helmet>
+
 
       {/* NAV */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-black/5 bg-white shadow-sm">
@@ -573,37 +652,18 @@ const LandingHome = () => {
                 </div>
               </div>
             </div>
-            <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {c.reviews.items.map((item, i) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                >
-                  <GlassCard className="h-full p-5">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
-                        {item.name.split(" ").map((n) => n[0]).join("")}
-                      </div>
-                      <div>
-                        <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="flex gap-0.5">
-                            {[...Array(5)].map((_, s) => (
-                              <Star key={s} className="h-3 w-3 fill-[#FBBF24] text-[#FBBF24]" />
-                            ))}
-                          </span>
-                          <span className="text-xs text-[#0F172A]/50">{item.when}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="mt-3 text-sm leading-relaxed text-[#0F172A]/70">“{item.text}”</p>
-                  </GlassCard>
-                </motion.div>
-              ))}
-            </div>
+            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+              <CarouselContent className="-ml-4">
+                {c.reviews.items.map((item) => (
+                  <CarouselItem key={item.name} className="pl-4 sm:basis-1/2 lg:basis-1/3">
+                    <ReviewCard item={item} moreLabel={c.reviews.more} lessLabel={c.reviews.less} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="-left-3 hidden sm:flex" />
+              <CarouselNext className="-right-3 hidden sm:flex" />
+            </Carousel>
+
           </div>
 
           <div className="mt-10 flex justify-center">
