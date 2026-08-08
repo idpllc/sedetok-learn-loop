@@ -558,10 +558,10 @@ const LandingHome = () => {
       {/* REVIEWS */}
       <section className="relative border-y border-black/5 bg-white py-16">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="flex flex-col items-center justify-between gap-8 lg:flex-row">
-            <div className="text-center lg:text-left">
+          <div className="flex flex-col items-center gap-8">
+            <div className="text-center">
               <Eyebrow>{c.reviews.eyebrow}</Eyebrow>
-              <div className="mt-4 flex items-center justify-center gap-4 lg:justify-start">
+              <div className="mt-4 flex items-center justify-center gap-4">
                 <div className="text-5xl font-semibold text-[#0F172A]">{c.reviews.rating}</div>
                 <div className="text-left">
                   <div className="flex gap-0.5">
@@ -573,21 +573,31 @@ const LandingHome = () => {
                 </div>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {c.reviews.items.map((item, i) => (
                 <motion.div
                   key={item.name}
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * 0.08 }}
                 >
                   <GlassCard className="h-full p-5">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
                         {item.name.split(" ").map((n) => n[0]).join("")}
                       </div>
-                      <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
+                      <div>
+                        <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex gap-0.5">
+                            {[...Array(5)].map((_, s) => (
+                              <Star key={s} className="h-3 w-3 fill-[#FBBF24] text-[#FBBF24]" />
+                            ))}
+                          </span>
+                          <span className="text-xs text-[#0F172A]/50">{item.when}</span>
+                        </div>
+                      </div>
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-[#0F172A]/70">“{item.text}”</p>
                   </GlassCard>
@@ -595,6 +605,7 @@ const LandingHome = () => {
               ))}
             </div>
           </div>
+
           <div className="mt-10 flex justify-center">
             <a
               href={c.reviews.url}
