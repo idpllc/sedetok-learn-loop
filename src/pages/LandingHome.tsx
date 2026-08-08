@@ -232,7 +232,7 @@ const COPY = {
 } as const;
 
 /* -------------------------------------------------------------------------- */
-/*  Animated nodes network background                                         */
+/*  Animated nodes network background — soft, light palette                    */
 /* -------------------------------------------------------------------------- */
 const NodesNetwork = ({ density = 70 }: { density?: number }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -267,7 +267,7 @@ const NodesNetwork = ({ density = 70 }: { density?: number }) => {
           const b = nodes[j];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
           if (d < 130 * dpr) {
-            ctx.strokeStyle = `rgba(34, 211, 183, ${(1 - d / (130 * dpr)) * 0.28})`;
+            ctx.strokeStyle = `rgba(34, 211, 183, ${(1 - d / (130 * dpr)) * 0.22})`;
             ctx.lineWidth = 0.6 * dpr;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -275,7 +275,7 @@ const NodesNetwork = ({ density = 70 }: { density?: number }) => {
             ctx.stroke();
           }
         }
-        ctx.fillStyle = "rgba(34, 211, 183, 0.8)";
+        ctx.fillStyle = "rgba(34, 211, 183, 0.55)";
         ctx.beginPath();
         ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
         ctx.fill();
@@ -288,11 +288,11 @@ const NodesNetwork = ({ density = 70 }: { density?: number }) => {
       window.removeEventListener("resize", resize);
     };
   }, [density]);
-  return <canvas ref={canvasRef} className="h-full w-full opacity-60" />;
+  return <canvas ref={canvasRef} className="h-full w-full opacity-70" />;
 };
 
 const Eyebrow = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[#22D3B7] backdrop-blur">
+  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#22D3B7]/20 bg-[#22D3B7]/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-[#0F766E] backdrop-blur">
     <span className="h-1.5 w-1.5 rounded-full bg-[#22D3B7] shadow-[0_0_10px_#22D3B7]" />
     {children}
   </div>
@@ -302,13 +302,12 @@ const GlassCard = ({ children, className = "" }: { children: React.ReactNode; cl
   <motion.div
     whileHover={{ y: -6 }}
     transition={{ type: "spring", stiffness: 200, damping: 20 }}
-    className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl ${className}`}
-    style={{ boxShadow: "0 20px 60px -30px rgba(0,0,0,0.6)" }}
+    className={`group relative overflow-hidden rounded-2xl border border-black/5 bg-white/80 shadow-[0_10px_40px_-20px_rgba(15,23,42,0.12)] backdrop-blur-xl ${className}`}
   >
     <div
       aria-hidden
       className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-      style={{ background: "radial-gradient(500px circle at 50% 0%, rgba(34,211,183,0.12), transparent 60%)" }}
+      style={{ background: "radial-gradient(500px circle at 50% 0%, rgba(34,211,183,0.10), transparent 60%)" }}
     />
     <div className="relative">{children}</div>
   </motion.div>
@@ -334,7 +333,7 @@ const PrimaryLink = ({ to, children }: { to: string; children: React.ReactNode }
       className="absolute inset-0 rounded-full"
       style={{
         background: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)",
-        boxShadow: "0 10px 40px -10px rgba(34,211,183,0.6)",
+        boxShadow: "0 10px 40px -10px rgba(34,211,183,0.5)",
       }}
     />
     <span className="relative flex items-center gap-2">
@@ -347,7 +346,7 @@ const PrimaryLink = ({ to, children }: { to: string; children: React.ReactNode }
 const GhostLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <Link
     to={to}
-    className="group inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-medium text-white/90 backdrop-blur-xl transition-colors hover:bg-white/[0.08]"
+    className="group inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/60 px-7 py-3.5 text-sm font-medium text-[#0F172A]/90 backdrop-blur-xl transition-colors hover:bg-white hover:border-black/15"
   >
     {children}
     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -374,7 +373,7 @@ const LandingHome = () => {
   const toggleLang = () => i18n.changeLanguage(lang === "es" ? "en" : "es");
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#0B1220] text-white antialiased">
+    <div className="min-h-screen overflow-x-hidden bg-[#F8FAFC] text-[#0F172A] antialiased">
       <Helmet>
         <html lang={c.htmlLang} />
         <title>{c.meta.title}</title>
@@ -407,21 +406,21 @@ const LandingHome = () => {
           <Link to="/" className="flex items-center">
             <img src={sedefyLogo} alt="SEDEFY" width={200} height={56} loading="eager" className="h-12 w-auto object-contain md:h-14" />
           </Link>
-          <div className="hidden items-center gap-8 text-sm text-[#0B1220]/60 md:flex">
-            <a href="#pillars" className="transition-colors hover:text-[#0B1220]">{c.nav.pillars}</a>
-            <a href="#how" className="transition-colors hover:text-[#0B1220]">{c.nav.how}</a>
-            <a href="#impact" className="transition-colors hover:text-[#0B1220]">{c.nav.impact}</a>
+          <div className="hidden items-center gap-8 text-sm text-[#0F172A]/60 md:flex">
+            <a href="#pillars" className="transition-colors hover:text-[#0F172A]">{c.nav.pillars}</a>
+            <a href="#how" className="transition-colors hover:text-[#0F172A]">{c.nav.how}</a>
+            <a href="#impact" className="transition-colors hover:text-[#0F172A]">{c.nav.impact}</a>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={toggleLang}
               aria-label="Language / Idioma"
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/[0.03] px-3 py-1.5 text-xs text-[#0B1220]/80 transition-colors hover:bg-black/[0.07]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-black/[0.03] px-3 py-1.5 text-xs text-[#0F172A]/80 transition-colors hover:bg-black/[0.07]"
             >
               <Languages className="h-3.5 w-3.5" />
               {lang === "es" ? "EN" : "ES"}
             </button>
-            <Link to="/auth" className="hidden text-sm text-[#0B1220]/70 transition-colors hover:text-[#0B1220] sm:inline">
+            <Link to="/auth" className="hidden text-sm text-[#0F172A]/70 transition-colors hover:text-[#0F172A] sm:inline">
               {c.nav.login}
             </Link>
             <Link
@@ -437,36 +436,36 @@ const LandingHome = () => {
 
 
       {/* HERO */}
-      <section className="relative flex min-h-[92vh] items-center overflow-hidden pt-28">
+      <section className="relative flex min-h-[92vh] items-center overflow-hidden bg-white pt-28">
         <div className="absolute inset-0"><NodesNetwork density={80} /></div>
         <div
           className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(34,211,183,0.14), transparent 60%)" }}
+          style={{ background: "radial-gradient(ellipse at 50% 30%, rgba(34,211,183,0.10), transparent 60%)" }}
         />
         <div className="relative mx-auto grid w-full max-w-7xl items-center gap-14 px-6 lg:grid-cols-[1.1fr_0.9fr]">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <Eyebrow>{c.hero.eyebrow}</Eyebrow>
-            <h1 className="text-balance text-5xl font-semibold leading-[1.03] tracking-tight md:text-7xl">
+            <h1 className="text-balance text-5xl font-semibold leading-[1.03] tracking-tight text-[#0F172A] md:text-7xl">
               {c.hero.title1}
               <br />
               {c.hero.title2}{" "}
               <span
                 className="bg-clip-text text-transparent"
-                style={{ backgroundImage: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)" }}
+                style={{ backgroundImage: "linear-gradient(135deg, #22D3B7 0%, #16A34A 100%)" }}
               >
                 {c.hero.gradient}
               </span>
               .
             </h1>
-            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-white/60">{c.hero.sub}</p>
+            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-[#0F172A]/60">{c.hero.sub}</p>
             <div className="mt-10 flex flex-wrap gap-4">
               <PrimaryLink to="/contacto">{c.hero.cta1}</PrimaryLink>
               <GhostLink to="/auth">{c.hero.cta2}</GhostLink>
             </div>
-            <div className="mt-8 flex flex-wrap gap-3 text-xs text-white/40">
+            <div className="mt-8 flex flex-wrap gap-3 text-xs text-[#0F172A]/50">
               {c.hero.badges.map((b) => (
-                <span key={b} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1">
-                  <ShieldCheck className="h-3.5 w-3.5 text-[#4ADE80]" />
+                <span key={b} className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3 py-1 shadow-sm">
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#16A34A]" />
                   {b}
                 </span>
               ))}
@@ -481,17 +480,17 @@ const LandingHome = () => {
                   className="flex h-11 w-11 items-center justify-center rounded-full"
                   style={{ background: "radial-gradient(circle at 30% 30%, #4ADE80, #22D3B7 70%)" }}
                 >
-                  <Brain className="h-5 w-5 text-[#0B1220]" />
+                  <Brain className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">SEDEFY AI</div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#A3E635]">
-                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#A3E635]" />
+                  <div className="text-sm font-semibold text-[#0F172A]">SEDEFY AI</div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#16A34A]">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#16A34A]" />
                     {lang === "es" ? "Analizando en tiempo real" : "Analysing in real time"}
                   </div>
                 </div>
               </div>
-              <motion.p key={q} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="min-h-[3.5rem] text-lg text-white/85">
+              <motion.p key={q} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="min-h-[3.5rem] text-lg text-[#0F172A]/85">
                 “{c.questions[q]}”
               </motion.p>
               <div className="mt-6 space-y-3">
@@ -499,17 +498,17 @@ const LandingHome = () => {
                   { icon: AlertTriangle, label: lang === "es" ? "Riesgo psicosocial" : "Psychosocial risk", v: 24, color: "#F87171" },
                   { icon: LineChart, label: lang === "es" ? "Potencial académico" : "Academic potential", v: 78, color: "#22D3B7" },
                   { icon: Compass, label: lang === "es" ? "Perfil vocacional" : "Vocational profile", v: 91, color: "#4ADE80" },
-                  { icon: Lightbulb, label: lang === "es" ? "Mejora didáctica" : "Teaching improvement", v: 63, color: "#A3E635" },
+                  { icon: Lightbulb, label: lang === "es" ? "Mejora didáctica" : "Teaching improvement", v: 63, color: "#16A34A" },
                 ].map((row) => (
                   <div key={row.label}>
-                    <div className="mb-1 flex items-center justify-between text-[11px] text-white/55">
+                    <div className="mb-1 flex items-center justify-between text-[11px] text-[#0F172A]/55">
                       <span className="inline-flex items-center gap-1.5">
                         <row.icon className="h-3.5 w-3.5" style={{ color: row.color }} />
                         {row.label}
                       </span>
                       <span className="tabular-nums">{row.v}%</span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-black/10">
                       <motion.div
                         className="h-full rounded-full"
                         style={{ background: row.color }}
@@ -527,12 +526,12 @@ const LandingHome = () => {
       </section>
 
       {/* PILLARS */}
-      <section id="pillars" className="relative py-32">
+      <section id="pillars" className="relative bg-[#F8FAFC] py-32">
         <div className="mx-auto max-w-7xl px-6">
           <div className="max-w-3xl">
             <Eyebrow>{lang === "es" ? "Qué detecta" : "What it detects"}</Eyebrow>
-            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">{c.pillarsTitle}</h2>
-            <p className="mt-6 text-lg text-white/60">{c.pillarsSub}</p>
+            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight text-[#0F172A] md:text-5xl">{c.pillarsTitle}</h2>
+            <p className="mt-6 text-lg text-[#0F172A]/60">{c.pillarsSub}</p>
           </div>
           <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {c.pillars.map((p, i) => {
@@ -548,18 +547,18 @@ const LandingHome = () => {
                   <GlassCard className="h-full p-8">
                     <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#22D3B7]/25 bg-[#22D3B7]/10">
-                        <Icon className="h-5 w-5 text-[#22D3B7]" />
+                        <Icon className="h-5 w-5 text-[#0F766E]" />
                       </div>
-                      <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-white/50">
+                      <span className="rounded-full border border-black/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-[#0F172A]/50">
                         {p.tag}
                       </span>
                     </div>
-                    <h3 className="mt-6 text-2xl font-semibold">{p.title}</h3>
-                    <p className="mt-3 text-white/60">{p.text}</p>
+                    <h3 className="mt-6 text-2xl font-semibold text-[#0F172A]">{p.title}</h3>
+                    <p className="mt-3 text-[#0F172A]/60">{p.text}</p>
                     <ul className="mt-6 space-y-2">
                       {p.bullets.map((b) => (
-                        <li key={b} className="flex items-start gap-2 text-sm text-white/70">
-                          <Target className="mt-0.5 h-4 w-4 shrink-0 text-[#4ADE80]" />
+                        <li key={b} className="flex items-start gap-2 text-sm text-[#0F172A]/70">
+                          <Target className="mt-0.5 h-4 w-4 shrink-0 text-[#16A34A]" />
                           {b}
                         </li>
                       ))}
@@ -573,12 +572,12 @@ const LandingHome = () => {
       </section>
 
       {/* HOW */}
-      <section id="how" className="relative overflow-hidden py-32">
-        <div className="absolute inset-0 opacity-40"><NodesNetwork density={40} /></div>
+      <section id="how" className="relative overflow-hidden bg-white py-32">
+        <div className="absolute inset-0 opacity-50"><NodesNetwork density={40} /></div>
         <div className="relative mx-auto max-w-7xl px-6">
           <div className="max-w-3xl">
             <Eyebrow>{lang === "es" ? "Cómo funciona" : "How it works"}</Eyebrow>
-            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">{c.howTitle}</h2>
+            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight text-[#0F172A] md:text-5xl">{c.howTitle}</h2>
           </div>
           <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {c.howSteps.map((s, i) => (
@@ -590,9 +589,9 @@ const LandingHome = () => {
                 transition={{ delay: i * 0.08 }}
               >
                 <GlassCard className="h-full p-7">
-                  <div className="text-4xl font-semibold text-white/10">0{i + 1}</div>
-                  <h3 className="mt-3 text-xl font-semibold">{s.t}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-white/60">{s.d}</p>
+                  <div className="text-4xl font-semibold text-[#0F172A]/10">0{i + 1}</div>
+                  <h3 className="mt-3 text-xl font-semibold text-[#0F172A]">{s.t}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#0F172A]/60">{s.d}</p>
                 </GlassCard>
               </motion.div>
             ))}
@@ -601,11 +600,11 @@ const LandingHome = () => {
       </section>
 
       {/* IMPACT */}
-      <section id="impact" className="relative py-32">
+      <section id="impact" className="relative bg-[#F8FAFC] py-32">
         <div className="mx-auto max-w-7xl px-6">
           <div className="max-w-3xl">
             <Eyebrow>{lang === "es" ? "Impacto" : "Impact"}</Eyebrow>
-            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">{c.impactTitle}</h2>
+            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight text-[#0F172A] md:text-5xl">{c.impactTitle}</h2>
           </div>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {c.impact.map((k, i) => (
@@ -617,8 +616,8 @@ const LandingHome = () => {
                 transition={{ delay: i * 0.07 }}
               >
                 <GlassCard className="h-full p-6">
-                  <div className="text-xs uppercase tracking-[0.2em] text-[#22D3B7]">{k.k}</div>
-                  <div className="mt-3 text-lg text-white/85">{k.v}</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-[#0F766E]">{k.k}</div>
+                  <div className="mt-3 text-lg text-[#0F172A]/85">{k.v}</div>
                 </GlassCard>
               </motion.div>
             ))}
@@ -628,11 +627,11 @@ const LandingHome = () => {
           <div className="mt-20 grid items-center gap-12 lg:grid-cols-2">
             <div>
               <Eyebrow>{lang === "es" ? "IA conversacional" : "Conversational AI"}</Eyebrow>
-              <h3 className="text-balance text-3xl font-semibold leading-tight md:text-4xl">{c.questionsTitle}</h3>
+              <h3 className="text-balance text-3xl font-semibold leading-tight text-[#0F172A] md:text-4xl">{c.questionsTitle}</h3>
               <div className="mt-8 space-y-3">
                 {c.questions.map((qq) => (
-                  <div key={qq} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
-                    <MessageSquare className="h-4 w-4 shrink-0 text-[#4ADE80]" />
+                  <div key={qq} className="flex items-center gap-3 rounded-lg border border-black/5 bg-white px-4 py-3 text-sm text-[#0F172A]/70 shadow-sm">
+                    <MessageSquare className="h-4 w-4 shrink-0 text-[#16A34A]" />
                     {qq}
                   </div>
                 ))}
@@ -642,19 +641,19 @@ const LandingHome = () => {
               {c.audiences.map((a) => (
                 <GlassCard key={a.t} className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white">
                       {a.href === "/gobierno" ? (
-                        <Users className="h-4.5 w-4.5 text-[#22D3B7]" />
+                        <Users className="h-4.5 w-4.5 text-[#0F766E]" />
                       ) : a.href === "/instituciones" ? (
-                        <GraduationCap className="h-4.5 w-4.5 text-[#22D3B7]" />
+                        <GraduationCap className="h-4.5 w-4.5 text-[#0F766E]" />
                       ) : (
-                        <BookOpen className="h-4.5 w-4.5 text-[#22D3B7]" />
+                        <BookOpen className="h-4.5 w-4.5 text-[#0F766E]" />
                       )}
                     </div>
-                    <div className="text-base font-semibold">{a.t}</div>
+                    <div className="text-base font-semibold text-[#0F172A]">{a.t}</div>
                   </div>
-                  <p className="mt-3 text-sm text-white/60">{a.d}</p>
-                  <Link to={a.href} className="mt-4 inline-flex items-center gap-1.5 text-sm text-[#4ADE80] hover:underline">
+                  <p className="mt-3 text-sm text-[#0F172A]/60">{a.d}</p>
+                  <Link to={a.href} className="mt-4 inline-flex items-center gap-1.5 text-sm text-[#16A34A] hover:underline">
                     {a.cta} <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </GlassCard>
@@ -665,22 +664,22 @@ const LandingHome = () => {
       </section>
 
       {/* CTA */}
-      <section className="relative overflow-hidden py-36">
+      <section className="relative overflow-hidden bg-white py-36">
         <div className="absolute inset-0"><NodesNetwork density={55} /></div>
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 20%, #0B1220 80%)" }} />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 20%, rgba(255,255,255,0.9) 80%)" }} />
         <div className="relative mx-auto max-w-4xl px-6 text-center">
           <Eyebrow>{c.nav.demo}</Eyebrow>
-          <h2 className="text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
+          <h2 className="text-balance text-4xl font-semibold leading-[1.05] tracking-tight text-[#0F172A] md:text-6xl">
             {c.ctaTitle1}{" "}
             <span
               className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)" }}
+              style={{ backgroundImage: "linear-gradient(135deg, #22D3B7 0%, #16A34A 100%)" }}
             >
               {c.ctaGradient}
             </span>
             .
           </h2>
-          <p className="mx-auto mt-8 max-w-2xl text-lg text-white/60">{c.ctaSub}</p>
+          <p className="mx-auto mt-8 max-w-2xl text-lg text-[#0F172A]/60">{c.ctaSub}</p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <PrimaryLink to="/contacto">{c.cta1}</PrimaryLink>
             <GhostLink to="/auth">{c.cta2}</GhostLink>
@@ -689,16 +688,16 @@ const LandingHome = () => {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/5 py-10">
+      <footer className="border-t border-black/5 bg-white py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 md:flex-row">
-          <div className="flex items-center gap-2 text-sm text-white/50">
+          <div className="flex items-center gap-2 text-sm text-[#0F172A]/50">
             <img src={sedefyLogo} alt="SEDEFY" width={40} height={40} loading="lazy" className="h-10 w-10 object-contain" />
             {c.footer}
           </div>
-          <div className="flex items-center gap-5 text-xs text-white/40">
-            <Link to="/instituciones" className="hover:text-white/70">{lang === "es" ? "Colegios" : "Schools"}</Link>
-            <Link to="/gobierno" className="hover:text-white/70">{lang === "es" ? "Gobierno" : "Government"}</Link>
-            <Link to="/privacy" className="hover:text-white/70">{lang === "es" ? "Privacidad" : "Privacy"}</Link>
+          <div className="flex items-center gap-5 text-xs text-[#0F172A]/40">
+            <Link to="/instituciones" className="hover:text-[#0F172A]/70">{lang === "es" ? "Colegios" : "Schools"}</Link>
+            <Link to="/gobierno" className="hover:text-[#0F172A]/70">{lang === "es" ? "Gobierno" : "Government"}</Link>
+            <Link to="/privacy" className="hover:text-[#0F172A]/70">{lang === "es" ? "Privacidad" : "Privacy"}</Link>
             <span>© {new Date().getFullYear()} SEDEFY. {c.rights}</span>
           </div>
         </div>
