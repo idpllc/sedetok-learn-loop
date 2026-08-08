@@ -324,24 +324,6 @@ const PILLAR_ICONS: Record<string, typeof Brain> = {
 };
 
 
-const PrimaryLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
-  <Link
-    to={to}
-    className="group relative inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium text-[#0B1220]"
-  >
-    <span
-      className="absolute inset-0 rounded-full"
-      style={{
-        background: "linear-gradient(135deg, #22D3B7 0%, #4ADE80 100%)",
-        boxShadow: "0 10px 40px -10px rgba(34,211,183,0.5)",
-      }}
-    />
-    <span className="relative flex items-center gap-2">
-      {children}
-      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-    </span>
-  </Link>
-);
 
 const GhostLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <Link
