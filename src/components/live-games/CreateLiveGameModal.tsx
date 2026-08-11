@@ -151,25 +151,55 @@ const CreateLiveGameModal = ({ open, onOpenChange }: CreateLiveGameModalProps) =
       const { data, error } = await supabase.functions.invoke('generate-live-game-questions', {
         body: { topic: aiTopic, gradeLevel: aiGradeLevel, numberOfQuestions: parseInt(aiNumberOfQuestions), difficulty: aiDifficulty === "auto" ? undefined : aiDifficulty },
       });
-      if (error) throw error;
+      if (error) {
+        // Intenta leer el mensaje real devuelto por la función (invoke solo da un error genérico)
+        let message = error.message || "No se pudieron generar las preguntas";
+        try {
+          const res = (error as any)?.context;
+          if (res && typeof res.json === "function") {
+            const body = await res.json();
+            if (body?.error) message = body.error;
+          }
+        } catch (_) { /* ignora */ }
+        throw new Error(message);
+      }
+      if (data?.error) throw new Error(data.error);
+      if (!data?.questions?.length) throw new Error("La IA no devolvió preguntas. Intenta de nuevo.");
       return data;
     },
     onSuccess: (data) => {
-      if (data.questions) {
-        setCustomQuestions(
-          data.questions.map((question: QuestionData, index: number) => ({
-            ...question,
-            local_id: question.id ?? createDraftId(),
-            order_index: index,
+      const normalized: QuestionData[] = data.questions.map((q: any, index: number) => {
+        const options = (Array.isArray(q.options) ? q.options : [])
+          .map((opt: any) => ({
+            text: typeof opt === "string" ? opt : String(opt?.text ?? ""),
+            image_url: typeof opt === "object" && opt?.image_url ? String(opt.image_url) : "",
           }))
-        );
-        toast({ title: "¡Preguntas generadas!", description: `Se generaron ${data.questions.length} preguntas con IA` });
-      }
+          .slice(0, 4);
+        while (options.length < 4) options.push({ text: "", image_url: "" });
+
+        const correct = Number(q.correct_answer);
+        return {
+          local_id: createDraftId(),
+          question_text: String(q.question_text ?? ""),
+          question_type: "multiple_choice",
+          options,
+          correct_answer: Number.isInteger(correct) && correct >= 0 && correct <= 3 ? correct : 0,
+          points: Number(q.points) > 0 ? Number(q.points) : 1000,
+          time_limit: Number(q.time_limit) >= 5 ? Number(q.time_limit) : 20,
+          order_index: index,
+          feedback: q.feedback || "",
+        } as QuestionData;
+      });
+
+      setCustomQuestions(normalized);
+      if (!title.trim() && aiTopic.trim()) setTitle(aiTopic.trim());
+      toast({ title: "¡Preguntas generadas!", description: `Se generaron ${normalized.length} preguntas con IA` });
     },
     onError: (error: any) => {
       toast({ title: "Error al generar preguntas", description: error.message, variant: "destructive" });
     },
   });
+
 
   const handleGenerateWithAI = () => {
     if (!aiTopic || !aiGradeLevel || !aiNumberOfQuestions) {
