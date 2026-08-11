@@ -875,6 +875,22 @@ const LandingHome = () => {
             <span>© {new Date().getFullYear()} SEDEFY. {c.rights}</span>
           </div>
         </div>
+        <div className="mx-auto mt-4 flex max-w-7xl flex-wrap items-center justify-center gap-x-6 gap-y-2 px-6 text-xs text-[#0F172A]/40 md:justify-between">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+            <span>
+              Powered by:{" "}
+              <a href="https://agenciaidp.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#F6339A]">agenciaidp.com</a>
+            </span>
+            <span>
+              Hosted in:{" "}
+              <a href="https://capihost.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#F6339A]">capihost.com</a>
+            </span>
+            <span>
+              CRM:{" "}
+              <a href="https://pushleads.co" target="_blank" rel="noopener noreferrer" className="hover:text-[#F6339A]">pushleads.co</a>
+            </span>
+          </div>
+        </div>
       </footer>
     </div>
   );
