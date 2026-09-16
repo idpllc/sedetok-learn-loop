@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getReturnOrigin } from "@/lib/returnOrigin";
 
 export interface UserPlan {
   plan_id: string;
@@ -67,7 +68,9 @@ export const useSubscription = () => {
       discount_code?: string;
       payer_email?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke("mp-create-checkout", { body: payload });
+      const { data, error } = await supabase.functions.invoke("mp-create-checkout", {
+        body: { ...payload, return_origin: getReturnOrigin() },
+      });
       if (error) {
         let message = error.message || "No se pudo iniciar el pago";
         const context = (error as any).context;
