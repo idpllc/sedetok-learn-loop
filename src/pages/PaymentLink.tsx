@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2, Sparkles, Crown, ShieldCheck, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
+import { getReturnOrigin } from "@/lib/returnOrigin";
 
 const FEATURES: Record<string, string[]> = {
   premium: [
@@ -95,7 +96,7 @@ export default function PaymentLink() {
     try {
       const { data: res, error } = await supabase.functions.invoke(
         "payment-link-create-yearly",
-        { body: { source_subscription_id: subscriptionId } },
+        { body: { source_subscription_id: subscriptionId, return_origin: getReturnOrigin() } },
       );
       if (error) {
         let msg = error.message || "No se pudo generar el pago anual";
