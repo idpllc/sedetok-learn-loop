@@ -1119,6 +1119,41 @@ export type Database = {
           },
         ]
       }
+      institution_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          institution_id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          institution_id: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          institution_id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_domains_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institution_members: {
         Row: {
           created_at: string | null
@@ -4083,6 +4118,7 @@ export type Database = {
           next_billing_at: string | null
           plan_code_snapshot: string | null
           plan_id: string
+          return_origin: string | null
           status: string
           updated_at: string
           user_id: string
@@ -4110,6 +4146,7 @@ export type Database = {
           next_billing_at?: string | null
           plan_code_snapshot?: string | null
           plan_id: string
+          return_origin?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -4137,6 +4174,7 @@ export type Database = {
           next_billing_at?: string | null
           plan_code_snapshot?: string | null
           plan_id?: string
+          return_origin?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -4560,6 +4598,7 @@ export type Database = {
         Args: { content_id: string }
         Returns: undefined
       }
+      is_allowed_return_domain: { Args: { _domain: string }; Returns: boolean }
       is_institution_admin: {
         Args: { _institution_id: string; _user_id: string }
         Returns: boolean
