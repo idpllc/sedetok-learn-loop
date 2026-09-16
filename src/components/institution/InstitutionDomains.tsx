@@ -70,6 +70,22 @@ export function InstitutionDomains({ institutionId }: Props) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["institution-domains", institutionId] }),
   });
 
+  const saveWebhook = useMutation({
+    mutationFn: async ({ id, webhook_url, webhook_secret }: { id: string; webhook_url: string; webhook_secret: string }) => {
+      const { error } = await supabase
+        .from("institution_domains" as any)
+        .update({ webhook_url: webhook_url.trim() || null, webhook_secret: webhook_secret.trim() || null })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["institution-domains", institutionId] });
+      toast({ title: "Aviso automático guardado" });
+    },
+    onError: (e: any) =>
+      toast({ title: "No se pudo guardar", description: e.message, variant: "destructive" }),
+  });
+
   const remove = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("institution_domains" as any).delete().eq("id", id);
