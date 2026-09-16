@@ -153,9 +153,9 @@ serve(async (req) => {
       external_reference: externalRef,
       notification_url: `${supabaseUrl}/functions/v1/mp-checkout-webhook`,
       back_urls: {
-        success: `${customDomain}/pricing?subscription=success`,
-        failure: `${customDomain}/pricing?subscription=failure`,
-        pending: `${customDomain}/pricing?subscription=pending`,
+        success: `${returnBase}/pricing?subscription=success`,
+        failure: `${returnBase}/pricing?subscription=failure`,
+        pending: `${returnBase}/pricing?subscription=pending`,
       },
       auto_return: "approved",
       statement_descriptor: "SEDEFY",
@@ -194,6 +194,7 @@ serve(async (req) => {
       init_point: initPoint,
       final_amount_cop: finalAmount,
       discount_amount_cop: discountAmount,
+      return_base: returnBase,
     });
   } catch (err) {
     console.error("mp-create-checkout error:", err);
