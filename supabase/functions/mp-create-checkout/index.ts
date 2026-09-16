@@ -81,6 +81,13 @@ serve(async (req) => {
 
     const admin = createClient(supabaseUrl, serviceKey);
 
+    // Where to send the buyer back (their school's site, if authorized)
+    const returnBase = await resolveReturnBase(
+      admin,
+      return_origin || req.headers.get("origin") || undefined,
+      customDomain,
+    );
+
     const { data: plan } = await admin
       .from("subscription_plans")
       .select("*")
