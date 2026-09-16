@@ -124,6 +124,7 @@ serve(async (req) => {
         billing_cycle,
         discount_code_id: discountCodeId,
         discount_amount_cop: discountAmount,
+        return_origin: returnBase,
       })
       .select()
       .single();
