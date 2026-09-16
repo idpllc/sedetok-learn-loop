@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { InstitutionSettings } from "@/components/institution/InstitutionSettings";
+import { InstitutionDomains } from "@/components/institution/InstitutionDomains";
 import { InstitutionAnalytics } from "@/components/institution/InstitutionAnalytics";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -665,11 +666,12 @@ export default function InstitutionDashboard() {
         </TabsContent>
 
         {canViewSettings && (
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="space-y-6">
             <InstitutionSettings 
               institutionId={myInstitution.id}
               institution={myInstitution}
             />
+            <InstitutionDomains institutionId={myInstitution.id} />
           </TabsContent>
         )}
       </Tabs>
