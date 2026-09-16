@@ -8,6 +8,100 @@ const corsHeaders = {
 
 const MP_BASE = "https://api.mercadopago.com";
 
+const hostOf = (value: string) => {
+  try {
+    const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+    return url.hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
+
+const hmacHex = async (secret: string, message: string) => {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const buf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+};
+
+/**
+ * Sends an approved-payment notification to the school's own website.
+ * The target site is resolved from the origin the buyer came from
+ * (user_subscriptions.return_origin) matched against institution_domains.
+ */
+const notifySchool = async (supabase: any, sub: any, payment: any) => {
+  const host = hostOf(sub.return_origin || "");
+  if (!host) return;
+
+  const { data: domains } = await supabase
+    .from("institution_domains")
+    .select("domain, webhook_url, webhook_secret, is_active, id")
+    .eq("is_active", true)
+    .not("webhook_url", "is", null);
+
+  const target = (domains || []).find((d: any) => hostOf(String(d.domain)) === host);
+  if (!target?.webhook_url) return;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, numero_documento, email, full_name, username, educoins")
+    .eq("id", sub.user_id)
+    .maybeSingle();
+
+  const payload = {
+    event: "payment.approved",
+    sent_at: new Date().toISOString(),
+    user: {
+      id: sub.user_id,
+      numero_documento: profile?.numero_documento || null,
+      email: profile?.email || null,
+      full_name: profile?.full_name || null,
+      username: profile?.username || null,
+    },
+    subscription: {
+      id: sub.id,
+      plan_code: sub.subscription_plans?.code || null,
+      plan_name: sub.subscription_plans?.name || null,
+      billing_cycle: sub.billing_cycle,
+      current_period_end: sub.current_period_end || null,
+    },
+    credits: {
+      granted: sub.subscription_plans?.monthly_educoins || 0,
+      balance: profile?.educoins ?? null,
+    },
+    payment: {
+      id: String(payment?.id || ""),
+      amount_cop: Math.round(payment?.transaction_amount || 0),
+      status: "approved",
+      provider: "mercadopago",
+    },
+  };
+
+  const body = JSON.stringify(payload);
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (target.webhook_secret) {
+    headers["x-sedefy-signature"] = await hmacHex(target.webhook_secret, body);
+  }
+
+  let statusText = "";
+  try {
+    const res = await fetch(target.webhook_url, { method: "POST", headers, body });
+    statusText = `${res.status}`;
+  } catch (err) {
+    statusText = `error: ${(err as Error).message}`;
+  }
+
+  await supabase
+    .from("institution_domains")
+    .update({ last_webhook_at: new Date().toISOString(), last_webhook_status: statusText })
+    .eq("id", target.id);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -165,6 +259,13 @@ serve(async (req) => {
           .from("discount_codes")
           .update({ used_count: (dc?.used_count || 0) + 1 })
           .eq("id", sub.discount_code_id);
+      }
+
+      // Notify the school's own website (webhook) so it can refresh the teacher's credits there.
+      try {
+        await notifySchool(supabase, sub, payment);
+      } catch (notifyErr) {
+        console.warn("mp-checkout-webhook: school notify failed", notifyErr);
       }
     }
 
