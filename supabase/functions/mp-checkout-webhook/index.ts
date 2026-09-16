@@ -166,6 +166,13 @@ serve(async (req) => {
           .update({ used_count: (dc?.used_count || 0) + 1 })
           .eq("id", sub.discount_code_id);
       }
+
+      // Notify the school's own website (webhook) so it can refresh the teacher's credits there.
+      try {
+        await notifySchool(supabase, sub, payment);
+      } catch (notifyErr) {
+        console.warn("mp-checkout-webhook: school notify failed", notifyErr);
+      }
     }
 
     return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
