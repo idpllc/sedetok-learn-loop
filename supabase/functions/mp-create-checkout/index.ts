@@ -20,6 +20,38 @@ const normalizeBaseUrl = (value?: string) => {
   return /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
 };
 
+const hostOf = (value: string) => {
+  try {
+    return new URL(normalizeBaseUrl(value)).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
+
+/**
+ * Resolves where the buyer should be sent back after paying.
+ * Only hosts registered (and active) in institution_domains are accepted,
+ * plus the platform's own domain. Anything else falls back to CUSTOM_DOMAIN.
+ */
+const resolveReturnBase = async (
+  admin: any,
+  candidate: string | undefined,
+  fallback: string,
+): Promise<string> => {
+  if (!candidate) return fallback;
+  const host = hostOf(candidate);
+  if (!host) return fallback;
+  if (host === hostOf(fallback)) return normalizeBaseUrl(candidate);
+
+  const { data } = await admin
+    .from("institution_domains")
+    .select("domain")
+    .eq("is_active", true);
+
+  const allowed = (data || []).some((d: any) => hostOf(String(d.domain)) === host);
+  return allowed ? normalizeBaseUrl(candidate) : fallback;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -41,13 +73,20 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: "No autorizado" }, 401);
 
-    const { plan_code, billing_cycle = "monthly", discount_code, payer_email } = await req.json();
+    const { plan_code, billing_cycle = "monthly", discount_code, payer_email, return_origin } = await req.json();
     if (!plan_code) return json({ error: "Falta plan_code" }, 400);
     if (!["monthly", "yearly"].includes(billing_cycle)) {
       return json({ error: "Ciclo inválido" }, 400);
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
+
+    // Where to send the buyer back (their school's site, if authorized)
+    const returnBase = await resolveReturnBase(
+      admin,
+      return_origin || req.headers.get("origin") || undefined,
+      customDomain,
+    );
 
     const { data: plan } = await admin
       .from("subscription_plans")
@@ -92,6 +131,7 @@ serve(async (req) => {
         billing_cycle,
         discount_code_id: discountCodeId,
         discount_amount_cop: discountAmount,
+        return_origin: returnBase,
       })
       .select()
       .single();
@@ -113,9 +153,9 @@ serve(async (req) => {
       external_reference: externalRef,
       notification_url: `${supabaseUrl}/functions/v1/mp-checkout-webhook`,
       back_urls: {
-        success: `${customDomain}/pricing?subscription=success`,
-        failure: `${customDomain}/pricing?subscription=failure`,
-        pending: `${customDomain}/pricing?subscription=pending`,
+        success: `${returnBase}/pricing?subscription=success`,
+        failure: `${returnBase}/pricing?subscription=failure`,
+        pending: `${returnBase}/pricing?subscription=pending`,
       },
       auto_return: "approved",
       statement_descriptor: "SEDEFY",
@@ -154,6 +194,7 @@ serve(async (req) => {
       init_point: initPoint,
       final_amount_cop: finalAmount,
       discount_amount_cop: discountAmount,
+      return_base: returnBase,
     });
   } catch (err) {
     console.error("mp-create-checkout error:", err);

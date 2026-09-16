@@ -20,6 +20,25 @@ const normalizeBaseUrl = (value?: string) => {
   return /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
 };
 
+const hostOf = (value: string) => {
+  try {
+    return new URL(normalizeBaseUrl(value)).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
+
+// Only hosts registered in institution_domains (or the platform domain) are valid returns.
+const resolveReturnBase = async (admin: any, candidate: string | undefined, fallback: string) => {
+  if (!candidate) return fallback;
+  const host = hostOf(candidate);
+  if (!host) return fallback;
+  if (host === hostOf(fallback)) return normalizeBaseUrl(candidate);
+  const { data } = await admin.from("institution_domains").select("domain").eq("is_active", true);
+  const allowed = (data || []).some((d: any) => hostOf(String(d.domain)) === host);
+  return allowed ? normalizeBaseUrl(candidate) : fallback;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -32,10 +51,16 @@ serve(async (req) => {
     }
     const customDomain = normalizeBaseUrl(Deno.env.get("CUSTOM_DOMAIN"));
 
-    const { source_subscription_id } = await req.json();
+    const { source_subscription_id, return_origin } = await req.json();
     if (!source_subscription_id) return json({ error: "Falta enlace origen" }, 400);
 
     const admin = createClient(supabaseUrl, serviceKey);
+
+    const returnBase = await resolveReturnBase(
+      admin,
+      return_origin || req.headers.get("origin") || undefined,
+      customDomain,
+    );
 
     // Load source subscription (publicly accessible via known UUID share link)
     const { data: source, error: srcErr } = await admin
@@ -76,6 +101,7 @@ serve(async (req) => {
         amount_cop: yearlyAmount,
         plan_code_snapshot: plan.code,
         created_by_admin: source.created_by_admin,
+        return_origin: returnBase,
       })
       .select()
       .single();
@@ -94,9 +120,9 @@ serve(async (req) => {
       external_reference: externalRef,
       notification_url: `${supabaseUrl}/functions/v1/mp-checkout-webhook`,
       back_urls: {
-        success: `${customDomain}/pay/${externalRef}?status=success`,
-        failure: `${customDomain}/pay/${externalRef}?status=failure`,
-        pending: `${customDomain}/pay/${externalRef}?status=pending`,
+        success: `${returnBase}/pay/${externalRef}?status=success`,
+        failure: `${returnBase}/pay/${externalRef}?status=failure`,
+        pending: `${returnBase}/pay/${externalRef}?status=pending`,
       },
       auto_return: "approved",
       statement_descriptor: "SEDEFY",

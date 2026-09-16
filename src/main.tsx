@@ -3,6 +3,9 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import "./i18n";
+import { captureReturnOrigin } from "./lib/returnOrigin";
+
+captureReturnOrigin();
 
 // Initialize Microsoft Clarity (script tag injection to avoid React duplication)
 (function(c: any, l: Document, a: string, r: string, i: string) {
