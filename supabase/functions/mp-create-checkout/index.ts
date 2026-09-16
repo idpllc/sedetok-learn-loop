@@ -20,6 +20,38 @@ const normalizeBaseUrl = (value?: string) => {
   return /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
 };
 
+const hostOf = (value: string) => {
+  try {
+    return new URL(normalizeBaseUrl(value)).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
+
+/**
+ * Resolves where the buyer should be sent back after paying.
+ * Only hosts registered (and active) in institution_domains are accepted,
+ * plus the platform's own domain. Anything else falls back to CUSTOM_DOMAIN.
+ */
+const resolveReturnBase = async (
+  admin: any,
+  candidate: string | undefined,
+  fallback: string,
+): Promise<string> => {
+  if (!candidate) return fallback;
+  const host = hostOf(candidate);
+  if (!host) return fallback;
+  if (host === hostOf(fallback)) return normalizeBaseUrl(candidate);
+
+  const { data } = await admin
+    .from("institution_domains")
+    .select("domain")
+    .eq("is_active", true);
+
+  const allowed = (data || []).some((d: any) => hostOf(String(d.domain)) === host);
+  return allowed ? normalizeBaseUrl(candidate) : fallback;
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
