@@ -133,23 +133,57 @@ export function InstitutionDomains({ institutionId }: Props) {
         ) : (
           <ul className="divide-y rounded-md border">
             {list.data?.map((d) => (
-              <li key={d.id} className="flex items-center justify-between gap-3 p-3">
-                <span className="truncate text-sm font-medium">{d.domain}</span>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={d.is_active}
-                    onCheckedChange={(v) => toggle.mutate({ id: d.id, is_active: v })}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (confirm(`¿Eliminar ${d.domain}?`)) remove.mutate(d.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+              <li key={d.id} className="space-y-3 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate text-sm font-medium">{d.domain}</span>
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      checked={d.is_active}
+                      onCheckedChange={(v) => toggle.mutate({ id: d.id, is_active: v })}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm(`¿Eliminar ${d.domain}?`)) remove.mutate(d.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
+
+                <form
+                  className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const form = e.currentTarget as HTMLFormElement;
+                    saveWebhook.mutate({
+                      id: d.id,
+                      webhook_url: (form.elements.namedItem("url") as HTMLInputElement).value,
+                      webhook_secret: (form.elements.namedItem("secret") as HTMLInputElement).value,
+                    });
+                  }}
+                >
+                  <Input
+                    name="url"
+                    defaultValue={d.webhook_url || ""}
+                    placeholder="https://colegio.edu.co/api/sedefy-pago"
+                  />
+                  <Input
+                    name="secret"
+                    defaultValue={d.webhook_secret || ""}
+                    placeholder="Clave secreta compartida"
+                  />
+                  <Button type="submit" variant="secondary" disabled={saveWebhook.isPending}>
+                    Guardar aviso
+                  </Button>
+                </form>
+                {d.last_webhook_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Último aviso: {new Date(d.last_webhook_at).toLocaleString()} · {d.last_webhook_status}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
