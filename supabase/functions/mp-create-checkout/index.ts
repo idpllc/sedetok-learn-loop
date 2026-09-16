@@ -73,7 +73,7 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: "No autorizado" }, 401);
 
-    const { plan_code, billing_cycle = "monthly", discount_code, payer_email } = await req.json();
+    const { plan_code, billing_cycle = "monthly", discount_code, payer_email, return_origin } = await req.json();
     if (!plan_code) return json({ error: "Falta plan_code" }, 400);
     if (!["monthly", "yearly"].includes(billing_cycle)) {
       return json({ error: "Ciclo inválido" }, 400);
