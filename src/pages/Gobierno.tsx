@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import Orb from "@/components/Orb";
 import sedefyLogo from "@/assets/sedefy-logo.png";
-import unicefLogo from "@/assets/partners/unicef.png.asset.json";
-import rutanLogo from "@/assets/partners/rutan-n.svg.asset.json";
-import creameLogo from "@/assets/partners/creame.png.asset.json";
+import unicefLogo from "@/assets/partners/unicef.png";
+import rutanLogo from "@/assets/partners/rutan-n.svg";
+import creameLogo from "@/assets/partners/creame.png";
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
