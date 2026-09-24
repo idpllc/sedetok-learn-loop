@@ -685,7 +685,7 @@ const LandingHome = () => {
       {/* PILLARS */}
       <section id="pillars" className="relative bg-[#F8FAFC] py-32">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="max-w-3xl">
+          <div className="mx-auto max-w-3xl text-center">
             <Eyebrow>{lang === "es" ? "Qué detecta" : "What it detects"}</Eyebrow>
             <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight text-[#0F172A] md:text-5xl">{c.pillarsTitle}</h2>
             <p className="mt-6 text-lg text-[#0F172A]/60">{c.pillarsSub}</p>
@@ -701,8 +701,8 @@ const LandingHome = () => {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
                 >
-                  <GlassCard className="h-full p-8">
-                    <div className="flex items-center gap-3">
+                  <GlassCard className="h-full p-8 text-center">
+                    <div className="flex items-center justify-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#22D3B7]/25 bg-[#22D3B7]/10">
                         <Icon className="h-5 w-5 text-[#0F766E]" />
                       </div>
@@ -714,8 +714,8 @@ const LandingHome = () => {
                     <p className="mt-3 text-[#0F172A]/60">{p.text}</p>
                     <ul className="mt-6 space-y-2">
                       {p.bullets.map((b) => (
-                        <li key={b} className="flex items-start gap-2 text-sm text-[#0F172A]/70">
-                          <Target className="mt-0.5 h-4 w-4 shrink-0 text-[#16A34A]" />
+                        <li key={b} className="flex items-center justify-center gap-2 text-sm text-[#0F172A]/70">
+                          <Target className="h-4 w-4 shrink-0 text-[#16A34A]" />
                           {b}
                         </li>
                       ))}
