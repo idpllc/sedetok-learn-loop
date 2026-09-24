@@ -714,8 +714,8 @@ const LandingHome = () => {
                     <p className="mt-3 text-[#0F172A]/60">{p.text}</p>
                     <ul className="mt-6 space-y-2">
                       {p.bullets.map((b) => (
-                        <li key={b} className="flex items-center justify-center gap-2 text-sm text-[#0F172A]/70">
-                          <Target className="h-4 w-4 shrink-0 text-[#16A34A]" />
+                        <li key={b} className="flex items-start justify-start gap-2 text-left text-sm text-[#0F172A]/70">
+                          <Target className="mt-0.5 h-4 w-4 shrink-0 text-[#16A34A]" />
                           {b}
                         </li>
                       ))}
