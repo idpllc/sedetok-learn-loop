@@ -304,13 +304,13 @@ const DataOrbit = () => {
           </motion.div>
         );
       })}
-      {/* connecting lines */}
+      {/* connecting lines (masked at the center, brightest at each label) */}
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
-          <linearGradient id="line" x1="0" x2="1">
-            <stop offset="0%" stopColor="#22D3B7" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#4ADE80" stopOpacity="0.2" />
-          </linearGradient>
+          <mask id="orbitCenterMask">
+            <rect x="0" y="0" width="100" height="100" fill="white" />
+            <circle cx="50" cy="50" r="11" fill="black" />
+          </mask>
           <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="0.8" result="coloredBlur" />
             <feMerge>
@@ -319,23 +319,39 @@ const DataOrbit = () => {
             </feMerge>
           </filter>
         </defs>
-        {decisions.map((_, i) => {
-          const angle = (i / decisions.length) * Math.PI * 2 - Math.PI / 2;
-          const R = 44;
-          const x = 50 + Math.cos(angle) * R;
-          const y = 50 + Math.sin(angle) * R;
-          return (
-            <motion.line
-              key={i}
-              x1="50" y1="50" x2={x} y2={y}
-              stroke="url(#line)" strokeWidth="0.35" filter="url(#lineGlow)"
-              initial={{ pathLength: 0, opacity: 0 }}
-              whileInView={{ pathLength: 1, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1.2, delay: i * 0.05 }}
-            />
-          );
-        })}
+        <g mask="url(#orbitCenterMask)">
+          {decisions.map((_, i) => {
+            const angle = (i / decisions.length) * Math.PI * 2 - Math.PI / 2;
+            const R = 44;
+            const x = 50 + Math.cos(angle) * R;
+            const y = 50 + Math.sin(angle) * R;
+            const gradId = `line-${i}`;
+            return (
+              <g key={i}>
+                <linearGradient
+                  id={gradId}
+                  gradientUnits="userSpaceOnUse"
+                  x1="50"
+                  y1="50"
+                  x2={x}
+                  y2={y}
+                >
+                  <stop offset="0%" stopColor="#22D3B7" stopOpacity="0.15" />
+                  <stop offset="60%" stopColor="#22D3B7" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#4ADE80" stopOpacity="0.95" />
+                </linearGradient>
+                <motion.line
+                  x1="50" y1="50" x2={x} y2={y}
+                  stroke={`url(#${gradId})`} strokeWidth="0.35" filter="url(#lineGlow)"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  whileInView={{ pathLength: 1, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1.2, delay: i * 0.05 }}
+                />
+              </g>
+            );
+          })}
+        </g>
       </svg>
     </div>
   );
