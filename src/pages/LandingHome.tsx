@@ -109,7 +109,7 @@ const COPY = {
         bullets: ["Cobertura de competencias por periodo", "Brechas entre plan y aprendizaje real", "Sugerencias de ajuste curricular con IA"],
       },
     ],
-    howTitle: "De la actividad diaria a la decisión pedagógica",
+    howTitle: "De la actividad diaria a la decisión pedagógica en tiempo real",
     howSteps: [
       { t: "Captura", d: "Lecturas, videos, quizzes, juegos, rutas, cuadernos y calificaciones institucionales alimentan el sistema sin trabajo adicional." },
       { t: "Análisis", d: "Los modelos de SEDEFY cruzan desempeño, constancia, interacción y contexto para construir el perfil de cada estudiante." },
@@ -232,7 +232,7 @@ const COPY = {
         bullets: ["Competency coverage per term", "Gaps between plan and real learning", "AI-assisted curriculum adjustments"],
       },
     ],
-    howTitle: "From daily activity to pedagogical decisions",
+    howTitle: "From daily activity to pedagogical decisions in real time",
     howSteps: [
       { t: "Capture", d: "Readings, videos, quizzes, games, paths, notebooks and institutional grades feed the system with no extra work." },
       { t: "Analysis", d: "SEDEFY models cross performance, consistency, interaction and context to build each student's profile." },
@@ -734,7 +734,8 @@ const LandingHome = () => {
         <div className="relative mx-auto max-w-7xl px-6">
           <div className="max-w-3xl">
             <Eyebrow>{lang === "es" ? "Cómo funciona" : "How it works"}</Eyebrow>
-            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight text-[#0F172A] md:text-5xl">{c.howTitle}</h2>
+            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight text-[#0F172A] md:text-5xl">{lang === "es" ? "Cómo funciona" : "How it works"}</h2>
+            <p className="mt-6 text-lg text-[#0F172A]/60">{c.howTitle}</p>
           </div>
           <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {c.howSteps.map((s, i) => (
