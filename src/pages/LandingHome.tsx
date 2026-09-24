@@ -700,9 +700,10 @@ const LandingHome = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
+                  className={i === c.pillars.length - 1 ? "xl:col-start-2" : undefined}
                 >
-                  <GlassCard className="h-full p-8 text-center">
-                    <div className="flex items-center justify-center gap-3">
+                  <GlassCard className="h-full p-8">
+                    <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#22D3B7]/25 bg-[#22D3B7]/10">
                         <Icon className="h-5 w-5 text-[#0F766E]" />
                       </div>
