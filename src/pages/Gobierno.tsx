@@ -910,9 +910,9 @@ const Gobierno = () => {
           </div>
           <div className="mt-16 grid gap-5 md:grid-cols-3">
             {[
-              { src: unicefLogo.url, alt: "UNICEF", name: "UNICEF", w: 960, h: 232 },
-              { src: rutanLogo.url, alt: "Ruta N", name: "Ruta N", w: 136, h: 80 },
-              { src: creameLogo.url, alt: "CREAME", name: "CREAME", w: 1569, h: 401 },
+              { src: unicefLogo, alt: "UNICEF", name: "UNICEF", w: 960, h: 232 },
+              { src: rutanLogo, alt: "Ruta N", name: "Ruta N", w: 136, h: 80 },
+              { src: creameLogo, alt: "CREAME", name: "CREAME", w: 1569, h: 401 },
             ].map((p, i) => (
               <motion.div
                 key={p.name}
