@@ -265,8 +265,8 @@ const DataOrbit = () => {
           transition={{ duration: 60 + i * 20, repeat: Infinity, ease: "linear" }}
         />
       ))}
-      {/* center */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+      {/* center (above the connector layer so lines start exactly at its edge) */}
+      <div className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
         <motion.div
           animate={{ scale: [1, 1.06, 1] }}
           transition={{ duration: 3, repeat: Infinity }}
@@ -282,7 +282,7 @@ const DataOrbit = () => {
           SEDEFY AI
         </div>
       </div>
-      {/* decisions */}
+      {/* decisions (above the connector layer; opaque fill so lines stop at the pill edge) */}
       {decisions.map((s, i) => {
         const angle = (i / decisions.length) * Math.PI * 2 - Math.PI / 2;
         const R = 44; // percent
@@ -295,10 +295,10 @@ const DataOrbit = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.05 }}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
+            className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${left}%`, top: `${top}%` }}
           >
-            <div className="rounded-full border border-[#22D3B7]/20 bg-white/[0.05] px-3 py-1.5 text-[11px] text-white/80 backdrop-blur-xl shadow-[0_0_20px_rgba(34,211,183,0.08)]">
+            <div className="rounded-full border border-[#22D3B7]/20 bg-[#050B08] px-3 py-1.5 text-[11px] text-white/80 shadow-[0_0_20px_rgba(34,211,183,0.08)]">
               {s}
             </div>
           </motion.div>
