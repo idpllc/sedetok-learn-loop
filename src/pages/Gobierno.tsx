@@ -912,7 +912,7 @@ const Gobierno = () => {
             {[
               { src: unicefLogo, alt: "UNICEF", name: "UNICEF", w: 960, h: 232 },
               { src: rutanLogo, alt: "Ruta N", name: "Ruta N", w: 136, h: 80 },
-              { src: creameLogo, alt: "CREAME", name: "CREAME", w: 1569, h: 401 },
+              { src: creameLogo, alt: "CREAME", name: "CREAME", w: 230, h: 89 },
             ].map((p, i) => (
               <motion.div
                 key={p.name}
