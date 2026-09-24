@@ -3,7 +3,7 @@ import Orb from "@/components/Orb";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import unicefLogo from "@/assets/partners/unicef.png";
 import rutanLogo from "@/assets/partners/rutan-n.svg";
-import creameLogo from "@/assets/partners/creame.png";
+import creameLogo from "@/assets/partners/creame.svg";
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
