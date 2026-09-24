@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import Orb from "@/components/Orb";
 import sedefyLogo from "@/assets/sedefy-logo.png";
+import unicefLogo from "@/assets/partners/unicef.png";
+import rutanLogo from "@/assets/partners/rutan-n.svg";
+import creameLogo from "@/assets/partners/creame.svg";
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
   Brain, Activity, AlertTriangle, BarChart3, Map, Sparkles, ArrowRight,
   GraduationCap, Building2, Landmark, School, Users, TrendingUp, Zap,
-  Database, LineChart, Target, Shield, Cpu, Network, Eye, MessageSquare,
+  Database, LineChart, Target, Shield, Cpu, Network, Eye, MessageSquare, MessageCircle,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
@@ -800,7 +803,11 @@ const Gobierno = () => {
             <Eyebrow>Predicción</Eyebrow>
             <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
               Del dato histórico a la acción recomendada.
-            </h2>
+          </h2>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#22D3B7]/30 bg-[#22D3B7]/10 px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#22D3B7]">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#4ADE80] shadow-[0_0_12px_#4ADE80]" />
+              Tiempo real
+            </div>
           </div>
 
           <div className="mt-16 grid gap-6 md:grid-cols-5">
@@ -885,6 +892,47 @@ const Gobierno = () => {
                       </li>
                     ))}
                   </ul>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* QUIÉNES NOS AYUDAN */}
+      <section className="relative py-32">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-3xl text-center">
+            <Eyebrow>Quiénes nos ayudan</Eyebrow>
+            <h2 className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
+              Aliados que impulsan la transformación educativa.
+            </h2>
+          </div>
+          <div className="mt-16 grid gap-5 md:grid-cols-3">
+            {[
+              { src: unicefLogo, alt: "UNICEF", name: "UNICEF", w: 960, h: 232 },
+              { src: rutanLogo, alt: "Ruta N", name: "Ruta N", w: 136, h: 80 },
+              { src: creameLogo, alt: "CREAME", name: "CREAME", w: 230, h: 89 },
+            ].map((p, i) => (
+              <motion.div
+                key={p.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <GlassCard className="h-full p-8">
+                  <div className="flex h-24 items-center justify-center rounded-xl bg-white px-6 py-4">
+                    <img
+                      src={p.src}
+                      alt={p.alt}
+                      width={p.w}
+                      height={p.h}
+                      loading="lazy"
+                      className="max-h-16 w-auto max-w-full object-contain"
+                    />
+                  </div>
+                  <div className="mt-4 text-center text-sm font-medium text-white/70">{p.name}</div>
                 </GlassCard>
               </motion.div>
             ))}
@@ -990,6 +1038,11 @@ const Gobierno = () => {
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <a href="https://api.whatsapp.com/send?phone=573235114265&text=%C2%A1Hola!%20Quiero%20una%20Demo%20de%20Sede" target="_blank" rel="noopener noreferrer"><MagneticButton>Solicitar demostración</MagneticButton></a>
+            <a href="https://pushleads.co/go/K2NZDpLj" target="_blank" rel="noopener noreferrer">
+              <MagneticButton variant="ghost">
+                <MessageCircle className="h-4 w-4" /> WhatsApp directo
+              </MagneticButton>
+            </a>
             <a href="mailto:gobierno@sedefy.com"><MagneticButton variant="ghost">Hablar con ventas</MagneticButton></a>
           </div>
         </div>
