@@ -223,7 +223,6 @@ const Index = () => {
       case "game": return "Juego";
       case "mapa_mental": return "Mapa Mental";
       case "presentacion": return "Presentación";
-      case "documento": return "Documento";
       case "learning_path": return "Ruta";
       default: return type;
     }
@@ -541,7 +540,7 @@ const Index = () => {
                   const views = Number(item.views_count || 0);
                   const metaLine = isLearningPath
                     ? `${formatCount(item.total_xp || 0)} XP · ${item.estimated_duration || 0} min · ${timeAgo(item.created_at)}`
-                    : `${views > 0 ? formatCount(views) + " vistas · " : ""}${timeAgo(item.created_at)}`;
+                    : `${views > 0 ? formatCount(views) + (views === 1 ? " vista · " : " vistas · ") : ""}${timeAgo(item.created_at)}`;
                   
                   return (
                     <article
