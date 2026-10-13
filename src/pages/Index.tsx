@@ -725,6 +725,9 @@ const Index = () => {
                           </div>
                         </div>
                       </article>
+                  );
+                })}
+              </div>
               
               {/* Observer target for infinite scroll */}
               <div ref={observerTarget} className="h-10" />
