@@ -687,7 +687,7 @@ const Index = () => {
                           </Avatar>
                           <div className="min-w-0 flex-1">
                             <h3 className="text-[15px] font-semibold leading-snug line-clamp-2 md:text-base">
-                              {item.title}
+                              {item.title || typeLabel}
                             </h3>
                             <p className="mt-1 truncate text-sm text-muted-foreground">
                               {creatorName}
