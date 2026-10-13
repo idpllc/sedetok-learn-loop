@@ -41,7 +41,8 @@ import { TriviaAdminPanel } from "@/components/trivia/TriviaAdminPanel";
 import { Brain } from "lucide-react";
 import { DiscountCodesManagement } from "@/components/admin/DiscountCodesManagement";
 import PaymentLinksManagement from "@/components/admin/PaymentLinksManagement";
-import { CreditCard } from "lucide-react";
+import { CreditCard, VideoOff } from "lucide-react";
+import { BrokenMediaManagement } from "@/components/admin/BrokenMediaManagement";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ export default function AdminDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-12 gap-2">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-13 gap-2">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Resumen</span>
@@ -137,6 +138,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="discounts" className="flex items-center gap-2">
               <Tag className="w-4 h-4" />
               <span className="hidden sm:inline">Cupones</span>
+            </TabsTrigger>
+            <TabsTrigger value="broken-media" className="flex items-center gap-2">
+              <VideoOff className="w-4 h-4" />
+              <span className="hidden sm:inline">Medios rotos</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -418,6 +423,9 @@ export default function AdminDashboard() {
           </TabsContent>
           <TabsContent value="discounts">
             <DiscountCodesManagement />
+          </TabsContent>
+          <TabsContent value="broken-media">
+            <BrokenMediaManagement />
           </TabsContent>
           <TabsContent value="settings">
             <ApiConfiguration />
