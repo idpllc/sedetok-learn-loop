@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal } from "lucide-react";
+import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal } from "lucide-react";
 import mindMapIcon from "@/assets/mind-map-icon.png";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { subjects } from "@/lib/subjects";
@@ -527,20 +527,15 @@ const Index = () => {
                   {filteredContent.length} {filteredContent.length === 1 ? "resultado" : "resultados"}
                 </p>
               </div> */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-6">
                 {filteredContent.map((item) => {
                   const isLearningPath = item.itemType === "learning_path";
                   const isQuiz = !isLearningPath && item.content_type === 'quiz';
                   const isLiked = !isLearningPath && likes.has(item.id);
-                  const isSaved = !isLearningPath && saves.has(item.id);
                   const profile = item.profiles as any;
                   const scientist = isQuiz ? getQuizScientistIcon(item.category) : null;
                   const creatorName = getShortFullName(profile) !== "Usuario" ? getShortFullName(profile) : (item.creator || "Usuario");
                   const typeLabel = getContentLabel(isLearningPath ? "learning_path" : item.content_type);
-                  const views = Number(item.views_count || 0);
-                  const metaLine = isLearningPath
-                    ? `${formatCount(item.total_xp || 0)} XP · ${item.estimated_duration || 0} min · ${timeAgo(item.created_at)}`
-                    : `${views > 0 ? formatCount(views) + (views === 1 ? " vista · " : " vistas · ") : ""}${timeAgo(item.created_at)}`;
                   
                   return (
                     <article
@@ -676,9 +671,9 @@ const Index = () => {
                           </div>
                         </div>
 
-                        {/* Autor + título + datos, como en YouTube */}
-                        <div className="mt-3 flex gap-3">
-                          <Avatar className="h-9 w-9 flex-shrink-0">
+                        {/* Autor + título + me gusta */}
+                        <div className="mt-2.5 flex gap-3">
+                          <Avatar className="h-8 w-8 flex-shrink-0">
                             <AvatarImage src={profile?.avatar_url || ""} alt={creatorName} />
                             <AvatarFallback className="text-sm">
                               {(getDisplayName(profile) || creatorName || "S").charAt(0).toUpperCase()}
@@ -688,41 +683,22 @@ const Index = () => {
                             <h3 className="text-[15px] font-semibold leading-snug line-clamp-2 md:text-base">
                               {item.title || typeLabel}
                             </h3>
-                            <p className="mt-1 truncate text-sm text-muted-foreground">
-                              {creatorName}
-                            </p>
-                            <p className="truncate text-sm text-muted-foreground">
-                              {metaLine}
-                            </p>
-                            {!isLearningPath && (
-                              <div className="mt-1.5 flex items-center gap-1">
+                            <div className="mt-1 flex items-center gap-2 truncate text-sm text-muted-foreground">
+                              <span className="truncate">{creatorName}</span>
+                              {!isLearningPath && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleLike(item.id, isLiked, isQuiz, item.content_type === 'game');
                                   }}
-                                  className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm transition-colors hover:bg-muted ${isLiked ? 'text-pink' : 'text-muted-foreground'}`}
+                                  className={`inline-flex flex-shrink-0 items-center gap-1 transition-colors ${isLiked ? 'text-pink' : 'hover:text-foreground'}`}
                                   aria-label="Me gusta"
                                 >
-                                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-pink' : ''}`} />
+                                  <Heart className={`h-3.5 w-3.5 ${isLiked ? 'fill-pink' : ''}`} />
                                   {formatCount(item.likes_count || 0)}
                                 </button>
-                                <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm text-muted-foreground">
-                                  <MessageCircle className="h-4 w-4" />
-                                  {formatCount(item.comments_count || 0)}
-                                </span>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSave(item.id, isSaved, isQuiz, item.content_type === 'game');
-                                  }}
-                                  className={`inline-flex items-center rounded-full p-2 transition-colors hover:bg-muted ${isSaved ? 'text-primary' : 'text-muted-foreground'}`}
-                                  aria-label="Guardar"
-                                >
-                                  <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
-                                </button>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         </div>
                       </article>
