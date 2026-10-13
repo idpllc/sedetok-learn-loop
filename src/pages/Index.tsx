@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, MessageCircle, Bookmark, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal } from "lucide-react";
+import { Search as SearchIcon, Play, BookOpen, FileText, ClipboardCheck, Map, Heart, Eye, ChevronLeft, ChevronRight, Users, SlidersHorizontal } from "lucide-react";
 import mindMapIcon from "@/assets/mind-map-icon.png";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { subjects } from "@/lib/subjects";
@@ -532,7 +532,6 @@ const Index = () => {
                   const isLearningPath = item.itemType === "learning_path";
                   const isQuiz = !isLearningPath && item.content_type === 'quiz';
                   const isLiked = !isLearningPath && likes.has(item.id);
-                  const isSaved = !isLearningPath && saves.has(item.id);
                   const profile = item.profiles as any;
                   const scientist = isQuiz ? getQuizScientistIcon(item.category) : null;
                   const creatorName = getShortFullName(profile) !== "Usuario" ? getShortFullName(profile) : (item.creator || "Usuario");
