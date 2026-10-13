@@ -133,7 +133,55 @@ const Index = () => {
       default: return "";
     }
   };
+  // Compact counters like "1,2 K" / "3 M"
+  const formatCount = (n?: number | null): string => {
+    const v = Number(n || 0);
+    const compact = (div: number, suffix: string) => {
+      const val = v / div;
+      const str = (val >= 10 ? String(Math.round(val)) : val.toFixed(1).replace(/\.0$/, "")).replace(".", ",");
+      return `${str} ${suffix}`;
+    };
+    if (v >= 1000000) return compact(1000000, "M");
+    if (v >= 1000) return compact(1000, "K");
+    return String(v);
+  };
 
+  // Relative time in Spanish ("hace 13 h")
+  const timeAgo = (iso?: string | null): string => {
+    if (!iso) return "";
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) return "";
+    const secs = Math.max(1, Math.floor((Date.now() - then) / 1000));
+    if (secs < 60) return "hace un momento";
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `hace ${mins} min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `hace ${days} d`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `hace ${weeks} sem`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `hace ${months} ${months === 1 ? "mes" : "meses"}`;
+    const years = Math.floor(days / 365);
+    return `hace ${years} ${years === 1 ? "año" : "años"}`;
+  };
+
+  // Emoji per content type, used when a card has no cover image
+  const contentEmoji = (type?: string | null): string => {
+    switch (type) {
+      case "video": return "🎥";
+      case "lectura": return "📖";
+      case "document":
+      case "documento": return "📄";
+      case "quiz": return "📝";
+      case "game": return "🎮";
+      case "mapa_mental": return "🧠";
+      case "presentacion": return "🖼️";
+      case "learning_path": return "🗺️";
+      default: return "📄";
+    }
+  };
 
   const gradeLevels = [
     { value: "all", label: "Todos" },
@@ -174,6 +222,7 @@ const Index = () => {
       case "quiz": return "Quiz";
       case "game": return "Juego";
       case "mapa_mental": return "Mapa Mental";
+      case "presentacion": return "Presentación";
       case "learning_path": return "Ruta";
       default: return type;
     }
@@ -298,7 +347,7 @@ const Index = () => {
                   <Badge
                     key={type.id}
                     variant={selectedType === type.id ? "default" : "outline"}
-                    className="cursor-pointer whitespace-nowrap py-1.5"
+                    className="cursor-pointer whitespace-nowrap px-3 py-1.5 text-sm font-medium"
                     onClick={() => setSelectedType(selectedType === type.id ? 'all' : type.id)}
                   >
                     <span className="mr-1">{type.icon}</span>
@@ -456,12 +505,18 @@ const Index = () => {
 
           {/* Main Content Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4].map((i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="space-y-3">
-                  <Skeleton className="h-[200px] w-full rounded-xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="aspect-video w-full rounded-xl" />
+                  <div className="flex gap-3">
+                    <Skeleton className="h-9 w-9 flex-shrink-0 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-11/12" />
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -472,7 +527,7 @@ const Index = () => {
                   {filteredContent.length} {filteredContent.length === 1 ? "resultado" : "resultados"}
                 </p>
               </div> */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
                 {filteredContent.map((item) => {
                   const isLearningPath = item.itemType === "learning_path";
                   const isQuiz = !isLearningPath && item.content_type === 'quiz';
@@ -480,11 +535,17 @@ const Index = () => {
                   const isSaved = !isLearningPath && saves.has(item.id);
                   const profile = item.profiles as any;
                   const scientist = isQuiz ? getQuizScientistIcon(item.category) : null;
+                  const creatorName = getShortFullName(profile) !== "Usuario" ? getShortFullName(profile) : (item.creator || "Usuario");
+                  const typeLabel = getContentLabel(isLearningPath ? "learning_path" : item.content_type);
+                  const views = Number(item.views_count || 0);
+                  const metaLine = isLearningPath
+                    ? `${formatCount(item.total_xp || 0)} XP · ${item.estimated_duration || 0} min · ${timeAgo(item.created_at)}`
+                    : `${views > 0 ? formatCount(views) + (views === 1 ? " vista · " : " vistas · ") : ""}${timeAgo(item.created_at)}`;
                   
                   return (
-                    <Card 
+                    <article
                       key={item.id}
-                      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                      className="group cursor-pointer"
                       onClick={() => {
                         if (isLearningPath) {
                           navigate(`/learning-paths/${item.id}`);
@@ -511,8 +572,7 @@ const Index = () => {
                         }
                       }}
                     >
-                      <CardContent className="p-0">
-                        <div className={`relative aspect-[16/10] ${
+                      <div className={`relative aspect-video overflow-hidden rounded-xl ${
                           isQuiz 
                             ? 'bg-gradient-to-br from-gray-800 via-gray-900 to-gray-800' 
                             : item.content_type === 'lectura' && !item.cover_url && !item.thumbnail_url
@@ -552,9 +612,9 @@ const Index = () => {
                               alt={item.title}
                               className="w-full h-full object-cover"
                               loading="lazy"
+                              width={640}
+                              height={360}
                             />
-
-
                           ) : isQuiz && scientist ? (
                             <>
                               {/* Question mark pattern background */}
@@ -562,12 +622,12 @@ const Index = () => {
                                 {'? '.repeat(60)}
                               </div>
                               <div className="absolute inset-0 flex items-center justify-center">
-                                <img src={scientist.icon} alt={scientist.name} className="w-24 h-24 object-contain rounded-full border-2 border-white/20 shadow-xl" />
+                                <img src={scientist.icon} alt={scientist.name} loading="lazy" width={96} height={96} className="w-24 h-24 object-contain rounded-full border-2 border-white/20 shadow-xl" />
                               </div>
                             </>
                           ) : item.content_type === 'lectura' && item.rich_text ? (
                             <div className="absolute inset-0 p-4 overflow-hidden">
-                              <p className="text-xs leading-relaxed text-muted-foreground line-clamp-[8] whitespace-pre-wrap font-serif">
+                              <p className="text-sm leading-relaxed text-muted-foreground line-clamp-[7] whitespace-pre-wrap font-serif">
                                 {stripHtml(item.rich_text)}
                               </p>
                               <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-amber-50 dark:from-amber-950/40 to-transparent" />
@@ -575,93 +635,97 @@ const Index = () => {
                           ) : item.content_type === 'game' && !item.cover_url && !item.thumbnail_url ? (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                               <span className="text-5xl">🎮</span>
-                              <span className="text-xs font-medium text-muted-foreground capitalize">{item.game_type?.replace('_', ' ') || 'Juego'}</span>
+                              <span className="text-sm font-medium text-muted-foreground capitalize">{item.game_type?.replace('_', ' ') || 'Juego'}</span>
                             </div>
                           ) : item.content_type === 'mapa_mental' && !item.cover_url && !item.thumbnail_url ? (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
                               <img src={mindMapIcon} alt="Mapa Mental" loading="lazy" width={64} height={64} className="w-16 h-16 object-contain" />
-                              <span className="text-xs font-semibold text-emerald-900 dark:text-emerald-100 line-clamp-2">
+                              <span className="text-sm font-semibold text-emerald-900 dark:text-emerald-100 line-clamp-2">
                                 {item.mind_map_data?.root?.title || "Mapa Mental"}
                               </span>
-                              <span className="text-[10px] uppercase tracking-wider text-emerald-700/80 dark:text-emerald-300/80">
+                              <span className="text-xs uppercase tracking-wider text-emerald-700/80 dark:text-emerald-300/80">
                                 Mapa Mental
                               </span>
                             </div>
                           ) : (item.content_type === 'document' || item.content_type === 'documento') && !item.cover_url && !item.thumbnail_url && item.document_url ? (
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-                              <div className="relative bg-white/20 backdrop-blur-md rounded-xl px-4 py-2 border border-white/30 shadow-xl">
-                                <span className="text-white font-bold text-base tracking-widest">.{(item.document_url as string).split('.').pop()?.split('?')[0]?.toUpperCase() || 'DOC'}</span>
+                              <div className="relative bg-white/20 backdrop-blur-md rounded-xl px-5 py-2 border border-white/30 shadow-xl">
+                                <span className="text-white font-bold text-lg tracking-widest">.{(item.document_url as string).split('.').pop()?.split('?')[0]?.toUpperCase() || 'DOC'}</span>
                               </div>
                             </div>
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center">
-                              {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
+                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-background/80 shadow-sm backdrop-blur-sm">
+                                {isLearningPath ? (
+                                  <Map className="h-7 w-7" />
+                                ) : item.content_type === 'video' ? (
+                                  <Play className="h-6 w-6 fill-current" />
+                                ) : (
+                                  <span className="text-3xl">{contentEmoji(item.content_type)}</span>
+                                )}
+                              </div>
                             </div>
                           )}
-                          {/* Gradient overlay at bottom of cover */}
-                          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
-                          {/* Creator username on cover */}
-                          <div className="absolute bottom-2 left-3 flex items-center gap-1.5">
-                            {profile?.avatar_url && (
-                              <Avatar className="w-5 h-5 border border-white/50">
-                                <AvatarImage src={profile.avatar_url} />
-                                <AvatarFallback className="text-[8px]">{getDisplayName(profile)[0].toUpperCase()}</AvatarFallback>
-                              </Avatar>
+                          {/* Tipo de contenido: píldora en la esquina, como la duración en YouTube */}
+                          <div className="absolute bottom-1.5 right-1.5 rounded-md bg-foreground/90 px-1.5 py-0.5 text-[11px] font-semibold leading-tight text-background">
+                            {typeLabel}
+                            {item.content_type === "lectura" && readingSubtypeLabel(item.reading_type) && (
+                              <span className="opacity-80"> · {readingSubtypeLabel(item.reading_type)}</span>
                             )}
-                            <span className="text-xs font-semibold text-white drop-shadow-md">
-                              {getShortFullName(profile) !== "Usuario" ? getShortFullName(profile) : item.creator}
-                            </span>
-                          </div>
-                          <div className="absolute top-2 right-2">
-                            <Badge variant="secondary" className="backdrop-blur-sm shadow-sm text-[10px] px-1.5 py-0.5">
-                              {getContentIcon(isLearningPath ? "learning_path" : item.content_type)}
-                              <span className="ml-1">
-                                {getContentLabel(isLearningPath ? "learning_path" : item.content_type)}
-                                {item.content_type === "lectura" && readingSubtypeLabel(item.reading_type) && (
-                                  <span className="opacity-80"> · {readingSubtypeLabel(item.reading_type)}</span>
-                                )}
-                              </span>
-                            </Badge>
                           </div>
                         </div>
-                        <div className="px-3 py-2 space-y-1">
-                          <h3 className="font-semibold text-sm line-clamp-1">{item.title}</h3>
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1">{stripHtml(item.description)}</p>
-                          )}
-                          <div className="flex items-center justify-end">
+
+                        {/* Autor + título + datos, como en YouTube */}
+                        <div className="mt-3 flex gap-3">
+                          <Avatar className="h-9 w-9 flex-shrink-0">
+                            <AvatarImage src={profile?.avatar_url || ""} alt={creatorName} />
+                            <AvatarFallback className="text-sm">
+                              {(getDisplayName(profile) || creatorName || "S").charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-[15px] font-semibold leading-snug line-clamp-2 md:text-base">
+                              {item.title || typeLabel}
+                            </h3>
+                            <p className="mt-1 truncate text-sm text-muted-foreground">
+                              {creatorName}
+                            </p>
+                            <p className="truncate text-sm text-muted-foreground">
+                              {metaLine}
+                            </p>
                             {!isLearningPath && (
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <div className="mt-1.5 flex items-center gap-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleLike(item.id, isLiked, isQuiz, item.content_type === 'game');
                                   }}
-                                  className="flex items-center gap-1 hover:text-red-500 transition-colors"
+                                  className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm transition-colors hover:bg-muted ${isLiked ? 'text-pink' : 'text-muted-foreground'}`}
+                                  aria-label="Me gusta"
                                 >
-                                  <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                                  {item.likes_count || 0}
+                                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-pink' : ''}`} />
+                                  {formatCount(item.likes_count || 0)}
                                 </button>
-                                <span className="flex items-center gap-1">
-                                  <MessageCircle className="w-4 h-4" />
-                                  {item.comments_count || 0}
+                                <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm text-muted-foreground">
+                                  <MessageCircle className="h-4 w-4" />
+                                  {formatCount(item.comments_count || 0)}
                                 </span>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSave(item.id, isSaved, isQuiz, item.content_type === 'game');
                                   }}
-                                  className="hover:text-primary transition-colors"
+                                  className={`inline-flex items-center rounded-full p-2 transition-colors hover:bg-muted ${isSaved ? 'text-primary' : 'text-muted-foreground'}`}
+                                  aria-label="Guardar"
                                 >
-                                  <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-primary' : ''}`} />
+                                  <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-primary' : ''}`} />
                                 </button>
                               </div>
                             )}
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </article>
                   );
                 })}
               </div>
