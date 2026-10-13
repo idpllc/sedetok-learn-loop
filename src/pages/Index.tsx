@@ -133,7 +133,55 @@ const Index = () => {
       default: return "";
     }
   };
+  // Compact counters like "1,2 K" / "3 M"
+  const formatCount = (n?: number | null): string => {
+    const v = Number(n || 0);
+    const compact = (div: number, suffix: string) => {
+      const val = v / div;
+      const str = (val >= 10 ? String(Math.round(val)) : val.toFixed(1).replace(/\.0$/, "")).replace(".", ",");
+      return `${str} ${suffix}`;
+    };
+    if (v >= 1000000) return compact(1000000, "M");
+    if (v >= 1000) return compact(1000, "K");
+    return String(v);
+  };
 
+  // Relative time in Spanish ("hace 13 h")
+  const timeAgo = (iso?: string | null): string => {
+    if (!iso) return "";
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) return "";
+    const secs = Math.max(1, Math.floor((Date.now() - then) / 1000));
+    if (secs < 60) return "hace un momento";
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `hace ${mins} min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `hace ${days} d`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 5) return `hace ${weeks} sem`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `hace ${months} ${months === 1 ? "mes" : "meses"}`;
+    const years = Math.floor(days / 365);
+    return `hace ${years} ${years === 1 ? "año" : "años"}`;
+  };
+
+  // Emoji per content type, used when a card has no cover image
+  const contentEmoji = (type?: string | null): string => {
+    switch (type) {
+      case "video": return "🎥";
+      case "lectura": return "📖";
+      case "document":
+      case "documento": return "📄";
+      case "quiz": return "📝";
+      case "game": return "🎮";
+      case "mapa_mental": return "🧠";
+      case "presentacion": return "🖼️";
+      case "learning_path": return "🗺️";
+      default: return "📄";
+    }
+  };
 
   const gradeLevels = [
     { value: "all", label: "Todos" },
@@ -298,7 +346,7 @@ const Index = () => {
                   <Badge
                     key={type.id}
                     variant={selectedType === type.id ? "default" : "outline"}
-                    className="cursor-pointer whitespace-nowrap py-1.5"
+                    className="cursor-pointer whitespace-nowrap px-3 py-1.5 text-sm font-medium"
                     onClick={() => setSelectedType(selectedType === type.id ? 'all' : type.id)}
                   >
                     <span className="mr-1">{type.icon}</span>
@@ -456,12 +504,18 @@ const Index = () => {
 
           {/* Main Content Grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4].map((i) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div key={i} className="space-y-3">
-                  <Skeleton className="h-[200px] w-full rounded-xl" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="aspect-video w-full rounded-xl" />
+                  <div className="flex gap-3">
+                    <Skeleton className="h-9 w-9 flex-shrink-0 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-11/12" />
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
