@@ -222,6 +222,8 @@ const Index = () => {
       case "quiz": return "Quiz";
       case "game": return "Juego";
       case "mapa_mental": return "Mapa Mental";
+      case "presentacion": return "Presentación";
+      case "documento": return "Documento";
       case "learning_path": return "Ruta";
       default: return type;
     }
