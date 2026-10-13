@@ -1,5 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { uploadBytesToS3, base64ToBytes } from "../_shared/s3-upload.ts";
+
+const PATH_FIELDS: Record<string, string> = { path_cover: "cover_url", path_thumbnail: "thumbnail_url" };
+const IMAGE_FIELDS = ["thumbnail_url", "path_cover", "path_thumbnail"];
 
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -76,6 +80,36 @@ async function suggestFor(admin: any, item: any) {
   return suggestions;
 }
 
+async function aiImage(admin: any, item: any, userId: string) {
+  const key = Deno.env.get("LOVABLE_API_KEY");
+  if (!key) throw new Error("IA no configurada");
+  const isPath = item.field in PATH_FIELDS;
+  const { data: c } = isPath
+    ? await admin.from("learning_paths").select("title, description, subject, topic").eq("id", item.content_id).maybeSingle()
+    : await admin.from("content").select("title, description, subject").eq("id", item.content_id).maybeSingle();
+  const title = c?.title || item.content_title || item.path_title || "Tema educativo";
+  const prompt = `Ilustración de portada educativa, moderna, colorida y limpia, estilo editorial, sin texto ni letras, formato horizontal. Tema: "${title}". ${c?.subject ? "Materia: " + c.subject + "." : ""} ${(c?.description || "").slice(0, 250)}`;
+  const r = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "openai/gpt-image-2.5-sunburst", prompt, size: "1536x1024", quality: "medium" }),
+  });
+  if (r.status === 402 || r.status === 403) throw new Error("Créditos de IA insuficientes");
+  if (r.status === 429) throw new Error("Créditos de IA: límite de solicitudes, intenta en un momento");
+  if (!r.ok) throw new Error(`IA ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  const d = await r.json();
+  const b64 = d.data?.[0]?.b64_json;
+  if (!b64) throw new Error("La IA no devolvió imagen");
+  const url = await uploadBytesToS3({ bytes: base64ToBytes(b64), contentType: "image/png", folder: "covers", extension: "png" });
+  if (!url) throw new Error("No se pudo subir la imagen");
+  const { error } = isPath
+    ? await admin.from("learning_paths").update({ [PATH_FIELDS[item.field]]: url }).eq("id", item.content_id)
+    : await admin.from("content").update({ thumbnail_url: url }).eq("id", item.content_id);
+  if (error) throw error;
+  await admin.from("media_repair_items").update({ status: "fixed", new_url: url, fixed_by: userId, fixed_at: new Date().toISOString() }).eq("id", item.id);
+  return url;
+}
+
 async function applyFix(admin: any, item: any, videoUrl: string, userId: string) {
   const id = ytId(videoUrl);
   if (!id) throw new Error("URL de YouTube inválida");
@@ -128,6 +162,15 @@ Deno.serve(async (req) => {
           candidates.push({ content_id: c.id, path_id: l.path_id, path_title: (l as any).learning_paths?.title || null, content_title: c.title, field: "rich_text", old_url: m?.[0] || "cloudinary" });
         }
       }
+      const { data: paths } = await admin.from("learning_paths").select("id, title, cover_url, thumbnail_url").limit(5000);
+      for (const p of paths || []) {
+        for (const [field, col] of Object.entries(PATH_FIELDS)) {
+          const v = (p as any)[col];
+          if (!v || seen.has(p.id + field)) continue;
+          seen.add(p.id + field);
+          candidates.push({ content_id: p.id, path_id: p.id, path_title: p.title, content_title: `Imagen de la ruta (${field === "path_cover" ? "portada" : "miniatura"})`, field, old_url: v });
+        }
+      }
       const broken: any[] = [];
       for (let i = 0; i < candidates.length; i += 15) {
         const chunk = candidates.slice(i, i + 15);
@@ -152,9 +195,13 @@ Deno.serve(async (req) => {
 
     for (const item of items || []) {
       try {
-        if (action === "suggest") results.push({ id: item.id, suggestions: await suggestFor(admin, item) });
+        if (action === "ai_image") {
+          if (!IMAGE_FIELDS.includes(item.field)) { results.push({ id: item.id, skipped: true }); continue; }
+          results.push({ id: item.id, ok: true, url: await aiImage(admin, item, u.user.id) });
+        } else if (action === "suggest") results.push({ id: item.id, suggestions: await suggestFor(admin, item) });
         else if (action === "apply") { await applyFix(admin, item, String(body.videoUrl || ""), u.user.id); results.push({ id: item.id, ok: true }); }
         else if (action === "auto") {
+          if (item.field in PATH_FIELDS) { results.push({ id: item.id, ok: true, url: await aiImage(admin, item, u.user.id) }); continue; }
           if (!["video_url", "thumbnail_url"].includes(item.field)) { results.push({ id: item.id, skipped: true }); continue; }
           const s = item.suggestions?.length ? item.suggestions : await suggestFor(admin, item);
           if (!s.length) { results.push({ id: item.id, ok: false, error: "Sin resultados" }); continue; }
@@ -162,15 +209,17 @@ Deno.serve(async (req) => {
           results.push({ id: item.id, ok: true });
         } else if (action === "undo") {
           if (item.field === "rich_text") continue;
-          await admin.from("content").update({ [item.field]: item.old_url }).eq("id", item.content_id);
+          if (item.field in PATH_FIELDS) await admin.from("learning_paths").update({ [PATH_FIELDS[item.field]]: item.old_url }).eq("id", item.content_id);
+          else await admin.from("content").update({ [item.field]: item.old_url }).eq("id", item.content_id);
           await admin.from("media_repair_items").update({ status: "broken", new_url: null, fixed_at: null, fixed_by: null }).eq("id", item.id);
           results.push({ id: item.id, ok: true });
         } else if (action === "ignore") {
           await admin.from("media_repair_items").update({ status: "ignored" }).eq("id", item.id);
           results.push({ id: item.id, ok: true });
         } else if (action === "remove_image") {
-          if (item.field !== "thumbnail_url") continue;
-          await admin.from("content").update({ thumbnail_url: null }).eq("id", item.content_id);
+          if (!IMAGE_FIELDS.includes(item.field)) continue;
+          if (item.field in PATH_FIELDS) await admin.from("learning_paths").update({ [PATH_FIELDS[item.field]]: null }).eq("id", item.content_id);
+          else await admin.from("content").update({ thumbnail_url: null }).eq("id", item.content_id);
           await admin.from("media_repair_items").update({ status: "fixed", new_url: null, fixed_by: u.user.id, fixed_at: new Date().toISOString() }).eq("id", item.id);
           results.push({ id: item.id, ok: true });
         } else return json({ error: "Acción inválida" }, 400);
