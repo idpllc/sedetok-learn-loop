@@ -1982,6 +1982,57 @@ export type Database = {
           },
         ]
       }
+      media_repair_items: {
+        Row: {
+          content_id: string
+          content_title: string | null
+          created_at: string
+          field: string
+          fixed_at: string | null
+          fixed_by: string | null
+          id: string
+          new_url: string | null
+          old_url: string
+          path_id: string | null
+          path_title: string | null
+          status: string
+          suggestions: Json
+          updated_at: string
+        }
+        Insert: {
+          content_id: string
+          content_title?: string | null
+          created_at?: string
+          field: string
+          fixed_at?: string | null
+          fixed_by?: string | null
+          id?: string
+          new_url?: string | null
+          old_url: string
+          path_id?: string | null
+          path_title?: string | null
+          status?: string
+          suggestions?: Json
+          updated_at?: string
+        }
+        Update: {
+          content_id?: string
+          content_title?: string | null
+          created_at?: string
+          field?: string
+          fixed_at?: string | null
+          fixed_by?: string | null
+          id?: string
+          new_url?: string | null
+          old_url?: string
+          path_id?: string | null
+          path_title?: string | null
+          status?: string
+          suggestions?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notebook_capsule_progress: {
         Row: {
           capsule_id: string
