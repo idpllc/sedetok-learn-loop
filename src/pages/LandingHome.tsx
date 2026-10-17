@@ -4,13 +4,11 @@ import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import sedefyLogo from "@/assets/sedefy-logo.png";
-import {
-  Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,
-} from "@/components/ui/carousel";
+import PosrankRatings from "@/components/PosrankRatings";
 import {
   Brain, HeartPulse, Compass, GraduationCap, Sparkles, ArrowRight, Languages,
   ShieldCheck, LineChart, Users, BookOpen, Lightbulb, AlertTriangle, Target, MessageSquare,
-  Leaf, Handshake, LayoutGrid, Star,
+  Leaf, Handshake, LayoutGrid,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
@@ -37,24 +35,6 @@ const COPY = {
       cta1: "Solicitar demostración",
       cta2: "Explorar la plataforma",
       badges: ["Sin instalar nada", "Datos protegidos", "Español · English"],
-    },
-    reviews: {
-      eyebrow: "Opiniones de Google",
-      rating: "5.0",
-      count: "12 opiniones",
-      cta: "Calificar en Google",
-      more: "Leer más",
-      less: "Leer menos",
-      url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
-      items: [
-        { name: "Yulieth CRn", when: "hace 3 días", text: "Me ha gustado Sedefy porque es muy fácil de usar y aprender con ella." },
-        { name: "Fabian Cuacialpud", when: "hace 3 semanas", text: "Plataforma de fácil uso y de contenido acorde a nuestros requerimientos." },
-        { name: "Nelson Pantoja", when: "hace 1 mes", text: "Para los docentes es algo innovador para facilitar la subida de notas, desempeños, actividades y más. Excelente soporte." },
-        { name: "Fabian Vasquez", when: "hace 1 mes", text: "Muy buena plataforma… la tenemos en nuestra institución educativa… Recomendada 100 %." },
-        { name: "Edgar Ruiz", when: "hace 4 meses", text: "Plataforma muy útil para la gestión educativa." },
-        { name: "Rocio Cuaran", when: "hace 3 meses", text: "Esta plataforma digital es una herramienta innovadora, muy eficiente y altamente recomendada para cualquier institución educativa que busca modernizar sus procesos de enseñanza y aprendizaje. El enfoque integral contribuye significativamente a mejorar la calidad educativa y a orientar a los estudiantes para los desafíos del mundo actual. La plataforma también se destaca por ser accesible y por fortalecer la comunicación permanente con los padres de familia. A través de ella, pueden mantenerse informados en tiempo real sobre el desempeño académico y de convivencia de sus hijos, lo que fomenta un acompañamiento más cercano, oportuno y efectivo en su proceso educativo. ¡Excelente plataforma!" },
-      ],
-
     },
     pillarsTitle: "Siete señales que ninguna institución debería seguir ignorando",
     pillarsSub: "SEDEFY analiza patrones de uso, desempeño, convivencia y contexto para hacer visible lo que hoy pasa desapercibido.",
@@ -161,23 +141,6 @@ const COPY = {
       cta1: "Request a demo",
       cta2: "Explore the platform",
       badges: ["Nothing to install", "Protected data", "Español · English"],
-    },
-    reviews: {
-      eyebrow: "Google Reviews",
-      rating: "5.0",
-      count: "12 reviews",
-      cta: "Rate us on Google",
-      more: "Read more",
-      less: "Read less",
-      url: "https://maps.app.goo.gl/C1CWDTroEWvK3vrh6",
-      items: [
-        { name: "Yulieth CRn", when: "3 days ago", text: "I like Sedefy because it is very easy to use and to learn with." },
-        { name: "Fabian Cuacialpud", when: "3 weeks ago", text: "Easy-to-use platform with content that matches our requirements." },
-        { name: "Nelson Pantoja", when: "1 month ago", text: "For teachers it is truly innovative: uploading grades, performance records, activities and more is much easier. Excellent support." },
-        { name: "Fabian Vasquez", when: "1 month ago", text: "Very good platform… we use it in our school… 100% recommended." },
-        { name: "Edgar Ruiz", when: "4 months ago", text: "A very useful platform for educational management." },
-        { name: "Rocio Cuaran", when: "3 months ago", text: "This digital platform is an innovative, highly efficient and strongly recommended tool for any school that wants to modernise its teaching and learning processes. Its comprehensive approach significantly improves educational quality and guides students toward the challenges of today's world. The platform also stands out for being accessible and for strengthening ongoing communication with families. Through it, parents can stay informed in real time about their children's academic performance and school behaviour, encouraging closer, timelier and more effective support throughout their education. An excellent platform!" },
-      ],
     },
     pillarsTitle: "Seven signals no school should keep ignoring",
     pillarsSub: "SEDEFY analyses usage, performance, school climate and context to make visible what goes unnoticed today.",
@@ -373,51 +336,6 @@ const GhostLink = ({ to, children }: { to: string; children: React.ReactNode }) 
   </Link>
 );
 
-const ReviewCard = ({
-  item,
-  moreLabel,
-  lessLabel,
-}: {
-  item: { name: string; when: string; text: string };
-  moreLabel: string;
-  lessLabel: string;
-}) => {
-  const [open, setOpen] = useState(false);
-  const isLong = item.text.length > 180;
-  const shown = isLong && !open ? `${item.text.slice(0, 175).trimEnd()}…` : item.text;
-
-  return (
-    <GlassCard className="flex h-full flex-col p-5">
-      <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#22D3B7]/10 text-xs font-semibold text-[#0F766E]">
-          {item.name.split(" ").map((n) => n[0]).join("")}
-        </div>
-        <div>
-          <div className="text-sm font-semibold text-[#0F172A]">{item.name}</div>
-          <div className="flex items-center gap-1.5">
-            <span className="flex gap-0.5">
-              {[...Array(5)].map((_, s) => (
-                <Star key={s} className="h-3 w-3 fill-[#FBBF24] text-[#FBBF24]" />
-              ))}
-            </span>
-            <span className="text-xs text-[#0F172A]/50">{item.when}</span>
-          </div>
-        </div>
-      </div>
-      <p className="mt-3 text-sm leading-relaxed text-[#0F172A]/70">“{shown}”</p>
-      {isLong && (
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="mt-2 self-start text-xs font-semibold text-[#0F766E] hover:underline"
-        >
-          {open ? lessLabel : moreLabel}
-        </button>
-      )}
-    </GlassCard>
-  );
-};
-
 /* -------------------------------------------------------------------------- */
 /*  Landing                                                                    */
 /* -------------------------------------------------------------------------- */
@@ -469,22 +387,6 @@ const LandingHome = () => {
             "@type": "Organization",
             name: "Sedefy",
             url: "https://sedefy.com/",
-            sameAs: ["https://maps.app.goo.gl/C1CWDTroEWvK3vrh6"],
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: "5.0",
-              bestRating: "5",
-              worstRating: "1",
-              reviewCount: String(c.reviews.items.length),
-              ratingCount: "12",
-            },
-            review: c.reviews.items.map((item) => ({
-              "@type": "Review",
-              author: { "@type": "Person", name: item.name },
-              reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
-              reviewBody: item.text,
-              publisher: { "@type": "Organization", name: "Google" },
-            })),
           })}
         </script>
       </Helmet>
@@ -634,53 +536,7 @@ const LandingHome = () => {
         </div>
       </section>
 
-      {/* REVIEWS */}
-      <section className="relative border-y border-black/5 bg-white py-16">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="flex flex-col items-center gap-8">
-            <div className="text-center">
-              <Eyebrow>{c.reviews.eyebrow}</Eyebrow>
-              <div className="mt-4 flex items-center justify-center gap-4">
-                <div className="text-5xl font-semibold text-[#0F172A]">{c.reviews.rating}</div>
-                <div className="text-left">
-                  <div className="flex gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-[#FBBF24] text-[#FBBF24]" />
-                    ))}
-                  </div>
-                  <div className="mt-1 text-sm text-[#0F172A]/60">{c.reviews.count}</div>
-                </div>
-              </div>
-            </div>
-            <Carousel opts={{ align: "start", loop: true }} className="w-full">
-              <CarouselContent className="-ml-4">
-                {c.reviews.items.map((item) => (
-                  <CarouselItem key={item.name} className="pl-4 sm:basis-1/2 lg:basis-1/3">
-                    <ReviewCard item={item} moreLabel={c.reviews.more} lessLabel={c.reviews.less} />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="-left-3 hidden sm:flex" />
-              <CarouselNext className="-right-3 hidden sm:flex" />
-            </Carousel>
-
-          </div>
-
-          <div className="mt-10 flex justify-center">
-            <a
-              href={c.reviews.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-medium text-[#0F172A]/80 shadow-sm transition-colors hover:bg-black/[0.03]"
-            >
-              <span className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-[#FBBF24] text-[#FBBF24]" />
-                {c.reviews.cta}
-              </span>
-            </a>
-          </div>
-        </div>
-      </section>
+      <PosrankRatings />
 
       {/* PILLARS */}
       <section id="pillars" className="relative bg-[#F8FAFC] py-32">
