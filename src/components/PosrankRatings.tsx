@@ -19,7 +19,7 @@ export default function PosrankRatings() {
           data-posrank-ratings="e460b1f8-b093-4651-8d63-9b9ddfd24072"
           data-template="banner"
           data-theme="light"
-          className="min-h-[420px] w-full"
+          className="w-full"
         />
       </div>
     </section>
