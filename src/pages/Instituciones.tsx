@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Orb from "@/components/Orb";
+import PosrankRatings from "@/components/PosrankRatings";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
@@ -631,6 +632,8 @@ const Instituciones = () => {
           Desplazar
         </motion.div>
       </section>
+
+      <PosrankRatings />
 
       {/* PROBLEMA */}
       <section id="plataforma" className="relative py-32">
