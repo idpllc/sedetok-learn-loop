@@ -1,0 +1,2 @@
+# Architecture rules
+- Public landing pages share `PosrankRatings`, which loads the provider script once and lets its observer initialize widgets after navigation; this avoids duplicate scripts and inconsistent ratings.

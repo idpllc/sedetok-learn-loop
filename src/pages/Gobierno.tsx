@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Orb from "@/components/Orb";
+import PosrankRatings from "@/components/PosrankRatings";
 import sedefyLogo from "@/assets/sedefy-logo.png";
 import unicefLogo from "@/assets/partners/unicef.png";
 import rutanLogo from "@/assets/partners/rutan-n.svg";
@@ -650,6 +651,8 @@ const Gobierno = () => {
           Desplazar
         </motion.div>
       </section>
+
+      <PosrankRatings />
 
       {/* PROBLEMA */}
       <section id="plataforma" className="relative py-32">
