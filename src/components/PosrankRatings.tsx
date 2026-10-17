@@ -17,7 +17,7 @@ export default function PosrankRatings() {
       <div className="mx-auto w-full max-w-7xl px-6">
         <div
           data-posrank-ratings="e460b1f8-b093-4651-8d63-9b9ddfd24072"
-          data-template="banner"
+          data-template="cards"
           data-theme="light"
           className="w-full"
         />
