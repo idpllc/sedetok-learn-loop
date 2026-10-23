@@ -68,7 +68,7 @@ const Auth = () => {
     } else {
       toast({
         title: "¡Registro exitoso!",
-        description: "Bienvenido a SEDETOK",
+        description: "Bienvenido a SEDEFY",
       });
     }
   };

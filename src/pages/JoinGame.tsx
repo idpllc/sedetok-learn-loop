@@ -167,9 +167,9 @@ const JoinGame = () => {
       {/* Logo */}
       <div className="mb-8 text-center">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-primary/20">
-          <img src={sedefyLogo} alt="SEDETOK" className="w-10 h-10 object-contain" />
+          <img src={sedefyLogo} alt="SEDEFY" className="w-10 h-10 object-contain" />
         </div>
-        <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest">SEDETOK</p>
+        <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest">SEDEFY</p>
       </div>
 
       <AnimatePresence mode="wait">

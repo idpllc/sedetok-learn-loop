@@ -91,7 +91,7 @@ export const ProfileHeader = ({ profile, isOwnProfile, onUpdateCover, onUpdateAv
     ? `${appDomain}/u/${profile.custom_url}`
     : `${appDomain}/profile/${profile?.id}`;
   
-  const shareText = `¡Mira mi perfil profesional en SEDETOK! ${getDisplayName(profile)}`;
+  const shareText = `¡Mira mi perfil profesional en SEDEFY! ${getDisplayName(profile)}`;
 
   const copyToClipboard = async () => {
     try {
