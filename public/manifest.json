@@ -1,7 +1,7 @@
 {
-  "name": "SEDEFY — Inteligencia educativa",
+  "name": "SEDEFY — El mejor gestor académico",
   "short_name": "SEDEFY",
-  "description": "Plataforma de inteligencia educativa que convierte la actividad académica en decisiones: riesgos psicosociales, potencial académico, perfil vocacional y mejora de la enseñanza.",
+  "description": "El mejor gestor académico del mercado: inteligencia educativa que convierte la actividad académica en decisiones — riesgos psicosociales, potencial académico, perfil vocacional y mejora de la enseñanza.",
   "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#0A0A0A",
