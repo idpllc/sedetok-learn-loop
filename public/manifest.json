@@ -1,7 +1,7 @@
 {
-  "name": "SEDETOK - Aprende con Videos Educativos",
-  "short_name": "SEDETOK",
-  "description": "Plataforma educativa interactiva estilo TikTok. Descubre contenido educativo en video, documentos y quizzes de manera divertida y dinámica.",
+  "name": "SEDEFY — Inteligencia educativa",
+  "short_name": "SEDEFY",
+  "description": "Plataforma de inteligencia educativa que convierte la actividad académica en decisiones: riesgos psicosociales, potencial académico, perfil vocacional y mejora de la enseñanza.",
   "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#0A0A0A",
@@ -10,7 +10,7 @@
   "scope": "/",
   "lang": "es",
   "dir": "ltr",
-  "id": "sedetok-app-v3",
+  "id": "sedefy-app-v3",
   "icons": [
     {
       "src": "/pwa-icon.png",
@@ -50,7 +50,7 @@
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "SEDETOK - Feed de contenido educativo"
+      "label": "SEDEFY - Inteligencia educativa"
     }
   ],
   "shortcuts": [
@@ -69,7 +69,7 @@
   "related_applications": [
     {
       "platform": "webapp",
-      "url": "https://sedetok-learn-loop.lovable.app/manifest.json"
+      "url": "https://sedefy.com/manifest.json"
     }
   ]
 }

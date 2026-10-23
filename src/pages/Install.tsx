@@ -87,7 +87,7 @@ const Install = () => {
             <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-2xl shadow-primary/30">
               <img
                 src={sedefyLogo}
-                alt="SEDETOK"
+                alt="SEDEFY"
                 className="w-18 h-18 object-contain"
                 style={{ width: '4.5rem', height: '4.5rem' }}
               />
@@ -101,11 +101,11 @@ const Install = () => {
         </div>
 
         <h1 className="text-3xl font-bold text-foreground mb-2">
-          {isInstalled ? '¡Ya está instalada!' : 'Instala SEDETOK'}
+          {isInstalled ? '¡Ya está instalada!' : 'Instala SEDEFY'}
         </h1>
         <p className="text-muted-foreground">
           {isInstalled
-            ? 'SEDETOK ya está en tu pantalla de inicio. ¡A aprender!'
+            ? 'SEDEFY ya está en tu pantalla de inicio. ¡A aprender!'
             : 'La mejor plataforma educativa, ahora como app en tu dispositivo'}
         </p>
       </div>
@@ -119,7 +119,7 @@ const Install = () => {
             </div>
             <p className="text-green-500 font-semibold">Instalación completa</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Busca el icono de SEDETOK en tu pantalla de inicio
+              Busca el icono de SEDEFY en tu pantalla de inicio
             </p>
           </div>
           <Button
@@ -127,7 +127,7 @@ const Install = () => {
             size="lg"
             className="w-full h-12 font-semibold"
           >
-            Ir a SEDETOK
+            Ir a SEDEFY
           </Button>
         </div>
       ) : (
@@ -148,7 +148,7 @@ const Install = () => {
               ) : (
                 <>
                   <Download className="w-5 h-5 mr-2" />
-                  Instalar SEDETOK gratis
+                  Instalar SEDEFY gratis
                 </>
               )}
             </Button>
@@ -185,7 +185,7 @@ const Install = () => {
           {!isIOS && !deferredPrompt && (
             <div className="bg-card border border-border rounded-2xl p-5 text-center">
               <p className="text-sm text-muted-foreground mb-1">
-                Para instalar SEDETOK, abre el menú de tu navegador
+                Para instalar SEDEFY, abre el menú de tu navegador
               </p>
               <p className="text-sm font-medium text-foreground">
                 y selecciona "Instalar aplicación" o "Añadir a pantalla de inicio"

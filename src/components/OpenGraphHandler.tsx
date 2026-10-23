@@ -37,8 +37,8 @@ export const OpenGraphHandler = () => {
             : undefined;
 
           setOgData({
-            title: `${data.title} - SEDETOK`,
-            description: data.description || "Descubre este contenido en SEDETOK",
+            title: `${data.title} - SEDEFY`,
+            description: data.description || "Descubre este contenido en SEDEFY",
             image: imageUrl,
             type: data.content_type === "video" ? "video.other" : "article",
             url: window.location.href,
@@ -60,8 +60,8 @@ export const OpenGraphHandler = () => {
             : undefined;
 
           setOgData({
-            title: `${data.title} - SEDETOK`,
-            description: data.description || "Pon a prueba tus conocimientos con este quiz en SEDETOK",
+            title: `${data.title} - SEDEFY`,
+            description: data.description || "Pon a prueba tus conocimientos con este quiz en SEDEFY",
             image: imageUrl,
             type: "article",
             url: window.location.href,
@@ -83,8 +83,8 @@ export const OpenGraphHandler = () => {
             : undefined;
 
           setOgData({
-            title: `${data.title} - SEDETOK`,
-            description: data.description || "Explora esta ruta de aprendizaje en SEDETOK",
+            title: `${data.title} - SEDEFY`,
+            description: data.description || "Explora esta ruta de aprendizaje en SEDEFY",
             image: imageUrl,
             type: "article",
             url: window.location.href,
@@ -99,14 +99,14 @@ export const OpenGraphHandler = () => {
   if (!ogData) {
     return (
       <Helmet>
-        <title>SEDETOK - Plataforma de Aprendizaje</title>
+        <title>SEDEFY - Plataforma de Aprendizaje</title>
         <meta name="description" content="Plataforma educativa con videos, quizzes, recursos y rutas de aprendizaje" />
-        <meta property="og:title" content="SEDETOK - Plataforma de Aprendizaje" />
+        <meta property="og:title" content="SEDEFY - Plataforma de Aprendizaje" />
         <meta property="og:description" content="Plataforma educativa con videos, quizzes, recursos y rutas de aprendizaje" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="SEDETOK - Plataforma de Aprendizaje" />
+        <meta name="twitter:title" content="SEDEFY - Plataforma de Aprendizaje" />
         <meta name="twitter:description" content="Plataforma educativa con videos, quizzes, recursos y rutas de aprendizaje" />
       </Helmet>
     );
@@ -132,7 +132,7 @@ export const OpenGraphHandler = () => {
           <meta property="og:image:alt" content={ogData.title} />
         </>
       )}
-      <meta property="og:site_name" content="SEDETOK" />
+      <meta property="og:site_name" content="SEDEFY" />
       <meta property="og:locale" content="es_ES" />
       
       {/* Twitter Card meta tags */}
@@ -145,10 +145,10 @@ export const OpenGraphHandler = () => {
           <meta name="twitter:image:alt" content={ogData.title} />
         </>
       )}
-      <meta name="twitter:site" content="@SEDETOK" />
+      <meta name="twitter:site" content="@SEDEFY" />
       
       {/* Facebook meta tags */}
-      <meta property="fb:app_id" content="SEDETOK" />
+      <meta property="fb:app_id" content="SEDEFY" />
     </Helmet>
   );
 };

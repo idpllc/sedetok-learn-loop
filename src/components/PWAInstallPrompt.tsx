@@ -137,13 +137,13 @@ export const PWAInstallPrompt = () => {
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/30">
               <img
                 src={sedefyLogo}
-                alt="SEDETOK"
+                alt="SEDEFY"
                 className="w-12 h-12 object-contain"
               />
             </div>
           </div>
           <h2 className="text-xl font-bold text-foreground mb-1">
-            Instala SEDETOK
+            Instala SEDEFY
           </h2>
           <p className="text-sm text-muted-foreground">
             Aprende más rápido con la app instalada

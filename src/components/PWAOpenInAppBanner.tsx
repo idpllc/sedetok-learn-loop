@@ -66,7 +66,7 @@ export const PWAOpenInAppBanner = () => {
           {isIOS ? (
             <>
               <p className="text-sm font-semibold text-foreground leading-tight">
-                Abre SEDETOK como app
+                Abre SEDEFY como app
               </p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
                 Toca <span className="font-medium">Compartir →</span>{" "}
@@ -76,7 +76,7 @@ export const PWAOpenInAppBanner = () => {
           ) : (
             <>
               <p className="text-sm font-semibold text-foreground leading-tight">
-                Tienes SEDETOK instalado
+                Tienes SEDEFY instalado
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Abre directamente en la app
