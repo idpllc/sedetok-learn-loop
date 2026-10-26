@@ -43,6 +43,7 @@ import { DiscountCodesManagement } from "@/components/admin/DiscountCodesManagem
 import PaymentLinksManagement from "@/components/admin/PaymentLinksManagement";
 import { CreditCard, VideoOff } from "lucide-react";
 import { BrokenMediaManagement } from "@/components/admin/BrokenMediaManagement";
+import { ActiveSubscriptionsManagement } from "@/components/admin/ActiveSubscriptionsManagement";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -418,7 +419,8 @@ export default function AdminDashboard() {
             <StudyPlanWebhookDocs />
           </TabsContent>
 
-          <TabsContent value="payments">
+          <TabsContent value="payments" className="space-y-6">
+            <ActiveSubscriptionsManagement />
             <PaymentLinksManagement />
           </TabsContent>
           <TabsContent value="discounts">
