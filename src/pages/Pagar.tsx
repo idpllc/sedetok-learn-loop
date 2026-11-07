@@ -112,6 +112,12 @@ const Pagar = () => {
     setQuote(null);
     setSelection({});
     setPayError(null);
+    // A valid link always carries colegio + t; don't call the server without them.
+    if (!colegio || !token) {
+      setError("Enlace no válido");
+      setLoading(false);
+      return;
+    }
     (async () => {
       try {
         const data = await callApi("session", { colegio, t: token });
