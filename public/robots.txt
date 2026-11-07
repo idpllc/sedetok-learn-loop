@@ -27,6 +27,7 @@ User-agent: *
 Allow: /
 
 # Rutas privadas - no indexar
+Disallow: /pagar
 Disallow: /admin
 Disallow: /api/
 Disallow: /teacher-dashboard

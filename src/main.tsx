@@ -7,15 +7,19 @@ import { captureReturnOrigin } from "./lib/returnOrigin";
 
 captureReturnOrigin();
 
-// Initialize Microsoft Clarity (script tag injection to avoid React duplication)
-(function(c: any, l: Document, a: string, r: string, i: string) {
-  c[a] = c[a] || function (...args: any[]) { (c[a].q = c[a].q || []).push(args); };
-  const t = l.createElement(r) as HTMLScriptElement;
-  t.async = true;
-  t.src = "https://www.clarity.ms/tag/" + i;
-  const y = l.getElementsByTagName(r)[0];
-  y.parentNode?.insertBefore(t, y);
-})(window, document, "clarity", "script", "wdsodbxujo");
+// Initialize Microsoft Clarity (script tag injection to avoid React duplication).
+// /pagar carries an access token in its URL and shows children's names, so it
+// is excluded from Clarity and any analytics.
+if (!window.location.pathname.startsWith("/pagar")) {
+  (function(c: any, l: Document, a: string, r: string, i: string) {
+    c[a] = c[a] || function (...args: any[]) { (c[a].q = c[a].q || []).push(args); };
+    const t = l.createElement(r) as HTMLScriptElement;
+    t.async = true;
+    t.src = "https://www.clarity.ms/tag/" + i;
+    const y = l.getElementsByTagName(r)[0];
+    y.parentNode?.insertBefore(t, y);
+  })(window, document, "clarity", "script", "wdsodbxujo");
+}
 
 const isInIframe = (() => {
   try {

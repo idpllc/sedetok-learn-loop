@@ -97,6 +97,8 @@ const Contacto = lazyWithRetry(() => import("./pages/Contacto"));
 const InstitutionProfile = lazyWithRetry(() => import("./pages/InstitutionProfile"));
 const Gobierno = lazyWithRetry(() => import("./pages/Gobierno"));
 const Instituciones = lazyWithRetry(() => import("./pages/Instituciones"));
+const Pagar = lazyWithRetry(() => import("./pages/Pagar"));
+const PagarResultado = lazyWithRetry(() => import("./pages/PagarResultado"));
 const LandingHome = lazyWithRetry(() => import("./pages/LandingHome"));
 
 // Heavy non-essential UI is lazy too, and skipped entirely in embed mode
@@ -136,7 +138,10 @@ const GlobalChrome = () => {
     (p) => location.pathname.startsWith(p)
   );
   const isDiagnosticRoute = location.pathname === "/admin/publishing-error";
-  const isPaymentRoute = location.pathname.startsWith("/pay/") || location.pathname.startsWith("/payment");
+  const isPaymentRoute =
+    location.pathname.startsWith("/pay/") ||
+    location.pathname.startsWith("/payment") ||
+    location.pathname.startsWith("/pagar");
   if (embed || isAuthRoute || isDiagnosticRoute || isPaymentRoute) return null;
   return (
     <Suspense fallback={null}>
@@ -261,6 +266,8 @@ const App = () => (
             <Route path="/chat/login-test" element={<ChatLoginTest />} />
             <Route path="/gobierno" element={<Gobierno />} />
             <Route path="/instituciones" element={<Instituciones />} />
+            <Route path="/pagar" element={<Pagar />} />
+            <Route path="/pagar/resultado" element={<PagarResultado />} />
             {/* Institution custom slug — MUST be the last named route before catch-all */}
             <Route
               path="/:slug"

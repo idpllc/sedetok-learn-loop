@@ -69,13 +69,18 @@
   
   
   
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9Q8XPQBK4D"></script>
+  <!-- Google tag (gtag.js) — excluded on /pagar: its URL carries an access token -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-9Q8XPQBK4D');
+    if (!location.pathname.startsWith('/pagar')) {
+      var gs = document.createElement('script');
+      gs.async = true;
+      gs.src = 'https://www.googletagmanager.com/gtag/js?id=G-9Q8XPQBK4D';
+      document.head.appendChild(gs);
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-9Q8XPQBK4D');
+    }
   </script>
 
   <!-- Google AdSense -->

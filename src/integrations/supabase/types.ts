@@ -347,6 +347,48 @@ export type Database = {
           },
         ]
       }
+      checkout_orders: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          mp_payment_id: string | null
+          payer_email: string | null
+          return_url: string | null
+          school_name: string | null
+          school_order_id: string
+          school_origin: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          payer_email?: string | null
+          return_url?: string | null
+          school_name?: string | null
+          school_order_id: string
+          school_origin: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          mp_payment_id?: string | null
+          payer_email?: string | null
+          return_url?: string | null
+          school_name?: string | null
+          school_order_id?: string
+          school_origin?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           comment_text: string
@@ -2488,6 +2530,47 @@ export type Database = {
           },
         ]
       }
+      payment_relays: {
+        Row: {
+          attempts: number
+          checkout_order_id: string | null
+          created_at: string
+          delivered_at: string | null
+          id: string
+          last_error: string | null
+          mp_payment_id: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          checkout_order_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          last_error?: string | null
+          mp_payment_id: string
+          status: string
+        }
+        Update: {
+          attempts?: number
+          checkout_order_id?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          last_error?: string | null
+          mp_payment_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_relays_checkout_order_id_fkey"
+            columns: ["checkout_order_id"]
+            isOneToOne: false
+            referencedRelation: "checkout_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           areas_interes: string[] | null
@@ -3152,6 +3235,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      school_endpoints: {
+        Row: {
+          active: boolean
+          created_at: string
+          name: string
+          origin: string
+          webhook_secret: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          name: string
+          origin: string
+          webhook_secret: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          name?: string
+          origin?: string
+          webhook_secret?: string
+        }
+        Relationships: []
       }
       search_history: {
         Row: {

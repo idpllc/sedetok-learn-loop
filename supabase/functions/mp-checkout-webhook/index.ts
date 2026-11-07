@@ -29,6 +29,153 @@ const hmacHex = async (secret: string, message: string) => {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 };
 
+/** Strict x-signature verification (used by the /pagar checkout-orders flow). */
+const verifyMpSignature = async (req: Request, url: URL, secret: string, fallbackId: string): Promise<boolean> => {
+  try {
+    const xSignature = req.headers.get("x-signature") || "";
+    const xRequestId = req.headers.get("x-request-id") || "";
+    const dataId = (url.searchParams.get("data.id") || url.searchParams.get("id") || fallbackId || "").toString().toLowerCase();
+    const parts = Object.fromEntries(
+      xSignature.split(",").map((p) => {
+        const [k, ...v] = p.trim().split("=");
+        return [k, v.join("=")];
+      })
+    ) as Record<string, string>;
+    if (!parts.ts || !parts.v1) return false;
+    const manifest = `id:${dataId};request-id:${xRequestId};ts:${parts.ts};`;
+    const computed = await hmacHex(secret, manifest);
+    return computed === parts.v1;
+  } catch {
+    return false;
+  }
+};
+
+const relayEventFor = (s: string) =>
+  s === "approved" ? "payment.approved"
+    : s === "pending" || s === "in_process" ? "payment.pending"
+    : s === "rejected" ? "payment.rejected"
+    : s === "cancelled" ? "payment.cancelled"
+    : "payment.refunded"; // refunded, charged_back
+
+/**
+ * /pagar flow: a payment whose external_reference is a checkout_orders row.
+ * Updates the order and relays every status change to the school, signed
+ * with that school's webhook secret. Responds 200 only when the school
+ * answered 200 so MercadoPago retries otherwise.
+ */
+const handleCheckoutOrder = async (
+  supabase: any,
+  req: Request,
+  url: URL,
+  webhookSecret: string | undefined,
+  payment: any,
+  order: any,
+) => {
+  if (webhookSecret) {
+    const ok = await verifyMpSignature(req, url, webhookSecret, String(payment?.id || ""));
+    if (!ok) {
+      console.warn("mp-checkout-webhook: invalid signature for checkout order", { id: payment?.id });
+      return new Response(JSON.stringify({ error: "invalid signature" }), { status: 401, headers: corsHeaders });
+    }
+  }
+
+  const status = String(payment.status || "").toLowerCase();
+  const mpPaymentId = String(payment.id || "");
+
+  await supabase.from("checkout_orders").update({
+    status,
+    mp_payment_id: mpPaymentId,
+    updated_at: new Date().toISOString(),
+  }).eq("id", order.id);
+
+  // Idempotency: this payment+status already delivered → 200 without resending
+  const { data: relay } = await supabase
+    .from("payment_relays")
+    .select("*")
+    .eq("mp_payment_id", mpPaymentId)
+    .eq("status", status)
+    .maybeSingle();
+  if (relay?.delivered_at) {
+    return new Response(JSON.stringify({ ok: true, note: "already delivered" }), { headers: corsHeaders });
+  }
+
+  const { data: school } = await supabase
+    .from("school_endpoints")
+    .select("origin, webhook_secret")
+    .eq("origin", order.school_origin)
+    .maybeSingle();
+
+  let delivered = false;
+  let lastError: string | null = null;
+
+  if (!school) {
+    lastError = "school endpoint not configured";
+    console.error("mp-checkout-webhook: school endpoint not found for a checkout order");
+  } else {
+    const payload = {
+      event: relayEventFor(status),
+      status,
+      order_id: order.school_order_id,
+      payment_id: mpPaymentId,
+      amount: Math.round(payment.transaction_amount || 0),
+      currency: "COP",
+      status_detail: payment.status_detail || null,
+      payment_method: payment.payment_method_id || null,
+      payment_type: payment.payment_type_id || null,
+      live_mode: Boolean(payment.live_mode),
+      paid_at: payment.date_approved || null,
+      provider: "mercadopago",
+    };
+    const body = JSON.stringify(payload); // sign the exact text we send
+    try {
+      const signature = await hmacHex(school.webhook_secret, body);
+      const res = await fetch(`${school.origin}/api/sedefy-pago`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-sedefy-signature": signature },
+        body,
+        signal: AbortSignal.timeout(12000),
+      });
+      if (res.ok) {
+        delivered = true;
+        const result = await res.json().catch(() => ({}));
+        if (result?.status === "error") {
+          console.error("mp-checkout-webhook: school reported relay result 'error'", { mpPaymentId, status });
+        }
+      } else {
+        lastError = res.status === 401
+          ? "school returned 401 (webhook secret mismatch)"
+          : `school responded HTTP ${res.status}`;
+        console.error("mp-checkout-webhook: relay failed", { mpPaymentId, status, schoolStatus: res.status });
+      }
+    } catch (err) {
+      lastError = (err as Error).message;
+      console.error("mp-checkout-webhook: relay exception", lastError);
+    }
+  }
+
+  if (relay) {
+    await supabase.from("payment_relays").update({
+      attempts: (relay.attempts || 0) + 1,
+      last_error: delivered ? null : lastError,
+      delivered_at: delivered ? new Date().toISOString() : null,
+    }).eq("id", relay.id);
+  } else {
+    await supabase.from("payment_relays").insert({
+      checkout_order_id: order.id,
+      mp_payment_id: mpPaymentId,
+      status,
+      attempts: 1,
+      last_error: delivered ? null : lastError,
+      delivered_at: delivered ? new Date().toISOString() : null,
+    });
+  }
+
+  if (!delivered) {
+    return new Response(JSON.stringify({ error: "relay failed" }), { status: 500, headers: corsHeaders });
+  }
+  return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+};
+
 /**
  * Sends an approved-payment notification to the school's own website.
  * The target site is resolved from the origin the buyer came from
@@ -187,6 +334,16 @@ serve(async (req) => {
     if (!externalRef) {
       console.warn("mp-checkout-webhook: no external_reference", payment);
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+    }
+
+    // /pagar flow: external_reference may be a checkout_orders row
+    const { data: checkoutOrder } = await supabase
+      .from("checkout_orders")
+      .select("*")
+      .eq("id", externalRef)
+      .maybeSingle();
+    if (checkoutOrder) {
+      return await handleCheckoutOrder(supabase, req, url, webhookSecret, payment, checkoutOrder);
     }
 
     const { data: sub } = await supabase
