@@ -15,6 +15,13 @@
       "when": 1794071485977,
       "tag": "0001_create_pagar_checkout_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794085336851,
+      "tag": "0002_admin_view_plan_purchases",
+      "breakpoints": true
     }
   ]
 }

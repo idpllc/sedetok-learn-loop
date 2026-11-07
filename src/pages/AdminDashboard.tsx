@@ -44,6 +44,7 @@ import PaymentLinksManagement from "@/components/admin/PaymentLinksManagement";
 import { CreditCard, VideoOff } from "lucide-react";
 import { BrokenMediaManagement } from "@/components/admin/BrokenMediaManagement";
 import { ActiveSubscriptionsManagement } from "@/components/admin/ActiveSubscriptionsManagement";
+import { PlanPurchasesManagement } from "@/components/admin/PlanPurchasesManagement";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -420,6 +421,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">
+            <PlanPurchasesManagement />
             <ActiveSubscriptionsManagement />
             <PaymentLinksManagement />
           </TabsContent>

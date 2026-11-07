@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { notifyPlanPurchase, runInBackground } from "../_shared/plan-purchase-notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,6 +88,17 @@ const handleCheckoutOrder = async (
     mp_payment_id: mpPaymentId,
     updated_at: new Date().toISOString(),
   }).eq("id", order.id);
+
+  // Notify admins on the first approval of a school plan purchase.
+  if (status === "approved" && String(order.status || "").toLowerCase() !== "approved") {
+    runInBackground(notifyPlanPurchase(supabase, {
+      kind: "paid",
+      source: `Colegio: ${order.school_name || order.school_origin}`,
+      planName: `Pedido #${order.school_order_id}`,
+      buyerEmail: order.payer_email,
+      amountCop: order.amount,
+    }));
+  }
 
   // Idempotency: this payment+status already delivered → 200 without resending
   const { data: relay } = await supabase
@@ -361,19 +373,32 @@ serve(async (req) => {
     const approved = status === "approved" || status === "accredited";
     const amount = Math.round(payment.transaction_amount || 0);
 
-    await supabase.from("subscription_payments").insert({
-      user_id: sub.user_id,
-      subscription_id: sub.id,
-      amount_cop: amount,
-      status: approved ? "approved" : status,
-      reference: String(payment.id || ""),
-      provider: "mercadopago",
-      provider_transaction_id: String(payment.id || ""),
-      raw_response: payment,
-      billing_cycle: sub.billing_cycle,
-      discount_code_id: sub.discount_code_id,
-      discount_amount_cop: sub.discount_amount_cop,
-    });
+    // MercadoPago can deliver the same payment twice (payment + merchant_order
+    // topics); used to avoid duplicate admin emails.
+    const { data: existingPayment } = await supabase
+      .from("subscription_payments")
+      .select("id")
+      .eq("provider", "mercadopago")
+      .eq("provider_transaction_id", String(payment.id || ""))
+      .maybeSingle();
+
+    if (!existingPayment) {
+      await supabase.from("subscription_payments").insert({
+        user_id: sub.user_id,
+        subscription_id: sub.id,
+        amount_cop: amount,
+        status: approved ? "approved" : status,
+        reference: String(payment.id || ""),
+        provider: "mercadopago",
+        provider_transaction_id: String(payment.id || ""),
+        raw_response: payment,
+        billing_cycle: sub.billing_cycle,
+        discount_code_id: sub.discount_code_id,
+        discount_amount_cop: sub.discount_amount_cop,
+      });
+    } else {
+      console.log("mp-checkout-webhook: payment already recorded, skipping insert", payment.id);
+    }
 
     if (approved) {
       const now = new Date();
@@ -423,6 +448,18 @@ serve(async (req) => {
         await notifySchool(supabase, sub, payment);
       } catch (notifyErr) {
         console.warn("mp-checkout-webhook: school notify failed", notifyErr);
+      }
+
+      // Notify admins: a plan was actually paid (only on first delivery of this payment).
+      if (!existingPayment) {
+        runInBackground(notifyPlanPurchase(supabase, {
+          kind: "paid",
+          source: "Sedefy",
+          planName: sub.subscription_plans?.name || "Plan Sedefy",
+          buyerEmail: sub.mp_payer_email,
+          billingCycle: sub.billing_cycle === "yearly" ? "Anual" : "Mensual",
+          amountCop: amount,
+        }));
       }
     }
 

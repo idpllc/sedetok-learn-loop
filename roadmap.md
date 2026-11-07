@@ -11,3 +11,11 @@
 
 ## Pendiente (bloqueado por terceros)
 - [ ] Prueba end-to-end real: requiere un colegio de pruebas con la API /api/planes/pago-externo y /api/sedefy-pago, y registrar su origin + webhook_secret en school_endpoints
+
+## Planes comprados + alertas de compra por correo — COMPLETADO
+- [x] Migración: admins/superadmins pueden leer todas las suscripciones, pagos y pedidos /pagar
+- [x] Panel Pagos: tabla "Planes comprados" (Sedefy + colegios, totales, buscador, estados)
+- [x] Correo a admins + jeff@idpagency.co al intentar comprar (mp-create-checkout y pagar-api)
+- [x] Correo al pagar efectivamente (mp-checkout-webhook, ambos flujos, sin duplicados)
+- [x] Webhook ya no inserta pagos duplicados (mismo provider_transaction_id)
+- [ ] Pendiente: probar el correo con una compra real (requiere pago en MercadoPago)

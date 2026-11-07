@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { notifyPlanPurchase, runInBackground } from "../_shared/plan-purchase-notify.ts";
 
 const MP_BASE = "https://api.mercadopago.com";
 
@@ -228,6 +229,15 @@ serve(async (req) => {
         await admin.from("checkout_orders").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", co.id);
         return json({ error: "No se pudo crear el pago con MercadoPago" }, 502);
       }
+
+      // Notify admins: a family started a school plan checkout (never blocks the buyer).
+      runInBackground(notifyPlanPurchase(admin, {
+        kind: "attempt",
+        source: `Colegio: ${data.school?.name || school.name}`,
+        planName: items.length > 1 ? `${items[0].title} (+${items.length - 1} más)` : items[0].title,
+        buyerEmail: payerEmail,
+        amountCop: total,
+      }));
 
       return json({ success: true, pedido: co.id, init_point: mpData.init_point || mpData.sandbox_init_point });
     }

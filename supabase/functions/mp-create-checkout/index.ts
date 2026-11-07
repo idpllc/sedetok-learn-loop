@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { notifyPlanPurchase, runInBackground } from "../_shared/plan-purchase-notify.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -187,6 +188,17 @@ serve(async (req) => {
       .from("user_subscriptions")
       .update({ mp_preference_id: mpData.id })
       .eq("id", pendingSub.id);
+
+    // Notify admins: someone started a plan checkout (never blocks the buyer).
+    runInBackground(notifyPlanPurchase(admin, {
+      kind: "attempt",
+      source: "Sedefy",
+      planName: plan.name,
+      buyerName: (user.user_metadata?.full_name || user.user_metadata?.name || null) as string | null,
+      buyerEmail: email,
+      billingCycle: cycleLabel,
+      amountCop: finalAmount,
+    }));
 
     return json({
       success: true,
