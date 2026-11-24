@@ -18,6 +18,12 @@ import NotFound from "@/pages/NotFound";
 export default function InstitutionProfile() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+
+  // Locale-prefixed URLs (e.g. /es-co, /pt-br) are not institution slugs: go home
+  const isLocaleSlug = !!slug && /^[a-z]{2}(-[a-z]{2})?$/i.test(slug);
+  useEffect(() => {
+    if (isLocaleSlug) navigate("/", { replace: true });
+  }, [isLocaleSlug, navigate]);
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -177,6 +183,7 @@ export default function InstitutionProfile() {
     );
   }
 
+  if (isLocaleSlug) return null;
   if (!institution) return <NotFound />;
 
   const actionLabel = (action: string) => {

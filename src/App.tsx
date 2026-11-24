@@ -268,6 +268,13 @@ const App = () => (
             <Route path="/instituciones" element={<Instituciones />} />
             <Route path="/pagar" element={<Pagar />} />
             <Route path="/pagar/resultado" element={<PagarResultado />} />
+            {/* Locale-prefixed URLs (e.g. /es-co) redirect to the landing */}
+            <Route path="/es-co" element={<Navigate to="/" replace />} />
+            <Route path="/es" element={<Navigate to="/" replace />} />
+            <Route path="/es-es" element={<Navigate to="/" replace />} />
+            <Route path="/es-mx" element={<Navigate to="/" replace />} />
+            <Route path="/en" element={<Navigate to="/" replace />} />
+            <Route path="/en-us" element={<Navigate to="/" replace />} />
             {/* Institution custom slug — MUST be the last named route before catch-all */}
             <Route
               path="/:slug"
